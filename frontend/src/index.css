@@ -35,3 +35,20 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+.shrine-theme {
+  position: relative;
+  filter: sepia(0.2) brightness(0.95) saturate(1.2);
+}
+
+.shrine-theme::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/torii-overlay.svg');
+  background-size: 80px 80px;
+  background-repeat: repeat;
+  pointer-events: none;
+  opacity: 0.15;
+  z-index: 800;
+}

@@ -11,10 +11,12 @@ export async function seedStats(prisma: PrismaClient) {
   const baseShrine = [
     { rank: 1, shrine_id: shrine.id, user_id: userIds[0], count: 10 },
     { rank: 2, shrine_id: shrine.id, user_id: userIds[1] ?? userIds[0], count: 5 },
+    { rank: 3, shrine_id: shrine.id, user_id: userIds[2] ?? userIds[0], count: 2 },
   ];
   const baseDiety = [
     { rank: 1, diety_id: diety.id, user_id: userIds[0], count: 8 },
     { rank: 2, diety_id: diety.id, user_id: userIds[1] ?? userIds[0], count: 4 },
+    { rank: 3, diety_id: diety.id, user_id: userIds[2] ?? userIds[0], count: 1 },
   ];
 
   await prisma.shrinePrayStats.createMany({ data: baseShrine, skipDuplicates: true });
