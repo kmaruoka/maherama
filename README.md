@@ -18,17 +18,20 @@
    cd ../frontend
    npm install
    ```
-2. バックエンドの起動
+2. PostgreSQL を起動
+   - ローカルの `127.0.0.1:15432` で動作していることを想定しています。
+   - 別の場所で動かす場合は `DB_HOST` などの環境変数で指定してください。
+3. バックエンドの起動
    ```bash
    cd backend
    node index.js
    ```
-3. フロントエンドの起動（別ターミナルで実行）
+4. フロントエンドの起動（別ターミナルで実行）
    ```bash
    cd frontend
    npm run dev
    ```
-4. ブラウザで [http://localhost:5173](http://localhost:5173) を開く
+5. ブラウザで [http://localhost:5173](http://localhost:5173) を開く
 
 バックエンドはポート3001で動作します。フロントエンドからはこのポートにアクセスします。
 
