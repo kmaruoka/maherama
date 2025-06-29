@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
@@ -58,6 +58,11 @@ const ShrineDetailPage: React.FC = () => {
     { key: 'weekly', label: '週間' },
   ];
 
+  useEffect(() => {
+    console.log('フロント shrine:', shrine);
+    console.log('フロント shrineError:', shrineError);
+  }, [shrine, shrineError]);
+
   if (!id) {
     return <div className="p-4">神社IDが指定されていません</div>;
   }
@@ -72,6 +77,12 @@ const ShrineDetailPage: React.FC = () => {
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
+      <div style={{ background: '#ffdddd', color: '#900', fontSize: '14px', padding: '8px', marginBottom: '8px', border: '2px solid #f00' }}>
+        【shrineデバッグ表示】
+        <pre style={{ background: 'inherit', color: 'inherit', fontSize: '12px', padding: 0, margin: 0, overflowX: 'auto' }}>
+          {JSON.stringify(shrine, null, 2)}
+        </pre>
+      </div>
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-2">{shrine.name}</h1>
         {shrine.kana && <p className="text-lg text-gray-600 mb-4">{shrine.kana}</p>}
@@ -110,19 +121,21 @@ const ShrineDetailPage: React.FC = () => {
             </div>
 
             {shrine.dieties.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-3">祭神</h3>
-                <div className="flex flex-wrap gap-2">
-                  {shrine.dieties.map((diety) => (
-                    <span
-                      key={diety.id}
-                      className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                    >
-                      {diety.name}
-                    </span>
-                  ))}
+              <>
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">祭神</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {shrine.dieties.map((diety) => (
+                      <span
+                        key={diety.id}
+                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {diety.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 

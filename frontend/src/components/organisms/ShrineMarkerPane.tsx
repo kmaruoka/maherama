@@ -84,12 +84,15 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 max-w-sm">
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <CustomLink type="shrine" onClick={() => onShowDetail && onShowDetail(shrine.id)}>
+        <div className="modal-header">
+          <CustomLink type="shrine" onClick={() => onShowDetail && onShowDetail(shrine.id)} className="modal-title">
             {shrine.name}
           </CustomLink>
-          {shrine.kana && <p className="text-sm text-gray-600">{shrine.kana}</p>}
+          {shrine.kana && <div className="modal-kana">{shrine.kana}</div>}
         </div>
+      </div>
+      <div className="modal-info">
+        <div>参拝数: <span className="font-bold">{shrine.count}</span></div>
       </div>
 
       {shrine.thumbnailUrl && (
@@ -108,22 +111,6 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
       <div className="mb-4">
         {shrine.founded && <p className="text-sm text-gray-600 mb-2">創建: {shrine.founded}</p>}
       </div>
-
-      {shrine.dieties && shrine.dieties.length > 0 && (
-        <div className="mb-4">
-          <h4 className="font-semibold mb-2">祭神</h4>
-          <div className="flex flex-wrap gap-1">
-            {shrine.dieties.map((diety) => (
-              <span
-                key={diety.id}
-                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-              >
-                {diety.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {shrine.history && (
         <div className="mb-4">

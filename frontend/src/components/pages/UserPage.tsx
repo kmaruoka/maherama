@@ -1,22 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
-import CustomLink from '../atoms/CustomLink';
-
-interface RankingItem {
-  rank: number;
-  userId: number;
-  userName: string;
-  count: number;
-}
+import RankingPane from '../organisms/RankingPane';
+import type { Period, RankingItem } from '../organisms/RankingPane';
 
 interface UserInfo {
   id: number;
   name: string;
   followingCount: number;
   followerCount: number;
-  topShrines: { id: number; name: string; count: number }[];
-  topDieties: { id: number; name: string; count: number }[];
   isFollowing: boolean;
 }
 
@@ -28,7 +20,9 @@ interface UserPageProps {
 
 export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProps) {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const [targetId, setTargetId] = useState('');
+  const [shrinePeriod, setShrinePeriod] = useState<Period>('all');
+  const [dietyPeriod, setDietyPeriod] = useState<Period>('all');
+  const [userRankingPeriod, setUserRankingPeriod] = useState<Period>('all');
 
   useEffect(() => {
     const storedId = localStorage.getItem('userId');
@@ -37,7 +31,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
 
   const displayId = id ?? currentUserId;
 
-  const { data: userInfo, isLoading } = useQuery({
+  const { data: userInfo, isLoading, refetch } = useQuery({
     queryKey: ['user', displayId, currentUserId],
     queryFn: async () => {
       if (!displayId) return null;
@@ -49,35 +43,66 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
     enabled: !!displayId
   });
 
-  const { data: rankings } = useQuery({
-    queryKey: ['user-rankings'],
+  const { data: shrineRankings = [] } = useQuery<RankingItem[]>({
+    queryKey: ['user-shrine-rankings', displayId, shrinePeriod],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE}/user-rankings`);
-      if (!response.ok) throw new Error('ランキングの取得に失敗しました');
-      return response.json() as Promise<RankingItem[]>;
-    }
+      const res = await fetch(`${API_BASE}/users/${displayId}/shrine-rankings?period=${shrinePeriod}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!displayId
+  });
+
+  const { data: dietyRankings = [] } = useQuery<RankingItem[]>({
+    queryKey: ['user-diety-rankings', displayId, dietyPeriod],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/users/${displayId}/diety-rankings?period=${dietyPeriod}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!displayId
+  });
+
+  const userRankingApiMap: Record<Period, string> = {
+    all: '/user-rankings',
+    yearly: '/user-rankings-yearly',
+    monthly: '/user-rankings-monthly',
+    weekly: '/user-rankings-weekly',
+  };
+
+  const { data: userRankings = [] } = useQuery<RankingItem[]>({
+    queryKey: ['user-rankings', userRankingPeriod],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}${userRankingApiMap[userRankingPeriod]}`);
+      if (!res.ok) return [];
+      const arr = await res.json();
+      return arr.map((item: any) => ({
+        id: item.userId,
+        name: item.userName,
+        count: item.count,
+        rank: item.rank
+      }));
+    },
   });
 
   const handleFollow = async () => {
-    if (!currentUserId || !targetId || !userInfo) return;
+    if (!currentUserId || !userInfo) return;
     await fetch(`${API_BASE}/follows`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ followerId: currentUserId, followingId: Number(targetId) }),
+      body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
     });
-    // クエリを再取得
-    window.location.reload();
+    refetch();
   };
 
   const handleUnfollow = async () => {
-    if (!currentUserId || !targetId || !userInfo) return;
+    if (!currentUserId || !userInfo) return;
     await fetch(`${API_BASE}/follows`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ followerId: currentUserId, followingId: Number(targetId) }),
+      body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
     });
-    // クエリを再取得
-    window.location.reload();
+    refetch();
   };
 
   if (!displayId) {
@@ -98,95 +123,59 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
         {userInfo.name}
       </h1>
 
-      <div className="modal-info">
+      <div className="modal-info flex items-center gap-4">
         <div>フォロー: {userInfo.followingCount}</div>
         <div>フォロワー: {userInfo.followerCount}</div>
-      </div>
-
-      {currentUserId && currentUserId !== displayId && (
-        <div className="modal-section">
-          <div className="modal-subtitle">フォロー操作</div>
-          <div className="flex space-x-2 items-center">
-            <input
-              type="number"
-              className="border p-1 text-sm"
-              placeholder="ユーザーID"
-              value={targetId}
-              onChange={(e) => setTargetId(e.target.value)}
-            />
-            <button
-              className="px-2 py-1 bg-green-500 text-white rounded text-sm"
-              onClick={handleFollow}
-            >
-              フォロー
-            </button>
+        {currentUserId && currentUserId !== displayId && (
+          userInfo.isFollowing ? (
             <button
               className="px-2 py-1 bg-red-500 text-white rounded text-sm"
               onClick={handleUnfollow}
             >
-              アンフォロー
+              フォロー解除
             </button>
-          </div>
-        </div>
-      )}
+          ) : (
+            <button
+              className="px-2 py-1 bg-green-500 text-white rounded text-sm"
+              onClick={handleFollow}
+            >
+              フォローする
+            </button>
+          )
+        )}
+      </div>
 
-      {userInfo.topShrines.length > 0 && (
-        <div className="modal-section">
-          <div className="modal-subtitle">よく参拝する神社</div>
-          <div className="flex flex-wrap gap-2">
-            {userInfo.topShrines.map((shrine) => (
-              <CustomLink
-                key={shrine.id}
-                onClick={() => onShowShrine && onShowShrine(shrine.id)}
-                className="tag-link tag-shrine"
-              >
-                {shrine.name}
-              </CustomLink>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="modal-section">
+        <div className="modal-subtitle">よく参拝する神社</div>
+        <RankingPane
+          items={shrineRankings.map((item, idx) => ({
+            id: item.id,
+            name: item.name,
+            count: item.count,
+            rank: idx + 1
+          }))}
+          type="shrine"
+          period={shrinePeriod}
+          onPeriodChange={setShrinePeriod}
+          onItemClick={onShowShrine}
+        />
+      </div>
 
-      {userInfo.topDieties.length > 0 && (
-        <div className="modal-section">
-          <div className="modal-subtitle">よく参拝する神</div>
-          <div className="flex flex-wrap gap-2">
-            {userInfo.topDieties.map((diety) => (
-              <CustomLink
-                key={diety.id}
-                onClick={() => onShowDiety && onShowDiety(diety.id)}
-                className="tag-link tag-diety"
-              >
-                {diety.name}
-              </CustomLink>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {rankings && (
-        <div className="modal-section">
-          <div className="modal-subtitle">参拝数ランキング</div>
-          <div className="space-y-2">
-            {rankings.slice(0, 5).map((item) => (
-              <div key={item.userId} className="modal-item">
-                <div className="flex items-center gap-2">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
-                    item.rank === 2 ? 'bg-gray-300 text-gray-700' :
-                    item.rank === 3 ? 'bg-orange-400 text-orange-900' :
-                    'bg-gray-200 text-gray-600'
-                  }`}>
-                    {item.rank}
-                  </span>
-                  <CustomLink className="tag-link tag-user">{item.userName}</CustomLink>
-                </div>
-                <span className="modal-item-text">{item.count}回</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="modal-section">
+        <div className="modal-subtitle">よく参拝する神様</div>
+        <RankingPane
+          items={dietyRankings.map((item, idx) => ({
+            id: item.id,
+            name: item.name,
+            count: item.count,
+            rank: idx + 1
+          }))}
+          type="diety"
+          period={dietyPeriod}
+          onPeriodChange={setDietyPeriod}
+          onItemClick={onShowDiety}
+        />
+      </div>
     </div>
   );
 }

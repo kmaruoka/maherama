@@ -73,7 +73,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const { data: shrines = [] } = useQuery<Shrine[]>({
     queryKey: ['shrines'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/shrines`);
+      const res = await fetch(`${API_BASE}/shrines/all`);
       return res.json();
     },
   });
@@ -96,7 +96,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
       >
         <TileLayer
           attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>"
-          url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         {position && (
           <Circle center={position} radius={100} pathOptions={{ color: 'blue' }} />

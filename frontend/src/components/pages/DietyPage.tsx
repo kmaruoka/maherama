@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
 import CustomLink from '../atoms/CustomLink';
+import RankingPane from '../organisms/RankingPane';
+import type { Period, RankingItem } from '../organisms/RankingPane';
 
 interface Diety {
   id: number;
@@ -13,17 +15,10 @@ interface Diety {
   shrines: Array<{ id: number; name: string; kana?: string }>;
 }
 
-interface RankingItem {
-  rank: number;
-  userId: number;
-  userName: string;
-  count: number;
-}
-
 export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { id: paramId } = useParams<{ id: string }>();
   const idFromParams = id || paramId;
-  const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'yearly' | 'monthly' | 'weekly'>('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
 
   // デバッグ用ログ
   console.log('DietyPage - ID from params:', idFromParams, 'Type:', typeof idFromParams);
@@ -33,7 +28,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
     queryFn: async () => {
       console.log('Fetching diety with ID:', idFromParams);
       const response = await fetch(`${API_BASE}/dieties/${idFromParams}`);
-      if (!response.ok) throw new Error('神情報取得に失敗しました');
+      if (!response.ok) throw new Error('神様情報取得に失敗しました');
       return response.json();
     },
     enabled: !!idFromParams && idFromParams !== 'undefined' && idFromParams !== '',
@@ -58,11 +53,11 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
   ];
 
   if (!idFromParams) {
-    return <div className="p-4">神IDが指定されていません</div>;
+    return <div className="p-4">神様IDが指定されていません</div>;
   }
 
   if (dietyError) {
-    return <div className="p-4 text-red-500">神情報の取得に失敗しました</div>;
+    return <div className="p-4 text-red-500">神様情報の取得に失敗しました</div>;
   }
 
   if (!diety) {
@@ -71,13 +66,15 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
 
   return (
     <div className="modal-content">
-      <h1 className="modal-title text-2xl mb-4">
-        {diety.name}
-      </h1>
-      {diety.kana && <p className="text-lg text-gray-600 mb-4">{diety.kana}</p>}
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="modal-header">
+          <div className="modal-title">{diety.name}</div>
+          {diety.kana && <div className="modal-kana">{diety.kana}</div>}
+        </div>
+      </div>
 
       <div className="modal-info">
-        <div>参拝数: <span className="font-bold">{diety.count}回</span></div>
+        <div>参拝数: <span className="font-bold">{diety.count}</span></div>
       </div>
 
       {diety.shrines.length > 0 && (
@@ -100,42 +97,18 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
       {/* ランキング表示 */}
       <div className="modal-section">
         <div className="modal-subtitle">参拝ランキング</div>
-        <div className="flex border-b mb-3">
-          {periods.map((period) => (
-            <button
-              key={period.key}
-              onClick={() => setSelectedPeriod(period.key as any)}
-              className={`px-2 py-1 text-xs ${
-                selectedPeriod === period.key
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
-        <div className="space-y-2">
-          {rankings.slice(0, 3).map((item) => (
-            <div key={item.userId} className="modal-item">
-              <div className="flex items-center gap-2">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                  item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
-                  item.rank === 2 ? 'bg-gray-300 text-gray-700' :
-                  item.rank === 3 ? 'bg-orange-400 text-orange-900' :
-                  'bg-gray-200 text-gray-600'
-                }`}>
-                  {item.rank}
-                </span>
-                <CustomLink onClick={() => onShowUser?.(item.userId)} className="tag-link tag-user">{item.userName}</CustomLink>
-              </div>
-              <span className="modal-item-text">{item.count}回</span>
-            </div>
-          ))}
-          {rankings.length === 0 && (
-            <p className="text-gray-500 text-center py-4 text-xs">データがありません</p>
-          )}
-        </div>
+        <RankingPane
+          items={rankings.map(item => ({
+            id: item.userId,
+            name: item.userName,
+            count: item.count,
+            rank: item.rank
+          }))}
+          type="user"
+          period={selectedPeriod}
+          onPeriodChange={setSelectedPeriod}
+          onItemClick={onShowUser}
+        />
       </div>
 
       {diety.description && (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import MapPage from './components/pages/Map3DPage';
+import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
 import ShrinePage from './components/pages/ShrinePage';
 import DietyPage from './components/pages/DietyPage';

@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
 import CustomLink from '../atoms/CustomLink';
+import RankingPane from '../organisms/RankingPane';
+import type { Period, RankingItem } from '../organisms/RankingPane';
 
 interface Shrine {
   id: number;
@@ -19,17 +21,11 @@ interface Shrine {
   history?: string;
   festivals?: string;
   description?: string;
-}
-
-interface RankingItem {
-  rank: number;
-  userId: number;
-  userName: string;
-  count: number;
+  dieties: Array<{ id: number; name: string; kana?: string }>;
 }
 
 export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
-  const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'yearly' | 'monthly' | 'weekly'>('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
   const { data } = useQuery<Shrine | null>({
     queryKey: ['shrine', id],
     enabled: !!id,
@@ -61,12 +57,6 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
     return <div className="p-4">Loading...</div>;
   }
 
-  // ダミー祭神リスト（本来はAPIで取得）
-  const dietyList = [
-    { id: 1, name: '天照大御神' },
-    { id: 2, name: '月読命' },
-  ];
-
   return (
     <div className="modal-content">
       <div className="flex items-center space-x-4 mb-4">
@@ -78,16 +68,14 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
             )}
           </div>
         )}
-        <div>
-          <div className="modal-title text-2xl">{data.name}</div>
-          {data.kana && <div className="text-gray-400 text-sm">{data.kana}</div>}
+        <div className="modal-header">
+          <div className="modal-title">{data.name}</div>
+          {data.kana && <div className="modal-kana">{data.kana}</div>}
         </div>
       </div>
       
       <div className="modal-info">
         <div>参拝数: <span className="font-bold">{data.count}</span></div>
-        <div>緯度: {data.lat}</div>
-        <div>経度: {data.lng}</div>
       </div>
       
       <div className="text-sm text-gray-300 mb-4">{data.location}</div>
@@ -109,15 +97,19 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
       <div className="modal-section">
         <div className="modal-subtitle">祭神</div>
         <div className="flex flex-wrap gap-2">
-          {dietyList.map(d => (
-            <CustomLink
-              key={d.id}
-              onClick={() => onShowDiety && onShowDiety(d.id)}
-              className="tag-link tag-diety"
-            >
-              {d.name}
-            </CustomLink>
-          ))}
+          {data.dieties && data.dieties.length > 0 ? (
+            data.dieties.map(d => (
+              <CustomLink
+                key={d.id}
+                onClick={() => onShowDiety && onShowDiety(d.id)}
+                className="tag-link tag-diety"
+              >
+                {d.name}
+              </CustomLink>
+            ))
+          ) : (
+            <span className="text-gray-400">祭神情報なし</span>
+          )}
         </div>
       </div>
       
@@ -138,42 +130,18 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
       {/* ランキング表示 */}
       <div className="modal-section">
         <div className="modal-subtitle">参拝ランキング</div>
-        <div className="flex border-b mb-3">
-          {periods.map((period) => (
-            <button
-              key={period.key}
-              onClick={() => setSelectedPeriod(period.key as any)}
-              className={`px-2 py-1 text-xs ${
-                selectedPeriod === period.key
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
-        <div className="space-y-2">
-          {rankings.slice(0, 3).map((item) => (
-            <div key={item.userId} className="modal-item">
-              <div className="flex items-center gap-2">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                  item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
-                  item.rank === 2 ? 'bg-gray-300 text-gray-700' :
-                  item.rank === 3 ? 'bg-orange-400 text-orange-900' :
-                  'bg-gray-200 text-gray-600'
-                }`}>
-                  {item.rank}
-                </span>
-                <CustomLink onClick={() => onShowUser && onShowUser(item.userId)} className="tag-link tag-user">{item.userName}</CustomLink>
-              </div>
-              <span className="modal-item-text">{item.count}回</span>
-            </div>
-          ))}
-          {rankings.length === 0 && (
-            <p className="text-gray-500 text-center py-4 text-xs">データがありません</p>
-          )}
-        </div>
+        <RankingPane
+          items={rankings.map(item => ({
+            id: item.userId,
+            name: item.userName,
+            count: item.count,
+            rank: item.rank
+          }))}
+          type="user"
+          period={selectedPeriod}
+          onPeriodChange={setSelectedPeriod}
+          onItemClick={onShowUser}
+        />
       </div>
       
       <div className="text-xs text-gray-400">登録日: {data.registeredAt}</div>

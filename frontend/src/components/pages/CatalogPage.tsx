@@ -78,7 +78,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           className={`px-2 py-1 border ${tab === 'diety' ? 'bg-gray-300' : ''}`}
           onClick={() => setTab('diety')}
         >
-          神
+          神様
         </button>
       </div>
       <div className="flex space-x-2">
