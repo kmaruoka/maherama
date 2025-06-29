@@ -1,4 +1,5 @@
 import CustomText from '../atoms/CustomText';
+import CustomLink from '../atoms/CustomLink';
 
 export interface LogItem {
   message: string;
@@ -38,9 +39,16 @@ export default function CustomLogLine({ log }: { log: LogItem }) {
           );
         }
         if (content.startsWith('shrine:')) {
-          return (
+          const info = content.slice(7);
+          const [id, ...rest] = info.split(':');
+          const name = rest.length > 0 ? rest.join(':') : id;
+          return rest.length > 0 ? (
+            <CustomLink key={idx} to={`/shrines/${id}`} className={cls}>
+              {'<'}{name}{'>'}
+            </CustomLink>
+          ) : (
             <CustomText key={idx} className={cls}>
-              {'<'}{content.slice(7)}{'>'}
+              {'<'}{name}{'>'}
             </CustomText>
           );
         }
