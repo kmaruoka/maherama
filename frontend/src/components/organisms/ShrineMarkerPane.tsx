@@ -84,7 +84,7 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
         <CustomText>参拝数: {shrine.count}</CustomText>
       </div>
 
-      {shrine.dieties.length > 0 && (
+      {shrine.dieties && shrine.dieties.length > 0 && (
         <div className="mb-4">
           <h4 className="font-semibold mb-2">祭神</h4>
           <div className="flex flex-wrap gap-1">
