@@ -1,68 +1,85 @@
-require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { Pool } = require('pg');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://amana_user:amana_pass@127.0.0.1:15432/amana',
-});
-
-async function seed() {
+async function main() {
   const filePath = path.join(__dirname, 'data.txt');
   const content = fs.readFileSync(filePath, 'utf-8');
   const sections = content.split(/\n{2,}/);
 
-  const shrineMap = new Map(); // shrine name -> shrine_id
-  const dietyMap = new Map();  // diety name -> diety_id
+  const shrineMap = new Map();
+  const dietyMap = new Map();
 
   for (const section of sections) {
     if (section.startsWith('[神社]')) {
       const lines = section.split('\n').slice(1);
       for (const line of lines) {
+        if (!line.trim()) continue;
         const [name, address, lat, lng, dietiesStr] = line.trim().split('\t');
-        const res = await pool.query(
-          'INSERT INTO shrines(name, address, lat, lng) VALUES ($1, $2, $3, $4) RETURNING id',
-          [name, address, parseFloat(lat), parseFloat(lng)]
-        );
-        const shrineId = res.rows[0].id;
-        shrineMap.set(name, shrineId);
+        const shrine = await prisma.shrine.create({
+          data: {
+            name,
+            address,
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+          },
+        });
+        shrineMap.set(name, shrine.id);
         const dieties = dietiesStr.split(',').map(s => s.trim());
         for (const d of dieties) {
+          let dietyId;
           if (!dietyMap.has(d)) {
-            const r = await pool.query('INSERT INTO dieties(name) VALUES ($1) RETURNING id', [d]);
-            dietyMap.set(d, r.rows[0].id);
+            const diety = await prisma.diety.create({
+              data: { name: d }
+            });
+            dietyId = diety.id;
+            dietyMap.set(d, dietyId);
+          } else {
+            dietyId = dietyMap.get(d);
           }
-          await pool.query(
-            'INSERT INTO shrine_diety(shrine_id, diety_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-            [shrineId, dietyMap.get(d)]
-          );
+          await prisma.shrineDiety.create({
+            data: {
+              shrine_id: shrine.id,
+              diety_id: dietyId
+            }
+          });
         }
       }
     } else if (section.startsWith('[神]')) {
       const lines = section.split('\n').slice(1);
       for (const line of lines) {
+        if (!line.trim()) continue;
         const [name, kana, description] = line.trim().split('\t');
         if (!dietyMap.has(name)) {
-          const r = await pool.query(
-            'INSERT INTO dieties(name, kana, description) VALUES ($1, $2, $3) RETURNING id',
-            [name, kana || null, description || null]
-          );
-          dietyMap.set(name, r.rows[0].id);
+          const diety = await prisma.diety.create({
+            data: {
+              name,
+              kana: kana || null,
+              description: description || null
+            }
+          });
+          dietyMap.set(name, diety.id);
         } else {
-          await pool.query(
-            'UPDATE dieties SET kana=$1, description=$2 WHERE id=$3',
-            [kana || null, description || null, dietyMap.get(name)]
-          );
+          await prisma.diety.update({
+            where: { id: dietyMap.get(name) },
+            data: {
+              kana: kana || null,
+              description: description || null
+            }
+          });
         }
       }
     }
   }
-
   console.log("Test data seeded.");
-  await pool.end();
 }
 
-seed().catch(err => {
-  console.error("Seeding failed", err);
-  process.exit(1);
-});
+main()
+  .catch(e => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

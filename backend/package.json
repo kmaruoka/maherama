@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db-init": "node scripts/initDb.js",
     "db-seed": "node scripts/seedTestData.js",
-    "db-reset": "npm run db-init && npm run db-seed",
     "start": "node index.js"
   },
   "keywords": [],
@@ -19,8 +17,9 @@
     "cors": "^2.8.5",
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
-    "pg": "^8.11.1",
-    "pg-connection-string": "^2.9.1",
     "prisma": "^6.10.1"
+  },
+  "prisma": {
+    "seed": "node scripts/seedTestData.js"
   }
 }

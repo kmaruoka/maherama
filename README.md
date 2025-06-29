@@ -31,6 +31,10 @@
    ```bash
    npx prisma migrate dev --name init
    ```
+4.5. テストデータの投入（任意）
+   ```bash
+   npx prisma db seed
+   ```
 5. バックエンドの起動
    ```bash
    cd backend
