@@ -3,21 +3,30 @@
 @tailwind utilities;
 
 .log-pane {
-  @apply bg-black bg-opacity-60 text-white text-sm fixed bottom-12 left-0 right-0 max-h-40 overflow-y-auto z-10;
+  position: fixed;
+  bottom: 3rem;
+  left: 0;
+  right: 0;
+  max-height: 10rem;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 0.875rem;
+  z-index: 1100;
 }
 
 .log-shrine {
-  @apply text-orange-400;
+  color: #f97316; /* orange-400 */
 }
 
 .log-user {
-  @apply text-sky-400;
+  color: #0ea5e9; /* sky-400 */
 }
 
 .log-region {
-  @apply text-lime-500;
+  color: #84cc16; /* lime-500 */
 }
 
 .log-system {
-  @apply text-yellow-300;
+  color: #fde047; /* yellow-300 */
 }
