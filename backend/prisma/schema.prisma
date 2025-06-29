@@ -62,6 +62,17 @@ model Log {
 model User {
   id    Int    @id @default(autoincrement())
   name  String
+  following Follow[] @relation("follows")
+  followers Follow[] @relation("followedBy")
+}
+
+model Follow {
+  follower     User @relation("follows", fields: [follower_id], references: [id])
+  follower_id  Int
+  following    User @relation("followedBy", fields: [following_id], references: [id])
+  following_id Int
+
+  @@id([follower_id, following_id])
 }
 
 model ShrinePray {
