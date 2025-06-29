@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import CustomLink from './components/atoms/CustomLink';
+import CustomText from './components/atoms/CustomText';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -43,8 +44,8 @@ export default function ShrineListPage() {
       </select>
       {sorted.map((s) => (
         <div key={s.id} className="border-b pb-2">
-          <Link className="text-blue-600" to={`/shrines/${s.id}`}>{s.name}</Link>
-          <div>参拝数: {s.count}</div>
+          <CustomLink to={`/shrines/${s.id}`}>{s.name}</CustomLink>
+          <CustomText>参拝数: {s.count}</CustomText>
         </div>
       ))}
     </div>
