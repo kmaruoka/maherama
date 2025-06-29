@@ -5,12 +5,15 @@ export default function SettingsPage() {
   const [userId, setUserId] = useState<number | null>(null);
   const [input, setInput] = useState('');
   const [idInput, setIdInput] = useState('');
+  const [debugMode, setDebugMode] = useState(false);
 
   useEffect(() => {
     const storedName = localStorage.getItem('userName');
     const storedId = localStorage.getItem('userId');
+    const storedDebug = localStorage.getItem('debugMode');
     if (storedName) setName(storedName);
     if (storedId) setUserId(Number(storedId));
+    if (storedDebug) setDebugMode(storedDebug === 'true');
   }, []);
 
   const handleLogin = () => {
@@ -29,6 +32,12 @@ export default function SettingsPage() {
     localStorage.removeItem('userId');
     setName('');
     setUserId(null);
+  };
+
+  const toggleDebugMode = () => {
+    const newValue = !debugMode;
+    setDebugMode(newValue);
+    localStorage.setItem('debugMode', String(newValue));
   };
 
   if (!name) {
@@ -70,6 +79,18 @@ export default function SettingsPage() {
         >
           ログアウト
         </button>
+      </div>
+      <div className="flex items-center justify-between">
+        <span>デバッグモード</span>
+        <label className="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="mr-2"
+            checked={debugMode}
+            onChange={toggleDebugMode}
+          />
+          {debugMode ? 'ON' : 'OFF'}
+        </label>
       </div>
     </div>
   );
