@@ -21,8 +21,10 @@ export async function seedStats(prisma: PrismaClient) {
   await prisma.shrinePrayStatsMonthly.createMany({ data: baseShrine, skipDuplicates: true });
   await prisma.shrinePrayStatsWeekly.createMany({ data: baseShrine, skipDuplicates: true });
   await prisma.shrinePrayStatsDaily.createMany({ data: baseShrine, skipDuplicates: true });
+  await prisma.shrinePrayStatsYearly.createMany({ data: baseShrine, skipDuplicates: true });
   await prisma.dietyPrayStats.createMany({ data: baseDiety, skipDuplicates: true });
   await prisma.dietyPrayStatsMonthly.createMany({ data: baseDiety, skipDuplicates: true });
   await prisma.dietyPrayStatsWeekly.createMany({ data: baseDiety, skipDuplicates: true });
   await prisma.dietyPrayStatsDaily.createMany({ data: baseDiety, skipDuplicates: true });
+  await prisma.dietyPrayStatsYearly.createMany({ data: baseDiety, skipDuplicates: true });
 }

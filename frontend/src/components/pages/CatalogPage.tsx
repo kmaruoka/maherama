@@ -1,10 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CustomLink from '../atoms/CustomLink';
 import CustomText from '../atoms/CustomText';
-
-const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
-const API_BASE = `http://localhost:${API_PORT}`;
+import { API_BASE } from '../../config/api';
 
 interface Item {
   id: number;

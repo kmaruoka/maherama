@@ -2,8 +2,23 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
+
+// 環境変数のチェック
+if (!process.env.PORT) {
+  console.error('エラー: PORT環境変数が設定されていません');
+  console.error('例: PORT=3001 npm start');
+  process.exit(1);
+}
+
 const app = express();
-const port = process.env.PORT || 3001;
+const port = parseInt(process.env.PORT, 10);
+
+// ポート番号の妥当性チェック
+if (isNaN(port) || port < 1 || port > 65535) {
+  console.error('エラー: 無効なポート番号です:', process.env.PORT);
+  console.error('有効な範囲: 1-65535');
+  process.exit(1);
+}
 
 const prisma = new PrismaClient();
 
@@ -291,6 +306,16 @@ app.get('/dieties', async (req, res) => {
 
 app.get('/dieties/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  
+  // デバッグ用ログ
+  console.log('Diety ID parameter:', req.params.id, 'Parsed ID:', id);
+  
+  // IDが無効な値の場合はエラーを返す
+  if (isNaN(id) || id <= 0) {
+    console.error('Invalid diety ID:', req.params.id);
+    return res.status(400).json({ error: 'Invalid ID parameter' });
+  }
+  
   try {
     const diety = await prisma.diety.findUnique({
       where: { id },
@@ -453,6 +478,147 @@ app.get('/user-rankings', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Error fetching user rankings:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/shrines/:id/rankings', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const period = req.query.period || 'all'; // all, yearly, monthly, weekly
+  
+  try {
+    const shrine = await prisma.shrine.findUnique({
+      where: { id },
+      select: { name: true }
+    });
+    
+    if (!shrine) {
+      return res.status(404).json({ error: '神社が見つかりません' });
+    }
+    
+    let rankings;
+    switch (period) {
+      case 'yearly':
+        rankings = await prisma.shrinePrayStatsYearly.findMany({
+          where: { shrine_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+        break;
+      case 'monthly':
+        rankings = await prisma.shrinePrayStatsMonthly.findMany({
+          where: { shrine_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+        break;
+      case 'weekly':
+        rankings = await prisma.shrinePrayStatsWeekly.findMany({
+          where: { shrine_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+        break;
+      default: // all
+        rankings = await prisma.shrinePrayStats.findMany({
+          where: { shrine_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+    }
+    
+    const userIds = rankings.map(r => r.user_id);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true }
+    });
+    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
+    
+    const result = rankings.map((r, i) => ({
+      rank: i + 1,
+      userId: r.user_id,
+      userName: userMap[r.user_id] || '名無し',
+      count: r.count
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching shrine rankings:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/dieties/:id/rankings', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const period = req.query.period || 'all'; // all, yearly, monthly, weekly
+  
+  // デバッグ用ログ
+  console.log('Diety Rankings - ID parameter:', req.params.id, 'Parsed ID:', id, 'Period:', period);
+  
+  // IDが無効な値の場合はエラーを返す
+  if (isNaN(id) || id <= 0) {
+    console.error('Invalid diety ID for rankings:', req.params.id);
+    return res.status(400).json({ error: 'Invalid ID parameter' });
+  }
+  
+  try {
+    const diety = await prisma.diety.findUnique({
+      where: { id },
+      select: { name: true }
+    });
+    
+    if (!diety) {
+      return res.status(404).json({ error: '神が見つかりません' });
+    }
+    
+    let rankings;
+    switch (period) {
+      case 'yearly':
+        rankings = await prisma.dietyPrayStatsYearly.findMany({
+          where: { diety_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+        break;
+      case 'monthly':
+        rankings = await prisma.dietyPrayStatsMonthly.findMany({
+          where: { diety_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+        break;
+      case 'weekly':
+        rankings = await prisma.dietyPrayStatsWeekly.findMany({
+          where: { diety_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+        break;
+      default: // all
+        rankings = await prisma.dietyPrayStats.findMany({
+          where: { diety_id: id },
+          orderBy: { count: 'desc' },
+          take: 10,
+        });
+    }
+    
+    const userIds = rankings.map(r => r.user_id);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true }
+    });
+    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
+    
+    const result = rankings.map((r, i) => ({
+      rank: i + 1,
+      userId: r.user_id,
+      userName: userMap[r.user_id] || '名無し',
+      count: r.count
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching diety rankings:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

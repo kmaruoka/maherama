@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-
-const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
-const API_BASE = `http://localhost:${API_PORT}`;
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { API_BASE } from '../../config/api';
 
 interface RankingItem {
   rank: number;

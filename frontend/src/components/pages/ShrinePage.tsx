@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-
-const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
-const API_BASE = `http://localhost:${API_PORT}`;
+import { API_BASE } from '../../config/api';
 
 interface Shrine {
   id: number;

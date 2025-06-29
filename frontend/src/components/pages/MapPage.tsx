@@ -1,14 +1,12 @@
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import '../../setupLeaflet';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { API_BASE } from '../../config/api';
 import ShrineMarkerPane, { type Shrine } from '../organisms/ShrineMarkerPane';
 import LogPane from '../organisms/LogPane';
 import type { LogItem } from '../molecules/CustomLogLine';
 import L from 'leaflet';
-
-const API_PORT = import.meta.env.VITE_API_PORT || '3000';
-const API_BASE = `http://localhost:${API_PORT}`;
 
 function createShrineIcon(thumbnailUrl?: string) {
   return L.icon({
@@ -53,28 +51,27 @@ export default function MapPage({ onShowShrine }: { onShowShrine: (id: number) =
     },
   });
 
-
   return (
     <>
       <MapContainer
-      center={[35.68, 139.76] as [number, number]}
-      zoom={5}
-      style={{ height: 'calc(100vh - 3rem)' }}
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {position && (
-        <Circle center={position} radius={100} pathOptions={{ color: 'blue' }} />
-      )}
-      {shrines.map((s) => (
-        <Marker key={s.id} position={[s.lat, s.lng]} icon={createShrineIcon(s.thumbnailUrl)}>
-          <Popup>
-            <ShrineMarkerPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} />
-          </Popup>
-        </Marker>
-      ))}
+        center={[35.68, 139.76] as [number, number]}
+        zoom={5}
+        style={{ height: 'calc(100vh - 3rem)' }}
+      >
+        <TileLayer
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {position && (
+          <Circle center={position} radius={100} pathOptions={{ color: 'blue' }} />
+        )}
+        {shrines.map((s) => (
+          <Marker key={s.id} position={[s.lat, s.lng]} icon={createShrineIcon(s.thumbnailUrl)}>
+            <Popup>
+              <ShrineMarkerPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} />
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
       <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} />
     </>
