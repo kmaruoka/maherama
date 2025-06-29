@@ -28,6 +28,7 @@ model Shrine {
   shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
   shrine_pray_stats_weekly ShrinePrayStatsWeekly[]
   shrine_pray_stats_daily ShrinePrayStatsDaily[]
+  shrine_books ShrineBook[]
 }
 
 model Diety {
@@ -42,6 +43,7 @@ model Diety {
   diety_pray_stats_monthly DietyPrayStatsMonthly[]
   diety_pray_stats_weekly DietyPrayStatsWeekly[]
   diety_pray_stats_daily DietyPrayStatsDaily[]
+  diety_books DietyBook[]
 }
 
 model ShrineDiety {
@@ -65,6 +67,8 @@ model User {
   name  String
   following Follow[] @relation("follows")
   followers Follow[] @relation("followedBy")
+  shrine_books ShrineBook[]
+  diety_books DietyBook[]
 }
 
 model Follow {
