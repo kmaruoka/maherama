@@ -21,6 +21,6 @@
     "prisma": "^6.10.1"
   },
   "prisma": {
-    "seed": "node scripts/seedTestData.js"
+    "seed": "tsx scripts/seed.ts"
   }
 }

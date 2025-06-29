@@ -16,20 +16,19 @@
 # git clean -fdx
 # git pull
 
-# バックエンド（依存関係のインストールと起動）
+# バックエンド（依存関係のインストール・DB初期化・seed投入・起動）
 cd backend
 npm install
-npx prisma generate
 cp .env.example .env
-npx prisma migrate dev --name init
+npx prisma migrate reset --force
+npx prisma generate
 npx prisma db seed
 node index.js
 
 # （別ターミナルで）
-#  フロントエンドの依存関係のインストールと起動）
+# フロントエンドの依存関係のインストールと起動
 cd ../frontend
 npm install
-cd frontend
 npm run dev
 ```
 
