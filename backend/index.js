@@ -79,7 +79,7 @@ app.post('/shrines/:id/pray', async (req, res) => {
     const shrine = rows[0];
     const newCount = shrine.count + 1;
     await pool.query('UPDATE shrines SET count=$1 WHERE id=$2', [newCount, id]);
-    await addLog(`<shrine:${shrine.name}>を参拝しました`);
+    await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
     res.json({ success: true, count: newCount });
   } catch (err) {
     res.status(500).json({ error: 'DB error' });
@@ -108,7 +108,7 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
     lastRemotePray = now;
     const newCount = shrine.count + 1;
     await pool.query('UPDATE shrines SET count=$1 WHERE id=$2', [newCount, id]);
-    await addLog(`<shrine:${shrine.name}>を遥拝しました`);
+    await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
     res.json({ success: true, count: newCount });
   } catch (err) {
     res.status(500).json({ error: 'DB error' });

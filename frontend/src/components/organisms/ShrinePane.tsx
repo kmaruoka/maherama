@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CustomText from '../atoms/CustomText';
+import CustomLink from '../atoms/CustomLink';
 
 export interface Shrine {
   id: number;
@@ -40,7 +41,7 @@ export default function ShrinePane({ shrine, refetchLogs }: { shrine: Shrine; re
 
   return (
     <div className="space-y-2">
-      <CustomText>{shrine.name}</CustomText>
+      <CustomLink to={`/shrines/${shrine.id}`}>{shrine.name}</CustomLink>
       <CustomText>参拝数: {shrine.count}</CustomText>
       <button
         className="px-2 py-1 bg-blue-500 text-white rounded"
