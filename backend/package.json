@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db-init": "node scripts/initDb.js",
+    "db-seed": "node scripts/seedTestData.js",
+    "db-reset": "npm run db-init && npm run db-seed",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",

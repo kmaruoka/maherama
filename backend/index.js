@@ -14,32 +14,6 @@ app.use(express.json());
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
 
-async function initDb() {
-  await pool.query(`CREATE TABLE IF NOT EXISTS shrines (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    lat NUMERIC NOT NULL,
-    lng NUMERIC NOT NULL,
-    count INTEGER NOT NULL DEFAULT 0,
-    registered_at DATE NOT NULL DEFAULT CURRENT_DATE
-  )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS logs (
-    id SERIAL PRIMARY KEY,
-    message TEXT NOT NULL,
-    type TEXT NOT NULL,
-    time TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`);
-
-  const { rows } = await pool.query('SELECT COUNT(*)::int AS cnt FROM shrines');
-  if (rows[0].cnt === 0) {
-    await pool.query(
-      `INSERT INTO shrines (name, lat, lng, registered_at) VALUES
-        ('明治神宮', 35.6764, 139.6993, '2024-01-01'),
-        ('伏見稲荷大社', 34.9671, 135.7727, '2024-02-01')`
-    );
-  }
-}
-
 async function addLog(message, type = 'normal') {
   await pool.query('INSERT INTO logs(message, type) VALUES ($1, $2)', [message, type]);
 }
@@ -126,20 +100,14 @@ app.get('/logs', async (req, res) => {
   }
 });
 
-initDb()
-  .then(() => {
-    app.listen(port, () => {
-      addLog('システム: サーバーを起動しました', 'system');
-      console.log(`Server listening on port ${port}`);
-    });
-    const shutdown = async () => {
-      await pool.end();
-      process.exit(0);
-    };
-    process.on('SIGINT', shutdown);
-    process.on('SIGTERM', shutdown);
-  })
-  .catch((err) => {
-    console.error('DB initialization failed', err);
-    process.exit(1);
-  });
+app.listen(port, () => {
+  addLog('システム: サーバーを起動しました', 'system');
+  console.log(`Server listening on port ${port}`);
+});
+
+const shutdown = async () => {
+  await pool.end();
+  process.exit(0);
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
