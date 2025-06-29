@@ -2,12 +2,14 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import './setupLeaflet';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import ShrinePane, { type Shrine } from './components/organisms/ShrinePane';
+import ShrinePopupPane, { type Shrine } from './components/organisms/ShrinePopupPane';
 import LogPane from './components/organisms/LogPane';
 import type { LogItem } from './components/molecules/CustomLogLine';
 
+const API_PORT = import.meta.env.VITE_API_PORT || '3000';
+const API_BASE = `http://localhost:${API_PORT}`;
 
-export default function MapPage() {
+export default function MapPage({ onShowShrine }: { onShowShrine?: (id: number) => void } = {}) {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const { data: logs = [], refetch: refetchLogs, isLoading: logsLoading, error: logsError } = useQuery<LogItem[]>({
     queryKey: ['logs'],
@@ -36,7 +38,7 @@ export default function MapPage() {
   const { data: shrines = [] } = useQuery<Shrine[]>({
     queryKey: ['shrines'],
     queryFn: async () => {
-      const res = await fetch('http://localhost:3001/shrines');
+      const res = await fetch(`${API_BASE}/shrines`);
       return res.json();
     },
   });
@@ -59,7 +61,7 @@ export default function MapPage() {
       {shrines.map((s) => (
         <Marker key={s.id} position={[s.lat, s.lng]}>
           <Popup>
-            <ShrinePane shrine={s} refetchLogs={refetchLogs} />
+            <ShrinePopupPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} />
           </Popup>
         </Marker>
       ))}

@@ -56,6 +56,22 @@ async function main() {
   } else {
     console.log('登録対象なし');
   }
+
+  // テスト用ログデータを追加（<>リンク形式で神社・神・ユーザー名を含む）
+  await prisma.log.createMany({
+    data: [
+      { message: '<user:テスト太郎>が<shrine:天村雲神社>を参拝しました', type: 'normal' },
+      { message: '<user:テスト花子>が<shrine:八幡神社>を参拝しました', type: 'normal' },
+      { message: '<user:テスト太郎>が<shrine:八幡神社>を遥拝しました', type: 'normal' },
+      { message: '<user:テスト三郎>が<diety:天照大御神>を祀りました', type: 'normal' },
+      { message: '<user:テスト花子>が<diety:素戔嗚尊>を祀りました', type: 'normal' },
+      { message: '<user:テスト三郎>が<shrine:天村雲神社>を参拝しました', type: 'normal' },
+      { message: '<user:テスト太郎>が<diety:天照大御神>を祀りました', type: 'normal' },
+      { message: '<user:テスト花子>が<shrine:天村雲神社>を遥拝しました', type: 'normal' },
+      { message: '<user:テスト三郎>が<shrine:八幡神社>を参拝しました', type: 'normal' },
+      { message: 'システム: サーバーを起動しました', type: 'system' }
+    ]
+  });
 }
 
 main()

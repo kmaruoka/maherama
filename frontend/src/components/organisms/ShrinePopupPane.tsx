@@ -11,7 +11,7 @@ export interface Shrine {
   registeredAt: string;
 }
 
-export default function ShrinePane({ shrine, refetchLogs }: { shrine: Shrine; refetchLogs: () => void; }) {
+export default function ShrinePane({ shrine, refetchLogs, onShowDetail }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; }) {
   const queryClient = useQueryClient();
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -41,8 +41,21 @@ export default function ShrinePane({ shrine, refetchLogs }: { shrine: Shrine; re
 
   return (
     <div className="space-y-2">
-      <CustomLink to={`/shrines/${shrine.id}`}>{shrine.name}</CustomLink>
+      <img src="/vite.svg" alt="サムネイル" className="w-full h-24 object-contain mb-1" />
+      <div className="flex flex-col">
+        <CustomText>{shrine.kana}</CustomText>
+      </div>
+      <div className="flex flex-col">
+        <span
+          className="text-blue-600 underline cursor-pointer"
+          onClick={() => onShowDetail && onShowDetail(shrine.id)}
+        >
+          {shrine.name}
+        </span>
+      </div>
+      <div className="flex flex-col">
       <CustomText>参拝数: {shrine.count}</CustomText>
+      </div>
       <button
         className="px-2 py-1 bg-blue-500 text-white rounded"
         onClick={() => prayMutation.mutate(shrine.id)}

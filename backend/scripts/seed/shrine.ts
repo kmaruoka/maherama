@@ -24,7 +24,6 @@ export async function seedShrine(prisma: PrismaClient): Promise<Set<number>> {
   const rawData = [
     { id: 1, name: '天村雲神社(山川町村雲)', kana: 'あめのむらくもじんじゃ', location: '徳島県吉野川市山川町村雲１３３' },
     { id: 2, name: '蜂須神社(つるぎ町)', kana: 'はちすじんじゃ', location: '徳島県美馬郡つるぎ町貞光字宮平７' },
-    { id: 3, name: '葛木男神社', kana: 'かつらぎおじんじゃ', location: '高知県高知市布師田字西谷宮ノ辺１３５８' },
     { id: 1831, name: '八幡神社(南伊豆町子浦)', kana: 'はちまんじんじゃ', location: '静岡県賀茂郡南伊豆町子浦１０００' },
   ];
 
