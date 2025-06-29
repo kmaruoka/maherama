@@ -22,6 +22,7 @@ npm install
 cp .env.example .env
 npx prisma migrate reset --force
 npx prisma generate
+npx prisma db seed
 node index.js
 
 # （別ターミナルで）
