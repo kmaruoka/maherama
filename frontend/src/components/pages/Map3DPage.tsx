@@ -1,6 +1,31 @@
 import { useEffect, useState } from 'react';
 import Map, { Marker, Popup } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
+
+const osmStyle: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster' as const,
+      tiles: [
+        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      ],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [
+    {
+      id: 'osm',
+      type: 'raster' as const,
+      source: 'osm',
+      minzoom: 0,
+      maxzoom: 19,
+    },
+  ],
+};
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
@@ -44,7 +69,7 @@ export default function Map3DPage({ onShowShrine, onShowUser, onShowDiety }: { o
         mapLib={maplibregl}
         initialViewState={{ latitude: 35.68, longitude: 139.76, zoom: 5, pitch: 45 }}
         style={{ height: 'calc(100vh - 3rem)' }}
-        mapStyle="https://demotiles.maplibre.org/style.json"
+        mapStyle={osmStyle}
       >
         {position && (
           <Marker longitude={position[1]} latitude={position[0]} anchor="bottom">
