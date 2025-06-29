@@ -15,12 +15,12 @@
 
 ```bash
 # .envファイルに追加
-PORT=3001
+PORT=3000
 ```
 
 または、起動時に指定：
 ```bash
-PORT=3001 npm start
+PORT=3000 npm start
 ```
 
 ### フロントエンド
@@ -28,12 +28,12 @@ PORT=3001 npm start
 
 ```bash
 # .envファイルに追加
-VITE_API_PORT=3001
+VITE_API_PORT=3000
 ```
 
 または、起動時に指定：
 ```bash
-VITE_API_PORT=3001 npm run dev
+VITE_API_PORT=3000 npm run dev
 ```
 
 ## セットアップ手順
@@ -42,20 +42,17 @@ VITE_API_PORT=3001 npm run dev
 ```bash
 cd backend
 npm install
-# .env.example を .env にコピー（Windows: copy .env.example .env）
 cp .env.example .env
-# .envファイルにPORT=3001を追加
 npx prisma migrate reset --force
 npx prisma generate
-PORT=3001 npm start
+npm start
 ```
 
 ### フロントエンド
 ```bash
 cd frontend
 npm install
-# .envファイルを作成し、VITE_API_PORT=3001を追加
-VITE_API_PORT=3001 npm run dev
+npm run dev
 ```
 
 ## テスト実行
@@ -63,7 +60,7 @@ VITE_API_PORT=3001 npm run dev
 ### バックエンドAPIテスト
 ```bash
 cd backend
-PORT=3001 npm test
+npm test
 ```
 
 テスト内容：
