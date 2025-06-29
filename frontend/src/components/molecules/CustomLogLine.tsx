@@ -31,7 +31,11 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
           cls = 'log-user';
           const [id, name] = content.slice(5).split(':');
           return (
-            <CustomLink key={idx} onClick={onShowUser ? () => onShowUser(Number(id)) : undefined} className={cls}>
+            <CustomLink key={idx} onClick={onShowUser ? () => {
+              const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
+              if (btn) btn.click();
+              setTimeout(() => onShowUser(Number(id)), 0);
+            } : undefined} className={cls}>
               {'<'}{name || id}{'>'}
             </CustomLink>
           );
@@ -48,7 +52,11 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
           cls = 'log-shrine';
           const [id, name] = content.slice(7).split(':');
           return (
-            <CustomLink key={idx} onClick={onShowShrine ? () => onShowShrine(Number(id)) : undefined} className={cls}>
+            <CustomLink key={idx} onClick={onShowShrine ? () => {
+              const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
+              if (btn) btn.click();
+              setTimeout(() => onShowShrine(Number(id)), 0);
+            } : undefined} className={cls}>
               {'<'}{name || id}{'>'}
             </CustomLink>
           );
@@ -57,7 +65,11 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
           cls = 'log-shrine';
           const [id, name] = content.slice(6).split(':');
           return (
-            <CustomLink key={idx} onClick={onShowDiety ? () => onShowDiety(Number(id)) : undefined} className={cls}>
+            <CustomLink key={idx} onClick={onShowDiety ? () => {
+              const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
+              if (btn) btn.click();
+              setTimeout(() => onShowDiety(Number(id)), 0);
+            } : undefined} className={cls}>
               {'<'}{name || id}{'>'}
             </CustomLink>
           );

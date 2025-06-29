@@ -46,3 +46,8 @@
 .log-system {
   color: #fde047 !important; /* yellow-300 */
 }
+
+.shrine-marker-icon img {
+  border-radius: 50%;
+  object-fit: cover;
+}

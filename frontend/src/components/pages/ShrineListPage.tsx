@@ -1,5 +1,5 @@
-import CustomLink from './components/atoms/CustomLink';
-import CustomText from './components/atoms/CustomText';
+import CustomLink from '../atoms/CustomLink';
+import CustomText from '../atoms/CustomText';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 

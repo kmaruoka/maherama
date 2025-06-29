@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import CustomLink from './components/atoms/CustomLink';
-import CustomText from './components/atoms/CustomText';
+import CustomLink from '../atoms/CustomLink';
+import CustomText from '../atoms/CustomText';
 
 const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
 const API_BASE = `http://localhost:${API_PORT}`;
@@ -51,9 +51,9 @@ export default function CatalogPage({ onShowShrine, onShowDiety }: { onShowShrin
       <img src="/vite.svg" alt="thumb" className="w-full h-24 object-contain mb-1" />
       <CustomLink onClick={() => {
         if (tab === 'shrine' && onShowShrine) {
-          onShowShrine(item.id);
+          setTimeout(() => onShowShrine(item.id), 0);
         } else if (tab === 'diety' && onShowDiety) {
-          onShowDiety(item.id);
+          setTimeout(() => onShowDiety(item.id), 0);
         }
       }}>{item.name}</CustomLink>
       <div className="text-sm text-gray-600">参拝数: {item.count}</div>
@@ -108,9 +108,9 @@ export default function CatalogPage({ onShowShrine, onShowDiety }: { onShowShrin
             <div key={item.id} className="border-b pb-1">
               <CustomLink onClick={() => {
                 if (tab === 'shrine' && onShowShrine) {
-                  onShowShrine(item.id);
+                  setTimeout(() => onShowShrine(item.id), 0);
                 } else if (tab === 'diety' && onShowDiety) {
-                  onShowDiety(item.id);
+                  setTimeout(() => onShowDiety(item.id), 0);
                 }
               }}>{item.name}</CustomLink>
               <CustomText className="ml-2 text-sm">参拝数: {item.count}</CustomText>

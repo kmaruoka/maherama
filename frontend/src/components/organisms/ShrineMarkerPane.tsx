@@ -12,9 +12,10 @@ export interface Shrine {
   count: number;
   registeredAt: string;
   kana?: string;
+  thumbnailUrl?: string;
 }
 
-export default function ShrinePane({ shrine, refetchLogs, onShowDetail }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; }) {
+export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; }) {
   const queryClient = useQueryClient();
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -44,14 +45,24 @@ export default function ShrinePane({ shrine, refetchLogs, onShowDetail }: { shri
 
   return (
     <div className="space-y-2">
-      <img src="/vite.svg" alt="サムネイル" className="w-full h-24 object-contain mb-1" />
+      <img
+        src={shrine.thumbnailUrl || '/images/marker-icon.png'}
+        alt="サムネイル"
+        className="w-full h-24 object-contain mb-1 rounded-full object-cover"
+      />
       <div className="flex flex-col">
         <CustomText>{shrine.kana}</CustomText>
       </div>
       <div className="flex flex-col">
         <span
           className="text-blue-600 underline cursor-pointer"
-          onClick={() => onShowDetail && onShowDetail(shrine.id)}
+          onClick={() => {
+            const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
+            if (btn) btn.click();
+            setTimeout(() => {
+              onShowDetail && onShowDetail(shrine.id);
+            }, 0);
+          }}
         >
           {shrine.name}
         </span>
@@ -73,4 +84,4 @@ export default function ShrinePane({ shrine, refetchLogs, onShowDetail }: { shri
       </button>
     </div>
   );
-}
+} 

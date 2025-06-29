@@ -1,13 +1,23 @@
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
-import './setupLeaflet';
+import '../../setupLeaflet';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import ShrinePopupPane, { type Shrine } from './components/organisms/ShrinePopupPane';
-import LogPane from './components/organisms/LogPane';
-import type { LogItem } from './components/molecules/CustomLogLine';
+import ShrineMarkerPane, { type Shrine } from '../organisms/ShrineMarkerPane';
+import LogPane from '../organisms/LogPane';
+import type { LogItem } from '../molecules/CustomLogLine';
+import L from 'leaflet';
 
 const API_PORT = import.meta.env.VITE_API_PORT || '3000';
 const API_BASE = `http://localhost:${API_PORT}`;
+
+function createShrineIcon(thumbnailUrl?: string) {
+  return L.icon({
+    iconUrl: thumbnailUrl || '/images/marker-icon.png',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  });
+}
 
 export default function MapPage({ onShowShrine }: { onShowShrine: (id: number) => void }) {
   const [position, setPosition] = useState<[number, number] | null>(null);
@@ -59,9 +69,9 @@ export default function MapPage({ onShowShrine }: { onShowShrine: (id: number) =
         <Circle center={position} radius={100} pathOptions={{ color: 'blue' }} />
       )}
       {shrines.map((s) => (
-        <Marker key={s.id} position={[s.lat, s.lng]}>
+        <Marker key={s.id} position={[s.lat, s.lng]} icon={createShrineIcon(s.thumbnailUrl)}>
           <Popup>
-            <ShrinePopupPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} />
+            <ShrineMarkerPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} />
           </Popup>
         </Marker>
       ))}
