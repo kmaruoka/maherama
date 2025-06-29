@@ -156,6 +156,61 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
   }
 });
 
+app.get('/dieties', async (req, res) => {
+  try {
+    const dieties = await prisma.diety.findMany({
+      select: {
+        id: true,
+        name: true,
+        count: true,
+        registered_at: true
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
+
+    const formatted = dieties.map(d => ({
+      ...d,
+      registeredAt: d.registered_at
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching dieties:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/dieties/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const diety = await prisma.diety.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        count: true,
+        registered_at: true
+      }
+    });
+
+    if (!diety) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const formatted = {
+      ...diety,
+      registeredAt: diety.registered_at
+    };
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching diety:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 app.get('/logs', async (req, res) => {
   try {
     const logs = await prisma.log.findMany({
