@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CustomLink from '../atoms/CustomLink';
 import CustomText from '../atoms/CustomText';
+import CustomCatalogCard from '../molecules/CustomCatalogCard';
 import { API_BASE } from '../../config/api';
 
 interface Item {
@@ -45,9 +46,13 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   });
 
   const renderItem = (item: Item) => (
-    <div key={item.id} className="border p-2 rounded">
-      <img src="/vite.svg" alt="thumb" className="w-full h-24 object-contain mb-1" />
-      <CustomLink onClick={() => {
+    <CustomCatalogCard
+      key={item.id}
+      id={item.id}
+      name={item.name}
+      count={item.count}
+      registeredAt={item.registeredAt}
+      onClick={() => {
         if (tab === 'shrine' && onShowShrine) {
           setTimeout(() => onShowShrine(item.id), 0);
         } else if (tab === 'diety' && onShowDiety) {
@@ -55,9 +60,9 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         } else if (onShowUser) {
           setTimeout(() => onShowUser(item.id), 0);
         }
-      }}>{item.name}</CustomLink>
-      <div className="text-sm text-gray-600">参拝数: {item.count}</div>
-    </div>
+      }}
+      countLabel="参拝数"
+    />
   );
 
   return (
@@ -99,7 +104,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         </select>
       </div>
       {style === 'card' ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, 220px)' }}>
           {sorted.map(renderItem)}
         </div>
       ) : (
