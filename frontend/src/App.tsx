@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import MapPage from './MapPage';
 import CatalogPage from './CatalogPage';
 import ShrinePage from './ShrinePage';
@@ -8,42 +7,44 @@ import UserPage from './UserPage';
 import SettingsPage from './SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
 
-function AppRoutes() {
+type ModalType = { type: 'shrine' | 'diety', id: number } | null;
+
+function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
-  const [shrineId, setShrineId] = useState<number | null>(null);
-  const navigate = useNavigate();
+  const [modal, setModal] = useState<ModalType>(null);
+
+  // ページ切り替え用
+  const renderPage = () => {
+    switch (page) {
+      case 'map':
+        return <MapPage onShowShrine={id => setModal({ type: 'shrine', id })} />;
+      case 'catalog':
+        return <CatalogPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} />;
+      case 'user':
+        return <UserPage />;
+      case 'settings':
+        return <SettingsPage />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
       <MenuPane setPage={setPage} />
       <div className="pb-12">
-        <Routes>
-          <Route path="/" element={<MapPage onShowShrine={(id) => navigate(`/shrines/${id}`)} />} />
-          <Route path="/catalog" element={<CatalogPage onShowShrine={(id) => navigate(`/shrines/${id}`)} onShowDiety={(id) => navigate(`/dieties/${id}`)} />} />
-          <Route path="/shrines/:id" element={<ShrinePageWrapper />} />
-          <Route path="/dieties/:id" element={<DietyPageWrapper />} />
-          <Route path="/user" element={<UserPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
+        {renderPage()}
+        {modal && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setModal(null)}>
+            <div className="bg-white p-4 rounded shadow-lg min-w-[300px] max-w-lg" onClick={e => e.stopPropagation()}>
+              {modal.type === 'shrine' && <ShrinePage id={modal.id} />}
+              {modal.type === 'diety' && <DietyPage id={modal.id} />}
+              <button className="mt-4 px-2 py-1 bg-gray-400 text-white rounded" onClick={() => setModal(null)}>閉じる</button>
+            </div>
+          </div>
+        )}
       </div>
     </>
-  );
-}
-
-function ShrinePageWrapper() {
-  const { id } = useParams();
-  return <ShrinePage id={Number(id)} />;
-}
-function DietyPageWrapper() {
-  const { id } = useParams();
-  return <DietyPage id={Number(id)} />;
-}
-
-function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
   );
 }
 

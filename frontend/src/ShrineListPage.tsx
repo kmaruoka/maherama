@@ -47,7 +47,7 @@ export default function ShrineListPage() {
       </select>
       {sorted.map((s) => (
         <div key={s.id} className="border-b pb-2">
-          <CustomLink to={`/shrines/${s.id}`}>{s.name}</CustomLink>
+          <CustomLink onClick={() => {}}>{s.name}</CustomLink>
           <CustomText>参拝数: {s.count}</CustomText>
         </div>
       ))}

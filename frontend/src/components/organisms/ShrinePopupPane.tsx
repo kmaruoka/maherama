@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CustomText from '../atoms/CustomText';
-import CustomLink from '../atoms/CustomLink';
 
 const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
 const API_BASE = `http://localhost:${API_PORT}`;
