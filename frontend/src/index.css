@@ -7,12 +7,24 @@
   bottom: 3rem;
   left: 0;
   right: 0;
-  max-height: 10rem;
+  max-height: 12rem;
   overflow-y: auto;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.9);
   color: white;
   font-size: 0.875rem;
-  z-index: 1100;
+  z-index: 9999;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  transition: max-height 0.3s ease;
+}
+
+.log-pane-collapsed {
+  max-height: 3rem;
+  overflow: hidden;
+}
+
+.log-pane-expanded {
+  max-height: 15rem;
+  overflow-y: auto;
 }
 
 .log-shrine {

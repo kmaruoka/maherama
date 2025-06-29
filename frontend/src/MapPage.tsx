@@ -22,12 +22,23 @@ export default function MapPage() {
   const queryClient = useQueryClient();
 
   const [position, setPosition] = useState<[number, number] | null>(null);
-  const { data: logs = [], refetch: refetchLogs } = useQuery<LogItem[]>({
+  const [isLogExpanded, setIsLogExpanded] = useState(false);
+  const { data: logs = [], refetch: refetchLogs, isLoading: logsLoading, error: logsError } = useQuery<LogItem[]>({
     queryKey: ['logs'],
     queryFn: async () => {
-      const res = await fetch('http://localhost:3001/logs');
-      return res.json();
+      try {
+        const res = await fetch('http://localhost:3001/logs');
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      } catch (error) {
+        console.error('ログの取得に失敗しました:', error);
+        throw error;
+      }
     },
+    refetchInterval: 5000, // 5秒ごとに更新
+    retry: 3,
   });
 
   useEffect(() => {
@@ -154,15 +165,32 @@ export default function MapPage() {
         </Marker>
       ))}
       </MapContainer>
-      <div className="log-pane">
-        {logs.map((l, i) => (
+      <div 
+        className={`log-pane ${isLogExpanded ? 'log-pane-expanded' : 'log-pane-collapsed'}`}
+        onClick={() => setIsLogExpanded(!isLogExpanded)}
+        style={{ cursor: 'pointer' }}
+      >
+        {logsLoading && <div className="px-2 py-1 text-gray-300">ログを読み込み中...</div>}
+        {logsError && <div className="px-2 py-1 text-red-400">ログの読み込みに失敗しました</div>}
+        {logs.length === 0 && !logsLoading && !logsError && (
+          <div className="px-2 py-1 text-gray-300">ログがありません</div>
+        )}
+        {(isLogExpanded ? logs : logs.slice(0, 1)).map((l, i) => (
           <div
             key={i}
-            className={`px-2 py-1 border-b ${l.type === 'system' ? 'log-system' : ''}`}
+            className={`px-2 py-1 border-b border-gray-600 ${l.type === 'system' ? 'log-system' : ''}`}
           >
             {formatTime(l.time)} {renderMessage(l.message)}
           </div>
         ))}
+        {!isLogExpanded && logs.length > 1 && (
+          <div className="px-2 py-1 text-center text-gray-400 text-xs">
+            他 {logs.length - 1} 件のログがあります
+          </div>
+        )}
+        <div className="px-2 py-1 text-center text-gray-400 text-xs">
+          {isLogExpanded ? 'タップで縮小' : 'タップで拡大'}
+        </div>
       </div>
     </>
   );
