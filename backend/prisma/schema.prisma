@@ -192,3 +192,12 @@ model DietyBook {
 
   @@id([user_id, diety_id])
 }
+
+model RemotePray {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  shrine_id Int
+  prayed_at DateTime @default(now())
+  
+  @@unique([user_id, shrine_id])
+}

@@ -169,41 +169,31 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
       where: { id },
       select: { name: true }
     });
-    
     if (!shrine) {
       return res.status(404).json({ error: 'Not found' });
     }
-    
+    // 仮のユーザーID（本来は認証から取得）
+    const userId = 1;
     const now = new Date();
-    if (!lastRemotePray) {
-      const lastLog = await prisma.log.findFirst({
-        where: {
-          message: {
-            contains: 'を遥拝しました'
-          }
-        },
-        orderBy: {
-          time: 'desc'
-        }
-      });
-      if (lastLog) lastRemotePray = lastLog.time;
-    }
-    
-    if (lastRemotePray) {
-      const diff = now - lastRemotePray;
-      if (diff < REMOTE_INTERVAL_DAYS * 24 * 60 * 60 * 1000) {
+    // RemotePrayテーブルから最新の遥拝日時を取得
+    const lastRemote = await prisma.remotePray.findFirst({
+      where: { shrine_id: id, user_id: userId },
+      orderBy: { prayed_at: 'desc' }
+    });
+    if (lastRemote) {
+      const diff = now - lastRemote.prayed_at;
+      if (diff < 7 * 24 * 60 * 60 * 1000) {
         return res.status(400).json({ error: '遥拝は一週間に1回のみ可能です' });
       }
     }
-    
-    lastRemotePray = now;
-    
-    // ShrinePrayStatsテーブルに遥拝記録を追加（仮のユーザーID: 1）
-    const userId = 1; // 仮のユーザーID
+    // 遥拝記録を追加
+    await prisma.remotePray.create({
+      data: { shrine_id: id, user_id: userId, prayed_at: now }
+    });
+    // ShrinePrayStatsテーブルも更新
     const existingStats = await prisma.shrinePrayStats.findFirst({
       where: { shrine_id: id, user_id: userId }
     });
-    
     if (existingStats) {
       await prisma.shrinePrayStats.update({
         where: { id: existingStats.id },
@@ -219,13 +209,11 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
         }
       });
     }
-    
-    // 更新後の総参拝数を取得
+    // 総参拝数
     const totalCount = await prisma.shrinePrayStats.aggregate({
       where: { shrine_id: id },
       _sum: { count: true }
     });
-    
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
     res.json({ success: true, count: totalCount._sum.count || 0 });
   } catch (err) {
