@@ -21,9 +21,7 @@ cd backend
 npm install
 cp .env.example .env
 npx prisma migrate reset --force
-# この時点でデータベースは初期化され、seed が自動実行されます
 npx prisma generate
-npx prisma db seed
 node index.js
 
 # （別ターミナルで）
