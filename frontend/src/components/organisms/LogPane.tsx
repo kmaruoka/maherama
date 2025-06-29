@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import CustomLogLine, { type LogItem } from '../molecules/CustomLogLine';
 
-export default function LogPane({ logs, loading, error }: { logs: LogItem[]; loading: boolean; error: boolean; }) {
+interface LogPaneProps {
+  logs: LogItem[];
+  loading: boolean;
+  error: boolean;
+  onShowShrine?: (id: number) => void;
+  onShowDiety?: (id: number) => void;
+  onShowUser?: (id: number) => void;
+}
+
+export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser }: LogPaneProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -16,7 +25,7 @@ export default function LogPane({ logs, loading, error }: { logs: LogItem[]; loa
         <div className="px-2 py-1 text-gray-300">ログがありません</div>
       )}
       {(isExpanded ? logs : logs.slice(0, 1)).map((l, i) => (
-        <CustomLogLine key={i} log={l} />
+        <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
       ))}
       {!isExpanded && logs.length > 1 && (
         <div className="px-2 py-1 text-center text-gray-400 text-xs">

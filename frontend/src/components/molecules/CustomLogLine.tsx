@@ -7,13 +7,18 @@ export interface LogItem {
   type?: string;
 }
 
-export default function CustomLogLine({ log }: { log: LogItem }) {
+interface CustomLogLineProps {
+  log: LogItem;
+  onShowShrine?: (id: number) => void;
+  onShowDiety?: (id: number) => void;
+  onShowUser?: (id: number) => void;
+}
+
+export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUser }: CustomLogLineProps) {
   function formatTime(t: string) {
     const d = new Date(t);
     const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(
-      d.getMinutes(),
-    )}${pad(d.getSeconds())}`;
+    return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   function renderMessage(msg: string) {
@@ -24,10 +29,11 @@ export default function CustomLogLine({ log }: { log: LogItem }) {
         let cls = 'log-shrine';
         if (content.startsWith('user:')) {
           cls = 'log-user';
+          const [id, name] = content.slice(5).split(':');
           return (
-            <CustomText key={idx} className={cls}>
-              {'<'}{content.slice(5)}{'>'}
-            </CustomText>
+            <CustomLink key={idx} onClick={onShowUser ? () => onShowUser(Number(id)) : undefined} className={cls}>
+              {'<'}{name || id}{'>'}
+            </CustomLink>
           );
         }
         if (content.startsWith('region:')) {
@@ -39,35 +45,21 @@ export default function CustomLogLine({ log }: { log: LogItem }) {
           );
         }
         if (content.startsWith('shrine:')) {
-          const inner = content.slice(7);
-          const [id, name] = inner.split(':');
-          if (id && name) {
-            return (
-              <CustomLink key={idx} to={`/shrines/${id}`} className={cls}>
-                {'<'}{name}{'>'}
-              </CustomLink>
-            );
-          }
+          cls = 'log-shrine';
+          const [id, name] = content.slice(7).split(':');
           return (
-            <CustomText key={idx} className={cls}>
-              {'<'}{inner}{'>'}
-            </CustomText>
+            <CustomLink key={idx} onClick={onShowShrine ? () => onShowShrine(Number(id)) : undefined} className={cls}>
+              {'<'}{name || id}{'>'}
+            </CustomLink>
           );
         }
         if (content.startsWith('diety:')) {
-          const inner = content.slice(6);
-          const [id, name] = inner.split(':');
-          if (id && name) {
-            return (
-              <CustomLink key={idx} to={`/dieties/${id}`} className={cls}>
-                {'<'}{name}{'>'}
-              </CustomLink>
-            );
-          }
+          cls = 'log-shrine';
+          const [id, name] = content.slice(6).split(':');
           return (
-            <CustomText key={idx} className={cls}>
-              {'<'}{inner}{'>'}
-            </CustomText>
+            <CustomLink key={idx} onClick={onShowDiety ? () => onShowDiety(Number(id)) : undefined} className={cls}>
+              {'<'}{name || id}{'>'}
+            </CustomLink>
           );
         }
         return (

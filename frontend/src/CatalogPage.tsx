@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import CustomLink from './components/atoms/CustomLink';
 import CustomText from './components/atoms/CustomText';
 
+const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
+const API_BASE = `http://localhost:${API_PORT}`;
+
 interface Item {
   id: number;
   name: string;
@@ -10,7 +13,7 @@ interface Item {
   registeredAt: string;
 }
 
-export default function CatalogPage() {
+export default function CatalogPage({ onShowShrine, onShowDiety }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const [tab, setTab] = useState<'shrine' | 'diety'>('shrine');
   const [sort, setSort] = useState('registeredAt-desc');
   const [style, setStyle] = useState<'card' | 'list'>('card');
@@ -18,7 +21,7 @@ export default function CatalogPage() {
   const { data: shrines = [] } = useQuery<Item[]>({
     queryKey: ['shrines'],
     queryFn: async () => {
-      const res = await fetch('http://localhost:3001/shrines');
+      const res = await fetch(`${API_BASE}/shrines`);
       return res.json();
     },
   });
@@ -26,7 +29,7 @@ export default function CatalogPage() {
   const { data: dieties = [] } = useQuery<Item[]>({
     queryKey: ['dieties'],
     queryFn: async () => {
-      const res = await fetch('http://localhost:3001/dieties');
+      const res = await fetch(`${API_BASE}/dieties`);
       return res.json();
     },
   });
@@ -46,7 +49,13 @@ export default function CatalogPage() {
   const renderItem = (item: Item) => (
     <div key={item.id} className="border p-2 rounded">
       <img src="/vite.svg" alt="thumb" className="w-full h-24 object-contain mb-1" />
-      <CustomLink to={`/${tab === 'shrine' ? 'shrines' : 'dieties'}/${item.id}`}>{item.name}</CustomLink>
+      <CustomLink onClick={() => {
+        if (tab === 'shrine' && onShowShrine) {
+          onShowShrine(item.id);
+        } else if (tab === 'diety' && onShowDiety) {
+          onShowDiety(item.id);
+        }
+      }}>{item.name}</CustomLink>
       <div className="text-sm text-gray-600">参拝数: {item.count}</div>
     </div>
   );
@@ -97,7 +106,13 @@ export default function CatalogPage() {
         <div className="space-y-1">
           {sorted.map((item) => (
             <div key={item.id} className="border-b pb-1">
-              <CustomLink to={`/${tab === 'shrine' ? 'shrines' : 'dieties'}/${item.id}`}>{item.name}</CustomLink>
+              <CustomLink onClick={() => {
+                if (tab === 'shrine' && onShowShrine) {
+                  onShowShrine(item.id);
+                } else if (tab === 'diety' && onShowDiety) {
+                  onShowDiety(item.id);
+                }
+              }}>{item.name}</CustomLink>
               <CustomText className="ml-2 text-sm">参拝数: {item.count}</CustomText>
             </div>
           ))}

@@ -2,6 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CustomText from '../atoms/CustomText';
 import CustomLink from '../atoms/CustomLink';
 
+const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
+const API_BASE = `http://localhost:${API_PORT}`;
+
 export interface Shrine {
   id: number;
   name: string;
@@ -9,13 +12,14 @@ export interface Shrine {
   lng: number;
   count: number;
   registeredAt: string;
+  kana?: string;
 }
 
 export default function ShrinePane({ shrine, refetchLogs, onShowDetail }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; }) {
   const queryClient = useQueryClient();
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`http://localhost:3001/shrines/${id}/pray`, {
+      const res = await fetch(`${API_BASE}/shrines/${id}/pray`, {
         method: 'POST',
       });
       return res.json();
@@ -28,7 +32,7 @@ export default function ShrinePane({ shrine, refetchLogs, onShowDetail }: { shri
 
   const remoteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`http://localhost:3001/shrines/${id}/remote-pray`, {
+      const res = await fetch(`${API_BASE}/shrines/${id}/remote-pray`, {
         method: 'POST',
       });
       return res.json();

@@ -3,6 +3,9 @@ import CustomText from './components/atoms/CustomText';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
+const API_BASE = `http://localhost:${API_PORT}`;
+
 interface Shrine {
   id: number;
   name: string;
@@ -15,7 +18,7 @@ export default function ShrineListPage() {
   const { data: shrines = [] } = useQuery<Shrine[]>({
     queryKey: ['shrines'],
     queryFn: async () => {
-      const res = await fetch('http://localhost:3001/shrines');
+      const res = await fetch(`${API_BASE}/shrines`);
       return res.json();
     },
   });

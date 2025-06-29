@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 
+const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
+const API_BASE = `http://localhost:${API_PORT}`;
+
 interface RankingItem {
   rank: number;
   userId: number;
@@ -45,7 +48,7 @@ export default function UserPage() {
   const fetchRankings = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/user-rankings');
+      const response = await fetch(`${API_BASE}/user-rankings`);
       if (response.ok) {
         const data = await response.json();
         setRankings(data);
@@ -59,7 +62,7 @@ export default function UserPage() {
 
   const fetchInfo = async (uid: number) => {
     try {
-      const res = await fetch(`http://localhost:3001/users/${uid}?viewerId=${uid}`);
+      const res = await fetch(`${API_BASE}/users/${uid}?viewerId=${uid}`);
       if (res.ok) {
         setInfo(await res.json());
       }
@@ -142,7 +145,7 @@ export default function UserPage() {
               className="px-2 py-1 bg-green-500 text-white rounded"
               onClick={async () => {
                 if (!userId || !targetId) return;
-                await fetch('http://localhost:3001/follows', {
+                await fetch(`${API_BASE}/follows`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ followerId: userId, followingId: Number(targetId) }),
@@ -156,7 +159,7 @@ export default function UserPage() {
               className="px-2 py-1 bg-red-500 text-white rounded"
               onClick={async () => {
                 if (!userId || !targetId) return;
-                await fetch('http://localhost:3001/follows', {
+                await fetch(`${API_BASE}/follows`, {
                   method: 'DELETE',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ followerId: userId, followingId: Number(targetId) }),

@@ -9,13 +9,13 @@ import type { LogItem } from './components/molecules/CustomLogLine';
 const API_PORT = import.meta.env.VITE_API_PORT || '3000';
 const API_BASE = `http://localhost:${API_PORT}`;
 
-export default function MapPage({ onShowShrine }: { onShowShrine?: (id: number) => void } = {}) {
+export default function MapPage({ onShowShrine }: { onShowShrine: (id: number) => void }) {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const { data: logs = [], refetch: refetchLogs, isLoading: logsLoading, error: logsError } = useQuery<LogItem[]>({
     queryKey: ['logs'],
     queryFn: async () => {
       try {
-        const res = await fetch('http://localhost:3001/logs');
+        const res = await fetch(`${API_BASE}/logs`);
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -66,7 +66,7 @@ export default function MapPage({ onShowShrine }: { onShowShrine?: (id: number) 
         </Marker>
       ))}
       </MapContainer>
-      <LogPane logs={logs} loading={logsLoading} error={!!logsError} />
+      <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} />
     </>
   );
 }

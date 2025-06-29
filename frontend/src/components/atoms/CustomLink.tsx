@@ -1,14 +1,9 @@
-import { Link, type LinkProps } from 'react-router-dom';
+import React from 'react';
 
-export default function CustomLink(
-  props: LinkProps & { children?: React.ReactNode },
-) {
-  const { className = '', children, ...rest } = props;
+export default function CustomLink({ onClick, children, className }: { onClick?: () => void; children: React.ReactNode; className?: string }) {
   return (
-    <Link {...rest} className={`text-blue-600 hover:underline ${className}`.trim()}>
-      {'<'}
+    <span className={`underline cursor-pointer ${className || ''}`.trim()} onClick={onClick}>
       {children}
-      {'>'}
-    </Link>
+    </span>
   );
 }

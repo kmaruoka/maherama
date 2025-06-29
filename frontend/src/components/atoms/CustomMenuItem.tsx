@@ -1,12 +1,9 @@
-import { Link, type LinkProps } from 'react-router-dom';
+import React from 'react';
 
-export default function CustomMenuItem(
-  props: LinkProps & { children?: React.ReactNode },
-) {
-  const { className = '', children, ...rest } = props;
+export default function CustomMenuItem({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <Link {...rest} className={`flex-1 py-2 text-center block ${className}`.trim()}>
+    <button className="flex-1 py-2 text-center" onClick={onClick}>
       {children}
-    </Link>
+    </button>
   );
 }

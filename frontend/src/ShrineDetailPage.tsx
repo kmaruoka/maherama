@@ -1,6 +1,9 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
+const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
+const API_BASE = `http://localhost:${API_PORT}`;
+
 interface Shrine {
   id: number;
   name: string;
@@ -16,7 +19,7 @@ export default function ShrineDetailPage() {
     queryKey: ['shrine', id],
     enabled: !!id,
     queryFn: async () => {
-      const res = await fetch(`http://localhost:3001/shrines/${id}`);
+      const res = await fetch(`${API_BASE}/shrines/${id}`);
       if (!res.ok) return null;
       return res.json();
     },

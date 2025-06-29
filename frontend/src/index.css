@@ -17,6 +17,10 @@
   transition: max-height 0.3s ease;
 }
 
+.log-pane * {
+  color: white;
+}
+
 .log-pane-collapsed {
   max-height: 3rem;
   overflow: hidden;
@@ -28,17 +32,17 @@
 }
 
 .log-shrine {
-  color: #f97316; /* orange-400 */
+  color: #f97316 !important; /* orange-400 */
 }
 
 .log-user {
-  color: #0ea5e9; /* sky-400 */
+  color: #0ea5e9 !important; /* sky-400 */
 }
 
 .log-region {
-  color: #84cc16; /* lime-500 */
+  color: #84cc16 !important; /* lime-500 */
 }
 
 .log-system {
-  color: #fde047; /* yellow-300 */
+  color: #fde047 !important; /* yellow-300 */
 }

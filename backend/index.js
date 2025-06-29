@@ -69,9 +69,18 @@ app.get('/shrines/:id', async (req, res) => {
       select: {
         id: true,
         name: true,
+        kana: true,
+        location: true,
+        address: true,
         lat: true,
         lng: true,
-        registered_at: true
+        registered_at: true,
+        thumbnailUrl: true,
+        thumbnailBy: true,
+        founded: true,
+        history: true,
+        festivals: true,
+        description: true
       }
     });
 

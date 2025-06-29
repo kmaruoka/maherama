@@ -29,6 +29,12 @@ model Shrine {
   shrine_pray_stats_weekly ShrinePrayStatsWeekly[]
   shrine_pray_stats_daily ShrinePrayStatsDaily[]
   shrine_books ShrineBook[]
+  thumbnailUrl  String?       // サムネイル画像URL
+  thumbnailBy   String?       // サムネイル投稿ユーザー名
+  founded       String?       // 創建
+  history       String?       // 歴史・伝承
+  festivals     String?       // 祭礼
+  description   String?       // 説明文
 }
 
 model Diety {

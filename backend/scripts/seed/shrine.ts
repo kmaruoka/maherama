@@ -22,9 +22,42 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function seedShrine(prisma: PrismaClient): Promise<Set<number>> {
   const rawData = [
-    { id: 1, name: '天村雲神社(山川町村雲)', kana: 'あめのむらくもじんじゃ', location: '徳島県吉野川市山川町村雲１３３' },
-    { id: 2, name: '蜂須神社(つるぎ町)', kana: 'はちすじんじゃ', location: '徳島県美馬郡つるぎ町貞光字宮平７' },
-    { id: 1831, name: '八幡神社(南伊豆町子浦)', kana: 'はちまんじんじゃ', location: '静岡県賀茂郡南伊豆町子浦１０００' },
+    {
+      id: 1,
+      name: '天村雲神社(山川町村雲)',
+      kana: 'あめのむらくもじんじゃ',
+      location: '徳島県吉野川市山川町村雲１３３',
+      thumbnailUrl: '/vite.svg',
+      thumbnailBy: 'テストユーザー1',
+      founded: '平安時代',
+      history: '古くから地域の信仰を集める神社。',
+      festivals: '例祭：10月10日',
+      description: '山川町村雲に鎮座する由緒ある神社。',
+    },
+    {
+      id: 2,
+      name: '蜂須神社(つるぎ町)',
+      kana: 'はちすじんじゃ',
+      location: '徳島県美馬郡つるぎ町貞光字宮平７',
+      thumbnailUrl: '/vite.svg',
+      thumbnailBy: 'テストユーザー2',
+      founded: '江戸時代',
+      history: '蜂須の地に創建されたと伝わる。',
+      festivals: '春祭り：4月3日',
+      description: 'つるぎ町の中心に位置する神社。',
+    },
+    {
+      id: 1831,
+      name: '八幡神社(南伊豆町子浦)',
+      kana: 'はちまんじんじゃ',
+      location: '静岡県賀茂郡南伊豆町子浦１０００',
+      thumbnailUrl: '/vite.svg',
+      thumbnailBy: 'テストユーザー3',
+      founded: '鎌倉時代',
+      history: '海の守り神として信仰される。',
+      festivals: '夏祭り：7月20日',
+      description: '南伊豆町子浦の八幡神社。',
+    },
   ];
 
   const enrichedData: any[] = [];
