@@ -4,15 +4,9 @@ const { Pool } = require('pg');
 const app = express();
 const port = process.env.PORT || 3001;
 
-const pool = process.env.DATABASE_URL
-  ? new Pool({ connectionString: process.env.DATABASE_URL })
-  : new Pool({
-      host: process.env.DB_HOST || '127.0.0.1',
-      port: process.env.DB_PORT || 15432,
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'postgres',
-    });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://amana_user:amana_pass@127.0.0.1:15432/amana',
+});
 
 app.use(cors());
 app.use(express.json());
