@@ -1,12 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
+const { PrismaClient } = require('@prisma/client');
 const app = express();
 const port = process.env.PORT || 3001;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://amana_user:amana_pass@127.0.0.1:15432/amana',
-});
+const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
@@ -15,16 +14,38 @@ let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
 
 async function addLog(message, type = 'normal') {
-  await pool.query('INSERT INTO logs(message, type) VALUES ($1, $2)', [message, type]);
+  await prisma.log.create({
+    data: {
+      message,
+      type
+    }
+  });
 }
 
 app.get('/shrines', async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT id, name, lat, lng, count, registered_at AS "registeredAt" FROM shrines ORDER BY id'
-    );
-    res.json(rows);
+    const shrines = await prisma.shrine.findMany({
+      select: {
+        id: true,
+        name: true,
+        lat: true,
+        lng: true,
+        count: true,
+        registered_at: true
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
+    
+    const formattedShrines = shrines.map(shrine => ({
+      ...shrine,
+      registeredAt: shrine.registered_at
+    }));
+    
+    res.json(formattedShrines);
   } catch (err) {
+    console.error('Error fetching shrines:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
@@ -32,15 +53,30 @@ app.get('/shrines', async (req, res) => {
 app.get('/shrines/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
-    const { rows } = await pool.query(
-      'SELECT id, name, lat, lng, count, registered_at AS "registeredAt" FROM shrines WHERE id=$1',
-      [id]
-    );
-    if (rows.length === 0) {
+    const shrine = await prisma.shrine.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        lat: true,
+        lng: true,
+        count: true,
+        registered_at: true
+      }
+    });
+    
+    if (!shrine) {
       return res.status(404).json({ error: 'Not found' });
     }
-    res.json(rows[0]);
+    
+    const formattedShrine = {
+      ...shrine,
+      registeredAt: shrine.registered_at
+    };
+    
+    res.json(formattedShrine);
   } catch (err) {
+    console.error('Error fetching shrine:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
@@ -48,14 +84,25 @@ app.get('/shrines/:id', async (req, res) => {
 app.post('/shrines/:id/pray', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
-    const { rows } = await pool.query('SELECT name, count FROM shrines WHERE id=$1', [id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
-    const shrine = rows[0];
-    const newCount = shrine.count + 1;
-    await pool.query('UPDATE shrines SET count=$1 WHERE id=$2', [newCount, id]);
+    const shrine = await prisma.shrine.findUnique({
+      where: { id },
+      select: { name: true, count: true }
+    });
+    
+    if (!shrine) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    
+    const updatedShrine = await prisma.shrine.update({
+      where: { id },
+      data: { count: shrine.count + 1 },
+      select: { count: true }
+    });
+    
     await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
-    res.json({ success: true, count: newCount });
+    res.json({ success: true, count: updatedShrine.count });
   } catch (err) {
+    console.error('Error praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
@@ -63,39 +110,69 @@ app.post('/shrines/:id/pray', async (req, res) => {
 app.post('/shrines/:id/remote-pray', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
-    const { rows } = await pool.query('SELECT name, count FROM shrines WHERE id=$1', [id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
-    const shrine = rows[0];
+    const shrine = await prisma.shrine.findUnique({
+      where: { id },
+      select: { name: true, count: true }
+    });
+    
+    if (!shrine) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    
     const now = new Date();
     if (!lastRemotePray) {
-      const lr = await pool.query(
-        "SELECT time FROM logs WHERE message LIKE '%を遥拝しました' ORDER BY time DESC LIMIT 1"
-      );
-      if (lr.rows.length) lastRemotePray = new Date(lr.rows[0].time);
+      const lastLog = await prisma.log.findFirst({
+        where: {
+          message: {
+            contains: 'を遥拝しました'
+          }
+        },
+        orderBy: {
+          time: 'desc'
+        }
+      });
+      if (lastLog) lastRemotePray = lastLog.time;
     }
+    
     if (lastRemotePray) {
       const diff = now - lastRemotePray;
       if (diff < REMOTE_INTERVAL_DAYS * 24 * 60 * 60 * 1000) {
         return res.status(400).json({ error: '遥拝は一週間に1回のみ可能です' });
       }
     }
+    
     lastRemotePray = now;
-    const newCount = shrine.count + 1;
-    await pool.query('UPDATE shrines SET count=$1 WHERE id=$2', [newCount, id]);
+    const updatedShrine = await prisma.shrine.update({
+      where: { id },
+      data: { count: shrine.count + 1 },
+      select: { count: true }
+    });
+    
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
-    res.json({ success: true, count: newCount });
+    res.json({ success: true, count: updatedShrine.count });
   } catch (err) {
+    console.error('Error remote praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
 
 app.get('/logs', async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT message, type, time FROM logs ORDER BY time DESC LIMIT 50'
-    );
-    res.json(rows);
+    const logs = await prisma.log.findMany({
+      select: {
+        message: true,
+        type: true,
+        time: true
+      },
+      orderBy: {
+        time: 'desc'
+      },
+      take: 50
+    });
+    
+    res.json(logs);
   } catch (err) {
+    console.error('Error fetching logs:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
@@ -106,7 +183,7 @@ app.listen(port, () => {
 });
 
 const shutdown = async () => {
-  await pool.end();
+  await prisma.$disconnect();
   process.exit(0);
 };
 process.on('SIGINT', shutdown);

@@ -41,3 +41,10 @@ model ShrineDiety {
 
   @@id([shrine_id, diety_id])
 }
+
+model Log {
+  id      Int      @id @default(autoincrement())
+  message String
+  type    String   @default("normal")
+  time    DateTime @default(now())
+}
