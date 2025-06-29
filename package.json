@@ -1,5 +1,7 @@
 {
   "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
     "jest": "^30.0.3",
     "supertest": "^7.1.1",
     "tsx": "^4.20.3"

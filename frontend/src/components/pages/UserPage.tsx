@@ -91,99 +91,100 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="modal-title text-2xl mb-4">
-          {userInfo.name}
-        </h1>
+    <div className="modal-content">
+      <h1 className="modal-title text-2xl mb-4">
+        {userInfo.name}
+      </h1>
 
-        <div className="space-y-4">
-          <div className="flex space-x-4 text-sm">
-            <div>フォロー: {userInfo.followingCount}</div>
-            <div>フォロワー: {userInfo.followerCount}</div>
-          </div>
-
-          {currentUserId && currentUserId !== id && (
-            <div className="flex space-x-2 items-center">
-              <input
-                type="number"
-                className="border p-1 text-sm"
-                placeholder="ユーザーID"
-                value={targetId}
-                onChange={(e) => setTargetId(e.target.value)}
-              />
-              <button
-                className="px-2 py-1 bg-green-500 text-white rounded text-sm"
-                onClick={handleFollow}
-              >
-                フォロー
-              </button>
-              <button
-                className="px-2 py-1 bg-red-500 text-white rounded text-sm"
-                onClick={handleUnfollow}
-              >
-                アンフォロー
-              </button>
-            </div>
-          )}
-
-          {userInfo.topShrines.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">よく参拝する神社</h3>
-              <div className="space-y-2">
-                {userInfo.topShrines.map((shrine) => (
-                  <div key={shrine.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <CustomLink type="shrine" onClick={() => onShowShrine && onShowShrine(shrine.id)}>
-                      {shrine.name}
-                    </CustomLink>
-                    <span className="text-gray-600 text-sm">{shrine.count}回</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {userInfo.topDieties.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">よく参拝する神</h3>
-              <div className="space-y-2">
-                {userInfo.topDieties.map((diety) => (
-                  <div key={diety.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <CustomLink type="diety" onClick={() => onShowDiety && onShowDiety(diety.id)}>
-                      {diety.name}
-                    </CustomLink>
-                    <span className="text-gray-600 text-sm">{diety.count}回</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {rankings && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">参拝数ランキング</h3>
-              <div className="space-y-2">
-                {rankings.slice(0, 5).map((item) => (
-                  <div key={item.userId} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
-                        item.rank === 2 ? 'bg-gray-300 text-gray-700' :
-                        item.rank === 3 ? 'bg-orange-400 text-orange-900' :
-                        'bg-gray-200 text-gray-600'
-                      }`}>
-                        {item.rank}
-                      </span>
-                      <CustomLink type="user">{item.userName}</CustomLink>
-                    </div>
-                    <span className="text-gray-600 font-semibold">{item.count}回</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="modal-info">
+        <div>フォロー: {userInfo.followingCount}</div>
+        <div>フォロワー: {userInfo.followerCount}</div>
       </div>
+
+      {currentUserId && currentUserId !== id && (
+        <div className="modal-section">
+          <div className="modal-subtitle">フォロー操作</div>
+          <div className="flex space-x-2 items-center">
+            <input
+              type="number"
+              className="border p-1 text-sm"
+              placeholder="ユーザーID"
+              value={targetId}
+              onChange={(e) => setTargetId(e.target.value)}
+            />
+            <button
+              className="px-2 py-1 bg-green-500 text-white rounded text-sm"
+              onClick={handleFollow}
+            >
+              フォロー
+            </button>
+            <button
+              className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+              onClick={handleUnfollow}
+            >
+              アンフォロー
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userInfo.topShrines.length > 0 && (
+        <div className="modal-section">
+          <div className="modal-subtitle">よく参拝する神社</div>
+          <div className="flex flex-wrap gap-2">
+            {userInfo.topShrines.map((shrine) => (
+              <CustomLink
+                key={shrine.id}
+                onClick={() => onShowShrine && onShowShrine(shrine.id)}
+                className="tag-link tag-shrine"
+              >
+                {shrine.name}
+              </CustomLink>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {userInfo.topDieties.length > 0 && (
+        <div className="modal-section">
+          <div className="modal-subtitle">よく参拝する神</div>
+          <div className="flex flex-wrap gap-2">
+            {userInfo.topDieties.map((diety) => (
+              <CustomLink
+                key={diety.id}
+                onClick={() => onShowDiety && onShowDiety(diety.id)}
+                className="tag-link tag-diety"
+              >
+                {diety.name}
+              </CustomLink>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {rankings && (
+        <div className="modal-section">
+          <div className="modal-subtitle">参拝数ランキング</div>
+          <div className="space-y-2">
+            {rankings.slice(0, 5).map((item) => (
+              <div key={item.userId} className="modal-item">
+                <div className="flex items-center gap-2">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
+                    item.rank === 2 ? 'bg-gray-300 text-gray-700' :
+                    item.rank === 3 ? 'bg-orange-400 text-orange-900' :
+                    'bg-gray-200 text-gray-600'
+                  }`}>
+                    {item.rank}
+                  </span>
+                  <CustomLink className="tag-link tag-user">{item.userName}</CustomLink>
+                </div>
+                <span className="modal-item-text">{item.count}回</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

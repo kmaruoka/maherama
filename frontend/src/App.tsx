@@ -36,7 +36,7 @@ function App() {
         {renderPage()}
         {modal && (
           <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999]" style={{ zIndex: 9999 }} onClick={() => setModal(null)}>
-            <div className="bg-white p-4 rounded shadow-lg min-w-[300px] max-w-lg relative" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] relative" onClick={e => e.stopPropagation()}>
               {modal.type === 'shrine' && <ShrinePage id={modal.id} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />}
               {modal.type === 'diety' && <DietyPage id={modal.id} onShowShrine={id => setModal({ type: 'shrine', id })} onShowUser={id => setModal({ type: 'user', id })} />}
               {modal.type === 'user' && <UserPage id={modal.id} onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} />}

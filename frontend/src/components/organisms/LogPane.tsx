@@ -13,27 +13,70 @@ interface LogPaneProps {
 export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser }: LogPaneProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  return (
-    <div
-      className={`log-pane ${isExpanded ? 'log-pane-expanded' : 'log-pane-collapsed'}`}
-      onClick={() => setIsExpanded(!isExpanded)}
-      style={{ cursor: 'pointer' }}
-    >
-      {loading && <div className="px-2 py-1 text-gray-300">ログを読み込み中...</div>}
-      {error && <div className="px-2 py-1 text-red-400">ログの読み込みに失敗しました</div>}
-      {logs.length === 0 && !loading && !error && (
-        <div className="px-2 py-1 text-gray-300">ログがありません</div>
-      )}
-      {(isExpanded ? logs : logs.slice(0, 1)).map((l, i) => (
-        <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
-      ))}
-      {!isExpanded && logs.length > 1 && (
+  const handlePaneClick = (e: React.MouseEvent) => {
+    // リンクやボタンがクリックされた場合は拡大・縮小しない
+    if ((e.target as HTMLElement).closest('.custom-link, button, a')) {
+      return;
+    }
+    setIsExpanded(!isExpanded);
+  };
+
+  if (!isExpanded) {
+    return (
+      <div
+        className={`log-pane log-pane-collapsed`}
+        onClick={handlePaneClick}
+        style={{ cursor: 'pointer', paddingBottom: '2.5rem', position: 'relative' }}
+      >
+        {loading && <div className="px-2 py-1 text-gray-300">ログを読み込み中...</div>}
+        {error && <div className="px-2 py-1 text-red-400">ログの読み込みに失敗しました</div>}
+        {logs.length === 0 && !loading && !error && (
+          <div className="px-2 py-1 text-gray-300">ログがありません</div>
+        )}
+        {logs.slice(0, 1).map((l, i) => (
+          <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
+        ))}
+        {logs.length > 1 && (
+          <div
+            className="px-2 py-1 text-center text-gray-400 text-xs"
+            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.8)' }}
+          >
+            他 {logs.length - 1} 件のログがあります
+          </div>
+        )}
         <div className="px-2 py-1 text-center text-gray-400 text-xs">
-          他 {logs.length - 1} 件のログがあります
+          タップで拡大
         </div>
-      )}
-      <div className="px-2 py-1 text-center text-gray-400 text-xs">
-        {isExpanded ? 'タップで縮小' : 'タップで拡大'}
+      </div>
+    );
+  }
+
+  // 拡大時はbackdropを追加
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)' }} onClick={() => setIsExpanded(false)} />
+      <div
+        className={`log-pane log-pane-expanded`}
+        style={{
+          cursor: 'pointer',
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: '3rem',
+          zIndex: 10000,
+        }}
+        onClick={handlePaneClick}
+      >
+        {loading && <div className="px-2 py-1 text-gray-300">ログを読み込み中...</div>}
+        {error && <div className="px-2 py-1 text-red-400">ログの読み込みに失敗しました</div>}
+        {logs.length === 0 && !loading && !error && (
+          <div className="px-2 py-1 text-gray-300">ログがありません</div>)}
+        {logs.map((l, i) => (
+          <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
+        ))}
+        <div className="px-2 py-1 text-center text-gray-400 text-xs">
+          タップで縮小
+        </div>
       </div>
     </div>
   );

@@ -26,56 +26,51 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
     return parts.map((p, idx) => {
       if (p.startsWith('<') && p.endsWith('>')) {
         const content = p.slice(1, -1);
-        let cls = 'log-shrine';
         if (content.startsWith('user:')) {
-          cls = 'log-user';
           const [id, name] = content.slice(5).split(':');
           return (
-            <CustomLink key={idx} type="user" onClick={onShowUser ? () => {
+            <CustomLink key={idx} onClick={onShowUser ? () => {
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowUser(Number(id)), 0);
-            } : undefined} className={cls}>
+            } : undefined} className="tag-link tag-user">
               {name || id}
             </CustomLink>
           );
         }
         if (content.startsWith('region:')) {
-          cls = 'log-region';
           return (
-            <CustomText key={idx} className={cls}>
+            <CustomText key={idx}>
               {'<'}{content.slice(7)}{'>'}
             </CustomText>
           );
         }
         if (content.startsWith('shrine:')) {
-          cls = 'log-shrine';
           const [id, name] = content.slice(7).split(':');
           return (
-            <CustomLink key={idx} type="shrine" onClick={onShowShrine ? () => {
+            <CustomLink key={idx} onClick={onShowShrine ? () => {
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowShrine(Number(id)), 0);
-            } : undefined} className={cls}>
+            } : undefined} className="tag-link tag-shrine">
               {name || id}
             </CustomLink>
           );
         }
         if (content.startsWith('diety:')) {
-          cls = 'log-shrine';
           const [id, name] = content.slice(6).split(':');
           return (
-            <CustomLink key={idx} type="diety" onClick={onShowDiety ? () => {
+            <CustomLink key={idx} onClick={onShowDiety ? () => {
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowDiety(Number(id)), 0);
-            } : undefined} className={cls}>
+            } : undefined} className="tag-link tag-diety">
               {name || id}
             </CustomLink>
           );
         }
         return (
-          <CustomText key={idx} className={cls}>
+          <CustomText key={idx}>
             {'<'}{content}{'>'}
           </CustomText>
         );
@@ -85,7 +80,7 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
   }
 
   return (
-    <div className={`px-2 py-1 border-b border-gray-600 ${log.type === 'system' ? 'log-system' : ''}`}> 
+    <div className="px-2 py-1 border-b border-gray-600"> 
       {formatTime(log.time)} {renderMessage(log.message)}
     </div>
   );
