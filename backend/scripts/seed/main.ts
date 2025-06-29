@@ -3,14 +3,18 @@ import { seedShrine } from './shrine';
 import { seedDiety } from './diety';
 import { seedShrineDiety } from './shrineDiety';
 import { seedUser } from './user';
+import { seedStats } from './stats';
+import { seedLog } from './log';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  await seedShrine(prisma);
+  const shrineIds = await seedShrine(prisma);
   await seedDiety(prisma);
-  await seedShrineDiety(prisma);
+  await seedShrineDiety(prisma, shrineIds);
   await seedUser(prisma);
+  await seedLog(prisma);
+  await seedStats(prisma);
   console.log('✅ Seeding completed.');
 }
 

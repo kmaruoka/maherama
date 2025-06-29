@@ -20,7 +20,7 @@ async function geocode(address: string): Promise<{ lat: number; lng: number }> {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function seedShrine(prisma: PrismaClient) {
+export async function seedShrine(prisma: PrismaClient): Promise<Set<number>> {
   const rawData = [
     { id: 1, name: '天村雲神社(山川町村雲)', kana: 'あめのむらくもじんじゃ', location: '徳島県吉野川市山川町村雲１３３' },
     { id: 2, name: '蜂須神社(つるぎ町)', kana: 'はちすじんじゃ', location: '徳島県美馬郡つるぎ町貞光字宮平７' },
@@ -29,11 +29,13 @@ export async function seedShrine(prisma: PrismaClient) {
   ];
 
   const enrichedData: any[] = [];
+  const insertedIds = new Set<number>();
   for (const item of rawData) {
     try {
       console.log(`Geocoding: ${item.location}`);
       const { lat, lng } = await geocode(item.location);
       enrichedData.push({ ...item, lat, lng });
+      insertedIds.add(item.id);
     } catch (e) {
       console.warn(`⚠️ スキップ: ${item.location} - ${(e as Error).message}`);
     }
@@ -46,4 +48,5 @@ export async function seedShrine(prisma: PrismaClient) {
       skipDuplicates: true,
     });
   }
+  return insertedIds;
 }
