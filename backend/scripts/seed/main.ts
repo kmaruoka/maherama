@@ -5,6 +5,7 @@ import { seedShrineDiety } from './shrineDiety';
 import { seedUser } from './user';
 import { seedStats } from './stats';
 import { seedLog } from './log';
+import { seedFollow } from './follow';
 
 const prisma = new PrismaClient();
 
@@ -13,9 +14,10 @@ async function main() {
   await seedDiety(prisma);
   await seedShrineDiety(prisma, shrineIds);
   await seedUser(prisma);
+  await seedFollow(prisma);
   await seedLog(prisma);
   await seedStats(prisma);
-  console.log('✅ Seeding completed.');
+  console.log("✅ Seeding completed.");
 }
 
 main()

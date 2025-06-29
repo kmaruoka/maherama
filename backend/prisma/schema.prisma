@@ -62,6 +62,17 @@ model Log {
 model User {
   id    Int    @id @default(autoincrement())
   name  String
+  following Follow[] @relation("follows")
+  followers Follow[] @relation("followedBy")
+}
+
+model Follow {
+  follower     User @relation("follows", fields: [follower_id], references: [id])
+  follower_id  Int
+  following    User @relation("followedBy", fields: [following_id], references: [id])
+  following_id Int
+
+  @@id([follower_id, following_id])
 }
 
 model ShrinePray {
@@ -150,4 +161,24 @@ model DietyPrayStatsDaily {
   diety_id  Int
   user_id   Int
   count     Int
+}
+
+model ShrineBook {
+  user          User   @relation(fields: [user_id], references: [id])
+  user_id       Int
+  shrine        Shrine @relation(fields: [shrine_id], references: [id])
+  shrine_id     Int
+  registered_at DateTime @default(now())
+
+  @@id([user_id, shrine_id])
+}
+
+model DietyBook {
+  user          User  @relation(fields: [user_id], references: [id])
+  user_id       Int
+  diety         Diety @relation(fields: [diety_id], references: [id])
+  diety_id      Int
+  registered_at DateTime @default(now())
+
+  @@id([user_id, diety_id])
 }
