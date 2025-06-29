@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import './setupLeaflet';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import ShrinePane, { type Shrine } from './components/organisms/ShrinePane';

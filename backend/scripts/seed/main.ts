@@ -17,7 +17,7 @@ async function main() {
   await seedFollow(prisma);
   await seedLog(prisma);
   await seedStats(prisma);
-  console.log('✅ Seeding completed.');
+  console.log("✅ Seeding completed.");
 }
 
 main()
