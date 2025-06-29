@@ -15,13 +15,19 @@ datasource db {
 
 model Shrine {
   id            Int           @id @default(autoincrement())
-  name          String
-  address       String
-  lat           Float
-  lng           Float
+  name          String        // 神社名
+  kana          String?       // 読み
+  location      String        // 所在地
+  lat           Float         // 緯度
+  lng           Float         // 経度
   count         Int           @default(0)
   registered_at DateTime      @default(now())
   shrine_dieties ShrineDiety[]
+  shrine_prays  ShrinePray[]
+  shrine_pray_stats ShrinePrayStats[]
+  shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
+  shrine_pray_stats_weekly ShrinePrayStatsWeekly[]
+  shrine_pray_stats_daily ShrinePrayStatsDaily[]
 }
 
 model Diety {
@@ -30,6 +36,11 @@ model Diety {
   kana         String?
   description  String?
   shrine_dieties ShrineDiety[]
+  diety_prays  DietyPray[]
+  diety_pray_stats DietyPrayStats[]
+  diety_pray_stats_monthly DietyPrayStatsMonthly[]
+  diety_pray_stats_weekly DietyPrayStatsWeekly[]
+  diety_pray_stats_daily DietyPrayStatsDaily[]
 }
 
 model ShrineDiety {
@@ -46,4 +57,97 @@ model Log {
   message String
   type    String   @default("normal")
   time    DateTime @default(now())
+}
+
+model User {
+  id    Int    @id @default(autoincrement())
+  name  String
+}
+
+model ShrinePray {
+  id        Int      @id @default(autoincrement())
+  shrine    Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  time      DateTime @default(now())
+}
+
+model DietyPray {
+  id        Int      @id @default(autoincrement())
+  diety     Diety    @relation(fields: [diety_id], references: [id])
+  diety_id  Int
+  user_id   Int
+  time      DateTime @default(now())
+}
+
+model ShrinePrayStats {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  count     Int
+}
+
+model ShrinePrayStatsMonthly {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  count     Int
+}
+
+model ShrinePrayStatsWeekly {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  count     Int
+}
+
+model ShrinePrayStatsDaily {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  count     Int
+}
+
+model DietyPrayStats {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  diety     Diety    @relation(fields: [diety_id], references: [id])
+  diety_id  Int
+  user_id   Int
+  count     Int
+}
+
+model DietyPrayStatsMonthly {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  diety     Diety    @relation(fields: [diety_id], references: [id])
+  diety_id  Int
+  user_id   Int
+  count     Int
+}
+
+model DietyPrayStatsWeekly {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  diety     Diety    @relation(fields: [diety_id], references: [id])
+  diety_id  Int
+  user_id   Int
+  count     Int
+}
+
+model DietyPrayStatsDaily {
+  id        Int      @id @default(autoincrement())
+  rank      Int
+  diety     Diety    @relation(fields: [diety_id], references: [id])
+  diety_id  Int
+  user_id   Int
+  count     Int
 }

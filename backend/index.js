@@ -177,6 +177,33 @@ app.get('/logs', async (req, res) => {
   }
 });
 
+app.get('/user-rankings', async (req, res) => {
+  try {
+    const rankings = await prisma.shrinePrayStats.groupBy({
+      by: ['user_id'],
+      _sum: { count: true },
+      orderBy: { _sum: { count: 'desc' } },
+      take: 20,
+    });
+    const userIds = rankings.map(r => r.user_id);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true },
+    });
+    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
+    const result = rankings.map((r, i) => ({
+      rank: i + 1,
+      userId: r.user_id,
+      userName: userMap[r.user_id] || '名無し',
+      count: r._sum.count || 0,
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching user rankings:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 app.listen(port, () => {
   addLog('システム: サーバーを起動しました', 'system');
   console.log(`Server listening on port ${port}`);
