@@ -1,9 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-// Prisma Client の生成先を変更しているため、
-// 生成されたクライアントを直接参照する
-const { PrismaClient } = require('./generated/prisma');
+const { PrismaClient } = require('@prisma/client');
 const app = express();
 const port = process.env.PORT || 3001;
 
