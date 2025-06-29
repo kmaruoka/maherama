@@ -6,6 +6,7 @@ import { seedUser } from './user';
 import { seedStats } from './stats';
 import { seedLog } from './log';
 import { seedFollow } from './follow';
+import { seedSubscription } from './subscription';
 
 const prisma = new PrismaClient();
 
@@ -17,6 +18,7 @@ async function main() {
   await seedFollow(prisma);
   await seedLog(prisma);
   await seedStats(prisma);
+  await seedSubscription(prisma);
   console.log("✅ Seeding completed.");
 }
 

@@ -13,6 +13,24 @@ app.use(express.json());
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
 
+// slotsから参拝可能半径を導出する関数
+function getRadiusFromSlots(slots) {
+  if (slots === 0) return 100; // 無課金
+  return 100 * Math.pow(2, slots); // 100m, 200m, 400m, 800m, 1600m...
+}
+
+// ユーザーの課金状態を取得する関数
+async function getUserSubscription(userId) {
+  const subscription = await prisma.userSubscription.findFirst({
+    where: { 
+      user_id: userId,
+      expires_at: { gt: new Date() }
+    },
+    orderBy: { created_at: 'desc' }
+  });
+  return subscription || { slots: 0 }; // 無課金の場合
+}
+
 async function addLog(message, type = 'normal') {
   await prisma.log.create({
     data: {
@@ -126,8 +144,8 @@ app.post('/shrines/:id/pray', async (req, res) => {
       return res.status(404).json({ error: 'Not found' });
     }
     
-    // ShrinePrayStatsテーブルに参拝記録を追加（仮のユーザーID: 1）
-    const userId = 1; // 仮のユーザーID
+    // ユーザーIDをリクエストヘッダーから取得（なければ1）
+    const userId = parseInt(req.headers['x-user-id']) || 1;
     const existingStats = await prisma.shrinePrayStats.findFirst({
       where: { shrine_id: id, user_id: userId }
     });
@@ -172,24 +190,36 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
     if (!shrine) {
       return res.status(404).json({ error: 'Not found' });
     }
-    // 仮のユーザーID（本来は認証から取得）
-    const userId = 1;
+    
+    // ユーザーIDをリクエストヘッダーから取得（なければ1）
+    const userId = parseInt(req.headers['x-user-id']) || 1;
     const now = new Date();
-    // RemotePrayテーブルから最新の遥拝日時を取得
-    const lastRemote = await prisma.remotePray.findFirst({
-      where: { shrine_id: id, user_id: userId },
-      orderBy: { prayed_at: 'desc' }
-    });
-    if (lastRemote) {
-      const diff = now - lastRemote.prayed_at;
-      if (diff < 7 * 24 * 60 * 60 * 1000) {
-        return res.status(400).json({ error: '遥拝は一週間に1回のみ可能です' });
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    // ユーザーの課金状態を取得
+    const subscription = await getUserSubscription(userId);
+    const maxRemotePrays = subscription.slots;
+    
+    // 過去1週間の遥拝回数をカウント
+    const recentRemotePrays = await prisma.remotePray.count({
+      where: {
+        user_id: userId,
+        prayed_at: { gte: oneWeekAgo }
       }
+    });
+    
+    // 課金口数制限チェック
+    if (recentRemotePrays >= maxRemotePrays) {
+      return res.status(400).json({ 
+        error: `遥拝は1週間に${maxRemotePrays}回までです（課金口数: ${maxRemotePrays}口）` 
+      });
     }
+    
     // 遥拝記録を追加
     await prisma.remotePray.create({
       data: { shrine_id: id, user_id: userId, prayed_at: now }
     });
+    
     // ShrinePrayStatsテーブルも更新
     const existingStats = await prisma.shrinePrayStats.findFirst({
       where: { shrine_id: id, user_id: userId }
@@ -209,11 +239,13 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
         }
       });
     }
+    
     // 総参拝数
     const totalCount = await prisma.shrinePrayStats.aggregate({
       where: { shrine_id: id },
       _sum: { count: true }
     });
+    
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
     res.json({ success: true, count: totalCount._sum.count || 0 });
   } catch (err) {

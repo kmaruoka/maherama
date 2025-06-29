@@ -201,3 +201,12 @@ model RemotePray {
   
   @@unique([user_id, shrine_id])
 }
+
+model UserSubscription {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  plan_type  String   // "basic", "premium", etc.
+  slots      Int      // 課金口数（遥拝可能神社数）
+  expires_at DateTime
+  created_at DateTime @default(now())
+}
