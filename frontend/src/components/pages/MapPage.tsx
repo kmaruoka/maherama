@@ -56,7 +56,8 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
       <MapContainer
         center={[35.68, 139.76] as [number, number]}
         zoom={5}
-        style={{ height: 'calc(100vh - 3rem)' }}
+        className="shrine-theme"
+        style={{ height: 'calc(100vh - 3rem)', position: 'relative' }}
       >
         <TileLayer
           attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>"
