@@ -35,16 +35,18 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
     if (storedId) setCurrentUserId(Number(storedId));
   }, []);
 
+  const displayId = id ?? currentUserId;
+
   const { data: userInfo, isLoading } = useQuery({
-    queryKey: ['user', id, currentUserId],
+    queryKey: ['user', displayId, currentUserId],
     queryFn: async () => {
-      if (!id) return null;
-      const viewerId = currentUserId || id;
-      const res = await fetch(`${API_BASE}/users/${id}?viewerId=${viewerId}`);
+      if (!displayId) return null;
+      const viewerId = currentUserId || displayId;
+      const res = await fetch(`${API_BASE}/users/${displayId}?viewerId=${viewerId}`);
       if (!res.ok) throw new Error('ユーザー情報の取得に失敗しました');
       return res.json() as Promise<UserInfo>;
     },
-    enabled: !!id
+    enabled: !!displayId
   });
 
   const { data: rankings } = useQuery({
@@ -78,7 +80,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
     window.location.reload();
   };
 
-  if (!id) {
+  if (!displayId) {
     return <div className="p-4">ユーザーIDが指定されていません</div>;
   }
 
@@ -101,7 +103,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
         <div>フォロワー: {userInfo.followerCount}</div>
       </div>
 
-      {currentUserId && currentUserId !== id && (
+      {currentUserId && currentUserId !== displayId && (
         <div className="modal-section">
           <div className="modal-subtitle">フォロー操作</div>
           <div className="flex space-x-2 items-center">
