@@ -1,0 +1,26 @@
+.custom-link {
+  color: #ff9800;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+.custom-link:hover {
+  color: #ffb74d;
+}
+.custom-link-shrine {
+  color: #ff9800;
+}
+.custom-link-diety {
+  color: #4caf50;
+}
+.custom-link-user {
+  color: #2196f3;
+}
+
+.modal-title {
+  font-weight: bold;
+  font-family: inherit;
+  font-size: 1.2em;
+} 

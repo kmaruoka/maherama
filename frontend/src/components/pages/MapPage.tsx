@@ -17,7 +17,7 @@ function createShrineIcon(thumbnailUrl?: string) {
   });
 }
 
-export default function MapPage({ onShowShrine }: { onShowShrine: (id: number) => void }) {
+export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const { data: logs = [], refetch: refetchLogs, isLoading: logsLoading, error: logsError } = useQuery<LogItem[]>({
     queryKey: ['logs'],
@@ -73,7 +73,7 @@ export default function MapPage({ onShowShrine }: { onShowShrine: (id: number) =
           </Marker>
         ))}
       </MapContainer>
-      <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} />
+      <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} onShowUser={onShowUser} onShowDiety={onShowDiety} />
     </>
   );
 }

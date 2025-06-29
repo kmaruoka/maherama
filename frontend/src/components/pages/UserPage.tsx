@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
+import CustomLink from '../atoms/CustomLink';
 
 interface RankingItem {
   rank: number;
@@ -20,180 +20,169 @@ interface UserInfo {
   isFollowing: boolean;
 }
 
-export default function UserPage() {
-  const [name, setName] = useState('');
-  const [userId, setUserId] = useState<number | null>(null);
-  const [input, setInput] = useState('');
-  const [idInput, setIdInput] = useState('');
-  const [rankings, setRankings] = useState<RankingItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [info, setInfo] = useState<UserInfo | null>(null);
+interface UserPageProps {
+  id?: number;
+  onShowShrine?: (id: number) => void;
+  onShowDiety?: (id: number) => void;
+}
+
+export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProps) {
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [targetId, setTargetId] = useState('');
 
   useEffect(() => {
-    const storedName = localStorage.getItem('userName');
     const storedId = localStorage.getItem('userId');
-    if (storedName) setName(storedName);
-    if (storedId) setUserId(Number(storedId));
+    if (storedId) setCurrentUserId(Number(storedId));
   }, []);
 
-  useEffect(() => {
-    if (userId) fetchInfo(userId);
-  }, [userId]);
+  const { data: userInfo, isLoading } = useQuery({
+    queryKey: ['user', id, currentUserId],
+    queryFn: async () => {
+      if (!id) return null;
+      const viewerId = currentUserId || id;
+      const res = await fetch(`${API_BASE}/users/${id}?viewerId=${viewerId}`);
+      if (!res.ok) throw new Error('ユーザー情報の取得に失敗しました');
+      return res.json() as Promise<UserInfo>;
+    },
+    enabled: !!id
+  });
 
-  useEffect(() => {
-    fetchRankings();
-  }, []);
-
-  const fetchRankings = async () => {
-    setLoading(true);
-    try {
+  const { data: rankings } = useQuery({
+    queryKey: ['user-rankings'],
+    queryFn: async () => {
       const response = await fetch(`${API_BASE}/user-rankings`);
-      if (response.ok) {
-        const data = await response.json();
-        setRankings(data);
-      }
-    } catch (error) {
-      console.error('ランキング取得エラー:', error);
-    } finally {
-      setLoading(false);
+      if (!response.ok) throw new Error('ランキングの取得に失敗しました');
+      return response.json() as Promise<RankingItem[]>;
     }
+  });
+
+  const handleFollow = async () => {
+    if (!currentUserId || !targetId || !userInfo) return;
+    await fetch(`${API_BASE}/follows`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followerId: currentUserId, followingId: Number(targetId) }),
+    });
+    // クエリを再取得
+    window.location.reload();
   };
 
-  const fetchInfo = async (uid: number) => {
-    try {
-      const res = await fetch(`${API_BASE}/users/${uid}?viewerId=${uid}`);
-      if (res.ok) {
-        setInfo(await res.json());
-      }
-    } catch (e) {
-      console.error('ユーザー情報取得エラー:', e);
-    }
+  const handleUnfollow = async () => {
+    if (!currentUserId || !targetId || !userInfo) return;
+    await fetch(`${API_BASE}/follows`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ followerId: currentUserId, followingId: Number(targetId) }),
+    });
+    // クエリを再取得
+    window.location.reload();
   };
 
-  const handleLogin = () => {
-    if (input.trim() && idInput.trim()) {
-      localStorage.setItem('userName', input.trim());
-      localStorage.setItem('userId', idInput.trim());
-      setName(input.trim());
-      setUserId(Number(idInput));
-      setInput('');
-      setIdInput('');
-    }
-  };
+  if (!id) {
+    return <div className="p-4">ユーザーIDが指定されていません</div>;
+  }
 
-  const handleLogout = () => {
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userId');
-    setName('');
-    setUserId(null);
-    setInfo(null);
-  };
+  if (isLoading) {
+    return <div className="p-4">読み込み中...</div>;
+  }
 
-  if (!name) {
-    return (
-      <div className="p-4 space-y-2">
-        <div>ユーザー名を入力してください</div>
-        <input
-          type="text"
-          className="border p-1 w-full"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <div>IDも入力してください</div>
-        <input
-          type="number"
-          className="border p-1 w-full"
-          value={idInput}
-          onChange={(e) => setIdInput(e.target.value)}
-        />
-        <button
-          className="px-2 py-1 bg-blue-500 text-white rounded"
-          onClick={handleLogin}
-        >
-          ログイン
-        </button>
-      </div>
-    );
+  if (!userInfo) {
+    return <div className="p-4">ユーザーが見つかりません</div>;
   }
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <div>ようこそ {name} さん (ID: {userId})</div>
-        <button
-          className="px-2 py-1 bg-gray-400 text-white rounded"
-          onClick={handleLogout}
-        >
-          ログアウト
-        </button>
-      </div>
+    <div className="p-4 max-w-2xl mx-auto">
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h1 className="modal-title text-2xl mb-4">
+          {userInfo.name}
+        </h1>
 
-      {info && (
-        <div className="space-y-2 border p-2 rounded">
-          <div>フォロー: {info.followingCount}</div>
-          <div>フォロワー: {info.followerCount}</div>
-          <div className="flex space-x-2 items-center mt-2">
-            <input
-              type="number"
-              className="border p-1"
-              placeholder="ユーザーID"
-              value={targetId}
-              onChange={(e) => setTargetId(e.target.value)}
-            />
-            <button
-              className="px-2 py-1 bg-green-500 text-white rounded"
-              onClick={async () => {
-                if (!userId || !targetId) return;
-                await fetch(`${API_BASE}/follows`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ followerId: userId, followingId: Number(targetId) }),
-                });
-                fetchInfo(userId);
-              }}
-            >
-              フォロー
-            </button>
-            <button
-              className="px-2 py-1 bg-red-500 text-white rounded"
-              onClick={async () => {
-                if (!userId || !targetId) return;
-                await fetch(`${API_BASE}/follows`, {
-                  method: 'DELETE',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ followerId: userId, followingId: Number(targetId) }),
-                });
-                fetchInfo(userId);
-              }}
-            >
-              アンフォロー
-            </button>
+        <div className="space-y-4">
+          <div className="flex space-x-4 text-sm">
+            <div>フォロー: {userInfo.followingCount}</div>
+            <div>フォロワー: {userInfo.followerCount}</div>
           </div>
-        </div>
-      )}
-      
-      <div className="border rounded p-4">
-        <h2 className="text-lg font-bold mb-4">参拝数ランキング</h2>
-        {loading ? (
-          <div>読み込み中...</div>
-        ) : rankings.length > 0 ? (
-          <div className="space-y-2">
-            {rankings.map((item) => (
-              <div key={item.userId} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                <div className="flex items-center space-x-3">
-                  <span className="font-bold text-lg">{item.rank}</span>
-                  <span className={item.userName === name ? 'font-bold text-blue-600' : ''}>
-                    {item.userName}
-                  </span>
-                </div>
-                <span className="text-gray-600">{item.count}回</span>
+
+          {currentUserId && currentUserId !== id && (
+            <div className="flex space-x-2 items-center">
+              <input
+                type="number"
+                className="border p-1 text-sm"
+                placeholder="ユーザーID"
+                value={targetId}
+                onChange={(e) => setTargetId(e.target.value)}
+              />
+              <button
+                className="px-2 py-1 bg-green-500 text-white rounded text-sm"
+                onClick={handleFollow}
+              >
+                フォロー
+              </button>
+              <button
+                className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                onClick={handleUnfollow}
+              >
+                アンフォロー
+              </button>
+            </div>
+          )}
+
+          {userInfo.topShrines.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">よく参拝する神社</h3>
+              <div className="space-y-2">
+                {userInfo.topShrines.map((shrine) => (
+                  <div key={shrine.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <CustomLink type="shrine" onClick={() => onShowShrine && onShowShrine(shrine.id)}>
+                      {shrine.name}
+                    </CustomLink>
+                    <span className="text-gray-600 text-sm">{shrine.count}回</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-gray-500">ランキングデータがありません</div>
-        )}
+            </div>
+          )}
+
+          {userInfo.topDieties.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">よく参拝する神</h3>
+              <div className="space-y-2">
+                {userInfo.topDieties.map((diety) => (
+                  <div key={diety.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <CustomLink type="diety" onClick={() => onShowDiety && onShowDiety(diety.id)}>
+                      {diety.name}
+                    </CustomLink>
+                    <span className="text-gray-600 text-sm">{diety.count}回</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {rankings && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">参拝数ランキング</h3>
+              <div className="space-y-2">
+                {rankings.slice(0, 5).map((item) => (
+                  <div key={item.userId} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                        item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
+                        item.rank === 2 ? 'bg-gray-300 text-gray-700' :
+                        item.rank === 3 ? 'bg-orange-400 text-orange-900' :
+                        'bg-gray-200 text-gray-600'
+                      }`}>
+                        {item.rank}
+                      </span>
+                      <CustomLink type="user">{item.userName}</CustomLink>
+                    </div>
+                    <span className="text-gray-600 font-semibold">{item.count}回</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

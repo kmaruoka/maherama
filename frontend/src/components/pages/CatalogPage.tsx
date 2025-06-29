@@ -11,7 +11,7 @@ interface Item {
   registeredAt: string;
 }
 
-export default function CatalogPage({ onShowShrine, onShowDiety }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void }) {
+export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const [tab, setTab] = useState<'shrine' | 'diety'>('shrine');
   const [sort, setSort] = useState('registeredAt-desc');
   const [style, setStyle] = useState<'card' | 'list'>('card');
@@ -52,6 +52,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety }: { onShowShrin
           setTimeout(() => onShowShrine(item.id), 0);
         } else if (tab === 'diety' && onShowDiety) {
           setTimeout(() => onShowDiety(item.id), 0);
+        } else if (onShowUser) {
+          setTimeout(() => onShowUser(item.id), 0);
         }
       }}>{item.name}</CustomLink>
       <div className="text-sm text-gray-600">参拝数: {item.count}</div>
@@ -109,6 +111,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety }: { onShowShrin
                   setTimeout(() => onShowShrine(item.id), 0);
                 } else if (tab === 'diety' && onShowDiety) {
                   setTimeout(() => onShowDiety(item.id), 0);
+                } else if (onShowUser) {
+                  setTimeout(() => onShowUser(item.id), 0);
                 }
               }}>{item.name}</CustomLink>
               <CustomText className="ml-2 text-sm">参拝数: {item.count}</CustomText>

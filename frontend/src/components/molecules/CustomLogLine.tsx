@@ -31,12 +31,12 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
           cls = 'log-user';
           const [id, name] = content.slice(5).split(':');
           return (
-            <CustomLink key={idx} onClick={onShowUser ? () => {
+            <CustomLink key={idx} type="user" onClick={onShowUser ? () => {
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowUser(Number(id)), 0);
             } : undefined} className={cls}>
-              {'<'}{name || id}{'>'}
+              {name || id}
             </CustomLink>
           );
         }
@@ -52,12 +52,12 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
           cls = 'log-shrine';
           const [id, name] = content.slice(7).split(':');
           return (
-            <CustomLink key={idx} onClick={onShowShrine ? () => {
+            <CustomLink key={idx} type="shrine" onClick={onShowShrine ? () => {
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowShrine(Number(id)), 0);
             } : undefined} className={cls}>
-              {'<'}{name || id}{'>'}
+              {name || id}
             </CustomLink>
           );
         }
@@ -65,12 +65,12 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
           cls = 'log-shrine';
           const [id, name] = content.slice(6).split(':');
           return (
-            <CustomLink key={idx} onClick={onShowDiety ? () => {
+            <CustomLink key={idx} type="diety" onClick={onShowDiety ? () => {
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowDiety(Number(id)), 0);
             } : undefined} className={cls}>
-              {'<'}{name || id}{'>'}
+              {name || id}
             </CustomLink>
           );
         }

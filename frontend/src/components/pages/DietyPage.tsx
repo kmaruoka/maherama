@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
+import CustomLink from '../atoms/CustomLink';
 
 interface Diety {
   id: number;
@@ -19,43 +20,44 @@ interface RankingItem {
   count: number;
 }
 
-const DietyPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const idFromParams = id || paramId;
   const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'yearly' | 'monthly' | 'weekly'>('all');
 
   // デバッグ用ログ
-  console.log('DietyPage - ID from params:', id, 'Type:', typeof id);
+  console.log('DietyPage - ID from params:', idFromParams, 'Type:', typeof idFromParams);
 
   const { data: diety, error: dietyError } = useQuery<Diety>({
-    queryKey: ['diety', id],
+    queryKey: ['diety', idFromParams],
     queryFn: async () => {
-      console.log('Fetching diety with ID:', id);
-      const response = await fetch(`${API_BASE}/dieties/${id}`);
+      console.log('Fetching diety with ID:', idFromParams);
+      const response = await fetch(`${API_BASE}/dieties/${idFromParams}`);
       if (!response.ok) throw new Error('神情報取得に失敗しました');
       return response.json();
     },
-    enabled: !!id && id !== 'undefined' && id !== '',
+    enabled: !!idFromParams && idFromParams !== 'undefined' && idFromParams !== '',
   });
 
-  const { data: rankings = [], error: rankingsError } = useQuery<RankingItem[]>({
-    queryKey: ['diety-rankings', id, selectedPeriod],
+  const { data: rankings = [] } = useQuery<RankingItem[]>({
+    queryKey: ['diety-rankings-modal', idFromParams, selectedPeriod],
     queryFn: async () => {
-      console.log('Fetching rankings with ID:', id, 'Period:', selectedPeriod);
-      const response = await fetch(`${API_BASE}/dieties/${id}/rankings?period=${selectedPeriod}`);
+      console.log('Fetching rankings with ID:', idFromParams, 'Period:', selectedPeriod);
+      const response = await fetch(`${API_BASE}/dieties/${idFromParams}/rankings?period=${selectedPeriod}`);
       if (!response.ok) throw new Error('ランキング取得に失敗しました');
       return response.json();
     },
-    enabled: !!id && id !== 'undefined' && id !== '',
+    enabled: !!idFromParams && idFromParams !== 'undefined' && idFromParams !== '',
   });
 
   const periods = [
-    { key: 'all', label: '全期間' },
+    { key: 'all', label: '総合' },
     { key: 'yearly', label: '年間' },
     { key: 'monthly', label: '月間' },
     { key: 'weekly', label: '週間' },
   ];
 
-  if (!id) {
+  if (!idFromParams) {
     return <div className="p-4">神IDが指定されていません</div>;
   }
 
@@ -70,7 +72,9 @@ const DietyPage: React.FC = () => {
   return (
     <div className="p-4 max-w-2xl mx-auto">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-2">{diety.name}</h1>
+        <h1 className="modal-title text-2xl mb-2">
+          {diety.name}
+        </h1>
         {diety.kana && <p className="text-lg text-gray-600 mb-4">{diety.kana}</p>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -88,12 +92,14 @@ const DietyPage: React.FC = () => {
                 <h3 className="text-lg font-semibold mb-3">祀られている神社</h3>
                 <div className="flex flex-wrap gap-2">
                   {diety.shrines.map((shrine) => (
-                    <span
+                    <CustomLink
                       key={shrine.id}
-                      className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                      type="shrine"
+                      onClick={() => onShowShrine?.(shrine.id)}
+                      className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2"
                     >
                       {shrine.name}
-                    </span>
+                    </CustomLink>
                   ))}
                 </div>
               </div>
@@ -122,24 +128,23 @@ const DietyPage: React.FC = () => {
 
             {/* ランキング一覧 */}
             <div className="space-y-3">
-              {rankings.length > 0 ? (
-                rankings.map((item) => (
-                  <div key={item.userId} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
-                        item.rank === 2 ? 'bg-gray-300 text-gray-700' :
-                        item.rank === 3 ? 'bg-orange-400 text-orange-900' :
-                        'bg-gray-200 text-gray-600'
-                      }`}>
-                        {item.rank}
-                      </span>
-                      <span className="font-medium">{item.userName}</span>
-                    </div>
-                    <span className="text-gray-600 font-semibold">{item.count}回</span>
+              {rankings.slice(0, 3).map((item) => (
+                <div key={item.userId} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
+                      item.rank === 2 ? 'bg-gray-300 text-gray-700' :
+                      item.rank === 3 ? 'bg-orange-400 text-orange-900' :
+                      'bg-gray-200 text-gray-600'
+                    }`}>
+                      {item.rank}
+                    </span>
+                    <CustomLink type="user" onClick={() => onShowUser?.(item.userId)}>{item.userName}</CustomLink>
                   </div>
-                ))
-              ) : (
+                  <span className="text-gray-600 font-semibold">{item.count}回</span>
+                </div>
+              ))}
+              {rankings.length === 0 && (
                 <p className="text-gray-500 text-center py-8">データがありません</p>
               )}
             </div>
@@ -155,6 +160,4 @@ const DietyPage: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default DietyPage;
+}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
+import CustomLink from '../atoms/CustomLink';
 
 interface Shrine {
   id: number;
@@ -20,7 +21,15 @@ interface Shrine {
   description?: string;
 }
 
-export default function ShrinePage({ id, onShowDiety }: { id: number; onShowDiety?: (id: number) => void }) {
+interface RankingItem {
+  rank: number;
+  userId: number;
+  userName: string;
+  count: number;
+}
+
+export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
+  const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'yearly' | 'monthly' | 'weekly'>('all');
   const { data } = useQuery<Shrine | null>({
     queryKey: ['shrine', id],
     enabled: !!id,
@@ -30,6 +39,23 @@ export default function ShrinePage({ id, onShowDiety }: { id: number; onShowDiet
       return res.json();
     },
   });
+
+  const { data: rankings = [] } = useQuery<RankingItem[]>({
+    queryKey: ['shrine-rankings-modal', id, selectedPeriod],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE}/shrines/${id}/rankings?period=${selectedPeriod}`);
+      if (!response.ok) throw new Error('ランキング取得に失敗しました');
+      return response.json();
+    },
+    enabled: !!id,
+  });
+
+  const periods = [
+    { key: 'all', label: '総合' },
+    { key: 'yearly', label: '年間' },
+    { key: 'monthly', label: '月間' },
+    { key: 'weekly', label: '週間' },
+  ];
 
   if (!data) {
     return <div className="p-4">Loading...</div>;
@@ -53,7 +79,7 @@ export default function ShrinePage({ id, onShowDiety }: { id: number; onShowDiet
           </div>
         )}
         <div>
-          <div className="text-2xl font-bold">{data.name}</div>
+          <div className="modal-title text-2xl">{data.name}</div>
           {data.kana && <div className="text-gray-400 text-sm">{data.kana}</div>}
         </div>
       </div>
@@ -64,7 +90,9 @@ export default function ShrinePage({ id, onShowDiety }: { id: number; onShowDiet
         <div className="font-bold">祭神</div>
         <ul className="list-disc ml-6">
           {dietyList.map(d => (
-            <li key={d.id} className="text-blue-300 underline cursor-pointer" onClick={() => onShowDiety && onShowDiety(d.id)}>{d.name}</li>
+            <li key={d.id}>
+              <CustomLink type="diety" onClick={() => onShowDiety && onShowDiety(d.id)}>{d.name}</CustomLink>
+            </li>
           ))}
         </ul>
       </div>
@@ -76,6 +104,47 @@ export default function ShrinePage({ id, onShowDiety }: { id: number; onShowDiet
         <div>経度: {data.lng}</div>
       </div>
       <div className="text-xs text-gray-400">登録日: {data.registeredAt}</div>
+
+      {/* ランキング表示 */}
+      <div className="mt-4">
+        <h4 className="font-semibold mb-2">参拝ランキング</h4>
+        <div className="flex border-b mb-3">
+          {periods.map((period) => (
+            <button
+              key={period.key}
+              onClick={() => setSelectedPeriod(period.key as any)}
+              className={`px-2 py-1 text-xs ${
+                selectedPeriod === period.key
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {period.label}
+            </button>
+          ))}
+        </div>
+        <div className="space-y-2">
+          {rankings.slice(0, 3).map((item) => (
+            <div key={item.userId} className="flex justify-between items-center p-2 bg-gray-50 rounded text-xs">
+              <div className="flex items-center gap-2">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  item.rank === 1 ? 'bg-yellow-400 text-yellow-900' :
+                  item.rank === 2 ? 'bg-gray-300 text-gray-700' :
+                  item.rank === 3 ? 'bg-orange-400 text-orange-900' :
+                  'bg-gray-200 text-gray-600'
+                }`}>
+                  {item.rank}
+                </span>
+                <CustomLink type="user" onClick={() => onShowUser && onShowUser(item.userId)}>{item.userName}</CustomLink>
+              </div>
+              <span className="text-gray-600 font-semibold">{item.count}回</span>
+            </div>
+          ))}
+          {rankings.length === 0 && (
+            <p className="text-gray-500 text-center py-4 text-xs">データがありません</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

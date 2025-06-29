@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import CustomText from '../atoms/CustomText';
 import { API_BASE } from '../../config/api';
+import CustomLink from '../atoms/CustomLink';
 
 export interface Shrine {
   id: number;
@@ -20,9 +21,33 @@ export interface Shrine {
   dieties: Array<{ id: number; name: string; kana?: string }>;
 }
 
+interface RankingItem {
+  rank: number;
+  userId: number;
+  userName: string;
+  count: number;
+}
+
 export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; }) {
   const queryClient = useQueryClient();
+  const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'yearly' | 'monthly' | 'weekly'>('all');
   
+  const { data: rankings = [] } = useQuery<RankingItem[]>({
+    queryKey: ['shrine-rankings-popup', shrine.id, selectedPeriod],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE}/shrines/${shrine.id}/rankings?period=${selectedPeriod}`);
+      if (!response.ok) throw new Error('ランキング取得に失敗しました');
+      return response.json();
+    },
+  });
+
+  const periods = [
+    { key: 'all', label: '総合' },
+    { key: 'yearly', label: '年間' },
+    { key: 'monthly', label: '月間' },
+    { key: 'weekly', label: '週間' },
+  ];
+
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await fetch(`${API_BASE}/shrines/${id}/pray`, {
@@ -60,7 +85,9 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
     <div className="bg-white rounded-lg shadow-lg p-4 max-w-sm">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-bold">{shrine.name}</h3>
+          <CustomLink type="shrine" onClick={() => onShowDetail && onShowDetail(shrine.id)}>
+            {shrine.name}
+          </CustomLink>
           {shrine.kana && <p className="text-sm text-gray-600">{shrine.kana}</p>}
         </div>
       </div>
@@ -79,9 +106,7 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
       )}
 
       <div className="mb-4">
-        <p className="text-sm text-gray-600 mb-2">所在地: {shrine.location}</p>
         {shrine.founded && <p className="text-sm text-gray-600 mb-2">創建: {shrine.founded}</p>}
-        <CustomText>参拝数: {shrine.count}</CustomText>
       </div>
 
       {shrine.dieties && shrine.dieties.length > 0 && (
@@ -121,7 +146,7 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 mt-2">
         <button
           className="px-2 py-1 bg-blue-500 text-white rounded"
           onClick={() => prayMutation.mutate(shrine.id)}
