@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .log-pane {
-  @apply bg-black bg-opacity-60 text-white text-sm fixed bottom-12 left-0 right-0 max-h-40 overflow-y-auto;
+  @apply bg-black bg-opacity-60 text-white text-sm fixed bottom-12 left-0 right-0 max-h-40 overflow-y-auto z-10;
 }
 
 .log-shrine {
