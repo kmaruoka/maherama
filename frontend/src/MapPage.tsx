@@ -12,11 +12,17 @@ interface Shrine {
   registeredAt: string;
 }
 
+interface LogItem {
+  message: string;
+  time: string;
+  type?: string;
+}
+
 export default function MapPage() {
   const queryClient = useQueryClient();
 
   const [position, setPosition] = useState<[number, number] | null>(null);
-  const { data: logs = [], refetch: refetchLogs } = useQuery<{ message: string; time: string }[]>({
+  const { data: logs = [], refetch: refetchLogs } = useQuery<LogItem[]>({
     queryKey: ['logs'],
     queryFn: async () => {
       const res = await fetch('http://localhost:3001/logs');
@@ -64,6 +70,53 @@ export default function MapPage() {
     },
   });
 
+  function formatTime(t: string) {
+    const d = new Date(t);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(
+      d.getMinutes(),
+    )}${pad(d.getSeconds())}`;
+  }
+
+  function renderMessage(msg: string) {
+    const parts = msg.split(/(<[^>]+>)/g).filter(Boolean);
+    return parts.map((p, idx) => {
+      if (p.startsWith('<') && p.endsWith('>')) {
+        const content = p.slice(1, -1);
+        let cls = 'log-shrine';
+        if (content.startsWith('user:')) {
+          cls = 'log-user';
+          return (
+            <span key={idx} className={cls}>
+              {'<'}{content.slice(5)}{'>'}
+            </span>
+          );
+        }
+        if (content.startsWith('region:')) {
+          cls = 'log-region';
+          return (
+            <span key={idx} className={cls}>
+              {'<'}{content.slice(7)}{'>'}
+            </span>
+          );
+        }
+        if (content.startsWith('shrine:')) {
+          return (
+            <span key={idx} className={cls}>
+              {'<'}{content.slice(7)}{'>'}
+            </span>
+          );
+        }
+        return (
+          <span key={idx} className={cls}>
+            {'<'}{content}{'>'}
+          </span>
+        );
+      }
+      return <span key={idx}>{p}</span>;
+    });
+  }
+
   return (
     <>
       <MapContainer
@@ -101,12 +154,13 @@ export default function MapPage() {
         </Marker>
       ))}
       </MapContainer>
-      <div
-        className="fixed bottom-12 left-0 right-0 max-h-40 overflow-y-auto bg-white border-t"
-      >
+      <div className="log-pane">
         {logs.map((l, i) => (
-          <div key={i} className="px-2 py-1 text-sm border-b">
-            {l.time} {l.message}
+          <div
+            key={i}
+            className={`px-2 py-1 border-b ${l.type === 'system' ? 'log-system' : ''}`}
+          >
+            {formatTime(l.time)} {renderMessage(l.message)}
           </div>
         ))}
       </div>
