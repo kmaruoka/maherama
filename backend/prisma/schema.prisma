@@ -35,7 +35,6 @@ model Diety {
   name         String
   kana         String?
   description  String?
-  count        Int           @default(0)
   registered_at DateTime      @default(now())
   shrine_dieties ShrineDiety[]
   diety_prays  DietyPray[]
