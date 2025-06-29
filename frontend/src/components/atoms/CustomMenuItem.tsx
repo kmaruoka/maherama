@@ -1,14 +1,12 @@
 import { Link, type LinkProps } from 'react-router-dom';
 
-export default function CustomLink(
+export default function CustomMenuItem(
   props: LinkProps & { children?: React.ReactNode },
 ) {
   const { className = '', children, ...rest } = props;
   return (
-    <Link {...rest} className={`text-blue-600 hover:underline ${className}`.trim()}>
-      {'<'}
+    <Link {...rest} className={`flex-1 py-2 text-center block ${className}`.trim()}>
       {children}
-      {'>'}
     </Link>
   );
 }
