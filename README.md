@@ -16,26 +16,23 @@
 # git clean -fdx
 # git pull
 
-# 依存関係のインストール
+# バックエンド（依存関係のインストールと起動）
 cd backend
 npm install
 npx prisma generate
 cp .env.example .env
 npx prisma migrate dev --name init
 npx prisma db seed
-
-cd ../frontend
-npm install
-
-# バックエンドの起動（別ターミナルで）
-cd ../backend
 node index.js
 
-# フロントエンドの起動（別ターミナルで）
+# （別ターミナルで）
+#  フロントエンドの依存関係のインストールと起動）
+cd ../frontend
+npm install
 cd frontend
 npm run dev
 ```
 
-- バックエンドはポート3001で動作します。フロントエンドからはこのポートにアクセスします。
+- バックエンドはポート3000で動作します。フロントエンドからはこのポートにアクセスします。
 - アプリを起動すると下部ナビゲーションから地図、図鑑、ユーザー、設定の各ページへ移動できます。
 - 図鑑からは神社情報ページ（ShrinePage）や神情報ページ（DietyPage）に遷移できます。
