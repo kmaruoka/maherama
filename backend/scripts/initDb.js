@@ -1,10 +1,32 @@
 const { Pool } = require('pg');
+const { parse } = require('pg-connection-string');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://amana_user:amana_pass@127.0.0.1:15432/amana',
-});
+const connectionString =
+  process.env.DATABASE_URL ||
+  'postgresql://amana_user:amana_pass@127.0.0.1:15432/amana';
+const config = parse(connectionString);
+
+async function recreateDatabase() {
+  const adminPool = new Pool({
+    host: config.host ?? '127.0.0.1',
+    port: config.port ? Number(config.port) : 5432,
+    user: config.user,
+    password: config.password,
+    database: 'postgres',
+  });
+  const dbName = config.database;
+  if (!dbName) throw new Error('No database name in connection string');
+
+  await adminPool.query(`DROP DATABASE IF EXISTS "${dbName}"`);
+  await adminPool.query(`CREATE DATABASE "${dbName}"`);
+  await adminPool.end();
+}
+
+let pool;
 
 async function initDb() {
+  await recreateDatabase();
+  pool = new Pool({ connectionString });
   await pool.query(`CREATE TABLE IF NOT EXISTS shrines (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
