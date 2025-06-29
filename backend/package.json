@@ -21,6 +21,6 @@
     "prisma": "^6.10.1"
   },
   "prisma": {
-    "seed": "tsx scripts/seed.ts"
+    "seed": "npx tsx scripts/seed.ts"
   }
 }
