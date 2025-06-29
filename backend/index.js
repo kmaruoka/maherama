@@ -30,8 +30,8 @@ let logs = [];
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
 
-function addLog(message) {
-  logs.unshift({ message, time: new Date().toISOString() });
+function addLog(message, type = 'normal') {
+  logs.unshift({ message, type, time: new Date().toISOString() });
   if (logs.length > 50) logs = logs.slice(0, 50);
 }
 
@@ -53,7 +53,7 @@ app.post('/shrines/:id/pray', (req, res) => {
   const shrine = shrines.find(s => s.id === id);
   if (!shrine) return res.status(404).json({ error: 'Not found' });
   shrine.count += 1;
-  addLog(`${shrine.name}を参拝しました`);
+  addLog(`<shrine:${shrine.name}>を参拝しました`);
   res.json({ success: true, count: shrine.count });
 });
 
@@ -72,7 +72,7 @@ app.post('/shrines/:id/remote-pray', (req, res) => {
   }
   lastRemotePray = now;
   shrine.count += 1;
-  addLog(`${shrine.name}を遥拝しました`);
+  addLog(`<shrine:${shrine.name}>を遥拝しました`);
   res.json({ success: true, count: shrine.count });
 });
 
@@ -81,5 +81,6 @@ app.get('/logs', (req, res) => {
 });
 
 app.listen(port, () => {
+  addLog('システム: サーバーを起動しました', 'system');
   console.log(`Server listening on port ${port}`);
 });

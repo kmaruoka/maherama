@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.log-pane {
+  position: fixed;
+  bottom: 3rem;
+  left: 0;
+  right: 0;
+  max-height: 10rem;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 0.875rem;
+  z-index: 1100;
+}
+
+.log-shrine {
+  color: #f97316; /* orange-400 */
+}
+
+.log-user {
+  color: #0ea5e9; /* sky-400 */
+}
+
+.log-region {
+  color: #84cc16; /* lime-500 */
+}
+
+.log-system {
+  color: #fde047; /* yellow-300 */
+}
