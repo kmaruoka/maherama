@@ -30,16 +30,27 @@ app.get('/shrines', async (req, res) => {
         name: true,
         lat: true,
         lng: true,
-        count: true,
         registered_at: true
       },
       orderBy: {
         id: 'asc'
       }
     });
-    
-    const formattedShrines = shrines.map(shrine => ({
-      ...shrine,
+
+    const shrineCounts = await prisma.shrinePrayStats.groupBy({
+      by: ['shrine_id'],
+      _sum: { count: true }
+    });
+    const countMap = Object.fromEntries(
+      shrineCounts.map((c) => [c.shrine_id, c._sum.count || 0])
+    );
+
+    const formattedShrines = shrines.map((shrine) => ({
+      id: shrine.id,
+      name: shrine.name,
+      lat: shrine.lat,
+      lng: shrine.lng,
+      count: countMap[shrine.id] || 0,
       registeredAt: shrine.registered_at
     }));
     
@@ -60,10 +71,15 @@ app.get('/shrines/:id', async (req, res) => {
         name: true,
         lat: true,
         lng: true,
-        count: true,
         registered_at: true
       }
     });
+
+    const countData = await prisma.shrinePrayStats.aggregate({
+      where: { shrine_id: id },
+      _sum: { count: true }
+    });
+    const totalCount = countData._sum.count || 0;
     
     if (!shrine) {
       return res.status(404).json({ error: 'Not found' });
@@ -71,6 +87,7 @@ app.get('/shrines/:id', async (req, res) => {
     
     const formattedShrine = {
       ...shrine,
+      count: totalCount,
       registeredAt: shrine.registered_at
     };
     
@@ -152,6 +169,76 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
     res.json({ success: true, count: updatedShrine.count });
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/dieties', async (req, res) => {
+  try {
+    const dieties = await prisma.diety.findMany({
+      select: {
+        id: true,
+        name: true,
+        registered_at: true
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
+
+    const dietyCounts = await prisma.dietyPrayStats.groupBy({
+      by: ['diety_id'],
+      _sum: { count: true }
+    });
+    const countMap = Object.fromEntries(
+      dietyCounts.map((c) => [c.diety_id, c._sum.count || 0])
+    );
+
+    const formatted = dieties.map((d) => ({
+      id: d.id,
+      name: d.name,
+      count: countMap[d.id] || 0,
+      registeredAt: d.registered_at
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching dieties:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/dieties/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const diety = await prisma.diety.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        registered_at: true
+      }
+    });
+
+    const countData = await prisma.dietyPrayStats.aggregate({
+      where: { diety_id: id },
+      _sum: { count: true }
+    });
+    const totalCount = countData._sum.count || 0;
+
+    if (!diety) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const formatted = {
+      ...diety,
+      count: totalCount,
+      registeredAt: diety.registered_at
+    };
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching diety:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

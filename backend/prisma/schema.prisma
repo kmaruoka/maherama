@@ -35,6 +35,7 @@ model Diety {
   name         String
   kana         String?
   description  String?
+  registered_at DateTime      @default(now())
   shrine_dieties ShrineDiety[]
   diety_prays  DietyPray[]
   diety_pray_stats DietyPrayStats[]
