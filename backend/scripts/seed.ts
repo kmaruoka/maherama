@@ -34,24 +34,28 @@ async function main() {
     // 必要に応じて追加
   ];
 
-  const enrichedData: Array<{
-    id: number;
-    name: string;
-    kana: string;
-    location: string;
-    lat: number;
-    lng: number;
-  }> = [];
+  const enrichedData = [];
 
   for (const item of rawData) {
-    console.log(`Geocoding: ${item.location}`);
-    const { lat, lng } = await geocode(item.location);
-    enrichedData.push({ ...item, lat, lng });
-    await sleep(1100); // OpenCage制限対策
+    try {
+      console.log(`Geocoding: ${item.location}`);
+      const { lat, lng } = await geocode(item.location);
+      enrichedData.push({ ...item, lat, lng });
+    } catch (e) {
+      console.warn(`⚠️ スキップ: ${item.location} - ${(e as Error).message}`);
+    }
+    await sleep(1100); // APIレート制限対策
   }
 
-  await prisma.shrine.createMany({ data: enrichedData });
-  console.log('登録完了');
+  if (enrichedData.length > 0) {
+    await prisma.shrine.createMany({
+      data: enrichedData,
+      skipDuplicates: true, // 既に存在する主キー（id）はスキップ
+    });
+    console.log('登録完了');
+  } else {
+    console.log('登録対象なし');
+  }
 }
 
 main()
