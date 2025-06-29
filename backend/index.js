@@ -177,6 +177,81 @@ app.get('/logs', async (req, res) => {
   }
 });
 
+app.get('/users/:id', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  const viewerId = req.query.viewerId ? parseInt(req.query.viewerId, 10) : null;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true },
+    });
+    if (!user) return res.status(404).json({ error: 'Not found' });
+
+    const followingCount = await prisma.follow.count({ where: { follower_id: userId } });
+    const followerCount = await prisma.follow.count({ where: { following_id: userId } });
+
+    const shrineStats = await prisma.shrinePrayStats.findMany({
+      where: { user_id: userId },
+      orderBy: { count: 'desc' },
+      include: { shrine: { select: { id: true, name: true } } },
+      take: 5,
+    });
+    const dietyStats = await prisma.dietyPrayStats.findMany({
+      where: { user_id: userId },
+      orderBy: { count: 'desc' },
+      include: { diety: { select: { id: true, name: true } } },
+      take: 5,
+    });
+
+    let isFollowing = false;
+    if (viewerId) {
+      const rel = await prisma.follow.findUnique({
+        where: {
+          follower_id_following_id: { follower_id: viewerId, following_id: userId },
+        },
+      });
+      isFollowing = !!rel;
+    }
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      followingCount,
+      followerCount,
+      topShrines: shrineStats.map((s) => ({ id: s.shrine.id, name: s.shrine.name, count: s.count })),
+      topDieties: dietyStats.map((d) => ({ id: d.diety.id, name: d.diety.name, count: d.count })),
+      isFollowing,
+    });
+  } catch (err) {
+    console.error('Error fetching user:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/follows', async (req, res) => {
+  const { followerId, followingId } = req.body;
+  try {
+    await prisma.follow.create({ data: { follower_id: followerId, following_id: followingId } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error follow:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.delete('/follows', async (req, res) => {
+  const { followerId, followingId } = req.body;
+  try {
+    await prisma.follow.delete({
+      where: { follower_id_following_id: { follower_id: followerId, following_id: followingId } },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error unfollow:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 app.get('/user-rankings', async (req, res) => {
   try {
     const rankings = await prisma.shrinePrayStats.groupBy({
