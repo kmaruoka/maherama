@@ -52,8 +52,7 @@ npm start
 ```bash
 cd frontend
 npm install
-# .envファイルを作成し、PORT=3000を追加
-echo "PORT=3000" > .env
+cp .env.example .env
 npm run dev
 ```
 
