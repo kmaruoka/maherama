@@ -39,16 +39,34 @@ export default function CustomLogLine({ log }: { log: LogItem }) {
           );
         }
         if (content.startsWith('shrine:')) {
-          const info = content.slice(7);
-          const [id, ...rest] = info.split(':');
-          const name = rest.length > 0 ? rest.join(':') : id;
-          return rest.length > 0 ? (
-            <CustomLink key={idx} to={`/shrines/${id}`} className={cls}>
-              {'<'}{name}{'>'}
-            </CustomLink>
-          ) : (
+          const inner = content.slice(7);
+          const [id, name] = inner.split(':');
+          if (id && name) {
+            return (
+              <CustomLink key={idx} to={`/shrines/${id}`} className={cls}>
+                {'<'}{name}{'>'}
+              </CustomLink>
+            );
+          }
+          return (
             <CustomText key={idx} className={cls}>
-              {'<'}{name}{'>'}
+              {'<'}{inner}{'>'}
+            </CustomText>
+          );
+        }
+        if (content.startsWith('diety:')) {
+          const inner = content.slice(6);
+          const [id, name] = inner.split(':');
+          if (id && name) {
+            return (
+              <CustomLink key={idx} to={`/dieties/${id}`} className={cls}>
+                {'<'}{name}{'>'}
+              </CustomLink>
+            );
+          }
+          return (
+            <CustomText key={idx} className={cls}>
+              {'<'}{inner}{'>'}
             </CustomText>
           );
         }
