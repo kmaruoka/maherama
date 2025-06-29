@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 const API_PORT = import.meta.env.VITE_API_PORT || import.meta.env.PORT || '3000';
@@ -7,12 +8,11 @@ interface Shrine {
   id: number;
   name: string;
   kana?: string;
-  count: number;
-  registeredAt: string;
+  location: string;
   lat: number;
   lng: number;
-  address?: string;
-  location?: string;
+  count: number;
+  registeredAt: string;
   thumbnailUrl?: string;
   thumbnailBy?: string;
   founded?: string;
@@ -21,7 +21,7 @@ interface Shrine {
   description?: string;
 }
 
-export default function ShrinePage({ id }: { id: number }) {
+export default function ShrinePage({ id, onShowDiety }: { id: number; onShowDiety?: (id: number) => void }) {
   const { data } = useQuery<Shrine | null>({
     queryKey: ['shrine', id],
     enabled: !!id,
@@ -65,7 +65,7 @@ export default function ShrinePage({ id }: { id: number }) {
         <div className="font-bold">祭神</div>
         <ul className="list-disc ml-6">
           {dietyList.map(d => (
-            <li key={d.id} className="text-blue-300 underline cursor-pointer">{d.name}</li>
+            <li key={d.id} className="text-blue-300 underline cursor-pointer" onClick={() => onShowDiety && onShowDiety(d.id)}>{d.name}</li>
           ))}
         </ul>
       </div>

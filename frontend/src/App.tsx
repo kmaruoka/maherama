@@ -37,8 +37,8 @@ function App() {
         {modal && (
           <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setModal(null)}>
             <div className="bg-white p-4 rounded shadow-lg min-w-[300px] max-w-lg" onClick={e => e.stopPropagation()}>
-              {modal.type === 'shrine' && <ShrinePage id={modal.id} />}
-              {modal.type === 'diety' && <DietyPage id={modal.id} />}
+              {modal.type === 'shrine' && <ShrinePage id={modal.id} onShowDiety={id => setModal({ type: 'diety', id })} />}
+              {modal.type === 'diety' && <DietyPage id={modal.id} onShowShrine={id => setModal({ type: 'shrine', id })} />}
               <button className="mt-4 px-2 py-1 bg-gray-400 text-white rounded" onClick={() => setModal(null)}>閉じる</button>
             </div>
           </div>

@@ -71,7 +71,6 @@ app.get('/shrines/:id', async (req, res) => {
         name: true,
         kana: true,
         location: true,
-        address: true,
         lat: true,
         lng: true,
         registered_at: true,
@@ -80,7 +79,14 @@ app.get('/shrines/:id', async (req, res) => {
         founded: true,
         history: true,
         festivals: true,
-        description: true
+        description: true,
+        shrine_dieties: {
+          select: {
+            diety: {
+              select: { id: true, name: true, kana: true }
+            }
+          }
+        }
       }
     });
 
@@ -97,7 +103,8 @@ app.get('/shrines/:id', async (req, res) => {
     const formattedShrine = {
       ...shrine,
       count: totalCount,
-      registeredAt: shrine.registered_at
+      registeredAt: shrine.registered_at,
+      dieties: shrine.shrine_dieties.map(sd => sd.diety)
     };
     
     res.json(formattedShrine);
@@ -112,21 +119,43 @@ app.post('/shrines/:id/pray', async (req, res) => {
   try {
     const shrine = await prisma.shrine.findUnique({
       where: { id },
-      select: { name: true, count: true }
+      select: { name: true }
     });
     
     if (!shrine) {
       return res.status(404).json({ error: 'Not found' });
     }
     
-    const updatedShrine = await prisma.shrine.update({
-      where: { id },
-      data: { count: shrine.count + 1 },
-      select: { count: true }
+    // ShrinePrayStatsテーブルに参拝記録を追加（仮のユーザーID: 1）
+    const userId = 1; // 仮のユーザーID
+    const existingStats = await prisma.shrinePrayStats.findFirst({
+      where: { shrine_id: id, user_id: userId }
+    });
+    
+    if (existingStats) {
+      await prisma.shrinePrayStats.update({
+        where: { id: existingStats.id },
+        data: { count: existingStats.count + 1 }
+      });
+    } else {
+      await prisma.shrinePrayStats.create({
+        data: {
+          shrine_id: id,
+          user_id: userId,
+          count: 1,
+          rank: 1
+        }
+      });
+    }
+    
+    // 更新後の総参拝数を取得
+    const totalCount = await prisma.shrinePrayStats.aggregate({
+      where: { shrine_id: id },
+      _sum: { count: true }
     });
     
     await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
-    res.json({ success: true, count: updatedShrine.count });
+    res.json({ success: true, count: totalCount._sum.count || 0 });
   } catch (err) {
     console.error('Error praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
@@ -138,7 +167,7 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
   try {
     const shrine = await prisma.shrine.findUnique({
       where: { id },
-      select: { name: true, count: true }
+      select: { name: true }
     });
     
     if (!shrine) {
@@ -168,14 +197,37 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
     }
     
     lastRemotePray = now;
-    const updatedShrine = await prisma.shrine.update({
-      where: { id },
-      data: { count: shrine.count + 1 },
-      select: { count: true }
+    
+    // ShrinePrayStatsテーブルに遥拝記録を追加（仮のユーザーID: 1）
+    const userId = 1; // 仮のユーザーID
+    const existingStats = await prisma.shrinePrayStats.findFirst({
+      where: { shrine_id: id, user_id: userId }
+    });
+    
+    if (existingStats) {
+      await prisma.shrinePrayStats.update({
+        where: { id: existingStats.id },
+        data: { count: existingStats.count + 1 }
+      });
+    } else {
+      await prisma.shrinePrayStats.create({
+        data: {
+          shrine_id: id,
+          user_id: userId,
+          count: 1,
+          rank: 1
+        }
+      });
+    }
+    
+    // 更新後の総参拝数を取得
+    const totalCount = await prisma.shrinePrayStats.aggregate({
+      where: { shrine_id: id },
+      _sum: { count: true }
     });
     
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
-    res.json({ success: true, count: updatedShrine.count });
+    res.json({ success: true, count: totalCount._sum.count || 0 });
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
@@ -225,7 +277,16 @@ app.get('/dieties/:id', async (req, res) => {
       select: {
         id: true,
         name: true,
-        registered_at: true
+        kana: true,
+        description: true,
+        registered_at: true,
+        shrine_dieties: {
+          select: {
+            shrine: {
+              select: { id: true, name: true, kana: true }
+            }
+          }
+        }
       }
     });
 
@@ -242,7 +303,8 @@ app.get('/dieties/:id', async (req, res) => {
     const formatted = {
       ...diety,
       count: totalCount,
-      registeredAt: diety.registered_at
+      registeredAt: diety.registered_at,
+      shrines: diety.shrine_dieties.map(sd => sd.shrine)
     };
 
     res.json(formatted);
@@ -375,10 +437,14 @@ app.get('/user-rankings', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  addLog('システム: サーバーを起動しました', 'system');
-  console.log(`Server listening on port ${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    addLog('システム: サーバーを起動しました', 'system');
+    console.log(`Server listening on port ${port}`);
+  });
+}
+
+module.exports = app;
 
 const shutdown = async () => {
   await prisma.$disconnect();

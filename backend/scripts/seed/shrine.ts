@@ -2,16 +2,16 @@ import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 
 // OpenCage APIで住所から座標を取得
-async function geocode(address: string): Promise<{ lat: number; lng: number }> {
+async function geocode(location: string): Promise<{ lat: number; lng: number }> {
   const res = await axios.get('https://api.opencagedata.com/geocode/v1/json', {
     params: {
       key: 'bb9388bfa20f4f7c80c37c54d8627615',
-      q: address,
+      q: location,
       language: 'ja',
     },
   });
   const result = res.data.results[0];
-  if (!result) throw new Error(`住所に対する座標が見つかりません: ${address}`);
+  if (!result) throw new Error(`住所に対する座標が見つかりません: ${location}`);
   return {
     lat: result.geometry.lat,
     lng: result.geometry.lng,

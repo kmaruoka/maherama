@@ -20,7 +20,6 @@ model Shrine {
   location      String        // 所在地
   lat           Float         // 緯度
   lng           Float         // 経度
-  count         Int           @default(0)
   registered_at DateTime      @default(now())
   shrine_dieties ShrineDiety[]
   shrine_prays  ShrinePray[]

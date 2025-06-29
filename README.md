@@ -28,6 +28,20 @@ npm install
 npm run dev
 ```
 
+## テスト実行
+
+### バックエンドAPIテスト
+```bash
+cd backend
+npm test
+```
+
+テスト内容：
+- `/user-rankings` APIの正常系テスト
+- `/shrines` APIの正常系テスト  
+- `/dieties` APIの正常系テスト
+- `/users/:id` APIの正常系・異常系テスト
+
 - バックエンドはポート3000で動作します。フロントエンドからはこのポートにアクセスします。
 - アプリを起動すると下部ナビゲーションから地図、図鑑、ユーザー、設定の各ページへ移動できます。
 - 図鑑からは神社情報ページ（ShrinePage）や神情報ページ（DietyPage）に遷移できます。

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "db-seed": "node scripts/seedTestData.js",
     "start": "node index.js"
   },
@@ -19,6 +19,10 @@
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
     "prisma": "^6.10.1"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^6.3.0"
   },
   "prisma": {
     "seed": "npx tsx scripts/seed/main.ts"
