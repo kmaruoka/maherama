@@ -8,6 +8,7 @@ interface Shrine {
   lat: number;
   lng: number;
   count: number;
+  registeredAt: string;
 }
 
 export default function MapPage() {
@@ -34,7 +35,11 @@ export default function MapPage() {
   });
 
   return (
-    <MapContainer center={[35.68, 139.76] as [number, number]} zoom={5} style={{ height: '100vh' }}>
+    <MapContainer
+      center={[35.68, 139.76] as [number, number]}
+      zoom={5}
+      style={{ height: 'calc(100vh - 3rem)' }}
+    >
       <TileLayer
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
