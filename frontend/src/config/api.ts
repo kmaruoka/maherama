@@ -1,3 +1,5 @@
+console.log('import.meta.env', import.meta.env);
+
 // API_BASEの設定
 const getApiBase = () => {
   // 開発環境
@@ -11,4 +13,6 @@ const getApiBase = () => {
   return `http://${window.location.hostname}:${port}`;
 };
 
-export const API_BASE = getApiBase(); 
+export const API_BASE = getApiBase();
+
+export const MAPBOX_API_KEY = import.meta.env.VITE_MAPBOX_API_KEY;

@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import '../../setupLeaflet';
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../../config/api';
+import { API_BASE, MAPBOX_API_KEY } from '../../config/api';
 import ShrineMarkerPane, { type Shrine } from '../organisms/ShrineMarkerPane';
 import LogPane from '../organisms/LogPane';
 import type { LogItem } from '../molecules/CustomLogLine';
-import L from 'leaflet';
+import L, { Map as LeafletMap } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 function createShrineIcon(thumbnailUrl?: string) {
   return L.icon({
@@ -38,6 +39,18 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     refetchInterval: 5000, // 5秒ごとに更新
     retry: 3,
   });
+
+  // localStorageからcenter/zoomを復元
+  const defaultCenter: [number, number] = [35.68, 139.76];
+  const defaultZoom = 5;
+  const savedCenter = localStorage.getItem('mapCenter');
+  const savedZoom = localStorage.getItem('mapZoom');
+  const [center, setCenter] = useState<[number, number]>(
+    savedCenter ? JSON.parse(savedCenter) : defaultCenter
+  );
+  const [zoom, setZoom] = useState<number>(
+    savedZoom ? Number(savedZoom) : defaultZoom
+  );
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition((pos) => {
@@ -81,13 +94,29 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   return (
     <>
       <MapContainer
-        center={[35.68, 139.76] as [number, number]}
-        zoom={5}
+        center={center}
+        zoom={zoom}
         style={{ height: 'calc(100vh - 3rem)' }}
-        whenCreated={(map) => {
-          mapRef.current = map;
+        // @ts-expect-error react-leafletのwhenReady型不一致回避
+        whenReady={({ target }: { target: LeafletMap }) => {
+          mapRef.current = target;
+          // center/zoom変更時にlocalStorageへ保存
+          target.on('moveend', () => {
+            const c = target.getCenter();
+            setCenter([c.lat, c.lng]);
+            localStorage.setItem('mapCenter', JSON.stringify([c.lat, c.lng]));
+            localStorage.setItem('mapZoom', String(target.getZoom()));
+            setZoom(target.getZoom());
+          });
+          target.on('zoomend', () => {
+            const c = target.getCenter();
+            setCenter([c.lat, c.lng]);
+            localStorage.setItem('mapCenter', JSON.stringify([c.lat, c.lng]));
+            localStorage.setItem('mapZoom', String(target.getZoom()));
+            setZoom(target.getZoom());
+          });
         }}
-        onmoveend={(e) => {
+        onmoveend={(e: { target: LeafletMap }) => {
           if (debugMode) {
             const c = e.target.getCenter();
             setPosition([c.lat, c.lng]);
@@ -95,8 +124,10 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         }}
       >
         <TileLayer
-          attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors &copy; <a href='https://carto.com/attributions'>CARTO</a>"
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a>'
+          url={`https://api.mapbox.com/styles/v1/kmigosso/cmcjan1td000401ridva77z79/tiles/512/{z}/{x}/{y}@2x?access_token=${MAPBOX_API_KEY}`}
+          tileSize={512}
+          zoomOffset={-1}
         />
         {position && (
           <Circle center={position} radius={100} pathOptions={{ color: 'blue' }} />
