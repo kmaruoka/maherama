@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 .log-pane {
   position: fixed;
   bottom: 3rem;
@@ -9,16 +14,16 @@
   right: 0;
   max-height: 12rem;
   overflow-y: auto;
-  background-color: rgba(0, 0, 0, 0.9);
-  color: white;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #222;
   font-size: 0.875rem;
   z-index: 9999;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
   transition: max-height 0.3s ease;
 }
 
 .log-pane * {
-  color: white;
+  color: #222;
 }
 
 .log-pane-collapsed {
