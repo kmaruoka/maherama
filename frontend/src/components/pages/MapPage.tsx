@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import '../../setupLeaflet';
 import { useQuery } from '@tanstack/react-query';
@@ -21,7 +22,7 @@ function createShrineIcon(thumbnailUrl?: string) {
 
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const [position, setPosition] = useState<[number, number] | null>(null);
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
   const mapRef = useRef<L.Map | null>(null);
   const defaultCenter: [number, number] = [35.68, 139.76];
   const defaultZoom = 17;
@@ -53,15 +54,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     });
   }, []);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('debugMode');
-    if (stored) setDebugMode(stored === 'true');
-    const handler = (e: StorageEvent) => {
-      if (e.key === 'debugMode') setDebugMode(e.newValue === 'true');
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, []);
 
   // GPS追従（通常モード）
   useEffect(() => {
