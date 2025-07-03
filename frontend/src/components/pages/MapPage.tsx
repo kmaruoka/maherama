@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import useCurrentPosition from '../../hooks/useCurrentPosition';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import '../../setupLeaflet';
 import { useQuery } from '@tanstack/react-query';
@@ -20,7 +21,7 @@ function createShrineIcon(thumbnailUrl?: string) {
 }
 
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
-  const [position, setPosition] = useState<[number, number] | null>(null);
+  const position = useCurrentPosition();
   const [debugMode, setDebugMode] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
   const defaultCenter: [number, number] = [35.68, 139.76];
@@ -47,11 +48,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     },
   });
 
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      setPosition([pos.coords.latitude, pos.coords.longitude]);
-    });
-  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem('debugMode');
