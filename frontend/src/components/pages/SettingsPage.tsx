@@ -1,25 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
 
 export default function SettingsPage() {
-  const [name, setName] = useState('');
-  const [userId, setUserId] = useState<number | null>(null);
+  const [name, setName] = useLocalStorageState('userName', '');
+  const [userId, setUserId] = useLocalStorageState<number | null>('userId', null);
   const [input, setInput] = useState('');
   const [idInput, setIdInput] = useState('');
-  const [debugMode, setDebugMode] = useState(false);
-
-  useEffect(() => {
-    const storedName = localStorage.getItem('userName');
-    const storedId = localStorage.getItem('userId');
-    const storedDebug = localStorage.getItem('debugMode');
-    if (storedName) setName(storedName);
-    if (storedId) setUserId(Number(storedId));
-    if (storedDebug) setDebugMode(storedDebug === 'true');
-  }, []);
+  const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
 
   const handleLogin = () => {
     if (input.trim() && idInput.trim()) {
-      localStorage.setItem('userName', input.trim());
-      localStorage.setItem('userId', idInput.trim());
       setName(input.trim());
       setUserId(Number(idInput));
       setInput('');
@@ -28,8 +18,6 @@ export default function SettingsPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userId');
     setName('');
     setUserId(null);
   };
@@ -37,7 +25,6 @@ export default function SettingsPage() {
   const toggleDebugMode = () => {
     const newValue = !debugMode;
     setDebugMode(newValue);
-    localStorage.setItem('debugMode', String(newValue));
   };
 
   if (!name) {
