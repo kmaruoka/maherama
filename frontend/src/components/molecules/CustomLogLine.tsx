@@ -80,7 +80,7 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
   }
 
   return (
-    <div className="px-2 py-1 border-b border-gray-600"> 
+    <div className="px-2 py-1"> 
       {formatTime(log.time)} {renderMessage(log.message)}
     </div>
   );
