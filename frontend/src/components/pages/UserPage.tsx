@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
 import RankingPane from '../organisms/RankingPane';
@@ -19,15 +20,10 @@ interface UserPageProps {
 }
 
 export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProps) {
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [currentUserId] = useLocalStorageState<number | null>('userId', null);
   const [shrinePeriod, setShrinePeriod] = useState<Period>('all');
   const [dietyPeriod, setDietyPeriod] = useState<Period>('all');
   const [userRankingPeriod, setUserRankingPeriod] = useState<Period>('all');
-
-  useEffect(() => {
-    const storedId = localStorage.getItem('userId');
-    if (storedId) setCurrentUserId(Number(storedId));
-  }, []);
 
   const displayId = id ?? currentUserId;
 
