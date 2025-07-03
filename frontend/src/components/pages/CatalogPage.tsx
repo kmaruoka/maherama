@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import CustomLink from '../atoms/CustomLink';
 import CustomText from '../atoms/CustomText';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
-import { API_BASE } from '../../config/api';
+import useShrineList from '../../hooks/useShrineList';
+import useDietyList from '../../hooks/useDietyList';
 
 interface Item {
   id: number;
@@ -17,21 +17,9 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   const [sort, setSort] = useState('registeredAt-desc');
   const [style, setStyle] = useState<'card' | 'list'>('card');
 
-  const { data: shrines = [] } = useQuery<Item[]>({
-    queryKey: ['shrines'],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/shrines`);
-      return res.json();
-    },
-  });
+  const { data: shrines = [] } = useShrineList();
 
-  const { data: dieties = [] } = useQuery<Item[]>({
-    queryKey: ['dieties'],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/dieties`);
-      return res.json();
-    },
-  });
+  const { data: dieties = [] } = useDietyList();
 
   const items = tab === 'shrine' ? shrines : dieties;
 

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import CustomLink from '../atoms/CustomLink';
 import CustomText from '../atoms/CustomText';
-import { API_BASE } from '../../config/api';
+import useShrineList from '../../hooks/useShrineList';
 
 interface Shrine {
   id: number;
@@ -13,13 +12,7 @@ interface Shrine {
 
 export default function ShrineListPage() {
   const [sort, setSort] = useState('registeredAt-desc');
-  const { data: shrines = [] } = useQuery<Shrine[]>({
-    queryKey: ['shrines'],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/shrines`);
-      return res.json();
-    },
-  });
+  const { data: shrines = [] } = useShrineList();
 
   const sorted = [...shrines].sort((a, b) => {
     const [key, dir] = sort.split('-');

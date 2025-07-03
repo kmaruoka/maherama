@@ -3,8 +3,9 @@ import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import '../../setupLeaflet';
-import { useQuery } from '@tanstack/react-query';
-import { API_BASE, MAPBOX_API_KEY } from '../../config/api';
+import { MAPBOX_API_KEY } from '../../config/api';
+import useLogs from '../../hooks/useLogs';
+import useAllShrines from '../../hooks/useAllShrines';
 import ShrineMarkerPane, { type Shrine } from '../organisms/ShrineMarkerPane';
 import LogPane from '../organisms/LogPane';
 import type { LogItem } from '../molecules/CustomLogLine';
@@ -30,24 +31,14 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
   const [zoom, setZoom] = useState<number>(defaultZoom);
 
-  const { data: logs = [], refetch: refetchLogs, isLoading: logsLoading, error: logsError } = useQuery<LogItem[]>({
-    queryKey: ['logs'],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/logs`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return res.json();
-    },
-    refetchInterval: 5000,
-    retry: 3,
-  });
+  const {
+    data: logs = [],
+    refetch: refetchLogs,
+    isLoading: logsLoading,
+    error: logsError,
+  } = useLogs();
 
-  const { data: shrines = [] } = useQuery<Shrine[]>({
-    queryKey: ['shrines'],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/shrines/all`);
-      return res.json();
-    },
-  });
+  const { data: shrines = [] } = useAllShrines();
 
 
 

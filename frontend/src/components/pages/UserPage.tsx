@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
 import RankingPane from '../organisms/RankingPane';
 import type { Period, RankingItem } from '../organisms/RankingPane';
+import useUserInfo from '../../hooks/useUserInfo';
+import useUserShrineRankings from '../../hooks/useUserShrineRankings';
+import useUserDietyRankings from '../../hooks/useUserDietyRankings';
+import useUserRankings from '../../hooks/useUserRankings';
 
 interface UserInfo {
   id: number;
@@ -27,59 +30,17 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
 
   const displayId = id ?? currentUserId;
 
-  const { data: userInfo, isLoading, refetch } = useQuery({
-    queryKey: ['user', displayId, currentUserId],
-    queryFn: async () => {
-      if (!displayId) return null;
-      const viewerId = currentUserId || displayId;
-      const res = await fetch(`${API_BASE}/users/${displayId}?viewerId=${viewerId}`);
-      if (!res.ok) throw new Error('ユーザー情報の取得に失敗しました');
-      return res.json() as Promise<UserInfo>;
-    },
-    enabled: !!displayId
-  });
+  const {
+    data: userInfo,
+    isLoading,
+    refetch,
+  } = useUserInfo(displayId ?? undefined, currentUserId);
 
-  const { data: shrineRankings = [] } = useQuery<RankingItem[]>({
-    queryKey: ['user-shrine-rankings', displayId, shrinePeriod],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/users/${displayId}/shrine-rankings?period=${shrinePeriod}`);
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: !!displayId
-  });
+  const { data: shrineRankings = [] } = useUserShrineRankings(displayId, shrinePeriod);
 
-  const { data: dietyRankings = [] } = useQuery<RankingItem[]>({
-    queryKey: ['user-diety-rankings', displayId, dietyPeriod],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/users/${displayId}/diety-rankings?period=${dietyPeriod}`);
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: !!displayId
-  });
+  const { data: dietyRankings = [] } = useUserDietyRankings(displayId, dietyPeriod);
 
-  const userRankingApiMap: Record<Period, string> = {
-    all: '/user-rankings',
-    yearly: '/user-rankings-yearly',
-    monthly: '/user-rankings-monthly',
-    weekly: '/user-rankings-weekly',
-  };
-
-  const { data: userRankings = [] } = useQuery<RankingItem[]>({
-    queryKey: ['user-rankings', userRankingPeriod],
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}${userRankingApiMap[userRankingPeriod]}`);
-      if (!res.ok) return [];
-      const arr = await res.json();
-      return arr.map((item: any) => ({
-        id: item.userId,
-        name: item.userName,
-        count: item.count,
-        rank: item.rank
-      }));
-    },
-  });
+  const { data: userRankings = [] } = useUserRankings(userRankingPeriod);
 
   const handleFollow = async () => {
     if (!currentUserId || !userInfo) return;

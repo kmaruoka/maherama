@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../../config/api';
+import useShrineDetail from '../../hooks/useShrineDetail';
+import useShrineRankings from '../../hooks/useShrineRankings';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from '../organisms/RankingPane';
 import type { Period, RankingItem } from '../organisms/RankingPane';
@@ -26,25 +26,9 @@ interface Shrine {
 
 export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
-  const { data } = useQuery<Shrine | null>({
-    queryKey: ['shrine', id],
-    enabled: !!id,
-    queryFn: async () => {
-      const res = await fetch(`${API_BASE}/shrines/${id}`);
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
+  const { data } = useShrineDetail(id);
 
-  const { data: rankings = [] } = useQuery<RankingItem[]>({
-    queryKey: ['shrine-rankings-modal', id, selectedPeriod],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE}/shrines/${id}/rankings?period=${selectedPeriod}`);
-      if (!response.ok) throw new Error('ランキング取得に失敗しました');
-      return response.json();
-    },
-    enabled: !!id,
-  });
+  const { data: rankings = [] } = useShrineRankings(id, selectedPeriod);
 
   const periods = [
     { key: 'all', label: '総合' },
