@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../../config/api';
+import useDietyDetail from '../../hooks/useDietyDetail';
+import useDietyRankings from '../../hooks/useDietyRankings';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from '../organisms/RankingPane';
 import type { Period, RankingItem } from '../organisms/RankingPane';
@@ -23,27 +23,9 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
   // デバッグ用ログ
   console.log('DietyPage - ID from params:', idFromParams, 'Type:', typeof idFromParams);
 
-  const { data: diety, error: dietyError } = useQuery<Diety>({
-    queryKey: ['diety', idFromParams],
-    queryFn: async () => {
-      console.log('Fetching diety with ID:', idFromParams);
-      const response = await fetch(`${API_BASE}/dieties/${idFromParams}`);
-      if (!response.ok) throw new Error('神様情報取得に失敗しました');
-      return response.json();
-    },
-    enabled: !!idFromParams && idFromParams !== 'undefined' && idFromParams !== '',
-  });
+  const { data: diety, error: dietyError } = useDietyDetail(idFromParams);
 
-  const { data: rankings = [] } = useQuery<RankingItem[]>({
-    queryKey: ['diety-rankings-modal', idFromParams, selectedPeriod],
-    queryFn: async () => {
-      console.log('Fetching rankings with ID:', idFromParams, 'Period:', selectedPeriod);
-      const response = await fetch(`${API_BASE}/dieties/${idFromParams}/rankings?period=${selectedPeriod}`);
-      if (!response.ok) throw new Error('ランキング取得に失敗しました');
-      return response.json();
-    },
-    enabled: !!idFromParams && idFromParams !== 'undefined' && idFromParams !== '',
-  });
+  const { data: rankings = [] } = useDietyRankings(idFromParams!, selectedPeriod);
 
   const periods = [
     { key: 'all', label: '総合' },

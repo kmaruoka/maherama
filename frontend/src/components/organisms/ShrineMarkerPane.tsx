@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CustomText from '../atoms/CustomText';
 import { API_BASE } from '../../config/api';
 import CustomLink from '../atoms/CustomLink';
+import useShrineRankings from '../../hooks/useShrineRankings';
 
 export interface Shrine {
   id: number;
@@ -32,14 +33,7 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
   const queryClient = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'yearly' | 'monthly' | 'weekly'>('all');
   
-  const { data: rankings = [] } = useQuery<RankingItem[]>({
-    queryKey: ['shrine-rankings-popup', shrine.id, selectedPeriod],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE}/shrines/${shrine.id}/rankings?period=${selectedPeriod}`);
-      if (!response.ok) throw new Error('ランキング取得に失敗しました');
-      return response.json();
-    },
-  });
+  const { data: rankings = [] } = useShrineRankings(shrine.id, selectedPeriod);
 
   const periods = [
     { key: 'all', label: '総合' },
