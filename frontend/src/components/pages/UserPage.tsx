@@ -14,6 +14,7 @@ interface UserInfo {
   followingCount: number;
   followerCount: number;
   isFollowing: boolean;
+  thumbnailUrl?: string;
 }
 
 interface UserPageProps {
@@ -76,30 +77,40 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
 
   return (
     <div className="modal-content">
-      <h1 className="modal-title text-2xl mb-4">
-        {userInfo.name}
-      </h1>
-
-      <div className="modal-info flex items-center gap-4">
-        <div>フォロー: {userInfo.followingCount}</div>
-        <div>フォロワー: {userInfo.followerCount}</div>
-        {currentUserId && currentUserId !== displayId && (
-          userInfo.isFollowing ? (
-            <button
-              className="px-2 py-1 bg-red-500 text-white rounded text-sm"
-              onClick={handleUnfollow}
-            >
-              フォロー解除
-            </button>
-          ) : (
-            <button
-              className="px-2 py-1 bg-green-500 text-white rounded text-sm"
-              onClick={handleFollow}
-            >
-              フォローする
-            </button>
-          )
-        )}
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="relative">
+          <img
+            src={userInfo.thumbnailUrl ? userInfo.thumbnailUrl : '/images/noimage-user.png'}
+            alt="ユーザーサムネイル"
+            className="w-24 h-24 object-contain rounded-full shadow"
+          />
+        </div>
+        <div>
+          <h1 className="modal-title text-2xl mb-4">
+            {userInfo.name}
+          </h1>
+          <div className="modal-info flex items-center gap-4">
+            <div>フォロー: {userInfo.followingCount}</div>
+            <div>フォロワー: {userInfo.followerCount}</div>
+            {currentUserId && currentUserId !== displayId && (
+              userInfo.isFollowing ? (
+                <button
+                  className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                  onClick={handleUnfollow}
+                >
+                  フォロー解除
+                </button>
+              ) : (
+                <button
+                  className="px-2 py-1 bg-green-500 text-white rounded text-sm"
+                  onClick={handleFollow}
+                >
+                  フォローする
+                </button>
+              )
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="modal-section">

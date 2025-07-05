@@ -13,6 +13,7 @@ interface Diety {
   description?: string;
   count: number;
   shrines: Array<{ id: number; name: string; kana?: string }>;
+  thumbnailUrl?: string;
 }
 
 export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
@@ -48,15 +49,17 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
 
   return (
     <div className="modal-content">
-      <div className="flex items-center space-x-4 mb-4">
-        <div className="modal-header">
+      <div className="flex items-start space-x-4 mb-4">
+        <img
+          src={diety.thumbnailUrl ? diety.thumbnailUrl : '/images/noimage-diety.png'}
+          alt="サムネイル"
+          className="w-24 h-24 object-contain rounded shadow"
+        />
+        <div>
           <div className="modal-title">{diety.name}</div>
           {diety.kana && <div className="modal-kana">{diety.kana}</div>}
+          <div className="text-xs text-gray-500 mt-2">参拝数: {diety.count}</div>
         </div>
-      </div>
-
-      <div className="modal-info">
-        <div>参拝数: <span className="font-bold">{diety.count}</span></div>
       </div>
 
       {diety.shrines.length > 0 && (

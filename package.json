@@ -5,5 +5,9 @@
     "jest": "^30.0.3",
     "supertest": "^7.1.1",
     "tsx": "^4.20.3"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.7",
+    "react-bootstrap": "^2.10.10"
   }
 }

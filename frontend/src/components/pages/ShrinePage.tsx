@@ -1,28 +1,9 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
 import useShrineDetail from '../../hooks/useShrineDetail';
 import useShrineRankings from '../../hooks/useShrineRankings';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from '../organisms/RankingPane';
-import type { Period, RankingItem } from '../organisms/RankingPane';
-
-interface Shrine {
-  id: number;
-  name: string;
-  kana?: string;
-  location: string;
-  lat: number;
-  lng: number;
-  count: number;
-  registeredAt: string;
-  thumbnailUrl?: string;
-  thumbnailBy?: string;
-  founded?: string;
-  history?: string;
-  festivals?: string;
-  description?: string;
-  dieties: Array<{ id: number; name: string; kana?: string }>;
-}
+import type { Period } from '../organisms/RankingPane';
 
 export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
@@ -30,36 +11,23 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
 
   const { data: rankings = [] } = useShrineRankings(id, selectedPeriod);
 
-  const periods = [
-    { key: 'all', label: '総合' },
-    { key: 'yearly', label: '年間' },
-    { key: 'monthly', label: '月間' },
-    { key: 'weekly', label: '週間' },
-  ];
-
   if (!data) {
     return <div className="p-4">Loading...</div>;
   }
 
   return (
     <div className="modal-content">
-      <div className="flex items-center space-x-4 mb-4">
-        {data.thumbnailUrl && (
-          <div className="relative">
-            <img src={data.thumbnailUrl} alt="サムネイル" className="w-24 h-24 object-contain rounded shadow" />
-            {data.thumbnailBy && (
-              <div className="absolute left-1 bottom-1 bg-black bg-opacity-60 text-xs text-white px-1 rounded">by {data.thumbnailBy}</div>
-            )}
-          </div>
-        )}
-        <div className="modal-header">
+      <div className="flex items-start space-x-4 mb-4">
+        <img
+          src={data.thumbnailUrl ? data.thumbnailUrl : '/images/noimage-shrine.png'}
+          alt="サムネイル"
+          className="w-24 h-24 object-contain rounded shadow"
+        />
+        <div>
           <div className="modal-title">{data.name}</div>
           {data.kana && <div className="modal-kana">{data.kana}</div>}
+          <div className="text-xs text-gray-500 mt-2">参拝数: {data.count}</div>
         </div>
-      </div>
-      
-      <div className="modal-info">
-        <div>参拝数: <span className="font-bold">{data.count}</span></div>
       </div>
       
       <div className="text-sm text-gray-300 mb-4">{data.location}</div>
