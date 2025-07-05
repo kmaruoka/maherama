@@ -7,12 +7,14 @@ import DietyPage from './components/pages/DietyPage';
 import UserPage from './components/pages/UserPage';
 import SettingsPage from './components/pages/SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
+import { useSkin } from './skins/SkinContext';
 
 type ModalType = { type: 'shrine' | 'diety' | 'user', id: number } | null;
 
 function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
   const [modal, setModal] = useState<ModalType>(null);
+  const { skin } = useSkin();
 
   // ページ切り替え用
   const renderPage = () => {
@@ -36,8 +38,23 @@ function App() {
       <div className="pb-5">
         {renderPage()}
         {modal && (
-          <Modal show onHide={() => setModal(null)} centered size="lg">
-            <Modal.Body style={{ position: 'relative' }}>
+          <Modal
+            show={modal !== null}
+            onHide={() => setModal(null)}
+            centered
+            contentClassName={undefined}
+          >
+            <Modal.Body style={{
+              position: 'relative',
+              border: `3px solid ${skin.colors.border}`,
+              boxShadow: skin.boxShadow,
+              borderRadius: skin.borderRadius,
+              background: skin.modal.background,
+              padding: skin.modal.padding,
+              maxWidth: skin.modal.maxWidth,
+              margin: '0 auto',
+              fontFamily: skin.fontFamily,
+            }}>
               <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1 }}>
                 <Button variant="light" onClick={() => setModal(null)} className="border-0">
                   <span aria-hidden="true">×</span>
