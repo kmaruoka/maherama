@@ -86,7 +86,7 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
         </div>
       </div>
       <div className="modal-info">
-        <div>参拝数: <span className="fw-bold">{shrine.count}</span></div>
+        <div className="modal-item-text">参拝数: <span className="fw-bold">{shrine.count}</span></div>
       </div>
 
       {shrine.thumbnailUrl && (

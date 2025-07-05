@@ -33,7 +33,7 @@ function App() {
       case 'catalog':
         return <CatalogPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />;
       case 'user':
-        return <UserPage />;
+        return <UserPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} />;
       case 'settings':
         return <SettingsPage />;
       default:
@@ -56,7 +56,7 @@ function App() {
           >
             <Modal.Body>
               <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1 }}>
-                <Button variant="light" onClick={() => setModal(null)} className="border-0">
+                <Button variant="light" onClick={() => setModal(null)} className="border-0 custom-close-btn">
                   <span aria-hidden="true">×</span>
                 </Button>
               </div>

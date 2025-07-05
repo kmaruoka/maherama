@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { useSkin } from '../../skins/SkinContext';
+import { skins } from '../../skins';
 
 export default function SettingsPage() {
   const [name, setName] = useLocalStorageState('userName', '');
@@ -7,6 +9,7 @@ export default function SettingsPage() {
   const [input, setInput] = useState('');
   const [idInput, setIdInput] = useState('');
   const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
+  const { skinName, setSkinName } = useSkin();
 
   const handleLogin = () => {
     if (input.trim() && idInput.trim()) {
@@ -78,6 +81,18 @@ export default function SettingsPage() {
           />
           {debugMode ? 'ON' : 'OFF'}
         </label>
+      </div>
+      <div className="d-flex align-items-center justify-content-between mt-3">
+        <span>スキン</span>
+        <select
+          className="form-select w-auto ms-2"
+          value={skinName}
+          onChange={e => setSkinName(e.target.value as keyof typeof skins)}
+        >
+          {Object.entries(skins).map(([key, skin]) => (
+            <option key={key} value={key}>{skin.name}</option>
+          ))}
+        </select>
       </div>
     </div>
   );

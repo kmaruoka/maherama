@@ -29,12 +29,17 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--color-tag-shrine-text', colors.tagShrineText);
     root.style.setProperty('--color-tag-diety-text', colors.tagDietyText);
     root.style.setProperty('--color-tag-user-text', colors.tagUserText);
+    root.style.setProperty('--color-log-text', colors.logText);
+    root.style.setProperty('--color-section', colors.section);
     root.style.setProperty('--border-radius', skin.borderRadius);
     root.style.setProperty('--font-family', skin.fontFamily);
     root.style.setProperty('--box-shadow', skin.boxShadow);
     root.style.setProperty('--modal-max-width', skin.modal.maxWidth);
     root.style.setProperty('--modal-padding', skin.modal.padding);
     root.style.setProperty('--modal-background', skin.modal.background);
+    root.style.setProperty('--color-scrollbar-thumb', colors.scrollbarThumb);
+    root.style.setProperty('--color-scrollbar-track', colors.scrollbarTrack);
+    root.style.setProperty('--color-scrollbar-thumb-hover', colors.scrollbarThumbHover);
   }, [skin]);
   return (
     <SkinContext.Provider value={{ skin, skinName, setSkinName }}>

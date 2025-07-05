@@ -27,11 +27,11 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
         <div>
           <div className="modal-title">{data.name}</div>
           {data.kana && <div className="modal-kana">{data.kana}</div>}
-          <div className="text-muted small mt-2">参拝数: {data.count}</div>
+          <div className="modal-item-text small mt-2">参拝数: {data.count}</div>
         </div>
       </div>
       
-      <div className="small text-muted mb-4">{data.location}</div>
+      <div className="small modal-item-text mb-4">{data.location}</div>
       
       {data.founded && (
         <div className="modal-section">

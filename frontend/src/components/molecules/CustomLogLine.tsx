@@ -1,5 +1,6 @@
 import CustomText from '../atoms/CustomText';
 import CustomLink from '../atoms/CustomLink';
+import { useSkin } from '../../skins/SkinContext';
 
 export interface LogItem {
   message: string;
@@ -15,6 +16,8 @@ interface CustomLogLineProps {
 }
 
 export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUser }: CustomLogLineProps) {
+  const { skin } = useSkin();
+
   function formatTime(t: string) {
     const d = new Date(t);
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -81,7 +84,8 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
 
   return (
     <div className="px-2 py-1"> 
-      {formatTime(log.time)} {renderMessage(log.message)}
+      <span style={{ color: skin.colors.logText }}>{formatTime(log.time)}</span>{' '}
+      <span style={{ color: skin.colors.logText }}>{renderMessage(log.message)}</span>
     </div>
   );
 }

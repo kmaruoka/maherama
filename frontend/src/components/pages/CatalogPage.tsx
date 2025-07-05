@@ -1,7 +1,6 @@
 import { useState } from 'react'; 
-import CustomLink from '../atoms/CustomLink';
-import CustomText from '../atoms/CustomText';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
+import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
 import useShrineList from '../../hooks/useShrineList';
 import useDietyList from '../../hooks/useDietyList';
 import Tabs from 'react-bootstrap/Tabs';
@@ -68,7 +67,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       </Tabs>
       <div className="d-flex gap-2 mb-3">
         <select
-          className="form-select"
+          className="form-select skin-select"
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
@@ -80,7 +79,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           <option value="count-asc">参拝数(少ない順)</option>
         </select>
         <select
-          className="form-select"
+          className="form-select skin-select"
           value={style}
           onChange={(e) => setStyle(e.target.value as 'card' | 'list')}
         >
@@ -95,8 +94,11 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       ) : (
         <div className="d-grid gap-2">
           {sorted.map((item) => (
-            <div key={item.id} className="border-bottom pb-1">
-              <CustomLink onClick={() => {
+            <CustomCatalogListItem
+              key={item.id}
+              name={item.name}
+              count={item.count}
+              onClick={() => {
                 if (tab === 'shrine' && onShowShrine) {
                   setTimeout(() => onShowShrine(item.id), 0);
                 } else if (tab === 'diety' && onShowDiety) {
@@ -104,9 +106,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                 } else if (onShowUser) {
                   setTimeout(() => onShowUser(item.id), 0);
                 }
-              }}>{item.name}</CustomLink>
-              <CustomText className="ms-2 small">参拝数: {item.count}</CustomText>
-            </div>
+              }}
+            />
           ))}
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import CustomLogLine, { type LogItem } from '../molecules/CustomLogLine';
+import { useSkin } from '../../skins/SkinContext';
 
 interface LogPaneProps {
   logs: LogItem[];
@@ -12,6 +13,7 @@ interface LogPaneProps {
 
 export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser }: LogPaneProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { skin } = useSkin();
 
   const handlePaneClick = (e: React.MouseEvent) => {
     // リンクやボタンがクリックされた場合は拡大・縮小しない
@@ -21,12 +23,23 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
     setIsExpanded(!isExpanded);
   };
 
+  const getLogPaneBg = () => {
+    if (skin.name === 'ダーク') return 'rgba(35,38,39,0.85)';
+    return 'rgba(255,255,255,0.7)';
+  };
+
   if (!isExpanded) {
     return (
       <div
         className={`log-pane log-pane-collapsed`}
         onClick={handlePaneClick}
-        style={{ cursor: 'pointer', paddingBottom: '2.5rem', position: 'relative', background: 'rgba(255,255,255,0.7)' }}
+        style={{
+          cursor: 'pointer',
+          paddingBottom: '2.5rem',
+          position: 'relative',
+          background: getLogPaneBg(),
+          color: '#fff',
+        }}
       >
         {loading && <div className="px-2 py-1 text-secondary">ログを読み込み中...</div>}
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
@@ -53,7 +66,8 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
           right: 0,
           bottom: '3rem',
           zIndex: 10000,
-          background: 'rgba(255,255,255,0.7)'
+          background: getLogPaneBg(),
+          color: '#fff',
         }}
         onClick={handlePaneClick}
       >

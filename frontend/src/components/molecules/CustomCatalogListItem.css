@@ -1,0 +1,6 @@
+.catalog-list-item {
+  border-bottom: 1px solid #ddd;
+}
+.catalog-list-item:last-child {
+  border-bottom: none;
+} 

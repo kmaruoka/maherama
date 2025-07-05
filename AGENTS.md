@@ -1,3 +1,11 @@
+# 実装規約
+
+- 標準的な命名スタイルを採用
+- フロントエンドのビジュアルコンポーネントはatomic designを採用
+- DBアクセスはN+1問題に注意
+- スタイルは全てスキンに定義し、ハードコーディング禁止
+
+
 # アプリケーション仕様書
 
 ## 概要
@@ -152,7 +160,7 @@
 - React Router
 - Leaflet.js（軽量でLeafletプラグインが豊富）
 - React Query（状態管理不要、キャッシュ+フェッチ一体化）
-- Tailwind CSS（MUI併用は避ける）
+- React-Bootstrap（TailWind等のライブライ併用は避ける）
 - i18next（将来的な多言語展開に備える）
 - PWA対応（Service Worker + manifest）
 
@@ -181,9 +189,3 @@
 
 ## CI/CD
 - GitHub Actions（フロント＋バック自動デプロイ）
-
-
-# 実装ガイド
-- 標準的な命名スタイルを採用
-- フロントエンドのビジュアルコンポーネントはatomic designを採用
-- DBアクセスはN+1問題に注意

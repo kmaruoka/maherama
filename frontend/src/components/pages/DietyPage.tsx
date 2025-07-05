@@ -59,7 +59,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
         <div>
           <div className="modal-title">{diety.name}</div>
           {diety.kana && <div className="modal-kana">{diety.kana}</div>}
-          <div className="text-muted small mt-2">参拝数: {diety.count}</div>
+          <div className="modal-item-text small mt-2">参拝数: {diety.count}</div>
         </div>
       </div>
 
