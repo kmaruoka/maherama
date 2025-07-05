@@ -15,7 +15,7 @@ export default function CustomImage({ src, alt = '', className = '', style = {},
       style={{
         width: '100%',
         aspectRatio,
-        background: '#222',
+        background: 'var(--color-text)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -30,7 +30,7 @@ export default function CustomImage({ src, alt = '', className = '', style = {},
           width: '100%',
           height: '100%',
           objectFit: 'contain',
-          background: '#222',
+          background: 'var(--color-text)',
           display: 'block',
         }}
       />

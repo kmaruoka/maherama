@@ -1,7 +1,33 @@
 
+:root {
+  --color-background: #f8f5e4;
+  --color-surface: #fffbe6;
+  --color-primary: #bfa14a;
+  --color-accent: #a67c00;
+  --color-text: #222;
+  --color-border: #bfa14a;
+  --color-shadow: rgba(80,60,10,0.18);
+  --color-card: #fffde7;
+  --color-tag-shrine: #fff7e6;
+  --color-tag-diety: #e8f5e9;
+  --color-tag-user: #e3f2fd;
+  --color-tag-shrine-text: #e65100;
+  --color-tag-diety-text: #1b5e20;
+  --color-tag-user-text: #0d47a1;
+  --border-radius: 1.5rem;
+  --font-family: "Noto Serif JP", serif;
+  --box-shadow: 0 8px 32px 0 rgba(80,60,10,0.18), 0 0 0 6px #f8f5e4;
+  --modal-max-width: 600px;
+  --modal-padding: 2rem 1.5rem;
+  --modal-background: linear-gradient(135deg, #f8f5e4 0%, #f5e9c6 100%);
+}
+
 html, body {
   height: 100%;
   overflow: hidden;
+  font-family: var(--font-family);
+  background: var(--color-background);
+  color: var(--color-text);
 }
 
 .log-pane {
@@ -11,16 +37,16 @@ html, body {
   right: 0;
   max-height: 12rem;
   overflow-y: auto;
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #222;
+  background-color: var(--color-surface);
+  color: var(--color-text);
   font-size: 0.875rem;
   z-index: 9999;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--color-border);
   transition: max-height 0.3s ease;
 }
 
 .log-pane * {
-  color: #222;
+  color: var(--color-text);
 }
 
 .log-pane-collapsed {
@@ -53,4 +79,16 @@ html, body {
   pointer-events: none;
   opacity: 0.15;
   z-index: 800;
+}
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  color: var(--color-text);
+}
+
+.custom-link {
+  color: var(--color-accent);
 }

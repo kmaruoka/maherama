@@ -14,7 +14,7 @@ type ModalType = { type: 'shrine' | 'diety' | 'user', id: number } | null;
 function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
   const [modal, setModal] = useState<ModalType>(null);
-  const { skin } = useSkin();
+  useSkin();
 
   // ページ切り替え用
   const renderPage = () => {
@@ -44,17 +44,19 @@ function App() {
             centered
             contentClassName={undefined}
           >
-            <Modal.Body style={{
-              position: 'relative',
-              border: `3px solid ${skin.colors.border}`,
-              boxShadow: skin.boxShadow,
-              borderRadius: skin.borderRadius,
-              background: skin.modal.background,
-              padding: skin.modal.padding,
-              maxWidth: skin.modal.maxWidth,
-              margin: '0 auto',
-              fontFamily: skin.fontFamily,
-            }}>
+            <Modal.Body
+              style={{
+                position: 'relative',
+                border: '3px solid var(--color-border)',
+                boxShadow: 'var(--box-shadow)',
+                borderRadius: 'var(--border-radius)',
+                background: 'var(--modal-background)',
+                padding: 'var(--modal-padding)',
+                maxWidth: 'var(--modal-max-width)',
+                margin: '0 auto',
+                fontFamily: 'var(--font-family)',
+              }}
+            >
               <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1 }}>
                 <Button variant="light" onClick={() => setModal(null)} className="border-0">
                   <span aria-hidden="true">×</span>
