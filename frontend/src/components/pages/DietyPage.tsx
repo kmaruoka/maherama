@@ -1,45 +1,32 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import useDietyDetail from '../../hooks/useDietyDetail';
-import useDietyRankings from '../../hooks/useDietyRankings';
+import useRankingsBundleAll from '../../hooks/useRankingsBundle';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from '../organisms/RankingPane';
 import type { Period, RankingItem } from '../organisms/RankingPane';
+import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
 
-interface Diety {
-  id: number;
-  name: string;
-  kana?: string;
-  description?: string;
-  count: number;
-  shrines: Array<{ id: number; name: string; kana?: string }>;
-  thumbnailUrl?: string;
-  registeredAt: string;
+function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItem[] } {
+  const empty = { all: [], yearly: [], monthly: [], weekly: [] };
+  if (!allRankings) return empty;
+  return {
+    all: allRankings.all?.[key] ?? [],
+    yearly: allRankings.yearly?.[key] ?? [],
+    monthly: allRankings.monthly?.[key] ?? [],
+    weekly: allRankings.weekly?.[key] ?? [],
+  };
 }
 
 export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { id: paramId } = useParams<{ id: string }>();
   const idFromParams = id || paramId;
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
 
   // デバッグ用ログ
   console.log('DietyPage - ID from params:', idFromParams, 'Type:', typeof idFromParams);
 
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams);
-
-  const { data: rankings = [] } = useDietyRankings(idFromParams!, selectedPeriod);
-
-  const periods = [
-    { key: 'all', label: '総合' },
-    { key: 'yearly', label: '年間' },
-    { key: 'monthly', label: '月間' },
-    { key: 'weekly', label: '週間' },
-  ];
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
+  const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(Number(idFromParams));
 
   if (!idFromParams) {
     return <div className="p-3">神様IDが指定されていません</div>;
@@ -57,7 +44,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <img
-          src={diety.thumbnailUrl ? diety.thumbnailUrl : '/images/noimage-diety.png'}
+          src={'/images/noimage-diety.png'}
           alt="サムネイル"
           className="rounded shadow"
           style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
@@ -90,15 +77,9 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
       <div className="modal-section">
         <div className="modal-subtitle">参拝ランキング</div>
         <RankingPane
-          items={rankings.map(item => ({
-            id: item.userId,
-            name: item.userName,
-            count: item.count,
-            rank: item.rank
-          }))}
+          itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
           type="user"
-          period={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
+          isLoading={isRankingLoading}
           onItemClick={onShowUser}
         />
       </div>
@@ -109,9 +90,6 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
           <p className="text-body-secondary small">{diety.description}</p>
         </div>
       )}
-
-      {/* 末尾に収録日表示を追加（登録日→収録日） */}
-      <div className="text-muted small">収録日: {formatDate(diety.registeredAt)}</div>
     </>
   );
 }

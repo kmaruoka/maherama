@@ -4,9 +4,12 @@ export default function useCurrentPosition(): [number, number] | null {
   const [position, setPosition] = useState<[number, number] | null>(null);
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition((pos) => {
+    const watchId = navigator.geolocation.watchPosition((pos) => {
       setPosition([pos.coords.latitude, pos.coords.longitude]);
     });
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   return position;

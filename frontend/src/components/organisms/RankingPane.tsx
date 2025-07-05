@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CustomLink from '../atoms/CustomLink';
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
@@ -14,10 +14,9 @@ export interface RankingItem {
 }
 
 interface RankingPaneProps {
-  items: RankingItem[];
+  itemsByPeriod?: { [key in Period]: RankingItem[] };
   type: 'user' | 'shrine' | 'diety';
-  period: Period;
-  onPeriodChange: (period: Period) => void;
+  isLoading?: boolean;
   onItemClick?: (id: number) => void;
 }
 
@@ -28,14 +27,17 @@ const periodLabels: Record<Period, string> = {
   weekly: '週間',
 };
 
-export default function RankingPane({ items, type, period, onPeriodChange, onItemClick }: RankingPaneProps) {
+export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClick }: RankingPaneProps) {
   const { skin } = useSkin();
+  const [period, setPeriod] = useState<Period>('all');
+  const safeItemsByPeriod = itemsByPeriod ?? { all: [], yearly: [], monthly: [], weekly: [] };
+  const items = safeItemsByPeriod[period] || [];
   return (
     <div className="ranking-pane">
       <Tabs
         id="ranking-tabs"
         activeKey={period}
-        onSelect={(k) => k && onPeriodChange(k as Period)}
+        onSelect={k => k && setPeriod(k as Period)}
         className="mb-2"
       >
         {(['all', 'yearly', 'monthly', 'weekly'] as Period[]).map(p => (
@@ -46,36 +48,41 @@ export default function RankingPane({ items, type, period, onPeriodChange, onIte
         ))}
       </Tabs>
       <div className="d-grid gap-2 mt-2">
-        {items.length === 0 && (
+        {isLoading ? (
+          <div className="text-center py-4 small text-secondary">読み込み中...</div>
+        ) : items.length === 0 ? (
           <div className="text-secondary text-center py-4 small">データがありません</div>
-        )}
-        {items.slice(0, 3).map((item, idx) => {
-          let badgeBg = skin.colors.rankingBadgeOther;
-          if (idx === 0) badgeBg = skin.colors.rankingBadge1;
-          else if (idx === 1) badgeBg = skin.colors.rankingBadge2;
-          else if (idx === 2) badgeBg = skin.colors.rankingBadge3;
-          return (
-            <div key={item.id} className="d-flex align-items-center gap-2 rounded px-3 py-2"
-              style={{
-                background: skin.colors.rankingRowBg,
-                border: `1px solid ${skin.colors.rankingRowBorder}`,
-              }}
-            >
-              <span
-                className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                style={{ width: '28px', height: '28px', background: badgeBg, color: skin.colors.rankingBadgeText }}>
-                {idx + 1}
-              </span>
-              <CustomLink
-                onClick={() => onItemClick && onItemClick(item.id)}
-                type={type}
+        ) : (
+          items.slice(0, 3).map((item, idx) => {
+            let badgeBg = skin.colors.rankingBadgeOther;
+            if (idx === 0) badgeBg = skin.colors.rankingBadge1;
+            else if (idx === 1) badgeBg = skin.colors.rankingBadge2;
+            else if (idx === 2) badgeBg = skin.colors.rankingBadge3;
+            return (
+              <div key={item.id + '-' + item.rank} className="d-flex align-items-center gap-2 rounded px-3 py-2"
+                style={{
+                  background: skin.colors.rankingRowBg,
+                  border: `1px solid ${skin.colors.rankingRowBorder}`,
+                }}
               >
-                {item.name}
-              </CustomLink>
-              <span className="small text-secondary ms-2">{item.count}回</span>
-            </div>
-          );
-        })}
+                <span
+                  className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                  style={{ width: '28px', height: '28px', background: badgeBg, color: skin.colors.rankingBadgeText }}>
+                  {idx + 1}
+                </span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 500, color: skin.colors.text }}>
+                  <CustomLink
+                    onClick={() => onItemClick && onItemClick(item.id)}
+                    type={type}
+                  >
+                    {item.name}
+                  </CustomLink>
+                </span>
+                <span className="small text-secondary ms-2">{item.count}回</span>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

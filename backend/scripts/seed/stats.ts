@@ -1,32 +1,108 @@
 import { PrismaClient } from '@prisma/client';
 
+const users = [3, 5];
+const shrines = [1, 2, 3, 4, 5, 6];
+const dieties = [1, 2, 3];
+
 export async function seedStats(prisma: PrismaClient) {
-  const shrine = await prisma.shrine.findFirst({ select: { id: true } });
-  const diety = await prisma.diety.findFirst({ select: { id: true } });
-  const users = await prisma.user.findMany({ select: { id: true }, take: 3 });
-
-  if (!shrine || !diety || users.length === 0) return;
-
-  const userIds = users.map(u => u.id);
-  const baseShrine = [
-    { rank: 1, shrine_id: shrine.id, user_id: userIds[0], count: 10 },
-    { rank: 2, shrine_id: shrine.id, user_id: userIds[1] ?? userIds[0], count: 5 },
-    { rank: 3, shrine_id: shrine.id, user_id: userIds[2] ?? userIds[0], count: 2 },
-  ];
-  const baseDiety = [
-    { rank: 1, diety_id: diety.id, user_id: userIds[0], count: 8 },
-    { rank: 2, diety_id: diety.id, user_id: userIds[1] ?? userIds[0], count: 4 },
-    { rank: 3, diety_id: diety.id, user_id: userIds[2] ?? userIds[0], count: 1 },
-  ];
-
-  await prisma.shrinePrayStats.createMany({ data: baseShrine, skipDuplicates: true });
-  await prisma.shrinePrayStatsMonthly.createMany({ data: baseShrine, skipDuplicates: true });
-  await prisma.shrinePrayStatsWeekly.createMany({ data: baseShrine, skipDuplicates: true });
-  await prisma.shrinePrayStatsDaily.createMany({ data: baseShrine, skipDuplicates: true });
-  await prisma.shrinePrayStatsYearly.createMany({ data: baseShrine, skipDuplicates: true });
-  await prisma.dietyPrayStats.createMany({ data: baseDiety, skipDuplicates: true });
-  await prisma.dietyPrayStatsMonthly.createMany({ data: baseDiety, skipDuplicates: true });
-  await prisma.dietyPrayStatsWeekly.createMany({ data: baseDiety, skipDuplicates: true });
-  await prisma.dietyPrayStatsDaily.createMany({ data: baseDiety, skipDuplicates: true });
-  await prisma.dietyPrayStatsYearly.createMany({ data: baseDiety, skipDuplicates: true });
+  // all（通算）
+  let rank = 1;
+  for (const userId of users) {
+    for (const shrineId of shrines) {
+      await prisma.shrinePrayStats.create({
+        data: {
+          user_id: userId,
+          shrine_id: shrineId,
+          count: 100 * userId + 10 * shrineId,
+          rank: rank++,
+        },
+      });
+    }
+    rank = 1;
+    for (const dietyId of dieties) {
+      await prisma.dietyPrayStats.create({
+        data: {
+          user_id: userId,
+          diety_id: dietyId,
+          count: 80 * userId + 5 * dietyId,
+          rank: rank++,
+        },
+      });
+    }
+  }
+  // yearly
+  rank = 1;
+  for (const userId of users) {
+    for (const shrineId of shrines) {
+      await prisma.shrinePrayStatsYearly.create({
+        data: {
+          user_id: userId,
+          shrine_id: shrineId,
+          count: 50 * userId + 5 * shrineId,
+          rank: rank++,
+        },
+      });
+    }
+    rank = 1;
+    for (const dietyId of dieties) {
+      await prisma.dietyPrayStatsYearly.create({
+        data: {
+          user_id: userId,
+          diety_id: dietyId,
+          count: 40 * userId + 2 * dietyId,
+          rank: rank++,
+        },
+      });
+    }
+  }
+  // monthly
+  rank = 1;
+  for (const userId of users) {
+    for (const shrineId of shrines) {
+      await prisma.shrinePrayStatsMonthly.create({
+        data: {
+          user_id: userId,
+          shrine_id: shrineId,
+          count: 20 * userId + 2 * shrineId,
+          rank: rank++,
+        },
+      });
+    }
+    rank = 1;
+    for (const dietyId of dieties) {
+      await prisma.dietyPrayStatsMonthly.create({
+        data: {
+          user_id: userId,
+          diety_id: dietyId,
+          count: 15 * userId + dietyId,
+          rank: rank++,
+        },
+      });
+    }
+  }
+  // weekly
+  rank = 1;
+  for (const userId of users) {
+    for (const shrineId of shrines) {
+      await prisma.shrinePrayStatsWeekly.create({
+        data: {
+          user_id: userId,
+          shrine_id: shrineId,
+          count: 5 * userId + shrineId,
+          rank: rank++,
+        },
+      });
+    }
+    rank = 1;
+    for (const dietyId of dieties) {
+      await prisma.dietyPrayStatsWeekly.create({
+        data: {
+          user_id: userId,
+          diety_id: dietyId,
+          count: 3 * userId + dietyId,
+          rank: rank++,
+        },
+      });
+    }
+  }
 }

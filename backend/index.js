@@ -34,11 +34,14 @@ function getRadiusFromSlots(slots) {
   return 100 * Math.pow(2, slots); // 100m, 200m, 400m, 800m, 1600m...
 }
 
+
+
 // ユーザーの課金状態を取得する関数
 async function getUserSubscription(userId) {
   const subscription = await prisma.userSubscription.findFirst({
     where: { 
       user_id: userId,
+      is_active: true,
       expires_at: { gt: new Date() }
     },
     orderBy: { created_at: 'desc' }
@@ -211,6 +214,9 @@ app.get('/shrines/:id', async (req, res) => {
 
 app.post('/shrines/:id/pray', async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  if (isNaN(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid shrine ID' });
+  }
   try {
     // 神社名と神様リレーションも取得（diety_id全件）
     const shrine = await prisma.shrine.findUnique({
@@ -227,6 +233,9 @@ app.post('/shrines/:id/pray', async (req, res) => {
     }
     // ユーザーIDをリクエストヘッダーから取得（なければ1）
     const userId = parseInt(req.headers['x-user-id']) || 1;
+    if (!userId || isNaN(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
+    }
     // ユーザーの課金ランク取得
     const subscription = await getUserSubscription(userId);
     const radius = getRadiusFromSlots(subscription.slots);
@@ -240,8 +249,10 @@ app.post('/shrines/:id/pray', async (req, res) => {
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       const dist = R * c;
       if (dist > radius) {
-        return res.status(400).json({ error: '現在地が神社から離れすぎています' });
+        return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius });
       }
+    } else {
+      return res.status(400).json({ error: '緯度・経度がリクエストボディに含まれていません' });
     }
     // --- 神社カウント ---
     // 取得した祭神IDをログ出力
@@ -798,59 +809,43 @@ app.get('/users/:id/shrine-rankings', async (req, res) => {
   }
 });
 
-// ユーザーごとの「よく参拝する神様」ランキング
-app.get('/users/:id/diety-rankings', async (req, res) => {
+// ユーザーごとの神様参拝ランキング一括取得API
+app.get('/users/:id/diety-rankings-bundle', async (req, res) => {
   const userId = parseInt(req.params.id, 10);
-  const period = req.query.period || 'all';
   if (isNaN(userId) || userId <= 0) {
-    return res.status(400).json({ error: 'Invalid ID parameter' });
+    return res.status(400).json({ error: 'Invalid user ID' });
   }
-  try {
-    let stats;
+  const periods = ['all', 'yearly', 'monthly', 'weekly'];
+  const result = {};
+  for (const period of periods) {
+    let model;
     switch (period) {
       case 'yearly':
-        stats = await prisma.dietyPrayStatsYearly.findMany({
-          where: { user_id: userId },
-          orderBy: { count: 'desc' },
-          include: { diety: { select: { id: true, name: true } } },
-          take: 10,
-        });
+        model = prisma.dietyPrayStatsYearly;
         break;
       case 'monthly':
-        stats = await prisma.dietyPrayStatsMonthly.findMany({
-          where: { user_id: userId },
-          orderBy: { count: 'desc' },
-          include: { diety: { select: { id: true, name: true } } },
-          take: 10,
-        });
+        model = prisma.dietyPrayStatsMonthly;
         break;
       case 'weekly':
-        stats = await prisma.dietyPrayStatsWeekly.findMany({
-          where: { user_id: userId },
-          orderBy: { count: 'desc' },
-          include: { diety: { select: { id: true, name: true } } },
-          take: 10,
-        });
+        model = prisma.dietyPrayStatsWeekly;
         break;
       default:
-        stats = await prisma.dietyPrayStats.findMany({
-          where: { user_id: userId },
-          orderBy: { count: 'desc' },
-          include: { diety: { select: { id: true, name: true } } },
-          take: 10,
-        });
+        model = prisma.dietyPrayStats;
     }
-    const result = stats.map((d, i) => ({
-      id: d.diety.id,
-      name: d.diety.name,
-      count: d.count,
+    const stats = await model.findMany({
+      where: { user_id: userId },
+      orderBy: { count: 'desc' },
+      include: { diety: { select: { id: true, name: true } } },
+      take: 10,
+    });
+    result[period] = stats.map((s, i) => ({
+      id: s.diety.id,
+      name: s.diety.name,
+      count: s.count,
       rank: i + 1
     }));
-    res.json(result);
-  } catch (err) {
-    console.error('Error fetching user diety rankings:', err);
-    res.status(500).json({ error: 'DB error' });
   }
+  res.json(result);
 });
 
 app.get('/users/me/subscription', async (req, res) => {
@@ -859,6 +854,457 @@ app.get('/users/me/subscription', async (req, res) => {
     const subscription = await getUserSubscription(userId);
     res.json({ slots: subscription.slots });
   } catch (err) {
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 課金ランク変更API（Stripe秒割り対応）
+app.post('/users/me/subscription/change-plan', async (req, res) => {
+  try {
+    const userId = parseInt(req.headers['x-user-id']) || 1;
+    const { newSlots, stripeSubscriptionId } = req.body;
+    
+    if (newSlots === undefined) {
+      return res.status(400).json({ error: 'newSlots is required' });
+    }
+    
+    const slots = newSlots;
+    
+    // 現在のアクティブなサブスクリプションを取得
+    const currentSubscription = await prisma.userSubscription.findFirst({
+      where: { 
+        user_id: userId,
+        is_active: true,
+        expires_at: { gt: new Date() }
+      },
+      orderBy: { created_at: 'desc' }
+    });
+    
+    const now = new Date();
+    
+    if (currentSubscription) {
+      // 現在のサブスクリプションを非アクティブ化
+      await prisma.userSubscription.update({
+        where: { id: currentSubscription.id },
+        data: { is_active: false }
+      });
+      
+      // 秒割り計算用の新しいサブスクリプションを作成
+      const newExpiresAt = currentSubscription.expires_at;
+      const billingCycleStart = currentSubscription.billing_cycle_start || currentSubscription.created_at;
+      const billingCycleEnd = currentSubscription.billing_cycle_end || currentSubscription.expires_at;
+      
+      await prisma.userSubscription.create({
+        data: {
+          user_id: userId,
+          slots: slots,
+          expires_at: newExpiresAt,
+          stripe_subscription_id: stripeSubscriptionId,
+          billing_cycle_start: billingCycleStart,
+          billing_cycle_end: billingCycleEnd,
+          is_active: true
+        }
+      });
+    } else {
+      // 初回サブスクリプション
+      const oneMonthLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      await prisma.userSubscription.create({
+        data: {
+          user_id: userId,
+          slots: slots,
+          expires_at: oneMonthLater,
+          stripe_subscription_id: stripeSubscriptionId,
+          billing_cycle_start: now,
+          billing_cycle_end: oneMonthLater,
+          is_active: true
+        }
+      });
+    }
+    
+    res.json({ success: true, slots: slots });
+  } catch (err) {
+    console.error('Subscription change error:', err);
+    res.status(500).json({ error: 'Subscription change failed' });
+  }
+});
+
+// Stripe Checkoutセッション作成API
+app.post('/subscription/create-checkout-session', async (req, res) => {
+  try {
+    const userId = parseInt(req.headers['x-user-id']) || 1;
+    const { planId, platform } = req.body;
+    
+    // プラン定義（slots数値のみ）
+    const plans = {
+      'slots-1': { price: 200, slots: 1 },
+      'slots-2': { price: 400, slots: 2 },
+      'slots-3': { price: 600, slots: 3 },
+      'slots-4': { price: 800, slots: 4 }
+    };
+    
+    const plan = plans[planId];
+    if (!plan) {
+      return res.status(400).json({ error: 'Invalid plan' });
+    }
+    
+    // Stripe Checkoutセッション作成（実際の実装ではStripe SDKが必要）
+    const sessionData = {
+      planId,
+      userId,
+      platform,
+      price: plan.price,
+      slots: plan.slots,
+      // 実際のStripe実装では以下を使用
+      // const session = await stripe.checkout.sessions.create({
+      //   payment_method_types: ['card'],
+      //   line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+      //   mode: 'subscription',
+      //   success_url: `${process.env.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      //   cancel_url: `${process.env.FRONTEND_URL}/subscription/cancel`,
+      //   metadata: { userId, planId }
+      // });
+    };
+    
+    // 仮のセッションID（実際はStripeから取得）
+    const sessionId = `cs_${Date.now()}_${userId}_${planId}`;
+    
+    res.json({ sessionId, ...sessionData });
+  } catch (err) {
+    console.error('Checkout session creation error:', err);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+// ユーザーごとの神社・神様ランキング一括取得API
+app.get('/users/:id/rankings', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  const period = req.query.period || 'all';
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid ID parameter' });
+  }
+  try {
+    // 神社ランキング
+    let shrineStats;
+    switch (period) {
+      case 'yearly':
+        shrineStats = await prisma.shrinePrayStatsYearly.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { shrine: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      case 'monthly':
+        shrineStats = await prisma.shrinePrayStatsMonthly.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { shrine: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      case 'weekly':
+        shrineStats = await prisma.shrinePrayStatsWeekly.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { shrine: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      default:
+        shrineStats = await prisma.shrinePrayStats.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { shrine: { select: { id: true, name: true } } },
+          take: 10,
+        });
+    }
+    const shrineRankings = shrineStats.map((s, i) => ({
+      id: s.shrine.id,
+      name: s.shrine.name,
+      count: s.count,
+      rank: i + 1
+    }));
+
+    // 神様ランキング
+    let dietyStats;
+    switch (period) {
+      case 'yearly':
+        dietyStats = await prisma.dietyPrayStatsYearly.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { diety: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      case 'monthly':
+        dietyStats = await prisma.dietyPrayStatsMonthly.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { diety: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      case 'weekly':
+        dietyStats = await prisma.dietyPrayStatsWeekly.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { diety: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      default:
+        dietyStats = await prisma.dietyPrayStats.findMany({
+          where: { user_id: userId },
+          orderBy: { count: 'desc' },
+          include: { diety: { select: { id: true, name: true } } },
+          take: 10,
+        });
+    }
+    const dietyRankings = dietyStats.map((d, i) => ({
+      id: d.diety.id,
+      name: d.diety.name,
+      count: d.count,
+      rank: i + 1
+    }));
+
+    res.json({ shrineRankings, dietyRankings });
+  } catch (err) {
+    console.error('Error fetching user rankings:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// ランキング一括取得API
+app.get('/shrine-rankings-bundle', async (req, res) => {
+  const periods = ['all', 'yearly', 'monthly', 'weekly'];
+  const result = {};
+  for (const period of periods) {
+    const rankings = await getShrineRankings(period); // 既存のランキング取得ロジックを流用
+    result[period] = rankings;
+  }
+  res.json(result);
+});
+
+app.get('/diety-rankings-bundle', async (req, res) => {
+  const periods = ['all', 'yearly', 'monthly', 'weekly'];
+  const dietyId = parseInt(req.query.dietyId, 10);
+  if (isNaN(dietyId) || dietyId <= 0) {
+    return res.status(400).json({ error: 'Invalid diety ID' });
+  }
+  const result = {};
+  for (const period of periods) {
+    const rankings = await getDietyRankings(period, dietyId);
+    result[period] = rankings;
+  }
+  res.json(result);
+});
+
+app.get('/user-rankings-bundle', async (req, res) => {
+  const periods = ['all', 'yearly', 'monthly', 'weekly'];
+  const result = {};
+  for (const period of periods) {
+    const rankings = await getUserRankings(period);
+    result[period] = rankings;
+  }
+  res.json(result);
+});
+
+// periodごとの神社ランキング取得
+async function getShrineRankings(period) {
+  let stats;
+  switch (period) {
+    case 'yearly':
+      stats = await prisma.shrinePrayStatsYearly.findMany({
+        orderBy: { count: 'desc' },
+        include: { shrine: { select: { id: true, name: true } } },
+        take: 10,
+      });
+      break;
+    case 'monthly':
+      stats = await prisma.shrinePrayStatsMonthly.findMany({
+        orderBy: { count: 'desc' },
+        include: { shrine: { select: { id: true, name: true } } },
+        take: 10,
+      });
+      break;
+    case 'weekly':
+      stats = await prisma.shrinePrayStatsWeekly.findMany({
+        orderBy: { count: 'desc' },
+        include: { shrine: { select: { id: true, name: true } } },
+        take: 10,
+      });
+      break;
+    default:
+      stats = await prisma.shrinePrayStats.findMany({
+        orderBy: { count: 'desc' },
+        include: { shrine: { select: { id: true, name: true } } },
+        take: 10,
+      });
+  }
+  return stats.map((s, i) => ({
+    id: s.shrine.id,
+    name: s.shrine.name,
+    count: s.count,
+    rank: i + 1
+  }));
+}
+
+// periodごとの神様ランキング取得
+async function getDietyRankings(period, dietyId) {
+  let model;
+  switch (period) {
+    case 'yearly':
+      model = prisma.dietyPrayStatsYearly;
+      break;
+    case 'monthly':
+      model = prisma.dietyPrayStatsMonthly;
+      break;
+    case 'weekly':
+      model = prisma.dietyPrayStatsWeekly;
+      break;
+    default:
+      model = prisma.dietyPrayStats;
+  }
+  const stats = await model.findMany({
+    where: { diety_id: dietyId },
+    orderBy: { count: 'desc' },
+    include: { user: { select: { id: true, name: true } } },
+    take: 10,
+  });
+  return stats.map((s, i) => ({
+    id: s.user.id,
+    name: s.user.name,
+    count: s.count,
+    rank: i + 1
+  }));
+}
+
+// periodごとのユーザーランキング取得
+async function getUserRankings(period) {
+  let model;
+  switch (period) {
+    case 'yearly':
+      model = prisma.shrinePrayStatsYearly;
+      break;
+    case 'monthly':
+      model = prisma.shrinePrayStatsMonthly;
+      break;
+    case 'weekly':
+      model = prisma.shrinePrayStatsWeekly;
+      break;
+    default:
+      model = prisma.shrinePrayStats;
+  }
+  const stats = await model.findMany({
+    orderBy: { count: 'desc' },
+    include: { user: { select: { id: true, name: true } } },
+    take: 10,
+  });
+  return stats.map((s, i) => ({
+    userId: s.user.id,
+    userName: s.user.name,
+    count: s.count,
+    rank: i + 1
+  }));
+}
+
+// 神社ごとのユーザー参拝ランキング一括取得API
+app.get('/shrines/:id/rankings-bundle', async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  if (isNaN(shrineId) || shrineId <= 0) {
+    return res.status(400).json({ error: 'Invalid shrine ID' });
+  }
+  const periods = ['all', 'yearly', 'monthly', 'weekly'];
+  const result = {};
+  for (const period of periods) {
+    let stats;
+    switch (period) {
+      case 'yearly':
+        stats = await prisma.shrinePrayStatsYearly.findMany({
+          where: { shrine_id: shrineId },
+          orderBy: { count: 'desc' },
+          include: { user: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      case 'monthly':
+        stats = await prisma.shrinePrayStatsMonthly.findMany({
+          where: { shrine_id: shrineId },
+          orderBy: { count: 'desc' },
+          include: { user: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      case 'weekly':
+        stats = await prisma.shrinePrayStatsWeekly.findMany({
+          where: { shrine_id: shrineId },
+          orderBy: { count: 'desc' },
+          include: { user: { select: { id: true, name: true } } },
+          take: 10,
+        });
+        break;
+      default:
+        stats = await prisma.shrinePrayStats.findMany({
+          where: { shrine_id: shrineId },
+          orderBy: { count: 'desc' },
+          include: { user: { select: { id: true, name: true } } },
+          take: 10,
+        });
+    }
+    result[period] = stats.map((s, i) => ({
+      userId: s.user.id,
+      userName: s.user.name,
+      count: s.count,
+      rank: i + 1
+    }));
+  }
+  res.json(result);
+});
+
+app.get('/users/:id/shrines-visited', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const stats = await prisma.shrinePrayStats.findMany({
+      where: { user_id: userId },
+      include: { shrine: true },
+      orderBy: { count: 'desc' },
+    });
+    const result = stats.map(s => ({
+      id: s.shrine.id,
+      name: s.shrine.name,
+      count: s.count,
+      registeredAt: s.shrine.registered_at
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching user shrines:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/users/:id/dieties-visited', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const stats = await prisma.dietyPrayStats.findMany({
+      where: { user_id: userId },
+      include: { diety: true },
+      orderBy: { count: 'desc' },
+    });
+    const result = stats.map(s => ({
+      id: s.diety.id,
+      name: s.diety.name,
+      count: s.count,
+      registeredAt: s.diety.registered_at
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching user dieties:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

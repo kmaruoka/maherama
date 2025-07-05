@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { API_BASE } from '../../config/api';
 import CustomLink from '../atoms/CustomLink';
-import useCurrentPosition from '../../hooks/useCurrentPosition';
-import useUserSubscription from '../../hooks/useUserSubscription';
+import { useSubscription } from '../../hooks/useSubscription';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
+import useDebugLog from '../../hooks/useDebugLog';
 import './ShrineMarkerPane.css';
 
 export interface Shrine {
@@ -23,10 +24,11 @@ export interface Shrine {
   dieties: Array<{ id: number; name: string; kana?: string }>;
 }
 
-export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; }) {
+export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail, currentPosition, addClientLog }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; currentPosition?: [number, number] | null; addClientLog?: (log: { message: string; time: string; type?: string }) => void; }) {
   const queryClient = useQueryClient();
-  const position = useCurrentPosition();
-  const { data: subscription } = useUserSubscription();
+  const [userId] = useLocalStorageState<number | null>('userId', null);
+  const { data: subscription } = useSubscription(userId);
+  const debugLog = useDebugLog();
 
   // 距離計算（Haversine公式）
   function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -43,19 +45,31 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
     return 100 * Math.pow(2, slots);
   }
   const radius = getRadiusFromSlots(subscription?.slots ?? 0);
-  const canPray = position && getDistanceMeters(position[0], position[1], shrine.lat, shrine.lng) <= radius;
+  const canPray = currentPosition && getDistanceMeters(currentPosition[0], currentPosition[1], shrine.lat, shrine.lng) <= radius;
 
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
       let body = undefined;
-      if (position) {
-        body = JSON.stringify({ lat: position[0], lng: position[1] });
+      if (currentPosition) {
+        body = JSON.stringify({ lat: currentPosition[0], lng: currentPosition[1] });
       }
       const res = await fetch(`${API_BASE}/shrines/${id}/pray`, {
         method: 'POST',
         headers: body ? { 'Content-Type': 'application/json' } : undefined,
         body,
       });
+      if (!res.ok) {
+        const error = await res.json();
+        debugLog(`[ERROR] 参拝失敗: ${error.error || '不明なエラー'}`);
+        if (addClientLog) {
+          addClientLog({
+            message: `参拝失敗: ${error.error || '不明なエラー'}`,
+            time: new Date().toISOString(),
+            type: 'error',
+          });
+        }
+        throw new Error(error.error || '参拝に失敗しました');
+      }
       return res.json();
     },
     onSuccess: () => {

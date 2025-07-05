@@ -76,6 +76,16 @@ model User {
   followers Follow[] @relation("followedBy")
   shrine_books ShrineBook[]
   diety_books DietyBook[]
+  shrine_pray_stats ShrinePrayStats[]
+  shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
+  shrine_pray_stats_weekly ShrinePrayStatsWeekly[]
+  shrine_pray_stats_daily ShrinePrayStatsDaily[]
+  shrine_pray_stats_yearly ShrinePrayStatsYearly[]
+  diety_pray_stats DietyPrayStats[]
+  diety_pray_stats_monthly DietyPrayStatsMonthly[]
+  diety_pray_stats_weekly DietyPrayStatsWeekly[]
+  diety_pray_stats_daily DietyPrayStatsDaily[]
+  diety_pray_stats_yearly DietyPrayStatsYearly[]
 }
 
 model Follow {
@@ -109,7 +119,9 @@ model ShrinePrayStats {
   shrine    Shrine   @relation(fields: [shrine_id], references: [id])
   shrine_id Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([shrine_id, user_id])
 }
 
 model ShrinePrayStatsMonthly {
@@ -118,7 +130,9 @@ model ShrinePrayStatsMonthly {
   shrine    Shrine   @relation(fields: [shrine_id], references: [id])
   shrine_id Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([shrine_id, user_id])
 }
 
 model ShrinePrayStatsWeekly {
@@ -127,7 +141,9 @@ model ShrinePrayStatsWeekly {
   shrine    Shrine   @relation(fields: [shrine_id], references: [id])
   shrine_id Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([shrine_id, user_id])
 }
 
 model ShrinePrayStatsDaily {
@@ -136,7 +152,9 @@ model ShrinePrayStatsDaily {
   shrine    Shrine   @relation(fields: [shrine_id], references: [id])
   shrine_id Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([shrine_id, user_id])
 }
 
 model ShrinePrayStatsYearly {
@@ -145,7 +163,9 @@ model ShrinePrayStatsYearly {
   shrine    Shrine   @relation(fields: [shrine_id], references: [id])
   shrine_id Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([shrine_id, user_id])
 }
 
 model DietyPrayStats {
@@ -154,7 +174,9 @@ model DietyPrayStats {
   diety     Diety    @relation(fields: [diety_id], references: [id])
   diety_id  Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([diety_id, user_id])
 }
 
 model DietyPrayStatsMonthly {
@@ -163,7 +185,9 @@ model DietyPrayStatsMonthly {
   diety     Diety    @relation(fields: [diety_id], references: [id])
   diety_id  Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([diety_id, user_id])
 }
 
 model DietyPrayStatsWeekly {
@@ -172,7 +196,9 @@ model DietyPrayStatsWeekly {
   diety     Diety    @relation(fields: [diety_id], references: [id])
   diety_id  Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([diety_id, user_id])
 }
 
 model DietyPrayStatsDaily {
@@ -181,7 +207,9 @@ model DietyPrayStatsDaily {
   diety     Diety    @relation(fields: [diety_id], references: [id])
   diety_id  Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([diety_id, user_id])
 }
 
 model DietyPrayStatsYearly {
@@ -190,7 +218,9 @@ model DietyPrayStatsYearly {
   diety     Diety    @relation(fields: [diety_id], references: [id])
   diety_id  Int
   user_id   Int
+  user      User     @relation(fields: [user_id], references: [id])
   count     Int
+  @@unique([diety_id, user_id])
 }
 
 model ShrineBook {
@@ -225,8 +255,11 @@ model RemotePray {
 model UserSubscription {
   id         Int      @id @default(autoincrement())
   user_id    Int
-  plan_type  String   // "basic", "premium", etc.
-  slots      Int      // 課金口数（遥拝可能神社数）
+  slots      Int      // 課金口数（参拝可能距離と遥拝可能回数に影響）
   expires_at DateTime
   created_at DateTime @default(now())
+  stripe_subscription_id String?  // StripeのサブスクリプションID
+  billing_cycle_start DateTime?   // 課金サイクル開始日
+  billing_cycle_end DateTime?     // 課金サイクル終了日
+  is_active Boolean @default(true) // アクティブなサブスクリプションかどうか
 }

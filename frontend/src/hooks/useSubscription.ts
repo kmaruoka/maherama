@@ -1,15 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../config/api';
 
-export default function useUserSubscription() {
+// 現在の課金状態取得（slots数値のみ）
+export function useSubscription(userId: number | null) {
   return useQuery<{ slots: number }>({
-    queryKey: ['user-subscription'],
+    queryKey: ['subscription', userId],
     queryFn: async () => {
+      if (!userId) throw new Error('ユーザーIDが未設定です');
       const res = await fetch(`${API_BASE}/users/me/subscription`, {
-        headers: { 'x-user-id': '1' }, // TODO: 実際のユーザーIDに置き換え
+        headers: { 'x-user-id': String(userId) },
       });
       if (!res.ok) throw new Error('課金情報の取得に失敗しました');
       return res.json();
     },
+    enabled: !!userId,
   });
 } 

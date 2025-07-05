@@ -11,13 +11,13 @@ export function subscribeDebugLogs(listener: (logs: string[]) => void) {
   };
 }
 
-export function addDebugLog(msg: string, debugMode: boolean) {
-  if (!debugMode) return;
+export function addDebugLog(msg: string) {
+  console.log(msg);
   debugLogs.push(msg);
   if (debugLogs.length > 100) debugLogs = debugLogs.slice(-100);
   debugLogListeners.forEach(l => l(debugLogs));
 }
 
-export default function useDebugLog(debugMode: boolean) {
-  return useCallback((msg: string) => addDebugLog(msg, debugMode), [debugMode]);
+export default function useDebugLog() {
+  return useCallback((msg: string) => addDebugLog(msg), []);
 } 

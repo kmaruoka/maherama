@@ -1,21 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { API_BASE } from '../../config/api';
 import RankingPane from '../organisms/RankingPane';
-import type { Period, RankingItem } from '../organisms/RankingPane';
 import useUserInfo from '../../hooks/useUserInfo';
 import useUserShrineRankings from '../../hooks/useUserShrineRankings';
 import useUserDietyRankings from '../../hooks/useUserDietyRankings';
-import useUserRankings from '../../hooks/useUserRankings';
-
-interface UserInfo {
-  id: number;
-  name: string;
-  followingCount: number;
-  followerCount: number;
-  isFollowing: boolean;
-  thumbnailUrl?: string;
-}
 
 interface UserPageProps {
   id?: number;
@@ -25,10 +14,6 @@ interface UserPageProps {
 
 export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProps) {
   const [currentUserId] = useLocalStorageState<number | null>('userId', null);
-  const [shrinePeriod, setShrinePeriod] = useState<Period>('all');
-  const [dietyPeriod, setDietyPeriod] = useState<Period>('all');
-  const [userRankingPeriod, setUserRankingPeriod] = useState<Period>('all');
-
   const displayId = id ?? currentUserId;
 
   const {
@@ -37,11 +22,8 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
     refetch,
   } = useUserInfo(displayId ?? undefined, currentUserId);
 
-  const { data: shrineRankings = [] } = useUserShrineRankings(displayId, shrinePeriod);
-
-  const { data: dietyRankings = [] } = useUserDietyRankings(displayId, dietyPeriod);
-
-  const { data: userRankings = [] } = useUserRankings(userRankingPeriod);
+  const { data: userShrineRankingsByPeriod, isLoading: isUserShrineRankingLoading } = useUserShrineRankings(displayId ?? undefined);
+  const { data: userDietyRankingsByPeriod, isLoading: isUserDietyRankingLoading } = useUserDietyRankings(displayId ?? undefined);
 
   const handleFollow = async () => {
     if (!currentUserId || !userInfo) return;
@@ -75,12 +57,15 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
     return <div className="p-3">ユーザーが見つかりません</div>;
   }
 
+  // 型安全なサムネイル取得
+  const thumbnailUrl = (userInfo as { thumbnailUrl?: string } | undefined)?.thumbnailUrl || '/images/noimage-user.png';
+
   return (
     <>
       <div className="d-flex align-items-center gap-3 mb-4">
         <div className="relative">
           <img
-            src={userInfo.thumbnailUrl ? userInfo.thumbnailUrl : '/images/noimage-user.png'}
+            src={thumbnailUrl}
             alt="ユーザーサムネイル"
             className="rounded-circle shadow"
             style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
@@ -117,15 +102,9 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
       <div className="modal-section">
         <div className="modal-subtitle">よく参拝する神社</div>
         <RankingPane
-          items={shrineRankings.map((item, idx) => ({
-            id: item.id,
-            name: item.name,
-            count: item.count,
-            rank: idx + 1
-          }))}
+          itemsByPeriod={userShrineRankingsByPeriod}
           type="shrine"
-          period={shrinePeriod}
-          onPeriodChange={setShrinePeriod}
+          isLoading={isUserShrineRankingLoading}
           onItemClick={onShowShrine}
         />
       </div>
@@ -133,15 +112,9 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
       <div className="modal-section">
         <div className="modal-subtitle">よく参拝する神様</div>
         <RankingPane
-          items={dietyRankings.map((item, idx) => ({
-            id: item.id,
-            name: item.name,
-            count: item.count,
-            rank: idx + 1
-          }))}
+          itemsByPeriod={userDietyRankingsByPeriod}
           type="diety"
-          period={dietyPeriod}
-          onPeriodChange={setDietyPeriod}
+          isLoading={isUserDietyRankingLoading}
           onItemClick={onShowDiety}
         />
       </div>

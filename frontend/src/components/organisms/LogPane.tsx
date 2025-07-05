@@ -12,7 +12,7 @@ interface LogPaneProps {
   debugLogs?: string[];
 }
 
-export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser }: LogPaneProps) {
+export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser, debugLogs }: LogPaneProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { skin } = useSkin();
 
@@ -42,6 +42,13 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
           color: '#fff',
         }}
       >
+        {debugLogs && debugLogs.length > 0 && (
+          <div className="px-2 py-1 text-warning" style={{ fontSize: '0.95em' }}>
+            {debugLogs.slice(-5).map((msg, i) => (
+              <div key={i}>[DEBUG] {msg}</div>
+            ))}
+          </div>
+        )}
         {loading && <div className="px-2 py-1 text-secondary">ログを読み込み中...</div>}
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
@@ -72,6 +79,13 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         }}
         onClick={handlePaneClick}
       >
+        {debugLogs && debugLogs.length > 0 && (
+          <div className="px-2 py-1 text-warning" style={{ fontSize: '0.95em' }}>
+            {debugLogs.slice(-20).map((msg, i) => (
+              <div key={i}>[DEBUG] {msg}</div>
+            ))}
+          </div>
+        )}
         {loading && <div className="px-2 py-1 text-secondary">ログを読み込み中...</div>}
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (

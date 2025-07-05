@@ -1,15 +1,40 @@
-import { useState } from 'react';
 import useShrineDetail from '../../hooks/useShrineDetail';
-import useShrineRankings from '../../hooks/useShrineRankings';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from '../organisms/RankingPane';
-import type { Period } from '../organisms/RankingPane';
+import type { Period, RankingItem } from '../organisms/RankingPane';
+import { useState, useEffect } from 'react';
+import { API_BASE } from '../../config/api';
+
+function useShrineUserRankingsBundle(shrineId: number | undefined): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
+  const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (!shrineId) return;
+    setLoading(true);
+    fetch(`${API_BASE}/shrines/${shrineId}/rankings-bundle`)
+      .then(res => res.json())
+      .then(json => setData(json))
+      .finally(() => setLoading(false));
+  }, [shrineId]);
+  return { data, isLoading: loading };
+}
+
+// userRankingsByPeriodのuserName→name変換
+function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }): { [key in Period]: RankingItem[] } {
+  const result: { [key in Period]: RankingItem[] } = { all: [], yearly: [], monthly: [], weekly: [] };
+  for (const period of ['all', 'yearly', 'monthly', 'weekly'] as Period[]) {
+    result[period] = (data[period] || []).map(item => ({
+      ...item,
+      id: item.userId,
+      name: item.userName
+    }));
+  }
+  return result;
+}
 
 export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
   const { data } = useShrineDetail(id);
-
-  const { data: rankings = [] } = useShrineRankings(id, selectedPeriod);
+  const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -89,15 +114,9 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
       <div className="modal-section">
         <div className="modal-subtitle">参拝ランキング</div>
         <RankingPane
-          items={rankings.map(item => ({
-            id: item.userId,
-            name: item.userName,
-            count: item.count,
-            rank: item.rank
-          }))}
+          itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
           type="user"
-          period={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
+          isLoading={isRankingLoading}
           onItemClick={onShowUser}
         />
       </div>

@@ -4,13 +4,16 @@ import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import '../../setupLeaflet';
 import { MAPBOX_API_KEY } from '../../config/api';
-import useLogs from '../../hooks/useLogs';
+import useLogs, { useClientLogs } from '../../hooks/useLogs';
 import useAllShrines from '../../hooks/useAllShrines';
 import ShrineMarkerPane from '../organisms/ShrineMarkerPane';
 import LogPane from '../organisms/LogPane';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CustomCircle from '../atoms/CustomCircle';
+import { getDistanceMeters } from '../../hooks/usePrayDistance';
+import useDebugLog from '../../hooks/useDebugLog';
+import { useSubscription } from '../../hooks/useSubscription';
 
 function createShrineIcon(thumbnailUrl?: string) {
   // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
@@ -47,14 +50,23 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const [zoom] = useState<number>(defaultZoom);
   const [mapReady, setMapReady] = useState(false);
 
+  const { clientLogs, addClientLog } = useClientLogs();
   const {
     data: logs = [],
     refetch: refetchLogs,
     isLoading: logsLoading,
     error: logsError,
-  } = useLogs();
+  } = useLogs(clientLogs);
 
   const { data: shrines = [] } = useAllShrines();
+
+  // 前回の座標を保持するref
+  const prevPositionRef = useRef<[number, number] | null>(null);
+
+  const debugLog = useDebugLog();
+
+  const [userId] = useLocalStorageState<number | null>('userId', null);
+  const { data: subscription } = useSubscription(userId);
 
   // GPS追従（通常モード）
   useEffect(() => {
@@ -106,6 +118,25 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     }
   }, [center, debugMode]);
 
+  // 現在位置移動時にデバッグログ出力
+  useEffect(() => {
+    if (debugMode) {
+      // centerの変化を現在位置移動とみなす
+      const prev = prevPositionRef.current;
+      if (!prev || prev[0] !== center[0] || prev[1] !== center[1]) {
+        debugLog(`[DEBUG] 現在位置が移動: [${center[0]}, ${center[1]}]`);
+        prevPositionRef.current = center;
+      }
+    } else if (position) {
+      // 通常モードはposition
+      const prev = prevPositionRef.current;
+      if (!prev || prev[0] !== position[0] || prev[1] !== position[1]) {
+        debugLog(`[DEBUG] 現在位置が移動: [${position[0]}, ${position[1]}]`);
+        prevPositionRef.current = position;
+      }
+    }
+  }, [center, position, debugMode, debugLog]);
+
   return (
     <>
       <MapContainer
@@ -123,10 +154,10 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           zoomOffset={-1}
         />
         {debugMode && center && (
-          <CustomCircle center={center} rank={"free"} />
+          <CustomCircle center={center} rank={subscription?.slots ?? 0} />
         )}
         {!debugMode && position && (
-          <CustomCircle center={position} rank={"free"} />
+          <CustomCircle center={position} rank={subscription?.slots ?? 0} />
         )}
         {/* デバッグ用: 現在地ピン */}
         {position && (
@@ -135,13 +166,28 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           </Marker>
         )}
         {/* 通常の神社マーカー */}
-        {shrines.map((s) => (
-          <Marker key={s.id} position={[s.lat, s.lng]} icon={createShrineIcon(s.thumbnailUrl)}>
-            <Popup>
-              <ShrineMarkerPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} />
-            </Popup>
-          </Marker>
-        ))}
+        {shrines.map((s) => {
+          const currentPosition = debugMode ? center : position;
+          return (
+            <Marker
+              key={s.id}
+              position={[s.lat, s.lng]}
+              icon={createShrineIcon(s.thumbnailUrl)}
+              eventHandlers={{
+                click: () => {
+                  if (currentPosition) {
+                    const dist = getDistanceMeters(currentPosition[0], currentPosition[1], s.lat, s.lng);
+                    debugLog(`[DEBUG] 神社クリック: ${s.name} | 神社座標: [${s.lat}, ${s.lng}] | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 距離: ${dist.toFixed(2)}m`);
+                  }
+                },
+              }}
+            >
+              <Popup>
+                <ShrineMarkerPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} currentPosition={currentPosition} addClientLog={addClientLog} />
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
       <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} onShowUser={onShowUser} onShowDiety={onShowDiety} />
     </>

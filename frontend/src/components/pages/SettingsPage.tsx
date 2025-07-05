@@ -4,24 +4,19 @@ import { useSkin } from '../../skins/SkinContext';
 import { skins } from '../../skins';
 
 export default function SettingsPage() {
-  const [name, setName] = useLocalStorageState('userName', '');
   const [userId, setUserId] = useLocalStorageState<number | null>('userId', null);
-  const [input, setInput] = useState('');
   const [idInput, setIdInput] = useState('');
   const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
   const { skinName, setSkinName } = useSkin();
 
   const handleLogin = () => {
-    if (input.trim() && idInput.trim()) {
-      setName(input.trim());
+    if (idInput.trim()) {
       setUserId(Number(idInput));
-      setInput('');
       setIdInput('');
     }
   };
 
   const handleLogout = () => {
-    setName('');
     setUserId(null);
   };
 
@@ -30,18 +25,11 @@ export default function SettingsPage() {
     setDebugMode(newValue);
   };
 
-  if (!name) {
+  if (!userId) {
     return (
       <div className="p-3">
         <h2 className="h5 fw-bold mb-3">ログイン</h2>
-        <div>ユーザー名を入力してください</div>
-        <input
-          type="text"
-          className="form-control"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <div>IDも入力してください</div>
+        <div>IDを入力してください</div>
         <input
           type="number"
           className="form-control"
@@ -62,7 +50,7 @@ export default function SettingsPage() {
     <div className="p-3 space-y-4">
       <h2 className="h5 fw-bold">設定</h2>
       <div className="d-flex justify-content-between align-items-center">
-        <div>ようこそ <span className="modal-title">{name}</span> さん (ID: {userId})</div>
+        <div>ログイン中 (ID: {userId})</div>
         <button
           className="btn btn-secondary btn-sm"
           onClick={handleLogout}
