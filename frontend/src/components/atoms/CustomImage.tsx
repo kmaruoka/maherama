@@ -1,5 +1,39 @@
-type CustomImageProps = React.ImgHTMLAttributes<HTMLImageElement>;
+import React from 'react';
 
-export default function CustomImage({ className = '', ...rest }: CustomImageProps) {
-  return <img {...rest} className={`object-contain ${className}`.trim()} />;
+interface CustomImageProps {
+  src: string;
+  alt?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  aspectRatio?: string; // 例: '16/9', '4/3' など
+}
+
+export default function CustomImage({ src, alt = '', className = '', style = {}, aspectRatio = '16/9' }: CustomImageProps) {
+  return (
+    <div
+      className={className}
+      style={{
+        width: '100%',
+        aspectRatio,
+        background: '#222',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        ...style,
+      }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          background: '#222',
+          display: 'block',
+        }}
+      />
+    </div>
+  );
 }

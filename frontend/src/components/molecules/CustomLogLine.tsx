@@ -33,7 +33,7 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowUser(Number(id)), 0);
-            } : undefined} className="tag-link tag-user">
+            } : undefined} type="user">
               {name || id}
             </CustomLink>
           );
@@ -52,7 +52,7 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowShrine(Number(id)), 0);
-            } : undefined} className="tag-link tag-shrine">
+            } : undefined} type="shrine">
               {name || id}
             </CustomLink>
           );
@@ -64,7 +64,7 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
               const btn = window.document.querySelector('.leaflet-popup-close-button') as HTMLElement | null;
               if (btn) btn.click();
               setTimeout(() => onShowDiety(Number(id)), 0);
-            } : undefined} className="tag-link tag-diety">
+            } : undefined} type="diety">
               {name || id}
             </CustomLink>
           );

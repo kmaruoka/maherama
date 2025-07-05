@@ -42,7 +42,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
 
   // 拡大時はbackdropを追加
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 800 }}>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)' }} onClick={() => setIsExpanded(false)} />
       <div
         className={`log-pane log-pane-expanded`}

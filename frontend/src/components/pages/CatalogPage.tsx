@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react'; 
 import CustomLink from '../atoms/CustomLink';
 import CustomText from '../atoms/CustomText';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
 import useShrineList from '../../hooks/useShrineList';
 import useDietyList from '../../hooks/useDietyList';
+import Tabs from 'react-bootstrap/Tabs';
+import Tab from 'react-bootstrap/Tab';
 
 interface Item {
   id: number;
@@ -36,7 +38,6 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   const renderItem = (item: Item) => (
     <CustomCatalogCard
       key={item.id}
-      id={item.id}
       name={item.name}
       count={item.count}
       registeredAt={item.registeredAt}
@@ -50,25 +51,21 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         }
       }}
       countLabel="参拝数"
+      type={tab}
     />
   );
 
   return (
     <div className="p-3">
-      <div className="d-flex gap-2 mb-2">
-        <button
-          className={`btn ${tab === 'shrine' ? 'btn-secondary' : 'btn-outline-secondary'}`}
-          onClick={() => setTab('shrine')}
-        >
-          神社
-        </button>
-        <button
-          className={`btn ${tab === 'diety' ? 'btn-secondary' : 'btn-outline-secondary'}`}
-          onClick={() => setTab('diety')}
-        >
-          神様
-        </button>
-      </div>
+      <Tabs
+        id="catalog-tabs"
+        activeKey={tab}
+        onSelect={k => k && setTab(k as 'shrine' | 'diety')}
+        className="mb-2"
+      >
+        <Tab eventKey="shrine" title="神社" />
+        <Tab eventKey="diety" title="神様" />
+      </Tabs>
       <div className="d-flex gap-2 mb-3">
         <select
           className="form-select"

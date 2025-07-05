@@ -1,5 +1,7 @@
 import React from 'react';
 import CustomLink from '../atoms/CustomLink';
+import Tabs from 'react-bootstrap/Tabs';
+import Tab from 'react-bootstrap/Tab';
 
 export type Period = 'all' | 'yearly' | 'monthly' | 'weekly';
 
@@ -28,17 +30,16 @@ const periodLabels: Record<Period, string> = {
 export default function RankingPane({ items, type, period, onPeriodChange, onItemClick }: RankingPaneProps) {
   return (
     <div className="ranking-pane">
-      <div className="d-flex gap-4 border-bottom mb-2 small">
+      <Tabs
+        id="ranking-tabs"
+        activeKey={period}
+        onSelect={(k) => k && onPeriodChange(k as Period)}
+        className="mb-2"
+      >
         {(['all', 'yearly', 'monthly', 'weekly'] as Period[]).map(p => (
-          <button
-            key={p}
-            className={`px-2 pb-1 border-bottom border-2 border-transparent ${period === p ? 'border-primary text-primary fw-bold' : 'text-secondary'}`}
-            onClick={() => onPeriodChange(p)}
-          >
-            {periodLabels[p]}
-          </button>
+          <Tab eventKey={p} title={periodLabels[p]} key={p} />
         ))}
-      </div>
+      </Tabs>
       <div className="d-grid gap-2 mt-2">
         {items.length === 0 && (
           <div className="text-secondary text-center py-4 small">データがありません</div>
@@ -57,7 +58,7 @@ export default function RankingPane({ items, type, period, onPeriodChange, onIte
             </span>
             <CustomLink
               onClick={() => onItemClick && onItemClick(item.id)}
-              className={`fw-bold text-decoration-underline tag-link tag-${type}`}
+              type={type}
             >
               {item.name}
             </CustomLink>

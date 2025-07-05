@@ -76,7 +76,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
   }
 
   return (
-    <div className="modal-content">
+    <>
       <div className="d-flex align-items-center gap-3 mb-4">
         <div className="relative">
           <img
@@ -145,6 +145,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
           onItemClick={onShowDiety}
         />
       </div>
-    </div>
+    </>
   );
 }

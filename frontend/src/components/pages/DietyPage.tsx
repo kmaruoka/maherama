@@ -48,7 +48,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
   }
 
   return (
-    <div className="modal-content">
+    <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <img
           src={diety.thumbnailUrl ? diety.thumbnailUrl : '/images/noimage-diety.png'}
@@ -71,7 +71,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
               <CustomLink
                 key={shrine.id}
                 onClick={() => onShowShrine?.(shrine.id)}
-                className="tag-link tag-shrine"
+                type="shrine"
               >
                 {shrine.name}
               </CustomLink>
@@ -103,6 +103,6 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
           <p className="text-body-secondary small">{diety.description}</p>
         </div>
       )}
-    </div>
+    </>
   );
 }

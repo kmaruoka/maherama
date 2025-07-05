@@ -16,7 +16,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
   }
 
   return (
-    <div className="modal-content">
+    <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <img
           src={data.thumbnailUrl ? data.thumbnailUrl : '/images/noimage-shrine.png'}
@@ -55,7 +55,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
               <CustomLink
                 key={d.id}
                 onClick={() => onShowDiety && onShowDiety(d.id)}
-                className="tag-link tag-diety"
+                type="diety"
               >
                 {d.name}
               </CustomLink>
@@ -98,6 +98,6 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
       </div>
       
       <div className="text-muted small">登録日: {data.registeredAt}</div>
-    </div>
+    </>
   );
 }

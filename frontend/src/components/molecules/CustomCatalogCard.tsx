@@ -1,29 +1,26 @@
-import React from 'react';
-import CustomLink from '../atoms/CustomLink';
+
+import CustomImage from '../atoms/CustomImage';
 
 interface CustomCatalogCardProps {
-  id: number;
   name: string;
   count: number;
-  registeredAt?: string;
-  thumbnailUrl?: string;
-  onClick?: (id: number) => void;
+  registeredAt: string;
+  onClick?: () => void;
   countLabel?: string;
+  type?: 'shrine' | 'diety';
+  thumbnailUrl?: string;
 }
-
-const CustomCatalogCard: React.FC<CustomCatalogCardProps> = ({ id, name, count, registeredAt, thumbnailUrl, onClick, countLabel = '参拝数' }) => (
-  <div className="card" style={{ width: '220px' }}>
-    <div className="ratio ratio-16x9 mb-1">
-      <img src={thumbnailUrl || '/vite.svg'} alt="thumb" className="card-img-top object-fit-cover" />
+export default function CustomCatalogCard({ name, count, registeredAt, onClick, countLabel = '参拝数', type, thumbnailUrl }: CustomCatalogCardProps) {
+  const noImage = type === 'diety' ? '/images/noimage-diety.png' : '/images/noimage-shrine.png';
+  const imageSrc = thumbnailUrl || noImage;
+  return (
+    <div className="card" style={{ width: '220px' }} onClick={onClick} role="button">
+      <CustomImage src={imageSrc} alt={name} />
+      <div className="card-body p-2">
+        <div className="fw-bold mb-1">{name}</div>
+        <div className="small text-muted mb-1">{countLabel}: {count}</div>
+        <div className="small text-secondary">登録日: {registeredAt}</div>
+      </div>
     </div>
-    <div className="card-body p-2">
-      <CustomLink onClick={onClick ? () => onClick(id) : undefined}>{name}</CustomLink>
-      <div className="text-muted small">{countLabel}: {count}</div>
-      {registeredAt && (
-        <div className="text-muted small">登録日: {new Date(registeredAt).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/')}</div>
-      )}
-    </div>
-  </div>
-);
-
-export default CustomCatalogCard; 
+  );
+} 

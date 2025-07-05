@@ -37,7 +37,12 @@ function App() {
         {renderPage()}
         {modal && (
           <Modal show onHide={() => setModal(null)} centered size="lg">
-            <Modal.Body>
+            <Modal.Body style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1 }}>
+                <Button variant="light" onClick={() => setModal(null)} className="border-0">
+                  <span aria-hidden="true">×</span>
+                </Button>
+              </div>
               {modal.type === 'shrine' && (
                 <ShrinePage
                   id={modal.id}
@@ -60,11 +65,6 @@ function App() {
                 />
               )}
             </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setModal(null)}>
-                閉じる
-              </Button>
-            </Modal.Footer>
           </Modal>
         )}
       </div>
