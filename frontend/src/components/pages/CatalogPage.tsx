@@ -51,6 +51,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       }}
       countLabel="参拝数"
       type={tab}
+      dateLabel="収録日"
     />
   );
 
@@ -71,8 +72,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
-          <option value="registeredAt-desc">登録日(新しい順)</option>
-          <option value="registeredAt-asc">登録日(古い順)</option>
+          <option value="registeredAt-desc">収録日(新しい順)</option>
+          <option value="registeredAt-asc">収録日(古い順)</option>
           <option value="name-asc">名前(昇順)</option>
           <option value="name-desc">名前(降順)</option>
           <option value="count-desc">参拝数(多い順)</option>

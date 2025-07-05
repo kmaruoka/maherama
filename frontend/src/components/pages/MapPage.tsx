@@ -13,22 +13,39 @@ import 'leaflet/dist/leaflet.css';
 import CustomCircle from '../atoms/CustomCircle';
 
 function createShrineIcon(thumbnailUrl?: string) {
-  return L.icon({
-    iconUrl: thumbnailUrl || '/images/marker-icon.png',
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40],
+  // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
+  return L.divIcon({
+    className: '',
+    html: `
+      <div class="shrine-marker-frame-anim">
+        <div class="shrine-marker-thumbnail-wrap">
+          <img src="${thumbnailUrl || '/images/noimage-shrine.png'}" alt="shrine" />
+          <div class="shrine-marker-thumbnail-gloss"></div>
+        </div>
+        <div class="shrine-marker-pin"></div>
+      </div>
+    `,
+    iconSize: [120, 95.5], // サムネイル+ピン
+    iconAnchor: [60, 95.5], // 下端中央
+    popupAnchor: [0, -95.5],
   });
 }
+
+const debugCurrentIcon = new L.Icon({
+  iconUrl: 'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+});
 
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
   const mapRef = useRef<L.Map | null>(null);
-  const defaultCenter: [number, number] = [35.68, 139.76];
+  const defaultCenter: [number, number] = [34.702485, 135.495951]; // 大阪・梅田
   const defaultZoom = 17;
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
   const [zoom] = useState<number>(defaultZoom);
+  const [mapReady, setMapReady] = useState(false);
 
   const {
     data: logs = [],
@@ -48,7 +65,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
 
   // 地図の操作可否切り替え
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapReady) return;
     if (debugMode) {
       mapRef.current.dragging.enable();
       mapRef.current.scrollWheelZoom.enable();
@@ -58,7 +75,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
       mapRef.current.scrollWheelZoom.disable();
       mapRef.current.doubleClickZoom.disable();
     }
-  }, [debugMode]);
+  }, [debugMode, mapReady]);
 
   // moveend イベントハンドラ（debugMode時のみ）
   useEffect(() => {
@@ -97,9 +114,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         minZoom={4}
         maxZoom={19}
         style={{ height: 'calc(100vh - 56px)' }}
-        whenReady={({ target }: any) => {
-          mapRef.current = target;
-        }}
+        whenReady={((event: { target: L.Map }) => { mapRef.current = event.target; setMapReady(true); }) as unknown as () => void}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a>'
@@ -113,6 +128,13 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         {!debugMode && position && (
           <CustomCircle center={position} rank={"free"} />
         )}
+        {/* デバッグ用: 現在地ピン */}
+        {position && (
+          <Marker position={position} icon={debugCurrentIcon}>
+            <Popup>現在地: {position[0]}, {position[1]}</Popup>
+          </Marker>
+        )}
+        {/* 通常の神社マーカー */}
         {shrines.map((s) => (
           <Marker key={s.id} position={[s.lat, s.lng]} icon={createShrineIcon(s.thumbnailUrl)}>
             <Popup>

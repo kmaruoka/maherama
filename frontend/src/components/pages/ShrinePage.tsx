@@ -11,6 +11,11 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
 
   const { data: rankings = [] } = useShrineRankings(id, selectedPeriod);
 
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   if (!data) {
     return <div className="p-3">Loading...</div>;
   }
@@ -27,7 +32,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
         <div>
           <div className="modal-title">{data.name}</div>
           {data.kana && <div className="modal-kana">{data.kana}</div>}
-          <div className="modal-item-text small mt-2">参拝数: {data.count}</div>
+          <div className="catalog-count modal-item-text small mt-2">参拝数: {data.count}</div>
         </div>
       </div>
       
@@ -97,7 +102,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
         />
       </div>
       
-      <div className="text-muted small">登録日: {data.registeredAt}</div>
+      <div className="text-muted small">収録日: {formatDate(data.registeredAt)}</div>
     </>
   );
 }

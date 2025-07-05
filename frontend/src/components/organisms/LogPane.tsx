@@ -9,6 +9,7 @@ interface LogPaneProps {
   onShowShrine?: (id: number) => void;
   onShowDiety?: (id: number) => void;
   onShowUser?: (id: number) => void;
+  debugLogs?: string[];
 }
 
 export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser }: LogPaneProps) {

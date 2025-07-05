@@ -1,0 +1,15 @@
+.modal-title, .modal-kana {
+  word-break: break-all;
+  max-width: 220px;
+  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  display: block;
+}
+
+.shrine-popup-pane {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 4px 24px 0 var(--color-shadow);
+} 

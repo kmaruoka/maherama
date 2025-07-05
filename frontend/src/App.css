@@ -135,3 +135,10 @@ body.no-skin-padding, body.no-skin-padding #root {
   background: var(--color-scrollbar-track);
   border-radius: 6px;
 }
+
+.catalog-count {
+  font-size: 0.85em;
+  color: var(--color-text);
+  opacity: 0.8;
+  letter-spacing: 0.01em;
+}

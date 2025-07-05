@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import CustomText from '../atoms/CustomText';
 import { API_BASE } from '../../config/api';
 import CustomLink from '../atoms/CustomLink';
-import useShrineRankings from '../../hooks/useShrineRankings';
+import useCurrentPosition from '../../hooks/useCurrentPosition';
+import useUserSubscription from '../../hooks/useUserSubscription';
+import './ShrineMarkerPane.css';
 
 export interface Shrine {
   id: number;
@@ -22,35 +23,43 @@ export interface Shrine {
   dieties: Array<{ id: number; name: string; kana?: string }>;
 }
 
-interface RankingItem {
-  rank: number;
-  userId: number;
-  userName: string;
-  count: number;
-}
-
 export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; }) {
   const queryClient = useQueryClient();
-  const [selectedPeriod, setSelectedPeriod] = useState<'all' | 'yearly' | 'monthly' | 'weekly'>('all');
-  
-  const { data: rankings = [] } = useShrineRankings(shrine.id, selectedPeriod);
+  const position = useCurrentPosition();
+  const { data: subscription } = useUserSubscription();
 
-  const periods = [
-    { key: 'all', label: '総合' },
-    { key: 'yearly', label: '年間' },
-    { key: 'monthly', label: '月間' },
-    { key: 'weekly', label: '週間' },
-  ];
+  // 距離計算（Haversine公式）
+  function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+    const R = 6371000; // 地球半径(m)
+    const toRad = (x: number) => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+  function getRadiusFromSlots(slots: number) {
+    if (slots === 0) return 100;
+    return 100 * Math.pow(2, slots);
+  }
+  const radius = getRadiusFromSlots(subscription?.slots ?? 0);
+  const canPray = position && getDistanceMeters(position[0], position[1], shrine.lat, shrine.lng) <= radius;
 
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
+      let body = undefined;
+      if (position) {
+        body = JSON.stringify({ lat: position[0], lng: position[1] });
+      }
       const res = await fetch(`${API_BASE}/shrines/${id}/pray`, {
         method: 'POST',
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body,
       });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shrines'] });
+      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       refetchLogs();
     },
   });
@@ -70,23 +79,22 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shrines'] });
+      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       refetchLogs();
     },
   });
 
   return (
-    <div className="bg-white rounded shadow p-4 max-w-sm">
+    <div>
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div className="modal-header">
           <CustomLink type="shrine" onClick={() => onShowDetail && onShowDetail(shrine.id)} className="modal-title">
             {shrine.name}
           </CustomLink>
-          {shrine.kana && <div className="modal-kana">{shrine.kana}</div>}
         </div>
       </div>
       <div className="modal-info">
-        <div className="modal-item-text">参拝数: <span className="fw-bold">{shrine.count}</span></div>
+        <div className="catalog-count modal-item-text">参拝数: <span className="fw-bold">{shrine.count}</span></div>
       </div>
 
       {shrine.thumbnailUrl && (
@@ -131,6 +139,7 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
         <button
           className="btn btn-primary btn-sm"
           onClick={() => prayMutation.mutate(shrine.id)}
+          disabled={!canPray}
         >
           参拝
         </button>

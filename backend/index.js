@@ -217,6 +217,8 @@ app.post('/shrines/:id/pray', async (req, res) => {
       where: { id },
       select: {
         name: true,
+        lat: true,
+        lng: true,
         shrine_dieties: { select: { diety_id: true } }
       }
     });
@@ -225,6 +227,22 @@ app.post('/shrines/:id/pray', async (req, res) => {
     }
     // ユーザーIDをリクエストヘッダーから取得（なければ1）
     const userId = parseInt(req.headers['x-user-id']) || 1;
+    // ユーザーの課金ランク取得
+    const subscription = await getUserSubscription(userId);
+    const radius = getRadiusFromSlots(subscription.slots);
+    // 距離チェック
+    if (req.body.lat && req.body.lng) {
+      const toRad = (x) => x * Math.PI / 180;
+      const R = 6371000;
+      const dLat = toRad(req.body.lat - shrine.lat);
+      const dLng = toRad(req.body.lng - shrine.lng);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(shrine.lat)) * Math.cos(toRad(req.body.lat)) * Math.sin(dLng/2) * Math.sin(dLng/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const dist = R * c;
+      if (dist > radius) {
+        return res.status(400).json({ error: '現在地が神社から離れすぎています' });
+      }
+    }
     // --- 神社カウント ---
     // 取得した祭神IDをログ出力
     console.log('shrine_dieties:', shrine.shrine_dieties);
@@ -831,6 +849,16 @@ app.get('/users/:id/diety-rankings', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Error fetching user diety rankings:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/users/me/subscription', async (req, res) => {
+  try {
+    const userId = parseInt(req.headers['x-user-id']) || 1;
+    const subscription = await getUserSubscription(userId);
+    res.json({ slots: subscription.slots });
+  } catch (err) {
     res.status(500).json({ error: 'DB error' });
   }
 });

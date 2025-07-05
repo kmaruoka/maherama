@@ -3,7 +3,7 @@ const darkSkin = {
   colors: {
     background: '#181a1b',
     surface: '#232627',
-    primary: '#90caf9',
+    primary: '#424242',
     accent: '#42a5f5',
     text: '#f5f5f5',
     border: '#424242',

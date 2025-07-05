@@ -14,6 +14,7 @@ interface Diety {
   count: number;
   shrines: Array<{ id: number; name: string; kana?: string }>;
   thumbnailUrl?: string;
+  registeredAt: string;
 }
 
 export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
@@ -34,6 +35,11 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
     { key: 'monthly', label: '月間' },
     { key: 'weekly', label: '週間' },
   ];
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
 
   if (!idFromParams) {
     return <div className="p-3">神様IDが指定されていません</div>;
@@ -59,7 +65,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
         <div>
           <div className="modal-title">{diety.name}</div>
           {diety.kana && <div className="modal-kana">{diety.kana}</div>}
-          <div className="modal-item-text small mt-2">参拝数: {diety.count}</div>
+          <div className="catalog-count modal-item-text small mt-2">参拝数: {diety.count}</div>
         </div>
       </div>
 
@@ -103,6 +109,9 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
           <p className="text-body-secondary small">{diety.description}</p>
         </div>
       )}
+
+      {/* 末尾に収録日表示を追加（登録日→収録日） */}
+      <div className="text-muted small">収録日: {formatDate(diety.registeredAt)}</div>
     </>
   );
 }
