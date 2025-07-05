@@ -12,25 +12,26 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
   const { data: rankings = [] } = useShrineRankings(id, selectedPeriod);
 
   if (!data) {
-    return <div className="p-4">Loading...</div>;
+    return <div className="p-3">Loading...</div>;
   }
 
   return (
     <div className="modal-content">
-      <div className="flex items-start space-x-4 mb-4">
+      <div className="d-flex align-items-start gap-3 mb-4">
         <img
           src={data.thumbnailUrl ? data.thumbnailUrl : '/images/noimage-shrine.png'}
           alt="サムネイル"
-          className="w-24 h-24 object-contain rounded shadow"
+          className="rounded shadow"
+          style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
         />
         <div>
           <div className="modal-title">{data.name}</div>
           {data.kana && <div className="modal-kana">{data.kana}</div>}
-          <div className="text-xs text-gray-500 mt-2">参拝数: {data.count}</div>
+          <div className="text-muted small mt-2">参拝数: {data.count}</div>
         </div>
       </div>
       
-      <div className="text-sm text-gray-300 mb-4">{data.location}</div>
+      <div className="small text-muted mb-4">{data.location}</div>
       
       {data.founded && (
         <div className="modal-section">
@@ -42,13 +43,13 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
       {data.description && (
         <div className="modal-section">
           <div className="modal-subtitle">説明</div>
-          <div className="text-sm text-gray-200">{data.description}</div>
+          <div className="small text-body-secondary">{data.description}</div>
         </div>
       )}
       
       <div className="modal-section">
         <div className="modal-subtitle">祭神</div>
-        <div className="flex flex-wrap gap-2">
+        <div className="d-flex flex-wrap gap-2">
           {data.dieties && data.dieties.length > 0 ? (
             data.dieties.map(d => (
               <CustomLink
@@ -60,7 +61,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
               </CustomLink>
             ))
           ) : (
-            <span className="text-gray-400">祭神情報なし</span>
+            <span className="text-muted">祭神情報なし</span>
           )}
         </div>
       </div>
@@ -68,14 +69,14 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
       {data.history && (
         <div className="modal-section">
           <div className="modal-subtitle">歴史・伝承</div>
-          <div className="text-sm">{data.history}</div>
+          <div className="small">{data.history}</div>
         </div>
       )}
       
       {data.festivals && (
         <div className="modal-section">
           <div className="modal-subtitle">祭礼</div>
-          <div className="text-sm">{data.festivals}</div>
+          <div className="small">{data.festivals}</div>
         </div>
       )}
 
@@ -96,7 +97,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
         />
       </div>
       
-      <div className="text-xs text-gray-400">登録日: {data.registeredAt}</div>
+      <div className="text-muted small">登録日: {data.registeredAt}</div>
     </div>
   );
 }

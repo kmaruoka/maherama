@@ -28,10 +28,10 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         onClick={handlePaneClick}
         style={{ cursor: 'pointer', paddingBottom: '2.5rem', position: 'relative', background: 'rgba(255,255,255,0.7)' }}
       >
-        {loading && <div className="px-2 py-1 text-gray-300">ログを読み込み中...</div>}
-        {error && <div className="px-2 py-1 text-red-400">ログの読み込みに失敗しました</div>}
+        {loading && <div className="px-2 py-1 text-secondary">ログを読み込み中...</div>}
+        {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
-          <div className="px-2 py-1 text-gray-300">ログがありません</div>
+          <div className="px-2 py-1 text-secondary">ログがありません</div>
         )}
         {logs.slice(0, 1).map((l, i) => (
           <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
@@ -57,10 +57,10 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         }}
         onClick={handlePaneClick}
       >
-        {loading && <div className="px-2 py-1 text-gray-300">ログを読み込み中...</div>}
-        {error && <div className="px-2 py-1 text-red-400">ログの読み込みに失敗しました</div>}
+        {loading && <div className="px-2 py-1 text-secondary">ログを読み込み中...</div>}
+        {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
-          <div className="px-2 py-1 text-gray-300">ログがありません</div>)}
+          <div className="px-2 py-1 text-secondary">ログがありません</div>)}
         {logs.map((l, i) => (
           <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
         ))}

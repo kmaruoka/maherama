@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Modal, Button } from 'react-bootstrap';
 import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
 import ShrinePage from './components/pages/ShrinePage';
@@ -32,17 +33,39 @@ function App() {
   return (
     <>
       <MenuPane setPage={setPage} />
-      <div className="pb-12">
+      <div className="pb-5">
         {renderPage()}
         {modal && (
-          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999]" style={{ zIndex: 9999 }} onClick={() => setModal(null)}>
-            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] relative" onClick={e => e.stopPropagation()}>
-              {modal.type === 'shrine' && <ShrinePage id={modal.id} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />}
-              {modal.type === 'diety' && <DietyPage id={modal.id} onShowShrine={id => setModal({ type: 'shrine', id })} onShowUser={id => setModal({ type: 'user', id })} />}
-              {modal.type === 'user' && <UserPage id={modal.id} onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} />}
-              <button className="mt-4 px-2 py-1 bg-gray-400 text-white rounded absolute right-2 top-2" onClick={() => setModal(null)}>閉じる</button>
-            </div>
-          </div>
+          <Modal show onHide={() => setModal(null)} centered size="lg">
+            <Modal.Body>
+              {modal.type === 'shrine' && (
+                <ShrinePage
+                  id={modal.id}
+                  onShowDiety={id => setModal({ type: 'diety', id })}
+                  onShowUser={id => setModal({ type: 'user', id })}
+                />
+              )}
+              {modal.type === 'diety' && (
+                <DietyPage
+                  id={modal.id}
+                  onShowShrine={id => setModal({ type: 'shrine', id })}
+                  onShowUser={id => setModal({ type: 'user', id })}
+                />
+              )}
+              {modal.type === 'user' && (
+                <UserPage
+                  id={modal.id}
+                  onShowShrine={id => setModal({ type: 'shrine', id })}
+                  onShowDiety={id => setModal({ type: 'diety', id })}
+                />
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setModal(null)}>
+                閉じる
+              </Button>
+            </Modal.Footer>
+          </Modal>
         )}
       </div>
     </>

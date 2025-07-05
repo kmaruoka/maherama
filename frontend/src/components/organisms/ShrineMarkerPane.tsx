@@ -76,8 +76,8 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
   });
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 max-w-sm">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white rounded shadow p-4 max-w-sm">
+      <div className="d-flex justify-content-between align-items-start mb-4">
         <div className="modal-header">
           <CustomLink type="shrine" onClick={() => onShowDetail && onShowDetail(shrine.id)} className="modal-title">
             {shrine.name}
@@ -86,7 +86,7 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
         </div>
       </div>
       <div className="modal-info">
-        <div>参拝数: <span className="font-bold">{shrine.count}</span></div>
+        <div>参拝数: <span className="fw-bold">{shrine.count}</span></div>
       </div>
 
       {shrine.thumbnailUrl && (
@@ -94,55 +94,55 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail }: 
           <img
             src={shrine.thumbnailUrl}
             alt={shrine.name}
-            className="w-full h-32 object-cover rounded"
+            className="w-100" style={{ height: '8rem', objectFit: 'cover', borderRadius: '.25rem' }}
           />
           {shrine.thumbnailBy && (
-            <p className="text-xs text-gray-500 mt-1">by {shrine.thumbnailBy}</p>
+            <p className="text-muted small mt-1">by {shrine.thumbnailBy}</p>
           )}
         </div>
       )}
 
       <div className="mb-4">
-        {shrine.founded && <p className="text-sm text-gray-600 mb-2">創建: {shrine.founded}</p>}
+        {shrine.founded && <p className="small text-muted mb-2">創建: {shrine.founded}</p>}
       </div>
 
       {shrine.history && (
         <div className="mb-4">
-          <h4 className="font-semibold mb-2">歴史・伝承</h4>
-          <p className="text-sm text-gray-700">{shrine.history}</p>
+          <h4 className="fw-semibold mb-2">歴史・伝承</h4>
+          <p className="small text-body-secondary">{shrine.history}</p>
         </div>
       )}
 
       {shrine.festivals && (
         <div className="mb-4">
-          <h4 className="font-semibold mb-2">祭礼</h4>
-          <p className="text-sm text-gray-700">{shrine.festivals}</p>
+          <h4 className="fw-semibold mb-2">祭礼</h4>
+          <p className="small text-body-secondary">{shrine.festivals}</p>
         </div>
       )}
 
       {shrine.description && (
         <div className="mb-4">
-          <h4 className="font-semibold mb-2">説明</h4>
-          <p className="text-sm text-gray-700">{shrine.description}</p>
+          <h4 className="fw-semibold mb-2">説明</h4>
+          <p className="small text-body-secondary">{shrine.description}</p>
         </div>
       )}
 
-      <div className="flex gap-2 mt-2">
+      <div className="d-flex gap-2 mt-2">
         <button
-          className="px-2 py-1 bg-blue-500 text-white rounded"
+          className="btn btn-primary btn-sm"
           onClick={() => prayMutation.mutate(shrine.id)}
         >
           参拝
         </button>
         <button
-          className="px-2 py-1 bg-green-500 text-white rounded"
+          className="btn btn-success btn-sm"
           onClick={() => remotePrayMutation.mutate()}
           disabled={remotePrayMutation.isPending}
         >
           {remotePrayMutation.isPending ? '遥拝中...' : '遥拝'}
         </button>
         {remotePrayMutation.error && (
-          <p className="text-red-500 text-sm mt-2">{remotePrayMutation.error.message}</p>
+          <p className="text-danger small mt-2">{remotePrayMutation.error.message}</p>
         )}
       </div>
     </div>

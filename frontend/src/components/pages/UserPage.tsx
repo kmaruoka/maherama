@@ -64,45 +64,46 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
   };
 
   if (!displayId) {
-    return <div className="p-4">ユーザーIDが指定されていません</div>;
+    return <div className="p-3">ユーザーIDが指定されていません</div>;
   }
 
   if (isLoading) {
-    return <div className="p-4">読み込み中...</div>;
+    return <div className="p-3">読み込み中...</div>;
   }
 
   if (!userInfo) {
-    return <div className="p-4">ユーザーが見つかりません</div>;
+    return <div className="p-3">ユーザーが見つかりません</div>;
   }
 
   return (
     <div className="modal-content">
-      <div className="flex items-center space-x-4 mb-4">
+      <div className="d-flex align-items-center gap-3 mb-4">
         <div className="relative">
           <img
             src={userInfo.thumbnailUrl ? userInfo.thumbnailUrl : '/images/noimage-user.png'}
             alt="ユーザーサムネイル"
-            className="w-24 h-24 object-contain rounded-full shadow"
+            className="rounded-circle shadow"
+            style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
           />
         </div>
         <div>
-          <h1 className="modal-title text-2xl mb-4">
+          <h1 className="modal-title h4 mb-4">
             {userInfo.name}
           </h1>
-          <div className="modal-info flex items-center gap-4">
+          <div className="modal-info d-flex align-items-center gap-4">
             <div>フォロー: {userInfo.followingCount}</div>
             <div>フォロワー: {userInfo.followerCount}</div>
             {currentUserId && currentUserId !== displayId && (
               userInfo.isFollowing ? (
                 <button
-                  className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                  className="btn btn-danger btn-sm"
                   onClick={handleUnfollow}
                 >
                   フォロー解除
                 </button>
               ) : (
                 <button
-                  className="px-2 py-1 bg-green-500 text-white rounded text-sm"
+                  className="btn btn-success btn-sm"
                   onClick={handleFollow}
                 >
                   フォローする

@@ -12,15 +12,17 @@ interface CustomCatalogCardProps {
 }
 
 const CustomCatalogCard: React.FC<CustomCatalogCardProps> = ({ id, name, count, registeredAt, thumbnailUrl, onClick, countLabel = '参拝数' }) => (
-  <div className="border p-2 rounded bg-white flex flex-col w-[220px]">
-    <div className="w-full aspect-video bg-gray-100 mb-1 overflow-hidden rounded">
-      <img src={thumbnailUrl || '/vite.svg'} alt="thumb" className="w-full h-full object-cover" />
+  <div className="card" style={{ width: '220px' }}>
+    <div className="ratio ratio-16x9 mb-1">
+      <img src={thumbnailUrl || '/vite.svg'} alt="thumb" className="card-img-top object-fit-cover" />
     </div>
-    <CustomLink onClick={onClick ? () => onClick(id) : undefined}>{name}</CustomLink>
-    <div className="text-sm text-gray-600">{countLabel}: {count}</div>
-    {registeredAt && (
-      <div className="text-xs text-gray-400 mt-1">登録日: {new Date(registeredAt).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/')}</div>
-    )}
+    <div className="card-body p-2">
+      <CustomLink onClick={onClick ? () => onClick(id) : undefined}>{name}</CustomLink>
+      <div className="text-muted small">{countLabel}: {count}</div>
+      {registeredAt && (
+        <div className="text-muted small">登録日: {new Date(registeredAt).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/')}</div>
+      )}
+    </div>
   </div>
 );
 
