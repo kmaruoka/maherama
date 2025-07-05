@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
@@ -15,6 +15,15 @@ function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
   const [modal, setModal] = useState<ModalType>(null);
   useSkin();
+
+  // 地図ページだけbodyにno-skin-paddingクラスを付与
+  useEffect(() => {
+    if (page === 'map') {
+      document.body.classList.add('no-skin-padding');
+    } else {
+      document.body.classList.remove('no-skin-padding');
+    }
+  }, [page]);
 
   // ページ切り替え用
   const renderPage = () => {
@@ -35,28 +44,17 @@ function App() {
   return (
     <>
       <MenuPane setPage={setPage} />
-      <div className="pb-5">
+      <div className={page === 'map' ? '' : 'overflow-y-auto pb-56 position-relative'}>
         {renderPage()}
         {modal && (
           <Modal
             show={modal !== null}
             onHide={() => setModal(null)}
             centered
-            contentClassName={undefined}
+            dialogClassName="custom-modal-dialog"
+            contentClassName="custom-modal-content-force"
           >
-            <Modal.Body
-              style={{
-                position: 'relative',
-                border: '3px solid var(--color-border)',
-                boxShadow: 'var(--box-shadow)',
-                borderRadius: 'var(--border-radius)',
-                background: 'var(--modal-background)',
-                padding: 'var(--modal-padding)',
-                maxWidth: 'var(--modal-max-width)',
-                margin: '0 auto',
-                fontFamily: 'var(--font-family)',
-              }}
-            >
+            <Modal.Body>
               <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1 }}>
                 <Button variant="light" onClick={() => setModal(null)} className="border-0">
                   <span aria-hidden="true">×</span>

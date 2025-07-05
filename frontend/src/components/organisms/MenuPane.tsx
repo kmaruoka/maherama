@@ -6,7 +6,7 @@ export default function MenuPane({ setPage }: { setPage: (page: 'map' | 'catalog
   return (
     <nav
       className="d-flex position-fixed bottom-0 start-0 end-0 border-top"
-      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', height: '56px', zIndex: 10000 }}
     >
       <CustomMenuItem onClick={() => setPage('map')}>地図</CustomMenuItem>
       <CustomMenuItem onClick={() => setPage('catalog')}>図鑑</CustomMenuItem>

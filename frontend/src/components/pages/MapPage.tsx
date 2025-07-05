@@ -6,10 +6,9 @@ import '../../setupLeaflet';
 import { MAPBOX_API_KEY } from '../../config/api';
 import useLogs from '../../hooks/useLogs';
 import useAllShrines from '../../hooks/useAllShrines';
-import ShrineMarkerPane, { type Shrine } from '../organisms/ShrineMarkerPane';
+import ShrineMarkerPane from '../organisms/ShrineMarkerPane';
 import LogPane from '../organisms/LogPane';
-import type { LogItem } from '../molecules/CustomLogLine';
-import L, { Map as LeafletMap } from 'leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CustomCircle from '../atoms/CustomCircle';
 
@@ -24,12 +23,12 @@ function createShrineIcon(thumbnailUrl?: string) {
 
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const position = useCurrentPosition();
-  const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
+  const [debugMode] = useLocalStorageState('debugMode', false);
   const mapRef = useRef<L.Map | null>(null);
   const defaultCenter: [number, number] = [35.68, 139.76];
   const defaultZoom = 17;
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
-  const [zoom, setZoom] = useState<number>(defaultZoom);
+  const [zoom] = useState<number>(defaultZoom);
 
   const {
     data: logs = [],
@@ -39,8 +38,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   } = useLogs();
 
   const { data: shrines = [] } = useAllShrines();
-
-
 
   // GPS追従（通常モード）
   useEffect(() => {
@@ -79,7 +76,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     };
 
     map.on('moveend', onMoveEnd);
-    return () => map.off('moveend', onMoveEnd);
+    return () => { map.off('moveend', onMoveEnd); };
   }, [debugMode, center]);
 
   // debugMode時、center変更でsetView（現在のmapとずれていれば）
@@ -99,8 +96,8 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         zoom={debugMode ? zoom : defaultZoom}
         minZoom={4}
         maxZoom={19}
-        style={{ height: 'calc(100vh - 3rem)' }}
-        whenReady={({ target }: { target: LeafletMap }) => {
+        style={{ height: 'calc(100vh - 56px)' }}
+        whenReady={({ target }: any) => {
           mapRef.current = target;
         }}
       >
