@@ -1,4 +1,4 @@
-import React, { createContext, useState, type ReactNode } from 'react';
+import React, { createContext, useState, useEffect, type ReactNode } from 'react';
 import skins from './index';
 import type { SkinName } from './index';
 
@@ -11,6 +11,31 @@ const SkinContext = createContext(undefined as unknown as {
 export const SkinProvider = ({ children }: { children: ReactNode }) => {
   const [skinName, setSkinName] = useState<SkinName>('wa');
   const skin = skins[skinName];
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const { colors } = skin;
+    root.style.setProperty('--color-background', colors.background);
+    root.style.setProperty('--color-surface', colors.surface);
+    root.style.setProperty('--color-primary', colors.primary);
+    root.style.setProperty('--color-accent', colors.accent);
+    root.style.setProperty('--color-text', colors.text);
+    root.style.setProperty('--color-border', colors.border);
+    root.style.setProperty('--color-shadow', colors.shadow);
+    root.style.setProperty('--color-card', colors.card);
+    root.style.setProperty('--color-tag-shrine', colors.tagShrine);
+    root.style.setProperty('--color-tag-diety', colors.tagDiety);
+    root.style.setProperty('--color-tag-user', colors.tagUser);
+    root.style.setProperty('--color-tag-shrine-text', colors.tagShrineText);
+    root.style.setProperty('--color-tag-diety-text', colors.tagDietyText);
+    root.style.setProperty('--color-tag-user-text', colors.tagUserText);
+    root.style.setProperty('--border-radius', skin.borderRadius);
+    root.style.setProperty('--font-family', skin.fontFamily);
+    root.style.setProperty('--box-shadow', skin.boxShadow);
+    root.style.setProperty('--modal-max-width', skin.modal.maxWidth);
+    root.style.setProperty('--modal-padding', skin.modal.padding);
+    root.style.setProperty('--modal-background', skin.modal.background);
+  }, [skin]);
   return (
     <SkinContext.Provider value={{ skin, skinName, setSkinName }}>
       {children}
