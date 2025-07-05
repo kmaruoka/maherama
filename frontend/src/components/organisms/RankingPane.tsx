@@ -28,38 +28,40 @@ const periodLabels: Record<Period, string> = {
 export default function RankingPane({ items, type, period, onPeriodChange, onItemClick }: RankingPaneProps) {
   return (
     <div className="ranking-pane">
-      <div className="flex gap-4 border-b mb-2 text-sm">
+      <div className="d-flex gap-4 border-bottom mb-2 small">
         {(['all', 'yearly', 'monthly', 'weekly'] as Period[]).map(p => (
           <button
             key={p}
-            className={`px-2 pb-1 border-b-2 transition-colors duration-100 ${period === p ? 'border-blue-500 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-2 pb-1 border-bottom border-2 border-transparent ${period === p ? 'border-primary text-primary fw-bold' : 'text-secondary'}`}
             onClick={() => onPeriodChange(p)}
           >
             {periodLabels[p]}
           </button>
         ))}
       </div>
-      <div className="space-y-2 mt-2">
+      <div className="d-grid gap-2 mt-2">
         {items.length === 0 && (
-          <div className="text-gray-500 text-center py-4 text-xs">データがありません</div>
+          <div className="text-secondary text-center py-4 small">データがありません</div>
         )}
         {items.slice(0, 3).map((item, idx) => (
-          <div key={item.id} className="flex items-center gap-2 bg-gray-50 rounded px-3 py-2">
-            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-base font-bold ${
-              idx === 0 ? 'bg-yellow-400 text-yellow-900' :
-              idx === 1 ? 'bg-gray-300 text-gray-700' :
-              idx === 2 ? 'bg-orange-400 text-orange-900' :
-              'bg-gray-200 text-gray-600'
-            }`}>
+          <div key={item.id} className="d-flex align-items-center gap-2 bg-light rounded px-3 py-2">
+            <span
+              className={`rounded-circle d-flex align-items-center justify-content-center fw-bold ${
+              idx === 0 ? 'bg-warning text-dark' :
+              idx === 1 ? 'bg-secondary text-dark' :
+              idx === 2 ? 'bg-orange-400 text-dark' :
+              'bg-light text-dark'
+            }`}
+              style={{ width: '28px', height: '28px' }}>
               {idx + 1}
             </span>
             <CustomLink
               onClick={() => onItemClick && onItemClick(item.id)}
-              className={`font-bold hover:underline tag-link tag-${type}`}
+              className={`fw-bold text-decoration-underline tag-link tag-${type}`}
             >
               {item.name}
             </CustomLink>
-            <span className="text-sm text-gray-500 ml-2">{item.count}回</span>
+            <span className="small text-secondary ms-2">{item.count}回</span>
           </div>
         ))}
       </div>

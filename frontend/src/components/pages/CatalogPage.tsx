@@ -54,24 +54,24 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   );
 
   return (
-    <div className="p-4 space-y-2">
-      <div className="flex space-x-2">
+    <div className="p-3">
+      <div className="d-flex gap-2 mb-2">
         <button
-          className={`px-2 py-1 border ${tab === 'shrine' ? 'bg-gray-300' : ''}`}
+          className={`btn ${tab === 'shrine' ? 'btn-secondary' : 'btn-outline-secondary'}`}
           onClick={() => setTab('shrine')}
         >
           神社
         </button>
         <button
-          className={`px-2 py-1 border ${tab === 'diety' ? 'bg-gray-300' : ''}`}
+          className={`btn ${tab === 'diety' ? 'btn-secondary' : 'btn-outline-secondary'}`}
           onClick={() => setTab('diety')}
         >
           神様
         </button>
       </div>
-      <div className="flex space-x-2">
+      <div className="d-flex gap-2 mb-3">
         <select
-          className="border p-1"
+          className="form-select"
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
@@ -83,7 +83,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           <option value="count-asc">参拝数(少ない順)</option>
         </select>
         <select
-          className="border p-1"
+          className="form-select"
           value={style}
           onChange={(e) => setStyle(e.target.value as 'card' | 'list')}
         >
@@ -92,13 +92,13 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         </select>
       </div>
       {style === 'card' ? (
-        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, 220px)' }}>
+        <div className="d-grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, 220px)' }}>
           {sorted.map(renderItem)}
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="d-grid gap-2">
           {sorted.map((item) => (
-            <div key={item.id} className="border-b pb-1">
+            <div key={item.id} className="border-bottom pb-1">
               <CustomLink onClick={() => {
                 if (tab === 'shrine' && onShowShrine) {
                   setTimeout(() => onShowShrine(item.id), 0);
@@ -108,7 +108,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                   setTimeout(() => onShowUser(item.id), 0);
                 }
               }}>{item.name}</CustomLink>
-              <CustomText className="ml-2 text-sm">参拝数: {item.count}</CustomText>
+              <CustomText className="ms-2 small">参拝数: {item.count}</CustomText>
             </div>
           ))}
         </div>

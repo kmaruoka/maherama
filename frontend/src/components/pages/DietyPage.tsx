@@ -36,36 +36,37 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
   ];
 
   if (!idFromParams) {
-    return <div className="p-4">神様IDが指定されていません</div>;
+    return <div className="p-3">神様IDが指定されていません</div>;
   }
 
   if (dietyError) {
-    return <div className="p-4 text-red-500">神様情報の取得に失敗しました</div>;
+    return <div className="p-3 text-danger">神様情報の取得に失敗しました</div>;
   }
 
   if (!diety) {
-    return <div className="p-4">読み込み中...</div>;
+    return <div className="p-3">読み込み中...</div>;
   }
 
   return (
     <div className="modal-content">
-      <div className="flex items-start space-x-4 mb-4">
+      <div className="d-flex align-items-start gap-3 mb-4">
         <img
           src={diety.thumbnailUrl ? diety.thumbnailUrl : '/images/noimage-diety.png'}
           alt="サムネイル"
-          className="w-24 h-24 object-contain rounded shadow"
+          className="rounded shadow"
+          style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
         />
         <div>
           <div className="modal-title">{diety.name}</div>
           {diety.kana && <div className="modal-kana">{diety.kana}</div>}
-          <div className="text-xs text-gray-500 mt-2">参拝数: {diety.count}</div>
+          <div className="text-muted small mt-2">参拝数: {diety.count}</div>
         </div>
       </div>
 
       {diety.shrines.length > 0 && (
         <div className="modal-section">
           <div className="modal-subtitle">祀られている神社</div>
-          <div className="flex flex-wrap gap-2">
+          <div className="d-flex flex-wrap gap-2">
             {diety.shrines.map((shrine) => (
               <CustomLink
                 key={shrine.id}
@@ -99,7 +100,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
       {diety.description && (
         <div className="modal-section">
           <div className="modal-subtitle">説明</div>
-          <p className="text-gray-700 leading-relaxed">{diety.description}</p>
+          <p className="text-body-secondary small">{diety.description}</p>
         </div>
       )}
     </div>
