@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
+import useAllUsers from '../../hooks/useAllUsers';
 import { useSkin } from '../../skins/SkinContext';
 import { skins } from '../../skins';
 
@@ -8,6 +9,7 @@ export default function SettingsPage() {
   const [idInput, setIdInput] = useState('');
   const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
   const { skinName, setSkinName } = useSkin();
+  const { data: users = [], isLoading } = useAllUsers();
 
   const handleLogin = () => {
     if (idInput.trim()) {
@@ -29,13 +31,34 @@ export default function SettingsPage() {
     return (
       <div className="p-3">
         <h2 className="h5 fw-bold mb-3">ログイン</h2>
-        <div>IDを入力してください</div>
+        <div>IDを入力するかテストユーザー一覧から選択してログインしてください</div>
         <input
           type="number"
           className="form-control"
           value={idInput}
           onChange={(e) => setIdInput(e.target.value)}
         />
+        <div className="text-muted small mt-2">
+          <div className="border rounded p-3 bg-light">
+            <div className="fw-bold mb-2">テストユーザー一覧:</div>
+            <div className="mt-1">
+              {isLoading ? (
+                <div>読み込み中...</div>
+              ) : (
+                users.map(user => (
+                  <div 
+                    key={user.id} 
+                    className={`py-1 ${Number(idInput) === user.id ? 'fw-bold text-primary' : ''}`}
+                    style={{cursor: 'pointer'}}
+                    onClick={() => setIdInput(String(user.id))}
+                  >
+                    ID: {user.id} - {user.name} (Lv.{user.level} / EXP: {user.exp} / AP: {user.ability_points})
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
         <button
           className="btn btn-primary mt-2"
           onClick={handleLogin}
@@ -50,7 +73,14 @@ export default function SettingsPage() {
     <div className="p-3 space-y-4">
       <h2 className="h5 fw-bold">設定</h2>
       <div className="d-flex justify-content-between align-items-center">
-        <div>ログイン中 (ID: {userId})</div>
+        {(() => {
+          const user = users.find(u => u.id === Number(userId));
+          return (
+            <div>
+              ログイン中 (ID: {userId} / {user?.name} / Lv.{user?.level} / EXP: {user?.exp})
+            </div>
+          );
+        })()}
         <button
           className="btn btn-secondary btn-sm"
           onClick={handleLogout}

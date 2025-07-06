@@ -3,6 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+// Stripe初期化（APIキーが設定されている場合のみ）
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+}
 
 // 環境変数のチェック
 if (!process.env.PORT) {
@@ -856,6 +861,26 @@ function authenticateJWT(req, res, next) {
   });
 }
 
+// 全ユーザー取得API
+app.get('/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        level: true,
+        exp: true,
+        ability_points: true
+      },
+      orderBy: { id: 'asc' }
+    });
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 // ユーザーごとの「よく参拝する神社」ランキング
 app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
@@ -1602,7 +1627,7 @@ app.post('/user/reset-abilities', authenticateJWT, async (req, res) => {
     });
 
     if (!resetSubscription) {
-      return res.status(400).json({ error: 'Reset subscription required' });
+      return res.status(400).json({ error: '能力初期化には有料サブスクリプションが必要です。' });
     }
 
     const abilities = await prisma.userAbility.findMany({
@@ -2084,3 +2109,69 @@ const shutdown = async () => {
 };
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+
+// Stripeで能力初期化用Checkoutセッション作成API
+app.post('/subscription/reset-abilities/checkout', authenticateJWT, async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe機能が無効です。STRIPE_SECRET_KEYを設定してください。' });
+  }
+  
+  try {
+    const userId = req.user.id;
+    // Stripe Price IDは.envから取得
+    const priceId = process.env.STRIPE_RESET_ABILITIES_PRICE_ID;
+    if (!priceId) return res.status(500).json({ error: 'Stripe Price ID未設定' });
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/subscription/cancel`,
+      metadata: { userId, type: 'reset_abilities' }
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe Checkout作成エラー:', err);
+    res.status(500).json({ error: 'Stripe Checkout作成エラー' });
+  }
+});
+
+// Stripe Webhook受信API
+app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe機能が無効です。STRIPE_SECRET_KEYを設定してください。' });
+  }
+  
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('Webhook署名検証失敗:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  // 支払い完了イベント
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    if (session.metadata && session.metadata.type === 'reset_abilities') {
+      const userId = parseInt(session.metadata.userId, 10);
+      if (userId) {
+        // サブスクリプション付与
+        const now = new Date();
+        const oneMonthLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        await prisma.userSubscription.create({
+          data: {
+            user_id: userId,
+            subscription_type: 'reset_abilities',
+            expires_at: oneMonthLater,
+            is_active: true,
+            billing_cycle_start: now,
+            billing_cycle_end: oneMonthLater
+          }
+        });
+        console.log(`reset_abilitiesサブスクリプション付与: userId=${userId}`);
+      }
+    }
+  }
+  res.json({ received: true });
+});

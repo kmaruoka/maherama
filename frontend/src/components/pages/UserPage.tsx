@@ -75,11 +75,37 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
   };
 
   const resetAbilities = async () => {
-    await apiCall(`${API_BASE}/user/reset-abilities`, {
-      method: 'POST',
-    });
-    refetch();
-    refetchAbilities();
+    try {
+      await apiCall(`${API_BASE}/user/reset-abilities`, {
+        method: 'POST',
+      });
+      refetch();
+      refetchAbilities();
+    } catch (error) {
+      console.error('能力初期化エラー:', error);
+      // エラーメッセージから詳細を抽出
+      const errorMessage = error instanceof Error ? error.message : '能力初期化に失敗しました';
+      if (errorMessage.includes('能力初期化には有料サブスクリプションが必要です')) {
+        alert('能力初期化には有料サブスクリプションが必要です。\n\nサブスクリプションを購入してから再度お試しください。');
+      } else {
+        alert(`能力初期化に失敗しました: ${errorMessage}`);
+      }
+    }
+  };
+
+  // Stripe能力初期化サブスクリプション購入
+  const handleBuyResetAbilities = async () => {
+    try {
+      const res = await apiCall(`${API_BASE}/subscription/reset-abilities/checkout`, { method: 'POST' });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Stripe決済URLの取得に失敗しました');
+      }
+    } catch (error) {
+      alert('Stripe決済画面の表示に失敗しました');
+    }
   };
 
   if (!displayId) {
@@ -157,7 +183,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
             <span>参拝距離: {userInfo.pray_distance}m</span>
             <span>遥拝回数: {userInfo.worship_count}回/日</span>
             <span>経験値: {userInfo.exp}</span>
-            <span>能力値: {userInfo.ability_points}</span>
           </div>
         </div>
       </div>
@@ -215,6 +240,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
       {currentUserId && currentUserId === displayId && (
         <div className="mb-3">
           <div className="modal-subtitle">能力解放</div>
+          <div className="modal-subtitle">能力値: {userInfo.ability_points}</div>
           <div className="d-grid gap-1">
             {abilities
               .filter(a => a.can_purchase || a.purchased)
@@ -267,6 +293,13 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
               onMouseOut={e => { e.currentTarget.style.background = skin.colors.accent; e.currentTarget.style.color = skin.colors.surface; }}
             >
               能力初期化（有料）
+            </button>
+            <button
+              className="btn btn-outline-primary btn-sm mt-2"
+              style={{ marginLeft: 8 }}
+              onClick={handleBuyResetAbilities}
+            >
+              能力初期化サブスクリプション購入（Stripe）
             </button>
           </div>
         </div>
