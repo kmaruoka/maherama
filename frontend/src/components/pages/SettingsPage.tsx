@@ -73,7 +73,7 @@ export default function SettingsPage() {
       <div className="d-flex align-items-center justify-content-between mt-3">
         <span>スキン</span>
         <select
-          className="form-select w-auto ms-2"
+          className="form-select skin-select w-auto ms-2"
           value={skinName}
           onChange={e => setSkinName(e.target.value as keyof typeof skins)}
         >
