@@ -1,5 +1,5 @@
 const darkSkin = {
-  name: 'ダーク',
+  name: '夜',
   colors: {
     background: '#181a1b',
     surface: '#232627',
@@ -33,7 +33,7 @@ const darkSkin = {
     tabInactive: 'linear-gradient(to bottom, #757575 0%, #b0bec5 100%)', // 上が暗く下が明るいグラデーション
   },
   borderRadius: '1.5rem',
-  fontFamily: '"Noto Sans JP", sans-serif',
+  fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5), 0 0 0 6px #181a1b',
   modal: {
     maxWidth: '600px',

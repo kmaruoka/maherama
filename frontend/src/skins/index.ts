@@ -1,15 +1,15 @@
 import wa from './wa';
-import dark from './dark';
-import modern from './modern';
-import forest from './forest';
 import sakura from './sakura';
+import forest from './forest';
+import dark from './dark';
+import snow from './snow';
 
 export const skins = {
   wa,
-  dark,
-  modern,
-  forest,
   sakura,
+  forest,
+  dark,
+  snow,
 };
 
 export type SkinName = keyof typeof skins;

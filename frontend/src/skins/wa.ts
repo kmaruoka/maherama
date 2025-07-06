@@ -1,5 +1,5 @@
 const waSkin = {
-  name: '和風',
+  name: '和',
   colors: {
     background: '#f8f5e4',
     surface: '#fffbe6',

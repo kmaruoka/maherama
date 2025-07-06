@@ -33,7 +33,7 @@ const sakuraSkin = {
     tabInactive: 'linear-gradient(to bottom, #eac1d5 0%, #fdeff2 100%)',
   },
   borderRadius: '1.5rem',
-  fontFamily: '"Noto Sans JP", sans-serif',
+  fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1), 0 0 0 6px #fff4f8',
   modal: {
     maxWidth: '600px',

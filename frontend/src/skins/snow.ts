@@ -1,5 +1,5 @@
-const modernSkin = {
-  name: 'モダン',
+const snowSkin = {
+  name: '雪',
   colors: {
     background: '#ffffff',
     surface: '#f4f4f5',
@@ -33,7 +33,7 @@ const modernSkin = {
     tabInactive: 'linear-gradient(to bottom, #d5d5d5 0%, #efefef 100%)',
   },
   borderRadius: '1.5rem',
-  fontFamily: '"Noto Sans JP", sans-serif',
+  fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1), 0 0 0 6px #ffffff',
   modal: {
     maxWidth: '600px',
@@ -42,4 +42,4 @@ const modernSkin = {
   },
 };
 
-export default modernSkin;
+export default snowSkin;
