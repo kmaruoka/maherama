@@ -30,6 +30,7 @@ const darkSkin = {
     scrollbarThumb: '#424242', // 濃グレー
     scrollbarTrack: '#232627', // ダーク背景
     scrollbarThumbHover: '#90caf9', // アクセント青
+    tabInactive: 'linear-gradient(to bottom, #757575 0%, #b0bec5 100%)', // 上が暗く下が明るいグラデーション
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Sans JP", sans-serif',

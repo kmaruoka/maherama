@@ -1,9 +1,9 @@
 import React from 'react';
 
-export default function CustomMenuItem({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+export default function CustomMenuItem({ onClick, children, active }: { onClick: () => void; children: React.ReactNode; active?: boolean }) {
   return (
     <button
-      className="flex-fill btn btn-link text-center py-2"
+      className={`custom-menu-item text-center py-2 flex-fill${active ? ' active' : ''}`}
       style={{ color: 'var(--color-text)' }}
       onClick={onClick}
     >

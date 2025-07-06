@@ -30,6 +30,7 @@ const waSkin = {
     scrollbarThumb: '#d1b97a', // 淡い金
     scrollbarTrack: '#f5e9c6', // ベージュ
     scrollbarThumbHover: '#bfa14a', // 濃い金
+    tabInactive: 'linear-gradient(to bottom, #bdbdbd 0%, #e0e0e0 100%)', // 上が暗く下が明るいグラデーション
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

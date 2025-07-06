@@ -19,6 +19,7 @@
   --modal-max-width: 600px;
   --modal-padding: 2rem 1.5rem;
   --modal-background: linear-gradient(135deg, #f8f5e4 0%, #f5e9c6 100%);
+  --color-tab-inactive: #f3eedc;
 }
 
 html, body {
@@ -210,4 +211,52 @@ body.dark .shrine-marker-pin::after {
   white-space: normal !important;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+/* --- CustomMenuItem --- */
+.custom-menu-item {
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 500;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  border-radius: 0;
+  box-shadow: none;
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.custom-menu-item.active {
+  background: var(--color-background) !important;
+  color: var(--color-text);
+  border-top: none !important;
+  border-left: 2.5px solid var(--color-border);
+  border-right: 2.5px solid var(--color-border);
+  border-bottom: 2.5px solid var(--color-border);
+}
+.custom-menu-item:not(.active) {
+  background: var(--color-tab-inactive);
+  color: var(--color-text);
+  border-top: 2.5px solid var(--color-border);
+}
+.custom-menu-item:not(.active):hover,
+.custom-menu-item:not(.active):focus {
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+/* navの上ボーダーは図鑑時だけ消す。図鑑以外は必ず表示 */
+.menu-pane-catalog {
+  border-top: none !important;
+}
+nav.d-flex.position-fixed {
+  border-top: none !important;
 }
