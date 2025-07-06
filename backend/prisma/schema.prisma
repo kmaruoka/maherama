@@ -72,6 +72,9 @@ model Log {
 model User {
   id    Int    @id @default(autoincrement())
   name  String
+  level Int @default(0)
+  exp   Int @default(0)
+  ability_points Int @default(0)
   following Follow[] @relation("follows")
   followers Follow[] @relation("followedBy")
   shrine_books ShrineBook[]
@@ -86,6 +89,9 @@ model User {
   diety_pray_stats_weekly DietyPrayStatsWeekly[]
   diety_pray_stats_daily DietyPrayStatsDaily[]
   diety_pray_stats_yearly DietyPrayStatsYearly[]
+  userAbilities UserAbility[]
+  abilityLogs AbilityLog[]
+  userTitles UserTitle[]
 }
 
 model Follow {
@@ -262,4 +268,55 @@ model UserSubscription {
   billing_cycle_start DateTime?   // 課金サイクル開始日
   billing_cycle_end DateTime?     // 課金サイクル終了日
   is_active Boolean @default(true) // アクティブなサブスクリプションかどうか
+}
+
+model AbilityMaster {
+  id           Int    @id @default(autoincrement())
+  name         String
+  cost         Int
+  effect_type  String
+  effect_value Int
+  userAbilities UserAbility[]
+  abilityLogs  AbilityLog[]
+}
+
+model UserAbility {
+  id         Int            @id @default(autoincrement())
+  user       User           @relation(fields: [user_id], references: [id])
+  user_id    Int
+  ability    AbilityMaster  @relation(fields: [ability_id], references: [id])
+  ability_id Int
+  acquired_at DateTime      @default(now())
+
+  @@unique([user_id, ability_id])
+}
+
+model AbilityLog {
+  id         Int           @id @default(autoincrement())
+  user       User          @relation(fields: [user_id], references: [id])
+  user_id    Int
+  ability    AbilityMaster @relation(fields: [ability_id], references: [id])
+  ability_id Int
+  points_spent Int
+  acquired_at DateTime @default(now())
+}
+
+model TitleMaster {
+  id             Int          @id @default(autoincrement())
+  name           String
+  condition_type String
+  condition_value String?
+  exp_reward     Int
+  userTitles     UserTitle[]
+}
+
+model UserTitle {
+  id        Int         @id @default(autoincrement())
+  user      User        @relation(fields: [user_id], references: [id])
+  user_id   Int
+  title     TitleMaster @relation(fields: [title_id], references: [id])
+  title_id  Int
+  awarded_at DateTime   @default(now())
+
+  @@unique([user_id, title_id])
 }
