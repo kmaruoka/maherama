@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import '../../setupLeaflet';
 import { MAPBOX_API_KEY } from '../../config/api';
 import useLogs, { useClientLogs } from '../../hooks/useLogs';
 import useAllShrines from '../../hooks/useAllShrines';
-import ShrineMarkerPane from '../organisms/ShrineMarkerPane';
 import LogPane from '../organisms/LogPane';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -75,6 +74,14 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     }
   }, [position, debugMode]);
 
+  // デバッグモード切り替え時の処理
+  useEffect(() => {
+    if (debugMode) {
+      // デバッグモード開始時に現在の中心位置を保存
+      localStorage.setItem('debugMapCenter', JSON.stringify(center));
+    }
+  }, [debugMode, center]);
+
   // 地図の操作可否切り替え
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
@@ -101,11 +108,25 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
       if (Math.abs(center[0] - newCenter[0]) > 1e-7 || Math.abs(center[1] - newCenter[1]) > 1e-7) {
         //console.log('moveend: updating center', newCenter);
         setCenter(newCenter);
+        // デバッグ中心位置をlocalStorageに保存
+        localStorage.setItem('debugMapCenter', JSON.stringify(newCenter));
       }
     };
 
+    const onMove = () => {
+      const c = map.getCenter();
+      const newCenter: [number, number] = [c.lat, c.lng];
+      // 移動中もリアルタイムで更新
+      setCenter(newCenter);
+      localStorage.setItem('debugMapCenter', JSON.stringify(newCenter));
+    };
+
     map.on('moveend', onMoveEnd);
-    return () => { map.off('moveend', onMoveEnd); };
+    map.on('move', onMove);
+    return () => { 
+      map.off('moveend', onMoveEnd);
+      map.off('move', onMove);
+    };
   }, [debugMode, center]);
 
   // debugMode時、center変更でsetView（現在のmapとずれていれば）
@@ -162,7 +183,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         {/* デバッグ用: 現在地ピン */}
         {position && (
           <Marker position={position} icon={debugCurrentIcon}>
-            <Popup>現在地: {position[0]}, {position[1]}</Popup>
           </Marker>
         )}
         {/* 通常の神社マーカー */}
@@ -179,13 +199,10 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
                     const dist = getDistanceMeters(currentPosition[0], currentPosition[1], s.lat, s.lng);
                     debugLog(`[DEBUG] 神社クリック: ${s.name} | 神社座標: [${s.lat}, ${s.lng}] | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 距離: ${dist.toFixed(2)}m`);
                   }
+                  onShowShrine(s.id);
                 },
               }}
-            >
-              <Popup>
-                <ShrineMarkerPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} currentPosition={currentPosition} addClientLog={addClientLog} />
-              </Popup>
-            </Marker>
+            />
           );
         })}
       </MapContainer>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { API_BASE } from '../../config/api';
 import RankingPane from '../organisms/RankingPane';
@@ -7,14 +7,19 @@ import useUserShrineRankings from '../../hooks/useUserShrineRankings';
 import useUserDietyRankings from '../../hooks/useUserDietyRankings';
 import useUserTitles from '../../hooks/useUserTitles';
 import useAbilityList from '../../hooks/useAbilityList';
+import useFollowing from '../../hooks/useFollowing';
+import useFollowers from '../../hooks/useFollowers';
+import FollowModal from '../molecules/FollowModal';
+import { useSkin } from '../../skins/SkinContext';
 
 interface UserPageProps {
   id?: number;
   onShowShrine?: (id: number) => void;
   onShowDiety?: (id: number) => void;
+  onShowUser?: (id: number) => void;
 }
 
-export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProps) {
+export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: UserPageProps) {
   const [currentUserId] = useLocalStorageState<number | null>('userId', null);
   const displayId = id ?? currentUserId;
 
@@ -30,6 +35,14 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
   const { data: userShrineRankingsByPeriod, isLoading: isUserShrineRankingLoading } = useUserShrineRankings(displayId ?? undefined);
   const { data: userDietyRankingsByPeriod, isLoading: isUserDietyRankingLoading } = useUserDietyRankings(displayId ?? undefined);
 
+  const { data: followingUsers, isLoading: isFollowingLoading, error: followingError, refetch: refetchFollowing } = useFollowing(displayId ?? undefined);
+  const { data: followerUsers, isLoading: isFollowersLoading, error: followersError, refetch: refetchFollowers } = useFollowers(displayId ?? undefined);
+
+  const { skin } = useSkin();
+
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showFollowerModal, setShowFollowerModal] = useState(false);
+
   const handleFollow = async () => {
     if (!currentUserId || !userInfo) return;
     await fetch(`${API_BASE}/follows`, {
@@ -38,6 +51,8 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
       body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
     });
     refetch();
+    refetchFollowing();
+    refetchFollowers();
   };
 
   const handleUnfollow = async () => {
@@ -48,6 +63,8 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
       body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
     });
     refetch();
+    refetchFollowing();
+    refetchFollowers();
   };
 
   const acquireAbility = async (abilityId: number) => {
@@ -95,12 +112,26 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
           />
         </div>
         <div>
-          <h1 className="modal-title h4 mb-4">
+          <h1 className="modal-title h4 mb-2">
             {userInfo.name}
           </h1>
-          <div className="modal-info d-flex align-items-center gap-4">
-            <div>フォロー: {userInfo.followingCount}</div>
-            <div>フォロワー: {userInfo.followerCount}</div>
+          <div className="modal-info d-flex align-items-center gap-4 mb-2">
+            <div 
+              role="button" 
+              className="text-primary" 
+              style={{cursor: 'pointer'}}
+              onClick={() => setShowFollowingModal(true)}
+            >
+              フォロー: {userInfo.followingCount}
+            </div>
+            <div
+              role="button"
+              className="text-primary"
+              style={{cursor: 'pointer'}} 
+              onClick={() => setShowFollowerModal(true)}
+            >
+              フォロワー: {userInfo.followerCount}
+            </div>
             {currentUserId && currentUserId !== displayId && (
               userInfo.isFollowing ? (
                 <button
@@ -118,13 +149,21 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
                 </button>
               )
             )}
+            
+          </div>
+          <div className="d-flex gap-3">
+            <span>レベル: {userInfo.level}</span>
+            {currentUserId && currentUserId === displayId && (
+              <>
+                <span>経験値: {userInfo.exp}</span>
+                <span>能力値: {userInfo.abilityPoints}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
-        <div>レベル: {userInfo.level}</div>
-        <div>経験値: {userInfo.exp}</div>
         {titles.length > 0 && (
           <div className="mt-2">
             <div className="modal-subtitle">称号</div>
@@ -139,14 +178,45 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
 
       {currentUserId && currentUserId === displayId && (
         <div className="mb-3">
-          <div className="modal-subtitle">能力</div>
+          <div className="modal-subtitle">能力解放</div>
           <div className="d-grid gap-2">
             {abilities.map(a => (
-              <button key={a.id} className="btn btn-outline-primary btn-sm" onClick={() => acquireAbility(a.id)}>
-                {a.name} ({a.cost}pt)
+              <button
+                key={a.id}
+                className="btn btn-sm"
+                style={{
+                  background: skin.colors.surface,
+                  color: skin.colors.text,
+                  border: `2px solid ${skin.colors.primary}`,
+                  borderRadius: skin.borderRadius,
+                  fontWeight: 500,
+                  boxShadow: skin.boxShadow,
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+                onClick={() => acquireAbility(a.id)}
+                onMouseOver={e => { e.currentTarget.style.background = skin.colors.primary; e.currentTarget.style.color = skin.colors.surface; }}
+                onMouseOut={e => { e.currentTarget.style.background = skin.colors.surface; e.currentTarget.style.color = skin.colors.text; }}
+              >
+                {a.name} (必要能力値: {a.cost})
               </button>
             ))}
-            <button className="btn btn-warning btn-sm" onClick={resetAbilities}>能力初期化</button>
+            <button
+              className="btn btn-sm"
+              style={{
+                background: skin.colors.accent,
+                color: skin.colors.surface,
+                border: `2px solid ${skin.colors.accent}`,
+                borderRadius: skin.borderRadius,
+                fontWeight: 500,
+                boxShadow: skin.boxShadow,
+                transition: 'background 0.2s, color 0.2s',
+              }}
+              onClick={resetAbilities}
+              onMouseOver={e => { e.currentTarget.style.background = skin.colors.surface; e.currentTarget.style.color = skin.colors.accent; }}
+              onMouseOut={e => { e.currentTarget.style.background = skin.colors.accent; e.currentTarget.style.color = skin.colors.surface; }}
+            >
+              能力初期化
+            </button>
           </div>
         </div>
       )}
@@ -160,6 +230,27 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
           onItemClick={onShowShrine}
         />
       </div>
+
+      {/* フォロー/フォロワーモーダル */}
+      <FollowModal
+        isOpen={showFollowingModal}
+        onClose={() => setShowFollowingModal(false)}
+        title="フォロー中"
+        users={followingUsers}
+        isLoading={isFollowingLoading}
+        error={followingError}
+        onUserClick={onShowUser}
+      />
+      
+      <FollowModal
+        isOpen={showFollowerModal}
+        onClose={() => setShowFollowerModal(false)}
+        title="フォロワー"
+        users={followerUsers}
+        isLoading={isFollowersLoading}
+        error={followersError}
+        onUserClick={onShowUser}
+      />
 
       <div className="modal-section">
         <div className="modal-subtitle">よく参拝する神様</div>

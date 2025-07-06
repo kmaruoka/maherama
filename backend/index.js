@@ -611,6 +611,74 @@ app.delete('/follows', async (req, res) => {
   }
 });
 
+// フォロー一覧を取得
+app.get('/users/:id/following', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid ID parameter' });
+  }
+  try {
+    const follows = await prisma.follow.findMany({
+      where: { follower_id: userId },
+      include: {
+        following: {
+          select: {
+            id: true,
+            name: true,
+            thumbnailUrl: true,
+          }
+        }
+      },
+      orderBy: { following: { name: 'asc' } }
+    });
+    
+    const result = follows.map(f => ({
+      id: f.following.id,
+      name: f.following.name,
+      thumbnailUrl: f.following.thumbnailUrl || '/images/noimage-user.png'
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching following:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// フォロワー一覧を取得
+app.get('/users/:id/followers', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid ID parameter' });
+  }
+  try {
+    const followers = await prisma.follow.findMany({
+      where: { following_id: userId },
+      include: {
+        follower: {
+          select: {
+            id: true,
+            name: true,
+            thumbnailUrl: true,
+          }
+        }
+      },
+      orderBy: { follower: { name: 'asc' } }
+    });
+    
+    const result = followers.map(f => ({
+      id: f.follower.id,
+      name: f.follower.name,
+      thumbnailUrl: f.follower.thumbnailUrl || '/images/noimage-user.png'
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching followers:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 app.get('/user-rankings', async (req, res) => {
   try {
     const rankings = await prisma.shrinePrayStats.groupBy({

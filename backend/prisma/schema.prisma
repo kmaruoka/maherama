@@ -75,6 +75,7 @@ model User {
   level Int @default(0)
   exp   Int @default(0)
   ability_points Int @default(0)
+  thumbnailUrl String? // ユーザーサムネイル画像URL
   following Follow[] @relation("follows")
   followers Follow[] @relation("followedBy")
   shrine_books ShrineBook[]

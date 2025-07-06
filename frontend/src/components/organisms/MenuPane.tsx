@@ -2,7 +2,7 @@ import { useState } from 'react';
 import CustomMenuItem from '../atoms/CustomMenuItem';
 import { useSkin } from '../../skins/SkinContext';
 
-export default function MenuPane({ setPage, page }: { setPage: (page: 'map' | 'catalog' | 'user' | 'settings') => void, page: 'map' | 'catalog' | 'user' | 'settings' }) {
+export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (page: 'map' | 'catalog' | 'user' | 'settings') => void, page: 'map' | 'catalog' | 'user' | 'settings', isDialogOpen?: boolean }) {
   useSkin();
   
   // 最後に選択したメニューを記憶する状態
@@ -21,7 +21,14 @@ export default function MenuPane({ setPage, page }: { setPage: (page: 'map' | 'c
   return (
     <nav
       className={`d-flex position-fixed bottom-0 start-0 end-0 border-top${page === 'catalog' ? ' menu-pane-catalog' : ''}`}
-      style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)', height: '56px', zIndex: 10000 }}
+      style={{ 
+        background: 'var(--color-surface)', 
+        borderColor: 'var(--color-border)', 
+        height: '56px', 
+        zIndex: 10000,
+        pointerEvents: isDialogOpen ? 'none' : undefined,
+        opacity: isDialogOpen ? 0.5 : 1,
+      }}
       onClick={handleNavClick}
     >
       <CustomMenuItem onClick={() => handleMenuItemClick('map')} active={lastSelectedMenu === 'map'}>地図</CustomMenuItem>

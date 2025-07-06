@@ -33,7 +33,7 @@ function App() {
       case 'catalog':
         return <CatalogPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />;
       case 'user':
-        return <UserPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} />;
+        return <UserPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />;
       case 'settings':
         return <SettingsPage />;
       default:
@@ -43,7 +43,7 @@ function App() {
 
   return (
     <>
-      <MenuPane setPage={setPage} />
+      <MenuPane setPage={setPage} page={page} isDialogOpen={modal !== null} />
       <div className={page === 'map' ? '' : 'overflow-y-auto pb-56 position-relative'}>
         {renderPage()}
         {modal && (
@@ -79,6 +79,7 @@ function App() {
                   id={modal.id}
                   onShowShrine={id => setModal({ type: 'shrine', id })}
                   onShowDiety={id => setModal({ type: 'diety', id })}
+                  onShowUser={id => setModal({ type: 'user', id })}
                 />
               )}
             </Modal.Body>

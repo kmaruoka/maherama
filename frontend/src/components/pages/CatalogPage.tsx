@@ -99,6 +99,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
               key={item.id}
               name={item.name}
               count={item.count}
+              recordedDate={item.registeredAt}
               onClick={() => {
                 if (tab === 'shrine' && onShowShrine) {
                   setTimeout(() => onShowShrine(item.id), 0);
