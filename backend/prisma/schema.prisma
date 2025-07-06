@@ -29,6 +29,7 @@ model Shrine {
   shrine_pray_stats_daily ShrinePrayStatsDaily[]
   shrine_pray_stats_yearly ShrinePrayStatsYearly[]
   shrine_books ShrineBook[]
+  shrine_images ShrineImage[]
   thumbnailUrl  String?       // サムネイル画像URL
   thumbnailBy   String?       // サムネイル投稿ユーザー名
   founded       String?       // 創建
@@ -93,6 +94,10 @@ model User {
   userAbilities UserAbility[]
   abilityLogs AbilityLog[]
   userTitles UserTitle[]
+  shrine_images ShrineImage[]
+  image_votes ImageVote[]
+  shrine_applications ShrineApplication[]
+  user_subscriptions UserSubscription[]
 }
 
 model Follow {
@@ -261,8 +266,9 @@ model RemotePray {
 
 model UserSubscription {
   id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [user_id], references: [id])
   user_id    Int
-  slots      Int      // 課金口数（参拝可能距離と遥拝可能回数に影響）
+  subscription_type String  // 'range_multiplier', 'worship_boost', 'reset_abilities'
   expires_at DateTime
   created_at DateTime @default(now())
   stripe_subscription_id String?  // StripeのサブスクリプションID
@@ -271,12 +277,26 @@ model UserSubscription {
   is_active Boolean @default(true) // アクティブなサブスクリプションかどうか
 }
 
+model LevelMaster {
+  id              Int    @id @default(autoincrement())
+  level           Int    @unique
+  required_exp    Int    // 必要経験値
+  pray_distance   Int    // 参拝距離（メートル）
+  worship_count   Int    // 1日の遥拝回数
+}
+
 model AbilityMaster {
   id           Int    @id @default(autoincrement())
   name         String
-  cost         Int
-  effect_type  String
+  description  String // 能力の説明文
+  base_cost    Int    // 基本コスト
+  cost_increase Int   @default(100) // 獲得回数ごとのコスト増加
+  effect_type  String // 'range', 'worship', 'skin', 'image_post', 'history_post', 'shrine_apply', 'approval'
   effect_value Int
+  max_level    Int    @default(1) // 最大獲得回数（1の場合は1回のみ）
+  prerequisite_ability_id Int? // 前提能力ID
+  prerequisite_ability AbilityMaster? @relation("Prerequisite", fields: [prerequisite_ability_id], references: [id])
+  dependent_abilities AbilityMaster[] @relation("Prerequisite")
   userAbilities UserAbility[]
   abilityLogs  AbilityLog[]
 }
@@ -287,6 +307,7 @@ model UserAbility {
   user_id    Int
   ability    AbilityMaster  @relation(fields: [ability_id], references: [id])
   ability_id Int
+  level      Int            @default(1) // 獲得回数（レベル）
   acquired_at DateTime      @default(now())
 
   @@unique([user_id, ability_id])
@@ -305,8 +326,8 @@ model AbilityLog {
 model TitleMaster {
   id             Int          @id @default(autoincrement())
   name           String
-  condition_type String
-  condition_value String?
+  condition_type String       // 'area_complete', 'consecutive_pray', 'monthly_rank', 'yearly_rank'
+  condition_value String?     // 条件値（地域名、神社名、年月など）
   exp_reward     Int
   userTitles     UserTitle[]
 }
@@ -320,4 +341,47 @@ model UserTitle {
   awarded_at DateTime   @default(now())
 
   @@unique([user_id, title_id])
+}
+
+model ShrineImage {
+  id         Int      @id @default(autoincrement())
+  shrine     Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id  Int
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  image_url  String
+  uploaded_at DateTime @default(now())
+  voting_month String  // 投票対象月（YYYY-MM形式）
+  is_winner  Boolean @default(false)
+  votes      ImageVote[]
+}
+
+model ImageVote {
+  id            Int        @id @default(autoincrement())
+  shrine_image  ShrineImage @relation(fields: [shrine_image_id], references: [id])
+  shrine_image_id Int
+  user          User       @relation(fields: [user_id], references: [id])
+  user_id       Int
+  voted_at      DateTime   @default(now())
+
+  @@unique([shrine_image_id, user_id])
+}
+
+model ShrineApplication {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     Int
+  name        String   // 神社名
+  kana        String?  // 読み
+  location    String   // 所在地
+  lat         Float    // 緯度
+  lng         Float    // 経度
+  founded     String?  // 創建
+  history     String?  // 歴史・伝承
+  festivals   String?  // 祭礼
+  description String?  // 説明文
+  status      String   @default("pending") // pending, approved, rejected
+  applied_at  DateTime @default(now())
+  reviewed_at DateTime?
+  reviewed_by String?  // レビュー担当者
 }

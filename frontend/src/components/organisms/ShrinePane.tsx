@@ -1,7 +1,7 @@
 import useShrineDetail from '../../hooks/useShrineDetail';
 import CustomLink from '../atoms/CustomLink';
-import RankingPane from '../organisms/RankingPane';
-import type { Period, RankingItem } from '../organisms/RankingPane';
+import RankingPane from './RankingPane';
+import type { Period, RankingItem } from './RankingPane';
 import { useState, useEffect } from 'react';
 import { API_BASE } from '../../config/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import useLocalStorageState from '../../hooks/useLocalStorageState';
 import useDebugLog from '../../hooks/useDebugLog';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import { useSubscription } from '../../hooks/useSubscription';
+import { NOIMAGE_SHRINE_URL } from '../../constants';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -37,7 +38,7 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
   return result;
 }
 
-export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
+export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { data } = useShrineDetail(id);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id);
   const queryClient = useQueryClient();
@@ -47,6 +48,22 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
+  const [prayDistance, setPrayDistance] = useState<number | null>(null);
+
+  // 追加: 参拝距離をAPIから取得
+  useEffect(() => {
+    if (userId) {
+      fetch(`${API_BASE}/users/${userId}/pray-distance`, {
+        headers: { 'x-user-id': String(userId) }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (typeof data.pray_distance === 'number') {
+            setPrayDistance(data.pray_distance);
+          }
+        });
+    }
+  }, [userId]);
 
   // デバッグモード時の地図中心位置を取得
   useEffect(() => {
@@ -124,14 +141,16 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
   }
 
   // 参拝可能かどうかを判定
-  const radius = getRadiusFromSlots(subscription?.slots ?? 0);
-  const canPray = currentPosition && data && getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng) <= radius;
+  const radius = prayDistance !== null ? prayDistance : getRadiusFromSlots(0);
+  const distance = (currentPosition && data) ? Number(getDistanceMeters(Number(currentPosition[0]), Number(currentPosition[1]), Number(data.lat), Number(data.lng))) : null;
+  // 小数点誤差を吸収して比較
+  const canPray = typeof distance === 'number' && typeof radius === 'number' && !isNaN(distance) && !isNaN(radius) && (Math.floor(distance * 100) / 100) <= (Math.floor(radius * 100) / 100);
 
   // デバッグ情報を出力
   useEffect(() => {
     if (currentPosition && data) {
-      const distance = getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng);
-      debugLog(`[DEBUG] 神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${distance.toFixed(2)}m | 半径: ${radius}m | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
+      const d = Number(getDistanceMeters(Number(currentPosition[0]), Number(currentPosition[1]), Number(data.lat), Number(data.lng)));
+      debugLog(`[DEBUG] 神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${d.toFixed(2)}m (typeof: ${typeof d}) | 半径: ${radius}m (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
     }
   }, [currentPosition, data, radius, canPray, debugMode, debugLog]);
 
@@ -192,7 +211,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <img
-          src={data.thumbnailUrl ? data.thumbnailUrl : '/images/noimage-shrine.png'}
+          src={data.thumbnailUrl ? data.thumbnailUrl : NOIMAGE_SHRINE_URL}
           alt="サムネイル"
           className="rounded shadow"
           style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
@@ -206,7 +225,7 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
               className="btn btn-primary btn-sm"
               onClick={() => prayMutation.mutate(data.id)}
               disabled={!canPray}
-              title={!currentPosition ? '位置情報が取得できません' : !data ? '神社情報が読み込まれていません' : `距離: ${currentPosition && data ? getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng).toFixed(2) : '計算中'}m / 半径: ${radius}m`}
+              title={!currentPosition ? '位置情報が取得できません' : !data ? '神社情報が読み込まれていません' : `距離: ${distance !== null ? distance.toFixed(2) : '計算中'}m / 半径: ${radius}m`}
             >
               参拝
             </button>
@@ -220,7 +239,12 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
           </div>
           {currentPosition && data && (
             <div className="text-muted small mt-1">
-              距離: {getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng).toFixed(2)}m / 参拝可能半径: {radius}m
+              距離: {distance !== null ? distance.toFixed(2) : '計算中'}m / 参拝可能距離: {radius}m
+            </div>
+          )}
+          {canPray === false && currentPosition && data && (
+            <div className="text-danger small mt-1">
+              現在地が神社から離れすぎています
             </div>
           )}
           {prayMutation.error && (
@@ -295,4 +319,4 @@ export default function ShrinePage({ id, onShowDiety, onShowUser }: { id: number
       <div className="text-muted small">収録日: {formatDate(data.registeredAt)}</div>
     </>
   );
-}
+} 

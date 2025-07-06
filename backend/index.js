@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
+const jwt = require('jsonwebtoken');
 
 // 環境変数のチェック
 if (!process.env.PORT) {
@@ -28,15 +29,294 @@ app.use(express.json());
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
 
-// slotsから参拝可能半径を導出する関数
-function getRadiusFromSlots(slots) {
-  if (slots === 0) return 100; // 無課金
-  return 100 * Math.pow(2, slots); // 100m, 200m, 400m, 800m, 1600m...
+// 経験値獲得の種類
+const EXP_REWARDS = {
+  PRAY: 10,           // 参拝
+  REMOTE_PRAY: 10,    // 遥拝
+  IMAGE_POST: 10,     // 画像投稿
+  HISTORY_POST: 10,   // 伝承投稿
+  TITLE_ACQUISITION: 50, // 称号獲得（基本）
+  SHRINE_APPROVAL: 500,  // 神社申請→承認
+};
+
+// 経験値を追加し、レベルアップをチェックする
+async function addExperience(userId, expAmount) {
+  return await prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { id: true, level: true, exp: true, ability_points: true }
+    });
+
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+
+    const newExp = user.exp + expAmount;
+    
+    const currentLevelMaster = await tx.levelMaster.findUnique({
+      where: { level: user.level }
+    });
+
+    if (!currentLevelMaster) {
+      throw new Error(`Level master not found for level: ${user.level}`);
+    }
+
+    const nextLevelMaster = await tx.levelMaster.findUnique({
+      where: { level: user.level + 1 }
+    });
+
+    let newLevel = user.level;
+    let levelUp = false;
+    let abilityPointsGained = 0;
+
+    if (nextLevelMaster && newExp >= nextLevelMaster.required_exp) {
+      newLevel = nextLevelMaster.level;
+      levelUp = true;
+      abilityPointsGained = 1;
+    }
+
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        exp: newExp,
+        level: newLevel,
+        ability_points: user.ability_points + abilityPointsGained
+      }
+    });
+
+    return {
+      newLevel,
+      levelUp,
+      abilityPointsGained
+    };
+  });
 }
 
+// ユーザーの現在の参拝距離を取得
+async function getUserPrayDistance(userId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { level: true }
+  });
 
+  if (!user) {
+    throw new Error(`User not found: ${userId}`);
+  }
 
-// ユーザーの課金状態を取得する関数
+  const levelMaster = await prisma.levelMaster.findUnique({
+    where: { level: user.level }
+  });
+
+  if (!levelMaster) {
+    throw new Error(`Level master not found for level: ${user.level}`);
+  }
+
+  let baseDistance = levelMaster.pray_distance;
+
+  const rangeAbilities = await prisma.userAbility.findMany({
+    where: {
+      user_id: userId,
+      ability: {
+        effect_type: 'range'
+      }
+    },
+    include: {
+      ability: true
+    }
+  });
+
+  const additionalDistance = rangeAbilities.reduce((sum, userAbility) => {
+    return sum + userAbility.ability.effect_value * userAbility.level;
+  }, 0);
+
+  const activeSubscription = await prisma.userSubscription.findFirst({
+    where: {
+      user_id: userId,
+      subscription_type: 'range_multiplier',
+      is_active: true,
+      expires_at: {
+        gt: new Date()
+      }
+    }
+  });
+
+  const totalDistance = baseDistance + additionalDistance;
+  
+  if (activeSubscription) {
+    return totalDistance * 2;
+  }
+
+  return totalDistance;
+}
+
+// ユーザーの1日の遥拝回数を取得
+async function getUserWorshipCount(userId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { level: true }
+  });
+
+  if (!user) {
+    throw new Error(`User not found: ${userId}`);
+  }
+
+  const levelMaster = await prisma.levelMaster.findUnique({
+    where: { level: user.level }
+  });
+
+  if (!levelMaster) {
+    throw new Error(`Level master not found for level: ${user.level}`);
+  }
+
+  let baseCount = levelMaster.worship_count;
+
+  const worshipAbilities = await prisma.userAbility.findMany({
+    where: {
+      user_id: userId,
+      ability: {
+        effect_type: 'worship'
+      }
+    },
+    include: {
+      ability: true
+    }
+  });
+
+  const additionalCount = worshipAbilities.reduce((sum, userAbility) => {
+    return sum + userAbility.ability.effect_value;
+  }, 0);
+
+  const activeSubscription = await prisma.userSubscription.findFirst({
+    where: {
+      user_id: userId,
+      subscription_type: 'worship_boost',
+      is_active: true,
+      expires_at: {
+        gt: new Date()
+      }
+    }
+  });
+
+  const totalCount = baseCount + additionalCount;
+  
+  if (activeSubscription) {
+    return totalCount + 1;
+  }
+
+  return totalCount;
+}
+
+// 今日の遥拝回数を取得
+async function getTodayWorshipCount(userId) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const count = await prisma.remotePray.count({
+    where: {
+      user_id: userId,
+      prayed_at: {
+        gte: today,
+        lt: tomorrow
+      }
+    }
+  });
+
+  return count;
+}
+
+// 能力を購入できるかチェック
+async function canPurchaseAbility(userId, abilityId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { ability_points: true }
+  });
+
+  if (!user) {
+    return { canPurchase: false, reason: 'User not found' };
+  }
+
+  const ability = await prisma.abilityMaster.findUnique({
+    where: { id: abilityId }
+  });
+
+  if (!ability) {
+    return { canPurchase: false, reason: 'Ability not found' };
+  }
+
+  const existingAbility = await prisma.userAbility.findUnique({
+    where: {
+      user_id_ability_id: {
+        user_id: userId,
+        ability_id: abilityId
+      }
+    }
+  });
+
+  if (existingAbility) {
+    return { canPurchase: false, reason: 'Already purchased' };
+  }
+
+  if (user.ability_points < ability.cost) {
+    return { canPurchase: false, reason: 'Insufficient ability points' };
+  }
+
+  return { canPurchase: true };
+}
+
+// 能力を購入
+async function purchaseAbility(userId, abilityId) {
+  const checkResult = await canPurchaseAbility(userId, abilityId);
+  
+  if (!checkResult.canPurchase) {
+    return { success: false, reason: checkResult.reason };
+  }
+
+  const ability = await prisma.abilityMaster.findUnique({
+    where: { id: abilityId }
+  });
+
+  if (!ability) {
+    return { success: false, reason: 'Ability not found' };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        ability_points: {
+          decrement: ability.cost
+        }
+      }
+    });
+
+    await tx.userAbility.create({
+      data: {
+        user_id: userId,
+        ability_id: abilityId
+      }
+    });
+
+    await tx.abilityLog.create({
+      data: {
+        user_id: userId,
+        ability_id: abilityId,
+        points_spent: ability.cost
+      }
+    });
+  });
+
+  return { success: true };
+}
+
+// 古い関数（後方互換性のため残す）
+function getRadiusFromSlots(slots) {
+  if (slots === 0) return 100;
+  return 100 * Math.pow(2, slots);
+}
+
 async function getUserSubscription(userId) {
   const subscription = await prisma.userSubscription.findFirst({
     where: { 
@@ -46,7 +326,7 @@ async function getUserSubscription(userId) {
     },
     orderBy: { created_at: 'desc' }
   });
-  return subscription || { slots: 0 }; // 無課金の場合
+  return subscription || { slots: 0 };
 }
 
 async function addLog(message, type = 'normal') {
@@ -58,7 +338,7 @@ async function addLog(message, type = 'normal') {
   });
 }
 
-// 経験値加算とレベルアップ処理
+// 古い経験値システム（後方互換性のため残す）
 async function gainExp(userId, amount) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return;
@@ -231,7 +511,7 @@ app.get('/shrines/:id', async (req, res) => {
   }
 });
 
-app.post('/shrines/:id/pray', async (req, res) => {
+app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
@@ -255,9 +535,9 @@ app.post('/shrines/:id/pray', async (req, res) => {
     if (!userId || isNaN(userId) || userId <= 0) {
       return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
     }
-    // ユーザーの課金ランク取得
-    const subscription = await getUserSubscription(userId);
-    const radius = getRadiusFromSlots(subscription.slots);
+    // 新しいレベルシステムで参拝距離を取得
+    const prayDistance = await getUserPrayDistance(userId);
+    
     // 距離チェック
     if (req.body.lat && req.body.lng) {
       const toRad = (x) => x * Math.PI / 180;
@@ -267,8 +547,8 @@ app.post('/shrines/:id/pray', async (req, res) => {
       const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(shrine.lat)) * Math.cos(toRad(req.body.lat)) * Math.sin(dLng/2) * Math.sin(dLng/2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       const dist = R * c;
-      if (dist > radius) {
-        return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius });
+      if (dist > prayDistance) {
+        return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
       }
     } else {
       return res.status(400).json({ error: '緯度・経度がリクエストボディに含まれていません' });
@@ -336,16 +616,25 @@ app.post('/shrines/:id/pray', async (req, res) => {
       where: { shrine_id: id },
       _sum: { count: true }
     });
-    await gainExp(userId, 10);
+    
+    // 新しい経験値システムで経験値を追加
+    const expResult = await addExperience(userId, EXP_REWARDS.PRAY);
+    
     await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
-    res.json({ success: true, count: totalCount._sum.count || 0 });
+    res.json({ 
+      success: true, 
+      count: totalCount._sum.count || 0,
+      level_up: expResult.levelUp,
+      new_level: expResult.newLevel,
+      ability_points_gained: expResult.abilityPointsGained
+    });
   } catch (err) {
     console.error('Error praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
 
-app.post('/shrines/:id/remote-pray', async (req, res) => {
+app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
     const shrine = await prisma.shrine.findUnique({
@@ -359,24 +648,14 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
     // ユーザーIDをリクエストヘッダーから取得（なければ1）
     const userId = parseInt(req.headers['x-user-id']) || 1;
     const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     
-    // ユーザーの課金状態を取得
-    const subscription = await getUserSubscription(userId);
-    const maxRemotePrays = subscription.slots;
+    // 新しいレベルシステムで遥拝回数制限をチェック
+    const maxWorshipCount = await getUserWorshipCount(userId);
+    const todayWorshipCount = await getTodayWorshipCount(userId);
     
-    // 過去1週間の遥拝回数をカウント
-    const recentRemotePrays = await prisma.remotePray.count({
-      where: {
-        user_id: userId,
-        prayed_at: { gte: oneWeekAgo }
-      }
-    });
-    
-    // 課金口数制限チェック
-    if (recentRemotePrays >= maxRemotePrays) {
+    if (todayWorshipCount >= maxWorshipCount) {
       return res.status(400).json({ 
-        error: `遥拝は1週間に${maxRemotePrays}回までです（課金口数: ${maxRemotePrays}口）` 
+        error: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）` 
       });
     }
     
@@ -410,9 +689,18 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
       where: { shrine_id: id },
       _sum: { count: true }
     });
-    await gainExp(userId, 10);
+    
+    // 新しい経験値システムで経験値を追加
+    const expResult = await addExperience(userId, EXP_REWARDS.REMOTE_PRAY);
+    
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
-    res.json({ success: true, count: totalCount._sum.count || 0 });
+    res.json({ 
+      success: true, 
+      count: totalCount._sum.count || 0,
+      level_up: expResult.levelUp,
+      new_level: expResult.newLevel,
+      ability_points_gained: expResult.abilityPointsGained
+    });
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
@@ -533,322 +821,37 @@ app.get('/logs', async (req, res) => {
   }
 });
 
-app.get('/users/:id', async (req, res) => {
-  const userId = parseInt(req.params.id, 10);
-  const viewerId = req.query.viewerId ? parseInt(req.query.viewerId, 10) : null;
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, name: true, level: true, exp: true, ability_points: true },
-    });
-    if (!user) return res.status(404).json({ error: 'Not found' });
-
-    const followingCount = await prisma.follow.count({ where: { follower_id: userId } });
-    const followerCount = await prisma.follow.count({ where: { following_id: userId } });
-
-    const shrineStats = await prisma.shrinePrayStats.findMany({
-      where: { user_id: userId },
-      orderBy: { count: 'desc' },
-      include: { shrine: { select: { id: true, name: true } } },
-      take: 5,
-    });
-    const dietyStats = await prisma.dietyPrayStats.findMany({
-      where: { user_id: userId },
-      orderBy: { count: 'desc' },
-      include: { diety: { select: { id: true, name: true } } },
-      take: 5,
-    });
-
-    let isFollowing = false;
-    if (viewerId) {
-      const rel = await prisma.follow.findUnique({
-        where: {
-          follower_id_following_id: { follower_id: viewerId, following_id: userId },
-        },
-      });
-      isFollowing = !!rel;
-    }
-
-    res.json({
-      id: user.id,
-      name: user.name,
-      level: user.level,
-      exp: user.exp,
-      abilityPoints: user.ability_points,
-      followingCount,
-      followerCount,
-      topShrines: shrineStats.map((s) => ({ id: s.shrine.id, name: s.shrine.name, count: s.count })),
-      topDieties: dietyStats.map((d) => ({ id: d.diety.id, name: d.diety.name, count: d.count })),
-      isFollowing,
-    });
-  } catch (err) {
-    console.error('Error fetching user:', err);
-    res.status(500).json({ error: 'DB error' });
-  }
-});
-
-app.post('/follows', async (req, res) => {
-  const { followerId, followingId } = req.body;
-  try {
-    await prisma.follow.create({ data: { follower_id: followerId, following_id: followingId } });
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Error follow:', err);
-    res.status(500).json({ error: 'DB error' });
-  }
-});
-
-app.delete('/follows', async (req, res) => {
-  const { followerId, followingId } = req.body;
-  try {
-    await prisma.follow.delete({
-      where: { follower_id_following_id: { follower_id: followerId, following_id: followingId } },
-    });
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Error unfollow:', err);
-    res.status(500).json({ error: 'DB error' });
-  }
-});
-
-// フォロー一覧を取得
-app.get('/users/:id/following', async (req, res) => {
-  const userId = parseInt(req.params.id, 10);
-  if (isNaN(userId) || userId <= 0) {
-    return res.status(400).json({ error: 'Invalid ID parameter' });
-  }
-  try {
-    const follows = await prisma.follow.findMany({
-      where: { follower_id: userId },
-      include: {
-        following: {
-          select: {
-            id: true,
-            name: true,
-            thumbnailUrl: true,
-          }
-        }
-      },
-      orderBy: { following: { name: 'asc' } }
-    });
-    
-    const result = follows.map(f => ({
-      id: f.following.id,
-      name: f.following.name,
-      thumbnailUrl: f.following.thumbnailUrl || '/images/noimage-user.png'
-    }));
-    
-    res.json(result);
-  } catch (err) {
-    console.error('Error fetching following:', err);
-    res.status(500).json({ error: 'DB error' });
-  }
-});
-
-// フォロワー一覧を取得
-app.get('/users/:id/followers', async (req, res) => {
-  const userId = parseInt(req.params.id, 10);
-  if (isNaN(userId) || userId <= 0) {
-    return res.status(400).json({ error: 'Invalid ID parameter' });
-  }
-  try {
-    const followers = await prisma.follow.findMany({
-      where: { following_id: userId },
-      include: {
-        follower: {
-          select: {
-            id: true,
-            name: true,
-            thumbnailUrl: true,
-          }
-        }
-      },
-      orderBy: { follower: { name: 'asc' } }
-    });
-    
-    const result = followers.map(f => ({
-      id: f.follower.id,
-      name: f.follower.name,
-      thumbnailUrl: f.follower.thumbnailUrl || '/images/noimage-user.png'
-    }));
-    
-    res.json(result);
-  } catch (err) {
-    console.error('Error fetching followers:', err);
-    res.status(500).json({ error: 'DB error' });
-  }
-});
-
-app.get('/user-rankings', async (req, res) => {
-  try {
-    const rankings = await prisma.shrinePrayStats.groupBy({
-      by: ['user_id'],
-      _sum: { count: true },
-      orderBy: { _sum: { count: 'desc' } },
-      take: 20,
-    });
-    const userIds = rankings.map(r => r.user_id);
-    const users = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, name: true },
-    });
-    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
-    const result = rankings.map((r, i) => ({
-      rank: i + 1,
-      userId: r.user_id,
-      userName: userMap[r.user_id] || '名無し',
-      count: r._sum.count || 0,
-    }));
-    res.json(result);
-  } catch (err) {
-    console.error('Error fetching user rankings:', err);
-    res.status(500).json({ error: 'DB error' });
-  }
-});
-
-app.get('/shrines/:id/rankings', async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const period = req.query.period || 'all'; // all, yearly, monthly, weekly
-  
-  try {
-    const shrine = await prisma.shrine.findUnique({
-      where: { id },
-      select: { name: true }
-    });
-    
-    if (!shrine) {
-      return res.status(404).json({ error: '神社が見つかりません' });
-    }
-    
-    let rankings;
-    switch (period) {
-      case 'yearly':
-        rankings = await prisma.shrinePrayStatsYearly.findMany({
-          where: { shrine_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-        break;
-      case 'monthly':
-        rankings = await prisma.shrinePrayStatsMonthly.findMany({
-          where: { shrine_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-        break;
-      case 'weekly':
-        rankings = await prisma.shrinePrayStatsWeekly.findMany({
-          where: { shrine_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-        break;
-      default: // all
-        rankings = await prisma.shrinePrayStats.findMany({
-          where: { shrine_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-    }
-    
-    const userIds = rankings.map(r => r.user_id);
-    const users = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, name: true }
-    });
-    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
-    
-    const result = rankings.map((r, i) => ({
-      rank: i + 1,
-      userId: r.user_id,
-      userName: userMap[r.user_id] || '名無し',
-      count: r.count
-    }));
-    
-    res.json(result);
-  } catch (err) {
-    console.error('Error fetching shrine rankings:', err);
-    res.status(500).json({ error: 'DB error' });
-  }
-});
-
-app.get('/dieties/:id/rankings', async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const period = req.query.period || 'all'; // all, yearly, monthly, weekly
-  
-  // デバッグ用ログ
-  console.log('Diety Rankings - ID parameter:', req.params.id, 'Parsed ID:', id, 'Period:', period);
-  
-  // IDが無効な値の場合はエラーを返す
-  if (isNaN(id) || id <= 0) {
-    console.error('Invalid diety ID for rankings:', req.params.id);
-    return res.status(400).json({ error: 'Invalid ID parameter' });
+// JWT認証ミドルウェア（開発用：一時的に無効化）
+function authenticateJWT(req, res, next) {
+  // 開発環境では認証をスキップ（NODE_ENVが未設定の場合も開発環境として扱う）
+  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
+    // フロントエンドから送信されたユーザーIDを使用、またはデフォルト値
+    const userIdFromHeader = req.headers['x-user-id'];
+    const userId = userIdFromHeader ? parseInt(userIdFromHeader, 10) : 3;
+    req.user = { id: userId };
+    console.log('開発環境: 認証バイパス、ユーザーID:', req.user.id);
+    return next();
   }
   
-  try {
-    const diety = await prisma.diety.findUnique({
-      where: { id },
-      select: { name: true }
-    });
-    
-    if (!diety) {
-      return res.status(404).json({ error: '神が見つかりません' });
-    }
-    
-    let rankings;
-    switch (period) {
-      case 'yearly':
-        rankings = await prisma.dietyPrayStatsYearly.findMany({
-          where: { diety_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-        break;
-      case 'monthly':
-        rankings = await prisma.dietyPrayStatsMonthly.findMany({
-          where: { diety_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-        break;
-      case 'weekly':
-        rankings = await prisma.dietyPrayStatsWeekly.findMany({
-          where: { diety_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-        break;
-      default: // all
-        rankings = await prisma.dietyPrayStats.findMany({
-          where: { diety_id: id },
-          orderBy: { count: 'desc' },
-          take: 10,
-        });
-    }
-    
-    const userIds = rankings.map(r => r.user_id);
-    const users = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, name: true }
-    });
-    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]));
-    
-    const result = rankings.map((r, i) => ({
-      rank: i + 1,
-      userId: r.user_id,
-      userName: userMap[r.user_id] || '名無し',
-      count: r.count
-    }));
-    
-    res.json(result);
-  } catch (err) {
-    console.error('Error fetching diety rankings:', err);
-    res.status(500).json({ error: 'DB error' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'No token provided' });
   }
-});
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  jwt.verify(token, process.env.JWT_SECRET || 'secret', (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    req.user = user;
+    next();
+  });
+}
 
 // ユーザーごとの「よく参拝する神社」ランキング
-app.get('/users/:id/shrine-rankings', async (req, res) => {
+app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   const period = req.query.period || 'all';
   if (isNaN(userId) || userId <= 0) {
@@ -903,7 +906,7 @@ app.get('/users/:id/shrine-rankings', async (req, res) => {
 });
 
 // ユーザーごとの神様参拝ランキング一括取得API
-app.get('/users/:id/diety-rankings-bundle', async (req, res) => {
+app.get('/users/:id/diety-rankings-bundle', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -941,7 +944,7 @@ app.get('/users/:id/diety-rankings-bundle', async (req, res) => {
   res.json(result);
 });
 
-app.get('/users/me/subscription', async (req, res) => {
+app.get('/users/me/subscription', authenticateJWT, async (req, res) => {
   try {
     const userId = parseInt(req.headers['x-user-id']) || 1;
     const subscription = await getUserSubscription(userId);
@@ -952,7 +955,7 @@ app.get('/users/me/subscription', async (req, res) => {
 });
 
 // 課金ランク変更API（Stripe秒割り対応）
-app.post('/users/me/subscription/change-plan', async (req, res) => {
+app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res) => {
   try {
     const userId = parseInt(req.headers['x-user-id']) || 1;
     const { newSlots, stripeSubscriptionId } = req.body;
@@ -1022,7 +1025,7 @@ app.post('/users/me/subscription/change-plan', async (req, res) => {
 });
 
 // Stripe Checkoutセッション作成API
-app.post('/subscription/create-checkout-session', async (req, res) => {
+app.post('/subscription/create-checkout-session', authenticateJWT, async (req, res) => {
   try {
     const userId = parseInt(req.headers['x-user-id']) || 1;
     const { planId, platform } = req.body;
@@ -1069,7 +1072,7 @@ app.post('/subscription/create-checkout-session', async (req, res) => {
 });
 
 // ユーザーごとの神社・神様ランキング一括取得API
-app.get('/users/:id/rankings', async (req, res) => {
+app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   const period = req.query.period || 'all';
   if (isNaN(userId) || userId <= 0) {
@@ -1354,7 +1357,29 @@ app.get('/shrines/:id/rankings-bundle', async (req, res) => {
   res.json(result);
 });
 
-app.get('/users/:id/shrines-visited', async (req, res) => {
+// 現在のユーザーの参拝した神社一覧
+app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const stats = await prisma.shrinePrayStats.findMany({
+      where: { user_id: userId },
+      include: { shrine: true },
+      orderBy: { count: 'desc' },
+    });
+    const result = stats.map(s => ({
+      id: s.shrine.id,
+      name: s.shrine.name,
+      count: s.count,
+      registeredAt: s.shrine.registered_at
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching user shrines:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/users/:id/shrines-visited', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -1378,7 +1403,29 @@ app.get('/users/:id/shrines-visited', async (req, res) => {
   }
 });
 
-app.get('/users/:id/dieties-visited', async (req, res) => {
+// 現在のユーザーの参拝した神様一覧
+app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const stats = await prisma.dietyPrayStats.findMany({
+      where: { user_id: userId },
+      include: { diety: true },
+      orderBy: { count: 'desc' },
+    });
+    const result = stats.map(s => ({
+      id: s.diety.id,
+      name: s.diety.name,
+      count: s.count,
+      registeredAt: s.diety.registered_at
+    }));
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching user dieties:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -1402,7 +1449,7 @@ app.get('/users/:id/dieties-visited', async (req, res) => {
   }
 });
 
-app.get('/users/:id/titles', async (req, res) => {
+app.get('/users/:id/titles', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -1424,7 +1471,17 @@ app.get('/users/:id/titles', async (req, res) => {
 app.get('/abilities', async (req, res) => {
   try {
     const abilities = await prisma.abilityMaster.findMany({
-      select: { id: true, name: true, cost: true, effect_type: true, effect_value: true }
+      select: { 
+        id: true, 
+        name: true, 
+        description: true,
+        base_cost: true, 
+        cost_increase: true,
+        effect_type: true, 
+        effect_value: true,
+        max_level: true,
+        prerequisite_ability_id: true
+      }
     });
     res.json(abilities);
   } catch (err) {
@@ -1434,62 +1491,155 @@ app.get('/abilities', async (req, res) => {
 });
 
 // 能力獲得
-app.post('/abilities/:id/acquire', async (req, res) => {
+app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
   const abilityId = parseInt(req.params.id, 10);
-  const userId = parseInt(req.headers['x-user-id']) || 1;
+  const userId = req.user.id;
+  
+  console.log('能力獲得リクエスト:', { abilityId, userId });
+  
   if (isNaN(abilityId) || abilityId <= 0) {
+    console.log('無効な能力ID:', abilityId);
     return res.status(400).json({ error: 'Invalid ability ID' });
   }
+  
   try {
-    const ability = await prisma.abilityMaster.findUnique({ where: { id: abilityId } });
-    if (!ability) return res.status(404).json({ error: 'Ability not found' });
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    if (user.ability_points < ability.cost) {
-      return res.status(400).json({ error: 'Insufficient ability points' });
+    const ability = await prisma.abilityMaster.findUnique({ 
+      where: { id: abilityId },
+      include: { prerequisite_ability: true }
+    });
+    if (!ability) {
+      console.log('能力が見つかりません:', abilityId);
+      return res.status(404).json({ error: 'Ability not found' });
     }
+    
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      console.log('ユーザーが見つかりません:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // 前提能力のチェック
+    if (ability.prerequisite_ability_id) {
+      const prerequisite = await prisma.userAbility.findUnique({
+        where: { user_id_ability_id: { user_id: userId, ability_id: ability.prerequisite_ability_id } }
+      });
+      if (!prerequisite) {
+        console.log('前提能力が未獲得:', { userId, prerequisiteAbilityId: ability.prerequisite_ability_id });
+        return res.status(400).json({ error: 'Prerequisite ability not acquired' });
+      }
+    }
+    
+    // 既存の能力レベルを取得
     const existing = await prisma.userAbility.findUnique({
       where: { user_id_ability_id: { user_id: userId, ability_id: abilityId } }
     });
-    if (existing) {
-      return res.status(400).json({ error: 'Ability already acquired' });
+    
+    // レベル上限チェック
+    if (existing && existing.level >= ability.max_level) {
+      console.log('レベル上限に達しています:', { userId, abilityId, currentLevel: existing.level, maxLevel: ability.max_level });
+      return res.status(400).json({ error: 'Maximum level reached' });
     }
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: userId },
-        data: { ability_points: { decrement: ability.cost } }
-      }),
-      prisma.userAbility.create({
-        data: { user_id: userId, ability_id: abilityId }
-      }),
-      prisma.abilityLog.create({
-        data: {
-          user_id: userId,
-          ability_id: abilityId,
-          points_spent: ability.cost
-        }
-      })
-    ]);
-    res.json({ success: true });
+    
+    // コスト計算
+    const currentLevel = existing ? existing.level : 0;
+    const cost = ability.base_cost + (currentLevel * ability.cost_increase);
+    
+    console.log('能力情報:', { 
+      userId: user.id, 
+      abilityPoints: user.ability_points, 
+      abilityCost: cost,
+      currentLevel,
+      maxLevel: ability.max_level
+    });
+    
+    if (user.ability_points < cost) {
+      console.log('能力ポイント不足:', { current: user.ability_points, required: cost });
+      return res.status(400).json({ error: 'Insufficient ability points' });
+    }
+    
+    console.log('能力獲得処理開始');
+    
+    if (existing) {
+      // 既存の能力をレベルアップ
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: userId },
+          data: { ability_points: { decrement: cost } }
+        }),
+        prisma.userAbility.update({
+          where: { user_id_ability_id: { user_id: userId, ability_id: abilityId } },
+          data: { level: existing.level + 1 }
+        }),
+        prisma.abilityLog.create({
+          data: {
+            user_id: userId,
+            ability_id: abilityId,
+            points_spent: cost
+          }
+        })
+      ]);
+    } else {
+      // 新しい能力を獲得
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: userId },
+          data: { ability_points: { decrement: cost } }
+        }),
+        prisma.userAbility.create({
+          data: { user_id: userId, ability_id: abilityId, level: 1 }
+        }),
+        prisma.abilityLog.create({
+          data: {
+            user_id: userId,
+            ability_id: abilityId,
+            points_spent: cost
+          }
+        })
+      ]);
+    }
+    
+    console.log('能力獲得成功');
+    res.json({ success: true, cost, newLevel: existing ? existing.level + 1 : 1 });
   } catch (err) {
-    console.error('Error acquiring ability:', err);
-    res.status(500).json({ error: 'DB error' });
+    console.error('能力獲得エラー:', err);
+    res.status(500).json({ error: 'DB error', details: err.message });
   }
 });
 
-// 能力初期化（ポイント払い戻し）
-app.post('/user/reset-abilities', async (req, res) => {
-  const userId = parseInt(req.headers['x-user-id']) || 1;
+// 能力初期化（有料リセット）
+app.post('/user/reset-abilities', authenticateJWT, async (req, res) => {
+  const userId = req.user.id;
   try {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // リセット権限のチェック
+    const resetSubscription = await prisma.userSubscription.findFirst({
+      where: {
+        user_id: userId,
+        subscription_type: 'reset_abilities',
+        is_active: true,
+        expires_at: { gt: new Date() }
+      }
+    });
+
+    if (!resetSubscription) {
+      return res.status(400).json({ error: 'Reset subscription required' });
+    }
 
     const abilities = await prisma.userAbility.findMany({
       where: { user_id: userId },
       include: { ability: true }
     });
 
-    const total = abilities.reduce((sum, ua) => sum + ua.ability.cost, 0);
+    // 獲得した能力ポイントの合計を計算
+    const total = abilities.reduce((sum, ua) => {
+      let abilityCost = 0;
+      for (let level = 1; level <= ua.level; level++) {
+        abilityCost += ua.ability.base_cost + ((level - 1) * ua.ability.cost_increase);
+      }
+      return sum + abilityCost;
+    }, 0);
 
     await prisma.$transaction([
       prisma.user.update({
@@ -1501,14 +1651,454 @@ app.post('/user/reset-abilities', async (req, res) => {
         data: abilities.map((ua) => ({
           user_id: userId,
           ability_id: ua.ability_id,
-          points_spent: -ua.ability.cost
+          points_spent: -total // 全額払い戻し
         }))
+      }),
+      // リセット権限を消費
+      prisma.userSubscription.update({
+        where: { id: resetSubscription.id },
+        data: { is_active: false }
       })
     ]);
 
     res.json({ success: true, refundedPoints: total });
   } catch (err) {
     console.error('Error resetting abilities:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 新しいレベルシステムAPI
+
+// ユーザーのレベル情報取得
+app.get('/users/:id/level-info', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, level: true, exp: true, ability_points: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const currentLevelMaster = await prisma.levelMaster.findUnique({
+      where: { level: user.level }
+    });
+
+    const nextLevelMaster = await prisma.levelMaster.findUnique({
+      where: { level: user.level + 1 }
+    });
+
+    const prayDistance = await getUserPrayDistance(userId);
+    const worshipCount = await getUserWorshipCount(userId);
+    const todayWorshipCount = await getTodayWorshipCount(userId);
+
+    res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        level: user.level,
+        exp: user.exp,
+        ability_points: user.ability_points
+      },
+      level: {
+        current: currentLevelMaster,
+        next: nextLevelMaster,
+        progress: nextLevelMaster ? 
+          Math.min(100, Math.floor((user.exp - currentLevelMaster.required_exp) / (nextLevelMaster.required_exp - currentLevelMaster.required_exp) * 100)) : 
+          100
+      },
+      stats: {
+        pray_distance: prayDistance,
+        worship_count: worshipCount,
+        today_worship_count: todayWorshipCount
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching user level info:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// ユーザーの能力一覧取得
+app.get('/users/:id/abilities', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const userAbilities = await prisma.userAbility.findMany({
+      where: { user_id: userId },
+      include: { ability: true },
+      orderBy: { acquired_at: 'desc' }
+    });
+
+    const allAbilities = await prisma.abilityMaster.findMany({
+      include: { prerequisite_ability: true },
+      orderBy: { id: 'asc' }
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { ability_points: true }
+    });
+
+    const userAbilityMap = new Map(userAbilities.map(ua => [ua.ability_id, ua]));
+
+    const abilities = allAbilities.map(ability => {
+      const userAbility = userAbilityMap.get(ability.id);
+      const currentLevel = userAbility ? userAbility.level : 0;
+      const nextCost = ability.base_cost + (currentLevel * ability.cost_increase);
+      const canLevelUp = currentLevel < ability.max_level;
+      
+      // 前提能力のチェック
+      let prerequisiteMet = true;
+      if (ability.prerequisite_ability_id) {
+        const prerequisite = userAbilityMap.get(ability.prerequisite_ability_id);
+        prerequisiteMet = prerequisite && prerequisite.level > 0;
+      }
+
+      return {
+        id: ability.id,
+        name: ability.name,
+        description: ability.description,
+        base_cost: ability.base_cost,
+        cost_increase: ability.cost_increase,
+        effect_type: ability.effect_type,
+        effect_value: ability.effect_value,
+        max_level: ability.max_level,
+        prerequisite_ability_id: ability.prerequisite_ability_id,
+        prerequisite_ability: ability.prerequisite_ability,
+        current_level: currentLevel,
+        next_cost: nextCost,
+        purchased: currentLevel > 0,
+        can_purchase: user.ability_points >= nextCost && canLevelUp && prerequisiteMet,
+        can_level_up: canLevelUp && user.ability_points >= nextCost && prerequisiteMet
+      };
+    });
+
+    res.json({
+      abilities,
+      ability_points: user.ability_points
+    });
+  } catch (err) {
+    console.error('Error fetching user abilities:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 能力購入API（新しい実装）
+app.post('/abilities/:id/purchase', authenticateJWT, async (req, res) => {
+  const abilityId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  
+  if (isNaN(abilityId) || abilityId <= 0) {
+    return res.status(400).json({ error: 'Invalid ability ID' });
+  }
+
+  try {
+    const result = await purchaseAbility(userId, abilityId);
+    
+    if (!result.success) {
+      return res.status(400).json({ error: result.reason });
+    }
+
+    // 更新されたユーザー情報を取得
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { ability_points: true }
+    });
+
+    res.json({ 
+      success: true, 
+      ability_points: user.ability_points 
+    });
+  } catch (err) {
+    console.error('Error purchasing ability:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 遥拝回数制限チェックAPI
+app.get('/users/:id/worship-limit', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const maxWorshipCount = await getUserWorshipCount(userId);
+    const todayWorshipCount = await getTodayWorshipCount(userId);
+    
+    res.json({
+      max_worship_count: maxWorshipCount,
+      today_worship_count: todayWorshipCount,
+      remaining_worship_count: Math.max(0, maxWorshipCount - todayWorshipCount),
+      can_worship: todayWorshipCount < maxWorshipCount
+    });
+  } catch (err) {
+    console.error('Error fetching worship limit:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 参拝距離取得API
+app.get('/users/:id/pray-distance', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const prayDistance = await getUserPrayDistance(userId);
+    
+    res.json({
+      pray_distance: prayDistance
+    });
+  } catch (err) {
+    console.error('Error fetching pray distance:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// サブスクリプション取得API（ユーザーID指定）
+app.get('/users/:id/subscription', authenticateJWT, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    if (isNaN(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'Invalid ID parameter' });
+    }
+    // JWTのuser.idと一致しない場合は403
+    if (req.user && req.user.id && req.user.id !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const subscription = await getUserSubscription(userId);
+    res.json(subscription);
+  } catch (err) {
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 既存のユーザー系APIにも認証を適用（例: /users/:id, /users/:id/abilities など）
+app.get('/users/:id', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  const viewerId = req.query.viewerId ? parseInt(req.query.viewerId, 10) : null;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, level: true, exp: true, ability_points: true },
+    });
+    if (!user) return res.status(404).json({ error: 'Not found' });
+
+    const followingCount = await prisma.follow.count({ where: { follower_id: userId } });
+    const followerCount = await prisma.follow.count({ where: { following_id: userId } });
+
+    const shrineStats = await prisma.shrinePrayStats.findMany({
+      where: { user_id: userId },
+      orderBy: { count: 'desc' },
+      include: { shrine: { select: { id: true, name: true } } },
+      take: 5,
+    });
+    const dietyStats = await prisma.dietyPrayStats.findMany({
+      where: { user_id: userId },
+      orderBy: { count: 'desc' },
+      include: { diety: { select: { id: true, name: true } } },
+      take: 5,
+    });
+
+    let isFollowing = false;
+    if (viewerId) {
+      const rel = await prisma.follow.findUnique({
+        where: {
+          follower_id_following_id: { follower_id: viewerId, following_id: userId },
+        },
+      });
+      isFollowing = !!rel;
+    }
+
+    // 追加: 各種カウント・距離を取得
+    const prayDistance = await getUserPrayDistance(userId);
+    const worshipCount = await getUserWorshipCount(userId);
+    const todayWorshipCount = await getTodayWorshipCount(userId);
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      level: user.level,
+      exp: user.exp,
+      ability_points: user.ability_points,
+      pray_distance: prayDistance,
+      worship_count: worshipCount,
+      today_worship_count: todayWorshipCount,
+      following_count: followingCount,
+      follower_count: followerCount,
+      is_following: isFollowing,
+      // 必要に応じて他のプロパティも追加
+    });
+  } catch (err) {
+    console.error('Error fetching user:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+// フォロー一覧取得
+app.get('/users/:id/following', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const following = await prisma.follow.findMany({
+      where: { follower_id: userId },
+      include: {
+        following: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+    
+    const result = following.map(f => ({
+      id: f.following.id,
+      name: f.following.name
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching following:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// フォロワー一覧取得
+app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const followers = await prisma.follow.findMany({
+      where: { following_id: userId },
+      include: {
+        follower: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+    
+    const result = followers.map(f => ({
+      id: f.follower.id,
+      name: f.follower.name
+    }));
+    
+    res.json(result);
+  } catch (err) {
+    console.error('Error fetching followers:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// フォロー/アンフォロー
+app.post('/follows', authenticateJWT, async (req, res) => {
+  const { followerId, followingId } = req.body;
+  if (!followerId || !followingId) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  
+  // 自分自身をフォローできないようにする
+  if (followerId === followingId) {
+    return res.status(400).json({ error: 'Cannot follow yourself' });
+  }
+  
+  try {
+    // 既存のフォロー関係をチェック
+    const existingFollow = await prisma.follow.findUnique({
+      where: {
+        follower_id_following_id: {
+          follower_id: followerId,
+          following_id: followingId
+        }
+      }
+    });
+    
+    if (existingFollow) {
+      return res.status(400).json({ error: 'Already following this user' });
+    }
+    
+    await prisma.follow.create({
+      data: {
+        follower_id: followerId,
+        following_id: followingId
+      }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error creating follow:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.delete('/follows', authenticateJWT, async (req, res) => {
+  const { followerId, followingId } = req.body;
+  if (!followerId || !followingId) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    await prisma.follow.delete({
+      where: {
+        follower_id_following_id: {
+          follower_id: followerId,
+          following_id: followingId
+        }
+      }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting follow:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const userAbilities = await prisma.userAbility.findMany({
+      where: { user_id: userId },
+      include: { ability: true },
+      orderBy: { acquired_at: 'desc' }
+    });
+
+    const allAbilities = await prisma.abilityMaster.findMany({
+      orderBy: { id: 'asc' }
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { ability_points: true }
+    });
+
+    const purchasedAbilityIds = new Set(userAbilities.map(ua => ua.ability_id));
+
+    const abilities = allAbilities.map(ability => ({
+      id: ability.id,
+      name: ability.name,
+      cost: ability.cost,
+      effect_type: ability.effect_type,
+      effect_value: ability.effect_value,
+      purchased: purchasedAbilityIds.has(ability.id),
+      can_purchase: user.ability_points >= ability.cost && !purchasedAbilityIds.has(ability.id)
+    }));
+
+    res.json({
+      abilities,
+      ability_points: user.ability_points
+    });
+  } catch (err) {
+    console.error('Error fetching user abilities:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

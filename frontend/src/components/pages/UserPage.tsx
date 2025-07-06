@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { API_BASE } from '../../config/api';
+import { API_BASE, apiCall } from '../../config/api';
 import RankingPane from '../organisms/RankingPane';
 import useUserInfo from '../../hooks/useUserInfo';
 import useUserShrineRankings from '../../hooks/useUserShrineRankings';
@@ -11,6 +11,7 @@ import useFollowing from '../../hooks/useFollowing';
 import useFollowers from '../../hooks/useFollowers';
 import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
+import { NOIMAGE_USER_URL } from '../../constants';
 
 interface UserPageProps {
   id?: number;
@@ -30,7 +31,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
   } = useUserInfo(displayId ?? undefined, currentUserId);
 
   const { data: titles = [] } = useUserTitles(displayId ?? undefined);
-  const { data: abilities = [], refetch: refetchAbilities } = useAbilityList();
+  const { data: abilities = [], refetch: refetchAbilities } = useAbilityList(displayId);
 
   const { data: userShrineRankingsByPeriod, isLoading: isUserShrineRankingLoading } = useUserShrineRankings(displayId ?? undefined);
   const { data: userDietyRankingsByPeriod, isLoading: isUserDietyRankingLoading } = useUserDietyRankings(displayId ?? undefined);
@@ -45,9 +46,8 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
 
   const handleFollow = async () => {
     if (!currentUserId || !userInfo) return;
-    await fetch(`${API_BASE}/follows`, {
+    await apiCall(`${API_BASE}/follows`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
     });
     refetch();
@@ -57,9 +57,8 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
 
   const handleUnfollow = async () => {
     if (!currentUserId || !userInfo) return;
-    await fetch(`${API_BASE}/follows`, {
+    await apiCall(`${API_BASE}/follows`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
     });
     refetch();
@@ -68,18 +67,16 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
   };
 
   const acquireAbility = async (abilityId: number) => {
-    await fetch(`${API_BASE}/abilities/${abilityId}/acquire`, {
+    await apiCall(`${API_BASE}/abilities/${abilityId}/acquire`, {
       method: 'POST',
-      headers: { 'x-user-id': String(currentUserId) },
     });
     refetch();
     refetchAbilities();
   };
 
   const resetAbilities = async () => {
-    await fetch(`${API_BASE}/user/reset-abilities`, {
+    await apiCall(`${API_BASE}/user/reset-abilities`, {
       method: 'POST',
-      headers: { 'x-user-id': String(currentUserId) },
     });
     refetch();
     refetchAbilities();
@@ -98,7 +95,11 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
   }
 
   // 型安全なサムネイル取得
-  const thumbnailUrl = (userInfo as { thumbnailUrl?: string } | undefined)?.thumbnailUrl || '/images/noimage-user.png';
+  const thumbnailUrl = (userInfo as { thumbnailUrl?: string } | undefined)?.thumbnailUrl || NOIMAGE_USER_URL;
+
+  if (currentUserId && currentUserId === displayId) {
+    console.log('abilities:', abilities);
+  }
 
   return (
     <>
@@ -122,7 +123,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
               style={{cursor: 'pointer'}}
               onClick={() => setShowFollowingModal(true)}
             >
-              フォロー: {userInfo.followingCount}
+              フォロー: {userInfo.following_count}
             </div>
             <div
               role="button"
@@ -130,10 +131,10 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
               style={{cursor: 'pointer'}} 
               onClick={() => setShowFollowerModal(true)}
             >
-              フォロワー: {userInfo.followerCount}
+              フォロワー: {userInfo.follower_count}
             </div>
             {currentUserId && currentUserId !== displayId && (
-              userInfo.isFollowing ? (
+              userInfo.is_following ? (
                 <button
                   className="btn btn-danger btn-sm"
                   onClick={handleUnfollow}
@@ -153,12 +154,10 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
           </div>
           <div className="d-flex gap-3">
             <span>レベル: {userInfo.level}</span>
-            {currentUserId && currentUserId === displayId && (
-              <>
-                <span>経験値: {userInfo.exp}</span>
-                <span>能力値: {userInfo.abilityPoints}</span>
-              </>
-            )}
+            <span>参拝距離: {userInfo.pray_distance}m</span>
+            <span>遥拝回数: {userInfo.worship_count}回/日</span>
+            <span>経験値: {userInfo.exp}</span>
+            <span>能力値: {userInfo.ability_points}</span>
           </div>
         </div>
       </div>
@@ -179,29 +178,44 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
       {currentUserId && currentUserId === displayId && (
         <div className="mb-3">
           <div className="modal-subtitle">能力解放</div>
-          <div className="d-grid gap-2">
-            {abilities.map(a => (
-              <button
-                key={a.id}
-                className="btn btn-sm"
-                style={{
-                  background: skin.colors.surface,
-                  color: skin.colors.text,
-                  border: `2px solid ${skin.colors.primary}`,
-                  borderRadius: skin.borderRadius,
-                  fontWeight: 500,
-                  boxShadow: skin.boxShadow,
-                  transition: 'background 0.2s, color 0.2s',
-                }}
-                onClick={() => acquireAbility(a.id)}
-                onMouseOver={e => { e.currentTarget.style.background = skin.colors.primary; e.currentTarget.style.color = skin.colors.surface; }}
-                onMouseOut={e => { e.currentTarget.style.background = skin.colors.surface; e.currentTarget.style.color = skin.colors.text; }}
-              >
-                {a.name} (必要能力値: {a.cost})
-              </button>
-            ))}
+          <div className="d-grid gap-1">
+            {abilities
+              .filter(a => a.can_purchase || a.current_level > 0)
+              .map(a => (
+                <div key={a.id} className="d-flex align-items-center mb-1" style={{fontSize: '0.95em'}}>
+                  <span
+                    className="fw-bold text-truncate"
+                    title={a.description}
+                    style={{maxWidth: 180, display: 'inline-block'}}
+                  >
+                    {a.name}
+                    {a.current_level > 0 && a.max_level > 1 && (
+                      <span className="ms-1 badge bg-primary">Lv.{a.current_level}</span>
+                    )}
+                  </span>
+                  <button
+                    className="btn btn-xs ms-2 px-2 py-0"
+                    style={{
+                      background: a.can_purchase ? skin.colors.surface : skin.colors.disabled,
+                      color: a.can_purchase ? skin.colors.text : skin.colors.textMuted,
+                      border: `1px solid ${a.can_purchase ? skin.colors.primary : skin.colors.disabled}`,
+                      borderRadius: '1em',
+                      fontWeight: 500,
+                      fontSize: '0.95em',
+                      opacity: a.can_purchase ? 1 : 0.6,
+                      minWidth: 90
+                    }}
+                    onClick={() => acquireAbility(a.id)}
+                    disabled={!a.can_purchase}
+                    title={a.description}
+                  >
+                    {a.current_level > 0 ? 'レベルアップ' : '獲得'}
+                    <span className="ms-1 small">({a.next_cost})</span>
+                  </button>
+                </div>
+              ))}
             <button
-              className="btn btn-sm"
+              className="btn btn-sm mt-2"
               style={{
                 background: skin.colors.accent,
                 color: skin.colors.surface,
@@ -215,7 +229,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
               onMouseOver={e => { e.currentTarget.style.background = skin.colors.surface; e.currentTarget.style.color = skin.colors.accent; }}
               onMouseOut={e => { e.currentTarget.style.background = skin.colors.accent; e.currentTarget.style.color = skin.colors.surface; }}
             >
-              能力初期化
+              能力初期化（有料）
             </button>
           </div>
         </div>
@@ -230,8 +244,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
           onItemClick={onShowShrine}
         />
       </div>
-
-      {/* フォロー/フォロワーモーダル */}
       <FollowModal
         isOpen={showFollowingModal}
         onClose={() => setShowFollowingModal(false)}
@@ -241,7 +253,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
         error={followingError}
         onUserClick={onShowUser}
       />
-      
       <FollowModal
         isOpen={showFollowerModal}
         onClose={() => setShowFollowerModal(false)}
@@ -251,7 +262,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
         error={followersError}
         onUserClick={onShowUser}
       />
-
       <div className="modal-section">
         <div className="modal-subtitle">よく参拝する神様</div>
         <RankingPane

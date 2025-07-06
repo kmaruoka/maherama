@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 interface FollowingUser {
   id: number;
@@ -22,7 +22,7 @@ export default function useFollowing(userId?: number) {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/users/${userId}/following`);
+      const response = await apiCall(`${API_BASE}/users/${userId}/following`);
       if (!response.ok) {
         throw new Error('フォロー一覧の取得に失敗しました');
       }

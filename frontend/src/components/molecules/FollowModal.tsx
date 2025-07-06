@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSkin } from '../../skins/SkinContext';
+import { NOIMAGE_USER_URL } from '../../constants';
 
 interface User {
   id: number;
@@ -111,7 +112,7 @@ export default function FollowModal({
                     onClick={() => onUserClick?.(user.id)}
                   >
                     <img
-                      src={user.thumbnailUrl}
+                      src={user.thumbnailUrl || NOIMAGE_USER_URL}
                       alt={`${user.name}のサムネイル`}
                       className="rounded-circle"
                       style={{

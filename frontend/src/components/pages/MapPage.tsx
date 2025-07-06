@@ -3,7 +3,7 @@ import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import '../../setupLeaflet';
-import { MAPBOX_API_KEY } from '../../config/api';
+import { MAPBOX_API_KEY, API_BASE } from '../../config/api';
 import useLogs, { useClientLogs } from '../../hooks/useLogs';
 import useAllShrines from '../../hooks/useAllShrines';
 import LogPane from '../organisms/LogPane';
@@ -13,6 +13,7 @@ import CustomCircle from '../atoms/CustomCircle';
 import { getDistanceMeters } from '../../hooks/usePrayDistance';
 import useDebugLog from '../../hooks/useDebugLog';
 import { useSubscription } from '../../hooks/useSubscription';
+import { NOIMAGE_SHRINE_URL } from '../../constants';
 
 function createShrineIcon(thumbnailUrl?: string) {
   // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
@@ -21,7 +22,7 @@ function createShrineIcon(thumbnailUrl?: string) {
     html: `
       <div class="shrine-marker-frame-anim">
         <div class="shrine-marker-thumbnail-wrap">
-          <img src="${thumbnailUrl || '/images/noimage-shrine.png'}" alt="shrine" />
+          <img src="${thumbnailUrl || NOIMAGE_SHRINE_URL}" alt="shrine" />
           <div class="shrine-marker-thumbnail-gloss"></div>
         </div>
         <div class="shrine-marker-pin"></div>
@@ -66,6 +67,21 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
 
   const [userId] = useLocalStorageState<number | null>('userId', null);
   const { data: subscription } = useSubscription(userId);
+
+  const [prayDistance, setPrayDistance] = useState<number>(100);
+  useEffect(() => {
+    if (userId) {
+      fetch(`${API_BASE}/users/${userId}/pray-distance`, {
+        headers: { 'x-user-id': String(userId) }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (typeof data.pray_distance === 'number') {
+            setPrayDistance(data.pray_distance);
+          }
+        });
+    }
+  }, [userId]);
 
   // GPS追従（通常モード）
   useEffect(() => {
@@ -175,10 +191,10 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           zoomOffset={-1}
         />
         {debugMode && center && (
-          <CustomCircle center={center} rank={subscription?.slots ?? 0} />
+          <CustomCircle center={center} radius={prayDistance} />
         )}
         {!debugMode && position && (
-          <CustomCircle center={position} rank={subscription?.slots ?? 0} />
+          <CustomCircle center={position} radius={prayDistance} />
         )}
         {/* デバッグ用: 現在地ピン */}
         {position && (

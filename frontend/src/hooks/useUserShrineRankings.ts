@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 import type { Period, RankingItem } from '../components/organisms/RankingPane';
 
 export type ItemsByPeriod = { [key in Period]: RankingItem[] };
@@ -12,7 +12,7 @@ export default function useUserShrineRankings(userId?: number) {
       const periods: Period[] = ['all', 'yearly', 'monthly', 'weekly'];
       const result: ItemsByPeriod = { all: [], yearly: [], monthly: [], weekly: [] };
       await Promise.all(periods.map(async (period) => {
-        const res = await fetch(`${API_BASE}/users/${userId}/shrine-rankings?period=${period}`);
+        const res = await apiCall(`${API_BASE}/users/${userId}/shrine-rankings?period=${period}`);
         result[period] = res.ok ? await res.json() : [];
       }));
       return result;

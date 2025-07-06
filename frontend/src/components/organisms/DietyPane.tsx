@@ -3,9 +3,10 @@ import { useParams } from 'react-router-dom';
 import useDietyDetail from '../../hooks/useDietyDetail';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
 import CustomLink from '../atoms/CustomLink';
-import RankingPane from '../organisms/RankingPane';
-import type { Period, RankingItem } from '../organisms/RankingPane';
+import RankingPane from './RankingPane';
+import type { Period, RankingItem } from './RankingPane';
 import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
+import { NOIMAGE_DIETY_URL } from '../../constants';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItem[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -18,7 +19,7 @@ function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key
   };
 }
 
-export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
+export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { id: paramId } = useParams<{ id: string }>();
   const idFromParams = id || paramId;
 
@@ -44,7 +45,7 @@ export default function DietyPage({ id, onShowShrine, onShowUser }: { id?: numbe
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <img
-          src={'/images/noimage-diety.png'}
+          src={NOIMAGE_DIETY_URL}
           alt="サムネイル"
           className="rounded shadow"
           style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}

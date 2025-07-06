@@ -31,6 +31,8 @@ const waSkin = {
     scrollbarTrack: '#eae2cc',
     scrollbarThumbHover: '#a77f3d',
     tabInactive: 'linear-gradient(to bottom, #c8bca8 0%, #eae2cc 100%)',
+    disabled: '#e0e0e0',
+    textMuted: '#aaa',
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

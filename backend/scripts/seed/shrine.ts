@@ -20,7 +20,7 @@ async function geocode(location: string): Promise<{ lat: number; lng: number }> 
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function seedShrine(prisma: PrismaClient): Promise<Set<number>> {
+export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
   const shrines = [
     { name: '天村雲神社', kana: 'あめのむらくもじんじゃ', location: '徳島県吉野川市山川町村雲１３３', lat: 34.067, lng: 134.283 },
     { name: '蜂須神社', kana: 'はちすじんじゃ', location: '徳島県鳴門市大麻町板東牛ノ宮東１８', lat: 34.123, lng: 134.567 },

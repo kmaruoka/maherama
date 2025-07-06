@@ -8,9 +8,11 @@ export async function seedSubscription(prisma: PrismaClient) {
   const now = new Date();
   const oneMonthLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+  const types = ['range_multiplier', 'worship_boost', 'reset_abilities'];
+
   const subscriptions = users.map((user, idx) => ({
     user_id: user.id,
-    slots: idx, // 0,1,2,3,4
+    subscription_type: types[idx % types.length],
     expires_at: oneMonthLater,
     is_active: true,
     billing_cycle_start: now,

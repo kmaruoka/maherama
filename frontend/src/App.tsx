@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
-import ShrinePage from './components/pages/ShrinePage';
-import DietyPage from './components/pages/DietyPage';
+import ShrinePane from './components/organisms/ShrinePane';
+import DietyPage from './components/organisms/DietyPane';
 import UserPage from './components/pages/UserPage';
 import SettingsPage from './components/pages/SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
@@ -61,7 +61,7 @@ function App() {
                 </Button>
               </div>
               {modal.type === 'shrine' && (
-                <ShrinePage
+                <ShrinePane
                   id={modal.id}
                   onShowDiety={id => setModal({ type: 'diety', id })}
                   onShowUser={id => setModal({ type: 'user', id })}

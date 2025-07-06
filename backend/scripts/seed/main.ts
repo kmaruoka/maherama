@@ -9,6 +9,7 @@ import { seedFollow } from './follow';
 import { seedSubscription } from './subscription';
 import { seedAbility } from './ability';
 import { seedTitle } from './title';
+import { seedLevel } from './level';
 
 const prisma = new PrismaClient();
 
@@ -23,6 +24,7 @@ async function main() {
   await seedSubscription(prisma);
   await seedAbility(prisma);
   await seedTitle(prisma);
+  await seedLevel(prisma);
   console.log("✅ Seeding completed.");
 }
 
