@@ -41,6 +41,8 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--color-scrollbar-track', colors.scrollbarTrack);
     root.style.setProperty('--color-scrollbar-thumb-hover', colors.scrollbarThumbHover);
     root.style.setProperty('--color-tab-inactive', colors.tabInactive);
+    root.style.setProperty('--color-cut-in-bg', colors.cutInBg);
+    root.style.setProperty('--color-cut-in-text', colors.cutInText);
   }, [skin]);
   return (
     <SkinContext.Provider value={{ skin, skinName, setSkinName }}>

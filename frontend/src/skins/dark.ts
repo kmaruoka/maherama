@@ -31,6 +31,8 @@ const darkSkin = {
     scrollbarTrack: '#232627', // ダーク背景
     scrollbarThumbHover: '#90caf9', // アクセント青
     tabInactive: 'linear-gradient(to bottom, #757575 0%, #b0bec5 100%)', // 上が暗く下が明るいグラデーション
+    cutInBg: '#232627',
+    cutInText: '#f5f5f5',
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

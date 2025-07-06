@@ -31,6 +31,8 @@ const forestSkin = {
     scrollbarTrack: '#e8f5e9',
     scrollbarThumbHover: '#2e7d32',
     tabInactive: 'linear-gradient(to bottom, #a8bfa1 0%, #dfe8d9 100%)',
+    cutInBg: '#f9faf8',
+    cutInText: '#2e3d2c',
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

@@ -40,7 +40,7 @@ const debugCurrentIcon = new L.Icon({
   iconAnchor: [16, 32],
 });
 
-export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
+export default function MapPage({ onShowShrine, onShowUser, onShowDiety, onCutIn }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void; onCutIn?: (msg: string) => void }) {
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
   const mapRef = useRef<L.Map | null>(null);
@@ -183,7 +183,14 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
               }}
             >
               <Popup>
-                <ShrineMarkerPane shrine={s} refetchLogs={refetchLogs} onShowDetail={onShowShrine} currentPosition={currentPosition} addClientLog={addClientLog} />
+                <ShrineMarkerPane
+                  shrine={s}
+                  refetchLogs={refetchLogs}
+                  onShowDetail={onShowShrine}
+                  currentPosition={currentPosition}
+                  addClientLog={addClientLog}
+                  onCutIn={onCutIn}
+                />
               </Popup>
             </Marker>
           );

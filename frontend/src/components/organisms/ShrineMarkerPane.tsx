@@ -24,7 +24,7 @@ export interface Shrine {
   dieties: Array<{ id: number; name: string; kana?: string }>;
 }
 
-export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail, currentPosition, addClientLog }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; currentPosition?: [number, number] | null; addClientLog?: (log: { message: string; time: string; type?: string }) => void; }) {
+export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail, currentPosition, addClientLog, onCutIn }: { shrine: Shrine; refetchLogs: () => void; onShowDetail?: (id: number) => void; currentPosition?: [number, number] | null; addClientLog?: (log: { message: string; time: string; type?: string }) => void; onCutIn?: (msg: string) => void; }) {
   const queryClient = useQueryClient();
   const [userId] = useLocalStorageState<number | null>('userId', null);
   const { data: subscription } = useSubscription(userId);
@@ -72,9 +72,11 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail, cu
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       refetchLogs();
+      if (data.levelUp && onCutIn) onCutIn('レベルアップ！');
+      if (data.newEntry && onCutIn) onCutIn('図鑑に登録！');
     },
   });
 
@@ -92,9 +94,11 @@ export default function ShrineMarkerPane({ shrine, refetchLogs, onShowDetail, cu
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       refetchLogs();
+      if (data.levelUp && onCutIn) onCutIn('レベルアップ！');
+      if (data.newEntry && onCutIn) onCutIn('図鑑に登録！');
     },
   });
 
