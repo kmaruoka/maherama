@@ -289,12 +289,10 @@ model AbilityMaster {
   id           Int    @id @default(autoincrement())
   name         String
   description  String // 能力の説明文
-  base_cost    Int    // 基本コスト
-  cost_increase Int   @default(100) // 獲得回数ごとのコスト増加
+  cost         Int    // 取得コスト
   effect_type  String // 'range', 'worship', 'skin', 'image_post', 'history_post', 'shrine_apply', 'approval'
   effect_value Int
-  max_level    Int    @default(1) // 最大獲得回数（1の場合は1回のみ）
-  prerequisite_ability_id Int? // 前提能力ID
+  prerequisite_ability_id Int?
   prerequisite_ability AbilityMaster? @relation("Prerequisite", fields: [prerequisite_ability_id], references: [id])
   dependent_abilities AbilityMaster[] @relation("Prerequisite")
   userAbilities UserAbility[]
@@ -307,7 +305,6 @@ model UserAbility {
   user_id    Int
   ability    AbilityMaster  @relation(fields: [ability_id], references: [id])
   ability_id Int
-  level      Int            @default(1) // 獲得回数（レベル）
   acquired_at DateTime      @default(now())
 
   @@unique([user_id, ability_id])

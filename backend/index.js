@@ -125,8 +125,9 @@ async function getUserPrayDistance(userId) {
     }
   });
 
+  // レベル制廃止: effect_valueの合計のみ加算
   const additionalDistance = rangeAbilities.reduce((sum, userAbility) => {
-    return sum + userAbility.ability.effect_value * userAbility.level;
+    return sum + userAbility.ability.effect_value;
   }, 0);
 
   const activeSubscription = await prisma.userSubscription.findFirst({
@@ -282,12 +283,17 @@ async function purchaseAbility(userId, abilityId) {
     return { success: false, reason: 'Ability not found' };
   }
 
+  const cost = ability.cost;
+  if (typeof cost !== 'number' || isNaN(cost) || cost <= 0) {
+    return { success: false, reason: 'Invalid ability cost' };
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: userId },
       data: {
         ability_points: {
-          decrement: ability.cost
+          decrement: cost
         }
       }
     });
@@ -303,7 +309,7 @@ async function purchaseAbility(userId, abilityId) {
       data: {
         user_id: userId,
         ability_id: abilityId,
-        points_spent: ability.cost
+        points_spent: cost
       }
     });
   });
@@ -1529,77 +1535,49 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
       }
     }
     
-    // 既存の能力レベルを取得
+    // 既に獲得済みかチェック
     const existing = await prisma.userAbility.findUnique({
       where: { user_id_ability_id: { user_id: userId, ability_id: abilityId } }
     });
     
-    // レベル上限チェック
-    if (existing && existing.level >= ability.max_level) {
-      console.log('レベル上限に達しています:', { userId, abilityId, currentLevel: existing.level, maxLevel: ability.max_level });
-      return res.status(400).json({ error: 'Maximum level reached' });
+    if (existing) {
+      console.log('既に獲得済みの能力:', { userId, abilityId });
+      return res.status(400).json({ error: 'Ability already acquired' });
     }
-    
-    // コスト計算
-    const currentLevel = existing ? existing.level : 0;
-    const cost = ability.base_cost + (currentLevel * ability.cost_increase);
     
     console.log('能力情報:', { 
       userId: user.id, 
       abilityPoints: user.ability_points, 
-      abilityCost: cost,
-      currentLevel,
-      maxLevel: ability.max_level
+      abilityCost: ability.cost
     });
     
-    if (user.ability_points < cost) {
-      console.log('能力ポイント不足:', { current: user.ability_points, required: cost });
+    if (user.ability_points < ability.cost) {
+      console.log('能力ポイント不足:', { current: user.ability_points, required: ability.cost });
       return res.status(400).json({ error: 'Insufficient ability points' });
     }
     
     console.log('能力獲得処理開始');
     
-    if (existing) {
-      // 既存の能力をレベルアップ
-      await prisma.$transaction([
-        prisma.user.update({
-          where: { id: userId },
-          data: { ability_points: { decrement: cost } }
-        }),
-        prisma.userAbility.update({
-          where: { user_id_ability_id: { user_id: userId, ability_id: abilityId } },
-          data: { level: existing.level + 1 }
-        }),
-        prisma.abilityLog.create({
-          data: {
-            user_id: userId,
-            ability_id: abilityId,
-            points_spent: cost
-          }
-        })
-      ]);
-    } else {
-      // 新しい能力を獲得
-      await prisma.$transaction([
-        prisma.user.update({
-          where: { id: userId },
-          data: { ability_points: { decrement: cost } }
-        }),
-        prisma.userAbility.create({
-          data: { user_id: userId, ability_id: abilityId, level: 1 }
-        }),
-        prisma.abilityLog.create({
-          data: {
-            user_id: userId,
-            ability_id: abilityId,
-            points_spent: cost
-          }
-        })
-      ]);
-    }
+    // 新しい能力を獲得
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { ability_points: { decrement: ability.cost } }
+      });
+      await tx.userAbility.create({
+        data: { user_id: userId, ability_id: abilityId }
+      });
+      await tx.abilityLog.create({
+        data: {
+          user_id: userId,
+          ability_id: abilityId,
+          points_spent: ability.cost
+        }
+      });
+    });
     
     console.log('能力獲得成功');
-    res.json({ success: true, cost, newLevel: existing ? existing.level + 1 : 1 });
+    res.json({ success: true, cost: ability.cost });
   } catch (err) {
     console.error('能力獲得エラー:', err);
     res.status(500).json({ error: 'DB error', details: err.message });
@@ -1634,32 +1612,28 @@ app.post('/user/reset-abilities', authenticateJWT, async (req, res) => {
 
     // 獲得した能力ポイントの合計を計算
     const total = abilities.reduce((sum, ua) => {
-      let abilityCost = 0;
-      for (let level = 1; level <= ua.level; level++) {
-        abilityCost += ua.ability.base_cost + ((level - 1) * ua.ability.cost_increase);
-      }
-      return sum + abilityCost;
+      return sum + ua.ability.cost;
     }, 0);
 
-    await prisma.$transaction([
-      prisma.user.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: { ability_points: { increment: total } }
-      }),
-      prisma.userAbility.deleteMany({ where: { user_id: userId } }),
-      prisma.abilityLog.createMany({
+      });
+      await tx.userAbility.deleteMany({ where: { user_id: userId } });
+      await tx.abilityLog.createMany({
         data: abilities.map((ua) => ({
           user_id: userId,
           ability_id: ua.ability_id,
           points_spent: -total // 全額払い戻し
         }))
-      }),
+      });
       // リセット権限を消費
-      prisma.userSubscription.update({
+      await tx.userSubscription.update({
         where: { id: resetSubscription.id },
         data: { is_active: false }
-      })
-    ]);
+      });
+    });
 
     res.json({ success: true, refundedPoints: total });
   } catch (err) {
@@ -1752,33 +1726,25 @@ app.get('/users/:id/abilities', async (req, res) => {
 
     const abilities = allAbilities.map(ability => {
       const userAbility = userAbilityMap.get(ability.id);
-      const currentLevel = userAbility ? userAbility.level : 0;
-      const nextCost = ability.base_cost + (currentLevel * ability.cost_increase);
-      const canLevelUp = currentLevel < ability.max_level;
-      
+      const purchased = !!userAbility;
+      const nextCost = ability.cost;
       // 前提能力のチェック
       let prerequisiteMet = true;
       if (ability.prerequisite_ability_id) {
         const prerequisite = userAbilityMap.get(ability.prerequisite_ability_id);
-        prerequisiteMet = prerequisite && prerequisite.level > 0;
+        prerequisiteMet = !!prerequisite;
       }
-
       return {
         id: ability.id,
         name: ability.name,
         description: ability.description,
-        base_cost: ability.base_cost,
-        cost_increase: ability.cost_increase,
+        cost: ability.cost,
         effect_type: ability.effect_type,
         effect_value: ability.effect_value,
-        max_level: ability.max_level,
         prerequisite_ability_id: ability.prerequisite_ability_id,
         prerequisite_ability: ability.prerequisite_ability,
-        current_level: currentLevel,
-        next_cost: nextCost,
-        purchased: currentLevel > 0,
-        can_purchase: user.ability_points >= nextCost && canLevelUp && prerequisiteMet,
-        can_level_up: canLevelUp && user.ability_points >= nextCost && prerequisiteMet
+        purchased,
+        can_purchase: user.ability_points >= nextCost && prerequisiteMet && !purchased,
       };
     });
 

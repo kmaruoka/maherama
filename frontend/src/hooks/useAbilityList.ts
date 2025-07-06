@@ -5,21 +5,16 @@ export interface AbilityItem {
   id: number;
   name: string;
   description: string;
-  base_cost: number;
-  cost_increase: number;
+  cost: number;
   effect_type: string;
   effect_value: number;
-  max_level: number;
   prerequisite_ability_id?: number;
   prerequisite_ability?: {
     id: number;
     name: string;
   };
-  current_level: number;
-  next_cost: number;
   purchased: boolean;
   can_purchase: boolean;
-  can_level_up: boolean;
 }
 
 export default function useAbilityList(userId?: number | null) {

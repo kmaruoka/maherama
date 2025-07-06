@@ -117,10 +117,10 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
             {userInfo.name}
           </h1>
           <div className="modal-info d-flex align-items-center gap-4 mb-2">
-            <div 
-              role="button" 
-              className="text-primary" 
-              style={{cursor: 'pointer'}}
+            <div
+              role="button"
+              className="text-primary"
+              style={{ cursor: 'pointer' }}
               onClick={() => setShowFollowingModal(true)}
             >
               フォロー: {userInfo.following_count}
@@ -128,7 +128,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
             <div
               role="button"
               className="text-primary"
-              style={{cursor: 'pointer'}} 
+              style={{ cursor: 'pointer' }}
               onClick={() => setShowFollowerModal(true)}
             >
               フォロワー: {userInfo.follower_count}
@@ -150,7 +150,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                 </button>
               )
             )}
-            
+
           </div>
           <div className="d-flex gap-3">
             <span>レベル: {userInfo.level}</span>
@@ -174,66 +174,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
           </div>
         )}
       </div>
-
-      {currentUserId && currentUserId === displayId && (
-        <div className="mb-3">
-          <div className="modal-subtitle">能力解放</div>
-          <div className="d-grid gap-1">
-            {abilities
-              .filter(a => a.can_purchase || a.current_level > 0)
-              .map(a => (
-                <div key={a.id} className="d-flex align-items-center mb-1" style={{fontSize: '0.95em'}}>
-                  <span
-                    className="fw-bold text-truncate"
-                    title={a.description}
-                    style={{maxWidth: 180, display: 'inline-block'}}
-                  >
-                    {a.name}
-                    {a.current_level > 0 && a.max_level > 1 && (
-                      <span className="ms-1 badge bg-primary">Lv.{a.current_level}</span>
-                    )}
-                  </span>
-                  <button
-                    className="btn btn-xs ms-2 px-2 py-0"
-                    style={{
-                      background: a.can_purchase ? skin.colors.surface : skin.colors.disabled,
-                      color: a.can_purchase ? skin.colors.text : skin.colors.textMuted,
-                      border: `1px solid ${a.can_purchase ? skin.colors.primary : skin.colors.disabled}`,
-                      borderRadius: '1em',
-                      fontWeight: 500,
-                      fontSize: '0.95em',
-                      opacity: a.can_purchase ? 1 : 0.6,
-                      minWidth: 90
-                    }}
-                    onClick={() => acquireAbility(a.id)}
-                    disabled={!a.can_purchase}
-                    title={a.description}
-                  >
-                    {a.current_level > 0 ? 'レベルアップ' : '獲得'}
-                    <span className="ms-1 small">({a.next_cost})</span>
-                  </button>
-                </div>
-              ))}
-            <button
-              className="btn btn-sm mt-2"
-              style={{
-                background: skin.colors.accent,
-                color: skin.colors.surface,
-                border: `2px solid ${skin.colors.accent}`,
-                borderRadius: skin.borderRadius,
-                fontWeight: 500,
-                boxShadow: skin.boxShadow,
-                transition: 'background 0.2s, color 0.2s',
-              }}
-              onClick={resetAbilities}
-              onMouseOver={e => { e.currentTarget.style.background = skin.colors.surface; e.currentTarget.style.color = skin.colors.accent; }}
-              onMouseOut={e => { e.currentTarget.style.background = skin.colors.accent; e.currentTarget.style.color = skin.colors.surface; }}
-            >
-              能力初期化（有料）
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="modal-section">
         <div className="modal-subtitle">よく参拝する神社</div>
@@ -271,6 +211,66 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
           onItemClick={onShowDiety}
         />
       </div>
+
+      {currentUserId && currentUserId === displayId && (
+        <div className="mb-3">
+          <div className="modal-subtitle">能力解放</div>
+          <div className="d-grid gap-1">
+            {abilities
+              .filter(a => a.can_purchase || a.purchased)
+              .map(a => (
+                <div key={a.id} className="d-flex align-items-center mb-1" style={{ fontSize: '0.95em' }}>
+                  <span
+                    className="fw-bold text-truncate"
+                    title={a.description}
+                    style={{ maxWidth: 180, display: 'inline-block' }}
+                  >
+                    {a.name}
+                  </span>
+                  {a.purchased ? (
+                    <span className="ms-2 text-success" style={{ fontWeight: 500 }}>解放済み</span>
+                  ) : (
+                    <button
+                      className="btn btn-xs ms-2 px-2 py-0"
+                      style={{
+                        background: a.can_purchase ? skin.colors.surface : skin.colors.disabled,
+                        color: a.can_purchase ? skin.colors.text : skin.colors.textMuted,
+                        border: `1px solid ${a.can_purchase ? skin.colors.primary : skin.colors.disabled}`,
+                        borderRadius: '1em',
+                        fontWeight: 500,
+                        fontSize: '0.95em',
+                        opacity: a.can_purchase ? 1 : 0.6,
+                        minWidth: 90
+                      }}
+                      onClick={() => acquireAbility(a.id)}
+                      disabled={!a.can_purchase}
+                      title={a.description}
+                    >
+                      <span className="ms-1 small">能力値 {a.cost} を消費して解放</span>
+                    </button>
+                  )}
+                </div>
+              ))}
+            <button
+              className="btn btn-sm mt-2"
+              style={{
+                background: skin.colors.accent,
+                color: skin.colors.surface,
+                border: `2px solid ${skin.colors.accent}`,
+                borderRadius: skin.borderRadius,
+                fontWeight: 500,
+                boxShadow: skin.boxShadow,
+                transition: 'background 0.2s, color 0.2s',
+              }}
+              onClick={resetAbilities}
+              onMouseOver={e => { e.currentTarget.style.background = skin.colors.surface; e.currentTarget.style.color = skin.colors.accent; }}
+              onMouseOut={e => { e.currentTarget.style.background = skin.colors.accent; e.currentTarget.style.color = skin.colors.surface; }}
+            >
+              能力初期化（有料）
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

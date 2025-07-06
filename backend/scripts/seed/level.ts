@@ -24,6 +24,8 @@ level | required_exp | pray_distance | worship_count
  19   |   9900       |     460       |      2
  20   |  11020       |     480       |      2
 ...
+ 80   |  63120       |    2380       |      8  // レベル80での距離
+...
 */
 
 export async function seedLevel(prisma: PrismaClient) {
