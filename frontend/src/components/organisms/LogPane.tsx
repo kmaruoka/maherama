@@ -12,6 +12,16 @@ interface LogPaneProps {
   debugLogs?: string[];
 }
 
+// 16進カラーをrgbaに変換するユーティリティ
+function hexToRgba(hex: string, alpha: number) {
+  const h = hex.replace('#', '');
+  const bigint = parseInt(h, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser, debugLogs }: LogPaneProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { skin } = useSkin();
@@ -25,8 +35,13 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
   };
 
   const getLogPaneBg = () => {
-    if (skin.name === 'ダーク') return 'rgba(35,38,39,0.85)';
-    return 'rgba(255,255,255,0.7)';
+    // surface色が#で始まる場合のみ半透明化
+    if (skin.colors.surface.startsWith('#')) {
+      // ダーク系はalpha 0.85、明色系は0.7
+      const isDark = skin.name === '夜';
+      return hexToRgba(skin.colors.surface, isDark ? 0.85 : 0.7);
+    }
+    return skin.colors.surface;
   };
 
   if (!isExpanded) {
@@ -39,7 +54,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
           paddingBottom: '2.5rem',
           position: 'relative',
           background: getLogPaneBg(),
-          color: '#fff',
+          color: skin.colors.logText,
         }}
       >
         {debugLogs && debugLogs.length > 0 && (
@@ -75,7 +90,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
           bottom: '3rem',
           zIndex: 10000,
           background: getLogPaneBg(),
-          color: '#fff',
+          color: skin.colors.logText,
         }}
         onClick={handlePaneClick}
       >

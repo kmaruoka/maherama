@@ -1,0 +1,46 @@
+const aiSkin = {
+    name: '藍',
+    colors: {
+      background: '#0d1b2a',          // 深い藍
+      surface: '#1b263b',             // 藍に近い濃紺
+      primary: '#415a77',             // 藍の中間色
+      accent: '#778da9',              // 淡い藍灰色
+      text: '#e0e1dd',                // やや暖かみのある白
+      border: '#1b263b',
+      shadow: 'rgba(0, 0, 0, 0.5)',
+      card: '#1b263b',
+      tagShrine: '#1e3d59',           // 寺社的な濃藍
+      tagDiety: '#2a4d69',            // 神聖さを感じる藍
+      tagUser: '#3c6e71',             // 個人性を表す緑がかった藍
+      tagShrineText: '#ffb347',       // 穏やかな橙（信仰・灯火のイメージ）
+      tagDietyText: '#a7d8c9',        // 淡い緑（神格・優しさ）
+      tagUserText: '#add8e6',         // 明るい水色（親しみ）
+      rankingTabBg: '#1b263b',
+      rankingTabActiveBg: '#0d1b2a',
+      rankingRowBg: '#1b263b',
+      rankingRowBorder: '#2c3e50',
+      rankingSection: '#aabac6',
+      logText: '#e0e1dd',
+      section: '#e0e1dd',
+      rankingBadge1: '#ffd700',       // 金
+      rankingBadge2: '#c0c0c0',       // 銀
+      rankingBadge3: '#cd7f32',       // 銅
+      rankingBadgeOther: '#2f4f4f',   // ダークスレートグレー
+      rankingBadgeText: '#f5f5f5',
+      scrollbarThumb: '#415a77',
+      scrollbarTrack: '#1b263b',
+      scrollbarThumbHover: '#778da9',
+      tabInactive: 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)',
+    },
+    borderRadius: '1.5rem',
+    fontFamily: '"Noto Serif JP", serif',
+    boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5), 0 0 0 6px #0d1b2a',
+    modal: {
+      maxWidth: '600px',
+      padding: '2rem 1.5rem',
+      background: 'linear-gradient(135deg, #1b263b 0%, #0d1b2a 100%)',
+    },
+  };
+  
+  export default aiSkin;
+  

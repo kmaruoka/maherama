@@ -1,45 +1,45 @@
 const waSkin = {
   name: '和',
   colors: {
-    background: '#f8f5e4',
-    surface: '#fffbe6',
-    primary: '#bfa14a',
-    accent: '#a67c00',
+    background: '#f6f1e7', // 少し赤みのある生成色（和紙ベース）
+    surface: '#fdfaf3',
+    primary: '#c7a76c', // 落ち着いた黄土色
+    accent: '#a77f3d',  // 和風の茶系アクセント（金の彩度を抑制）
     text: '#222',
-    border: '#bfa14a',
-    shadow: 'rgba(80,60,10,0.18)',
-    card: '#fffde7',
-    tagShrine: '#fff7e6',
-    tagDiety: '#e8f5e9',
-    tagUser: '#e3f2fd',
-    tagShrineText: '#e65100',
-    tagDietyText: '#1b5e20',
-    tagUserText: '#0d47a1',
-    rankingTabBg: '#fffbe6',
-    rankingTabActiveBg: '#fffde7',
-    rankingRowBg: '#fffde7',
-    rankingRowBorder: '#e0c97f',
-    rankingSection: '#374151',
+    border: '#c7a76c',
+    shadow: 'rgba(100, 80, 40, 0.18)',
+    card: '#fbf8ef',
+    tagShrine: '#f5ede2', // 彩度を落とした薄生成（社殿）
+    tagDiety: '#eef5ec',  // 淡い緑がかった和紙（自然神）
+    tagUser: '#edf3fa',   // 薄い藍鼠（人とのつながり）
+    tagShrineText: '#b05e1e', // 柿茶（穏やかな朱）
+    tagDietyText: '#33691e',  // 深緑（自然・森）
+    tagUserText: '#1e3a5f',   // 藍色（人情と知性）
+    rankingTabBg: '#fdfaf3',
+    rankingTabActiveBg: '#fbf8ef',
+    rankingRowBg: '#fbf8ef',
+    rankingRowBorder: '#d4bc94',
+    rankingSection: '#5d4037', // 濃い焦茶（引き締め）
     logText: '#222',
-    section: '#374151',
-    rankingBadge1: '#ffd700', // 金
-    rankingBadge2: '#c0c0c0', // 銀
-    rankingBadge3: '#cd7f32', // 銅
-    rankingBadgeOther: '#f5e9c6', // 薄茶
-    rankingBadgeText: '#222',
-    scrollbarThumb: '#d1b97a', // 淡い金
-    scrollbarTrack: '#f5e9c6', // ベージュ
-    scrollbarThumbHover: '#bfa14a', // 濃い金
-    tabInactive: 'linear-gradient(to bottom, #bdbdbd 0%, #e0e0e0 100%)', // 上が暗く下が明るいグラデーション
+    section: '#5d4037',
+    rankingBadge1: '#d4af37',  // 鈍い金（明度・彩度抑制）
+    rankingBadge2: '#b0aeb0',  // 薄墨銀
+    rankingBadge3: '#c27c44',  // 焦げ茶寄りの銅
+    rankingBadgeOther: '#eae2cc', // 黄味ベージュ
+    rankingBadgeText: '#3e3e3e',
+    scrollbarThumb: '#c7a76c',
+    scrollbarTrack: '#eae2cc',
+    scrollbarThumbHover: '#a77f3d',
+    tabInactive: 'linear-gradient(to bottom, #c8bca8 0%, #eae2cc 100%)',
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',
-  boxShadow: '0 8px 32px 0 rgba(80,60,10,0.18), 0 0 0 6px #f8f5e4',
+  boxShadow: '0 8px 32px 0 rgba(100, 80, 40, 0.18), 0 0 0 6px #f6f1e7',
   modal: {
     maxWidth: '600px',
     padding: '2rem 1.5rem',
-    background: 'linear-gradient(135deg, #f8f5e4 0%, #f5e9c6 100%)',
+    background: 'radial-gradient(circle at 50% 30%, #fdfaf3 0%, #f6f1e7 100%)',
   },
 };
 
-export default waSkin; 
+export default waSkin;
