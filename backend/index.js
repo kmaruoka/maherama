@@ -58,6 +58,25 @@ async function addLog(message, type = 'normal') {
   });
 }
 
+// 経験値加算とレベルアップ処理
+async function gainExp(userId, amount) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return;
+  let exp = user.exp + amount;
+  let level = user.level;
+  let abilityPoints = user.ability_points;
+  let required = (level + 1) * (level + 1) * 10;
+  while (exp >= required) {
+    level += 1;
+    abilityPoints += 100;
+    required = (level + 1) * (level + 1) * 10;
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { exp, level, ability_points: abilityPoints },
+  });
+}
+
 // 全神社（参拝数0も含む）を返すAPI
 app.get('/shrines/all', async (req, res) => {
   try {
@@ -254,7 +273,8 @@ app.post('/shrines/:id/pray', async (req, res) => {
     } else {
       return res.status(400).json({ error: '緯度・経度がリクエストボディに含まれていません' });
     }
-    // --- 神社カウント ---
+    // --- 参拝ログ保存 ---
+    await prisma.shrinePray.create({ data: { shrine_id: id, user_id: userId } });
     // 取得した祭神IDをログ出力
     console.log('shrine_dieties:', shrine.shrine_dieties);
     const shrineStats = await prisma.shrinePrayStats.findFirst({ where: { shrine_id: id, user_id: userId } });
@@ -284,6 +304,7 @@ app.post('/shrines/:id/pray', async (req, res) => {
     // --- 神様カウント ---
     // shrine.shrine_dietiesが配列で全件取得できているか再確認し、全てのdiety_idに対して+1
     for (const sd of shrine.shrine_dieties) {
+      await prisma.dietyPray.create({ data: { diety_id: sd.diety_id, user_id: userId } });
       const dietyId = sd.diety_id;
       const dietyStats = await prisma.dietyPrayStats.findFirst({ where: { diety_id: dietyId, user_id: userId } });
       if (dietyStats) {
@@ -315,6 +336,7 @@ app.post('/shrines/:id/pray', async (req, res) => {
       where: { shrine_id: id },
       _sum: { count: true }
     });
+    await gainExp(userId, 10);
     await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
     res.json({ success: true, count: totalCount._sum.count || 0 });
   } catch (err) {
@@ -388,7 +410,7 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
       where: { shrine_id: id },
       _sum: { count: true }
     });
-    
+    await gainExp(userId, 10);
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
     res.json({ success: true, count: totalCount._sum.count || 0 });
   } catch (err) {
@@ -517,7 +539,7 @@ app.get('/users/:id', async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, level: true, exp: true, ability_points: true },
     });
     if (!user) return res.status(404).json({ error: 'Not found' });
 
@@ -550,6 +572,9 @@ app.get('/users/:id', async (req, res) => {
     res.json({
       id: user.id,
       name: user.name,
+      level: user.level,
+      exp: user.exp,
+      abilityPoints: user.ability_points,
       followingCount,
       followerCount,
       topShrines: shrineStats.map((s) => ({ id: s.shrine.id, name: s.shrine.name, count: s.count })),
@@ -1305,6 +1330,117 @@ app.get('/users/:id/dieties-visited', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Error fetching user dieties:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.get('/users/:id/titles', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    const titles = await prisma.userTitle.findMany({
+      where: { user_id: userId },
+      include: { title: true },
+      orderBy: { awarded_at: 'desc' },
+    });
+    res.json(titles.map(t => ({ id: t.title.id, name: t.title.name })));
+  } catch (err) {
+    console.error('Error fetching user titles:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 能力一覧取得
+app.get('/abilities', async (req, res) => {
+  try {
+    const abilities = await prisma.abilityMaster.findMany({
+      select: { id: true, name: true, cost: true, effect_type: true, effect_value: true }
+    });
+    res.json(abilities);
+  } catch (err) {
+    console.error('Error fetching abilities:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 能力獲得
+app.post('/abilities/:id/acquire', async (req, res) => {
+  const abilityId = parseInt(req.params.id, 10);
+  const userId = parseInt(req.headers['x-user-id']) || 1;
+  if (isNaN(abilityId) || abilityId <= 0) {
+    return res.status(400).json({ error: 'Invalid ability ID' });
+  }
+  try {
+    const ability = await prisma.abilityMaster.findUnique({ where: { id: abilityId } });
+    if (!ability) return res.status(404).json({ error: 'Ability not found' });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.ability_points < ability.cost) {
+      return res.status(400).json({ error: 'Insufficient ability points' });
+    }
+    const existing = await prisma.userAbility.findUnique({
+      where: { user_id_ability_id: { user_id: userId, ability_id: abilityId } }
+    });
+    if (existing) {
+      return res.status(400).json({ error: 'Ability already acquired' });
+    }
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { ability_points: { decrement: ability.cost } }
+      }),
+      prisma.userAbility.create({
+        data: { user_id: userId, ability_id: abilityId }
+      }),
+      prisma.abilityLog.create({
+        data: {
+          user_id: userId,
+          ability_id: abilityId,
+          points_spent: ability.cost
+        }
+      })
+    ]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error acquiring ability:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 能力初期化（ポイント払い戻し）
+app.post('/user/reset-abilities', async (req, res) => {
+  const userId = parseInt(req.headers['x-user-id']) || 1;
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const abilities = await prisma.userAbility.findMany({
+      where: { user_id: userId },
+      include: { ability: true }
+    });
+
+    const total = abilities.reduce((sum, ua) => sum + ua.ability.cost, 0);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { ability_points: { increment: total } }
+      }),
+      prisma.userAbility.deleteMany({ where: { user_id: userId } }),
+      prisma.abilityLog.createMany({
+        data: abilities.map((ua) => ({
+          user_id: userId,
+          ability_id: ua.ability_id,
+          points_spent: -ua.ability.cost
+        }))
+      })
+    ]);
+
+    res.json({ success: true, refundedPoints: total });
+  } catch (err) {
+    console.error('Error resetting abilities:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

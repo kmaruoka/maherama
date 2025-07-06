@@ -14,6 +14,9 @@ describe('GET /users/:id', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('id');
     expect(res.body).toHaveProperty('name');
+    expect(res.body).toHaveProperty('level');
+    expect(res.body).toHaveProperty('exp');
+    expect(res.body).toHaveProperty('abilityPoints');
     expect(res.body).toHaveProperty('followingCount');
     expect(res.body).toHaveProperty('followerCount');
     expect(res.body).toHaveProperty('topShrines');
