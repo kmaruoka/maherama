@@ -5,6 +5,8 @@ import RankingPane from '../organisms/RankingPane';
 import useUserInfo from '../../hooks/useUserInfo';
 import useUserShrineRankings from '../../hooks/useUserShrineRankings';
 import useUserDietyRankings from '../../hooks/useUserDietyRankings';
+import useUserTitles from '../../hooks/useUserTitles';
+import useAbilityList from '../../hooks/useAbilityList';
 
 interface UserPageProps {
   id?: number;
@@ -21,6 +23,9 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
     isLoading,
     refetch,
   } = useUserInfo(displayId ?? undefined, currentUserId);
+
+  const { data: titles = [] } = useUserTitles(displayId ?? undefined);
+  const { data: abilities = [], refetch: refetchAbilities } = useAbilityList();
 
   const { data: userShrineRankingsByPeriod, isLoading: isUserShrineRankingLoading } = useUserShrineRankings(displayId ?? undefined);
   const { data: userDietyRankingsByPeriod, isLoading: isUserDietyRankingLoading } = useUserDietyRankings(displayId ?? undefined);
@@ -43,6 +48,24 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
       body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
     });
     refetch();
+  };
+
+  const acquireAbility = async (abilityId: number) => {
+    await fetch(`${API_BASE}/abilities/${abilityId}/acquire`, {
+      method: 'POST',
+      headers: { 'x-user-id': String(currentUserId) },
+    });
+    refetch();
+    refetchAbilities();
+  };
+
+  const resetAbilities = async () => {
+    await fetch(`${API_BASE}/user/reset-abilities`, {
+      method: 'POST',
+      headers: { 'x-user-id': String(currentUserId) },
+    });
+    refetch();
+    refetchAbilities();
   };
 
   if (!displayId) {
@@ -98,6 +121,35 @@ export default function UserPage({ id, onShowShrine, onShowDiety }: UserPageProp
           </div>
         </div>
       </div>
+
+      <div className="mb-3">
+        <div>レベル: {userInfo.level}</div>
+        <div>経験値: {userInfo.exp}</div>
+        {titles.length > 0 && (
+          <div className="mt-2">
+            <div className="modal-subtitle">称号</div>
+            <ul className="list-unstyled">
+              {titles.map(t => (
+                <li key={t.id}>🏆 {t.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {currentUserId && currentUserId === displayId && (
+        <div className="mb-3">
+          <div className="modal-subtitle">能力</div>
+          <div className="d-grid gap-2">
+            {abilities.map(a => (
+              <button key={a.id} className="btn btn-outline-primary btn-sm" onClick={() => acquireAbility(a.id)}>
+                {a.name} ({a.cost}pt)
+              </button>
+            ))}
+            <button className="btn btn-warning btn-sm" onClick={resetAbilities}>能力初期化</button>
+          </div>
+        </div>
+      )}
 
       <div className="modal-section">
         <div className="modal-subtitle">よく参拝する神社</div>

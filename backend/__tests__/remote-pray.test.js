@@ -17,11 +17,14 @@ describe('POST /shrines/:id/remote-pray', () => {
   });
 
   it('should return 200 for subscribed user with 1 slot', async () => {
+    const before = await request(app).get('/users/2');
     const res = await request(app)
       .post('/shrines/1/remote-pray')
       .set('x-user-id', '2'); // ユーザーID 2は1口課金
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('success', true);
+    const after = await request(app).get('/users/2');
+    expect(after.body.exp).toBe(before.body.exp + 10);
   });
 
   it('should return 400 when exceeding slot limit', async () => {
