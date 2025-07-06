@@ -61,20 +61,23 @@ async function addLog(message, type = 'normal') {
 // 経験値加算とレベルアップ処理
 async function gainExp(userId, amount) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return;
+  if (!user) return { levelUp: false, level: 0 };
   let exp = user.exp + amount;
   let level = user.level;
   let abilityPoints = user.ability_points;
   let required = (level + 1) * (level + 1) * 10;
+  let levelUp = false;
   while (exp >= required) {
     level += 1;
     abilityPoints += 100;
+    levelUp = true;
     required = (level + 1) * (level + 1) * 10;
   }
   await prisma.user.update({
     where: { id: userId },
     data: { exp, level, ability_points: abilityPoints },
   });
+  return { levelUp, level };
 }
 
 // 全神社（参拝数0も含む）を返すAPI
@@ -275,6 +278,16 @@ app.post('/shrines/:id/pray', async (req, res) => {
     }
     // --- 参拝ログ保存 ---
     await prisma.shrinePray.create({ data: { shrine_id: id, user_id: userId } });
+
+    let newEntry = false;
+
+    const existingBook = await prisma.shrineBook.findUnique({
+      where: { user_id_shrine_id: { user_id: userId, shrine_id: id } }
+    });
+    if (!existingBook) {
+      await prisma.shrineBook.create({ data: { user_id: userId, shrine_id: id } });
+      newEntry = true;
+    }
     // 取得した祭神IDをログ出力
     console.log('shrine_dieties:', shrine.shrine_dieties);
     const shrineStats = await prisma.shrinePrayStats.findFirst({ where: { shrine_id: id, user_id: userId } });
@@ -306,6 +319,13 @@ app.post('/shrines/:id/pray', async (req, res) => {
     for (const sd of shrine.shrine_dieties) {
       await prisma.dietyPray.create({ data: { diety_id: sd.diety_id, user_id: userId } });
       const dietyId = sd.diety_id;
+      const dietyBook = await prisma.dietyBook.findUnique({
+        where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } }
+      });
+      if (!dietyBook) {
+        await prisma.dietyBook.create({ data: { user_id: userId, diety_id: dietyId } });
+        newEntry = true;
+      }
       const dietyStats = await prisma.dietyPrayStats.findFirst({ where: { diety_id: dietyId, user_id: userId } });
       if (dietyStats) {
         await prisma.dietyPrayStats.update({ where: { id: dietyStats.id }, data: { count: dietyStats.count + 1 } });
@@ -336,9 +356,9 @@ app.post('/shrines/:id/pray', async (req, res) => {
       where: { shrine_id: id },
       _sum: { count: true }
     });
-    await gainExp(userId, 10);
+    const { levelUp } = await gainExp(userId, 10);
     await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
-    res.json({ success: true, count: totalCount._sum.count || 0 });
+    res.json({ success: true, count: totalCount._sum.count || 0, newEntry, levelUp });
   } catch (err) {
     console.error('Error praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
@@ -384,6 +404,15 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
     await prisma.remotePray.create({
       data: { shrine_id: id, user_id: userId, prayed_at: now }
     });
+
+    let newEntry = false;
+    const book = await prisma.shrineBook.findUnique({
+      where: { user_id_shrine_id: { user_id: userId, shrine_id: id } }
+    });
+    if (!book) {
+      await prisma.shrineBook.create({ data: { user_id: userId, shrine_id: id } });
+      newEntry = true;
+    }
     
     // ShrinePrayStatsテーブルも更新
     const existingStats = await prisma.shrinePrayStats.findFirst({
@@ -410,9 +439,9 @@ app.post('/shrines/:id/remote-pray', async (req, res) => {
       where: { shrine_id: id },
       _sum: { count: true }
     });
-    await gainExp(userId, 10);
+    const { levelUp } = await gainExp(userId, 10);
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
-    res.json({ success: true, count: totalCount._sum.count || 0 });
+    res.json({ success: true, count: totalCount._sum.count || 0, newEntry, levelUp });
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });

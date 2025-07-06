@@ -7,6 +7,7 @@ import DietyPage from './components/pages/DietyPage';
 import UserPage from './components/pages/UserPage';
 import SettingsPage from './components/pages/SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
+import CutIn from './components/organisms/CutIn';
 import { useSkin } from './skins/SkinContext';
 
 type ModalType = { type: 'shrine' | 'diety' | 'user', id: number } | null;
@@ -14,6 +15,7 @@ type ModalType = { type: 'shrine' | 'diety' | 'user', id: number } | null;
 function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
   const [modal, setModal] = useState<ModalType>(null);
+  const [cutIn, setCutIn] = useState<string | null>(null);
   useSkin();
 
   // 地図ページだけbodyにno-skin-paddingクラスを付与
@@ -29,7 +31,13 @@ function App() {
   const renderPage = () => {
     switch (page) {
       case 'map':
-        return <MapPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowUser={id => setModal({ type: 'user', id })} />;
+        return (
+          <MapPage
+            onShowShrine={id => setModal({ type: 'shrine', id })}
+            onShowUser={id => setModal({ type: 'user', id })}
+            onCutIn={msg => setCutIn(msg)}
+          />
+        );
       case 'catalog':
         return <CatalogPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />;
       case 'user':
@@ -85,6 +93,7 @@ function App() {
           </Modal>
         )}
       </div>
+      <CutIn message={cutIn || ''} show={cutIn !== null} onHide={() => setCutIn(null)} />
     </>
   );
 }
