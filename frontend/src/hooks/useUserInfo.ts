@@ -4,6 +4,9 @@ import { API_BASE } from '../config/api';
 export interface UserInfo {
   id: number;
   name: string;
+  level: number;
+  exp: number;
+  abilityPoints: number;
   followingCount: number;
   followerCount: number;
   isFollowing: boolean;
