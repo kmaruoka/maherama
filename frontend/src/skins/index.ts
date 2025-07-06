@@ -1,14 +1,16 @@
 import wa from './wa';
 import sakura from './sakura';
 import forest from './forest';
-import dark from './dark';
+import ai from './ai';
+import moon from './moon';
 import snow from './snow';
 
 export const skins = {
   wa,
   sakura,
   forest,
-  dark,
+  ai,
+  moon,
   snow,
 };
 
