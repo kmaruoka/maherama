@@ -3,12 +3,15 @@ import useLocalStorageState from '../../hooks/useLocalStorageState';
 import useAllUsers from '../../hooks/useAllUsers';
 import { useSkin } from '../../skins/SkinContext';
 import { skins } from '../../skins';
+import { useBarrier } from '../../barriers/BarrierContext';
+import { barriers } from '../../barriers';
 
 export default function SettingsPage() {
   const [userId, setUserId] = useLocalStorageState<number | null>('userId', null);
   const [idInput, setIdInput] = useState('');
   const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
   const { skinName, setSkinName } = useSkin();
+  const { barrierName, setBarrierName } = useBarrier();
   const { data: users = [], isLoading } = useAllUsers();
 
   const handleLogin = () => {
@@ -109,6 +112,18 @@ export default function SettingsPage() {
         >
           {Object.entries(skins).map(([key, skin]) => (
             <option key={key} value={key}>{skin.name}</option>
+          ))}
+        </select>
+      </div>
+      <div className="d-flex align-items-center justify-content-between mt-3">
+        <span>結界</span>
+        <select
+          className="form-select skin-select w-auto ms-2"
+          value={barrierName}
+          onChange={e => setBarrierName(e.target.value as keyof typeof barriers)}
+        >
+          {Object.entries(barriers).map(([key, b]) => (
+            <option key={key} value={key}>{b.name}</option>
           ))}
         </select>
       </div>

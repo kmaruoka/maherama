@@ -14,6 +14,7 @@ import { getDistanceMeters } from '../../hooks/usePrayDistance';
 import useDebugLog from '../../hooks/useDebugLog';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
+import { useBarrier } from '../../barriers/BarrierContext';
 
 function createShrineIcon(thumbnailUrl?: string) {
   // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
@@ -43,6 +44,7 @@ const debugCurrentIcon = new L.Icon({
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
+  const { barrier } = useBarrier();
   const mapRef = useRef<L.Map | null>(null);
   const defaultCenter: [number, number] = [34.702485, 135.495951]; // 大阪・梅田
   const defaultZoom = 17;
@@ -191,10 +193,10 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           zoomOffset={-1}
         />
         {debugMode && center && (
-          <CustomCircle center={center} radius={prayDistance} />
+          <CustomCircle center={center} radius={prayDistance} className={barrier.className} />
         )}
         {!debugMode && position && (
-          <CustomCircle center={position} radius={prayDistance} />
+          <CustomCircle center={position} radius={prayDistance} className={barrier.className} />
         )}
         {/* デバッグ用: 現在地ピン */}
         {position && (
