@@ -11,7 +11,7 @@ import useCurrentPosition from '../../hooks/useCurrentPosition';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
 
-function useShrineUserRankingsBundle(shrineId: number | undefined): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
+function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -21,7 +21,7 @@ function useShrineUserRankingsBundle(shrineId: number | undefined): { data: { [k
       .then(res => res.json())
       .then(json => setData(json))
       .finally(() => setLoading(false));
-  }, [shrineId]);
+  }, [shrineId, refreshKey]);
   return { data, isLoading: loading };
 }
 
@@ -40,7 +40,8 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
 
 export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { data } = useShrineDetail(id);
-  const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id);
+  const [rankRefreshKey, setRankRefreshKey] = useState(0);
+  const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
   const queryClient = useQueryClient();
   const [userId] = useLocalStorageState<number | null>('userId', null);
   const { data: subscription } = useSubscription(userId);
@@ -175,6 +176,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+      setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
   });
 
@@ -195,6 +197,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+      setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
   });
 
