@@ -265,3 +265,35 @@ body.dark .shrine-marker-pin::after {
 nav.d-flex.position-fixed {
   border-top: none !important;
 }
+
+/* Barrier styles */
+.barrier-normal path {
+  fill: rgba(0, 0, 255, 0.2);
+  stroke: none;
+}
+
+.barrier-wave path {
+  fill: rgba(128, 0, 255, 0.2);
+  stroke: rgba(255, 0, 0, 0.6);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+  animation: barrier-wave 2s linear infinite;
+}
+
+@keyframes barrier-wave {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 14; }
+}
+
+.barrier-search path {
+  fill: rgba(0, 255, 0, 0.1);
+  stroke: rgba(0, 128, 0, 0.7);
+  stroke-width: 2;
+  stroke-dasharray: 0 40 5 5;
+  animation: barrier-search 4s linear infinite;
+}
+
+@keyframes barrier-search {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -50; }
+}
