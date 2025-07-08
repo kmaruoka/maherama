@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Pane, SVGOverlay, useMap, Circle } from 'react-leaflet';
 import '../../setupLeaflet';
 import { MAPBOX_API_KEY, API_BASE } from '../../config/api';
 import useLogs, { useClientLogs } from '../../hooks/useLogs';
@@ -15,6 +15,9 @@ import useDebugLog from '../../hooks/useDebugLog';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { useBarrier } from '../../barriers/BarrierContext';
+import AnimatedPulseCircle from '../atoms/AnimatedPulseCircle';
+import AnimatedRadarCircle from '../atoms/AnimatedRadarCircle';
+import { useMapEvents } from 'react-leaflet';
 
 function createShrineIcon(thumbnailUrl?: string) {
   // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
@@ -41,10 +44,50 @@ const debugCurrentIcon = new L.Icon({
   iconAnchor: [16, 32],
 });
 
+function BarrierAnimationAbsolute({ center, radius, barrierType }: { center: [number, number]; radius: number; barrierType: string }) {
+  const map = useMap();
+  const [refresh, setRefresh] = useState(0);
+  useMapEvents({
+    move: () => setRefresh(r => r + 1),
+    zoom: () => setRefresh(r => r + 1),
+  });
+  // 地図中心のピクセル座標
+  const point = map.latLngToContainerPoint(center);
+  // 半径（メートル→ピクセル）
+  const pointC = map.latLngToContainerPoint(center);
+  const pointX = L.point(pointC.x + 1, pointC.y);
+  const latLngX = map.containerPointToLatLng(pointX);
+  const metersPerPixel = map.distance(center, latLngX);
+  const pixelRadius = radius / metersPerPixel;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: point.x,
+        top: point.y,
+        pointerEvents: 'none',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 410,
+      }}
+    >
+      <svg width={pixelRadius * 2} height={pixelRadius * 2} style={{ overflow: 'visible' }}>
+        <g transform={`translate(${pixelRadius},${pixelRadius})`}>
+          {barrierType === 'wave' && (
+            <AnimatedPulseCircle center={center} radius={radius} />
+          )}
+          {barrierType === 'search' && (
+            <AnimatedRadarCircle center={center} radius={radius} />
+          )}
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
-  const { barrier } = useBarrier();
+  const { barrier, barrierName } = useBarrier();
   const mapRef = useRef<L.Map | null>(null);
   const defaultCenter: [number, number] = [34.702485, 135.495951]; // 大阪・梅田
   const defaultZoom = 17;
@@ -176,14 +219,16 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     }
   }, [center, position, debugMode, debugLog]);
 
+  const centerArray: [number, number] = debugMode ? center : (position || defaultCenter);
+
   return (
-    <>
+    <div style={{ position: 'relative', height: 'calc(100vh - 56px)' }}>
       <MapContainer
         center={debugMode ? center : (position || defaultCenter)}
         zoom={debugMode ? zoom : defaultZoom}
         minZoom={4}
         maxZoom={19}
-        style={{ height: 'calc(100vh - 56px)' }}
+        style={{ height: '100%', position: 'relative' }}
         whenReady={((event: { target: L.Map }) => { mapRef.current = event.target; setMapReady(true); }) as unknown as () => void}
       >
         <TileLayer
@@ -192,12 +237,12 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           tileSize={512}
           zoomOffset={-1}
         />
-        {debugMode && center && (
-          <CustomCircle center={center} radius={prayDistance} className={barrier.className} />
-        )}
-        {!debugMode && position && (
-          <CustomCircle center={position} radius={prayDistance} className={barrier.className} />
-        )}
+        <Pane name="barrierPane" style={{ zIndex: 399 }}>
+          {/* 半透明円は従来通り */}
+          <CustomCircle center={centerArray} radius={prayDistance} barrierType="normal" pane="barrierPane" />
+          {/* アニメーションもbarrierPane内で絶対配置 */}
+          <BarrierAnimationAbsolute center={centerArray} radius={prayDistance} barrierType={barrierName} />
+        </Pane>
         {/* デバッグ用: 現在地ピン */}
         {position && (
           <Marker position={position} icon={debugCurrentIcon}>
@@ -225,6 +270,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         })}
       </MapContainer>
       <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} onShowUser={onShowUser} onShowDiety={onShowDiety} />
-    </>
+    </div>
   );
 }
