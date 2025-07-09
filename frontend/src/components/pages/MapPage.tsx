@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { MapContainer, TileLayer, Marker, Pane, SVGOverlay, useMap, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Pane } from 'react-leaflet';
 import '../../setupLeaflet';
 import { MAPBOX_API_KEY, API_BASE } from '../../config/api';
 import useLogs, { useClientLogs } from '../../hooks/useLogs';
@@ -15,9 +15,7 @@ import useDebugLog from '../../hooks/useDebugLog';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { useBarrier } from '../../barriers/BarrierContext';
-import AnimatedPulseCircle from '../atoms/AnimatedPulseCircle';
-import AnimatedRadarCircle from '../atoms/AnimatedRadarCircle';
-import { useMapEvents } from 'react-leaflet';
+import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
 
 function createShrineIcon(thumbnailUrl?: string) {
   // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
@@ -95,7 +93,6 @@ function BarrierAnimationAbsolute({
     </div>
   );
 }
-
 
 
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {

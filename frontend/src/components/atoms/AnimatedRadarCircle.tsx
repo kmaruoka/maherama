@@ -95,5 +95,4 @@ export default function AnimatedRadarCircle({ pixelRadius }: AnimatedRadarCircle
         </filter>
       </defs>
     </>
-  );
-} 
+  );}

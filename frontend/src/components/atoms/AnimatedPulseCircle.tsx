@@ -41,26 +41,20 @@ export default function AnimatedPulseCircle({ pixelRadius }: AnimatedPulseCircle
   }, []);
 
   // 1本のリングのアニメーション進行度を計算
-  let t = animT;
-  const eased = easeOutCubic(t);
+  const eased = easeOutCubic(animT);
   const ring = {
     r: pixelRadius * eased,
     opacity: 1 - eased,
   };
-
-  return (
-    <>
-      {ring.r > 6 && ring.r < pixelRadius ? (
-        <circle
-          cx={0}
-          cy={0}
-          r={ring.r}
-          fill="none"
-          stroke={RING_COLOR}
-          strokeWidth={RING_WIDTH}
-          opacity={RING_OPACITY * ring.opacity}
-        />
-      ) : null}
-    </>
-  );
-} 
+  return ring.r > 6 && ring.r < pixelRadius ? (
+    <circle
+      cx={0}
+      cy={0}
+      r={ring.r}
+      fill="none"
+      stroke={RING_COLOR}
+      strokeWidth={RING_WIDTH}
+      opacity={RING_OPACITY * ring.opacity}
+    />
+  ) : null;
+}
