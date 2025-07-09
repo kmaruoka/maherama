@@ -4,8 +4,7 @@ import L from 'leaflet';
 import { useCirclePixelRadius } from '../../hooks/useCirclePixelRadius';
 
 interface AnimatedRadarCircleProps {
-  center: [number, number]; // 中心位置（緯度経度）
-  radius: number; // メートル単位
+  pixelRadius: number;
 }
 
 const DURATION = 2000; // ms 1周の時間
@@ -15,20 +14,9 @@ const TAIL_COUNT = 12; // 尾の本数
 const TAIL_WIDTH_DEG = 10; // 尾の各扇形の幅
 const TAIL_STEP_DEG = 3; // 尾の各扇形の角度ずらし
 
-export default function AnimatedRadarCircle({ center, radius }: AnimatedRadarCircleProps) {
-  const map = useMap();
+export default function AnimatedRadarCircle({ pixelRadius }: AnimatedRadarCircleProps) {
   const [angle, setAngle] = useState(0); // 0~360
-  const [refresh, setRefresh] = useState(0); // 強制再描画用
   const lastTimestampRef = useRef<number | null>(null);
-
-  // 地図イベントで強制再描画
-  useMapEvents({
-    move: () => setRefresh(r => r + 1),
-    zoom: () => setRefresh(r => r + 1),
-  });
-
-  // 半径（メートル）→ピクセル
-  const pixelRadius = useCirclePixelRadius(center, radius);
 
   useEffect(() => {
     let frame: number;

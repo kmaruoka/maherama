@@ -44,45 +44,61 @@ const debugCurrentIcon = new L.Icon({
   iconAnchor: [16, 32],
 });
 
-function BarrierAnimationAbsolute({ center, radius, barrierType }: { center: [number, number]; radius: number; barrierType: string }) {
+
+function BarrierAnimationAbsolute({
+  center,
+  radius,
+  barrierType,
+}: {
+  center: [number, number];
+  radius: number;
+  barrierType: string;
+}) {
   const map = useMap();
-  const [refresh, setRefresh] = useState(0);
+  const [pixel, setPixel] = useState({ x: 0, y: 0, pixelRadius: 0 });
+
+  const recalcPixel = () => {
+    if (!map) return;
+    const point = map.latLngToContainerPoint(center);
+    const pointX = L.point(point.x + 1, point.y);
+    const latLngX = map.containerPointToLatLng(pointX);
+    const metersPerPixel = map.distance(center, latLngX);
+    const pixelRadius = radius / metersPerPixel;
+    setPixel({ x: point.x, y: point.y, pixelRadius });
+  };
+
+  useEffect(() => {
+    recalcPixel(); // center変更時に即再計算
+  }, [map, center, radius]);
+
+  // ズームやスクロール中も追従
   useMapEvents({
-    move: () => setRefresh(r => r + 1),
-    zoom: () => setRefresh(r => r + 1),
+    move: recalcPixel,
+    zoom: recalcPixel,
   });
-  // 地図中心のピクセル座標
-  const point = map.latLngToContainerPoint(center);
-  // 半径（メートル→ピクセル）
-  const pointC = map.latLngToContainerPoint(center);
-  const pointX = L.point(pointC.x + 1, pointC.y);
-  const latLngX = map.containerPointToLatLng(pointX);
-  const metersPerPixel = map.distance(center, latLngX);
-  const pixelRadius = radius / metersPerPixel;
+
   return (
     <div
       style={{
         position: 'absolute',
-        left: point.x,
-        top: point.y,
+        left: pixel.x,
+        top: pixel.y,
         pointerEvents: 'none',
         transform: 'translate(-50%, -50%)',
         zIndex: 410,
       }}
     >
-      <svg width={pixelRadius * 2} height={pixelRadius * 2} style={{ overflow: 'visible' }}>
-        <g transform={`translate(${pixelRadius},${pixelRadius})`}>
-          {barrierType === 'wave' && (
-            <AnimatedPulseCircle center={center} radius={radius} />
-          )}
-          {barrierType === 'search' && (
-            <AnimatedRadarCircle center={center} radius={radius} />
-          )}
+      <svg width={pixel.pixelRadius * 2} height={pixel.pixelRadius * 2} style={{ overflow: 'visible' }}>
+        <g transform={`translate(${pixel.pixelRadius},${pixel.pixelRadius})`}>
+          {barrierType === 'wave' && <AnimatedPulseCircle pixelRadius={pixel.pixelRadius} />}
+          {barrierType === 'search' && <AnimatedRadarCircle pixelRadius={pixel.pixelRadius} />}
         </g>
       </svg>
     </div>
   );
 }
+
+
 
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const position = useCurrentPosition();
@@ -241,7 +257,11 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           {/* 半透明円は従来通り */}
           <CustomCircle center={centerArray} radius={prayDistance} barrierType="normal" pane="barrierPane" />
           {/* アニメーションもbarrierPane内で絶対配置 */}
-          <BarrierAnimationAbsolute center={centerArray} radius={prayDistance} barrierType={barrierName} />
+          <BarrierAnimationAbsolute
+  center={centerArray}
+  radius={prayDistance}
+  barrierType={barrierName}
+/>
         </Pane>
         {/* デバッグ用: 現在地ピン */}
         {position && (

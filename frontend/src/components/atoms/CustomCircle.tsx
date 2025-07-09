@@ -13,7 +13,7 @@ function getRadiusFromSlots(slots: number) {
   return 100 * Math.pow(2, slots);
 }
 
-export default function CustomCircle({ center, radius, color = 'rgba(0, 0, 255, 0.2)', className }: CustomCircleProps) {
+export default function CustomCircle({ center, radius, color = 'rgba(0, 0, 0, 0.2)', className }: CustomCircleProps) {
   return (
     <Circle
       center={center}

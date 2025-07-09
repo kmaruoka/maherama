@@ -4,8 +4,7 @@ import L from 'leaflet';
 import { useCirclePixelRadius } from '../../hooks/useCirclePixelRadius';
 
 interface AnimatedPulseCircleProps {
-  center: [number, number]; // 中心位置（緯度経度）
-  radius: number; // メートル単位
+  pixelRadius: number;
 }
 
 function easeOutCubic(t: number) {
@@ -17,20 +16,9 @@ const RING_OPACITY = 1;
 const RING_WIDTH = 5;
 const DURATION = 1800; // ms
 
-export default function AnimatedPulseCircle({ center, radius }: AnimatedPulseCircleProps) {
-  const map = useMap();
+export default function AnimatedPulseCircle({ pixelRadius }: AnimatedPulseCircleProps) {
   const [animT, setAnimT] = useState(0);
-  const [refresh, setRefresh] = useState(0); // 強制再描画用
   const lastTimestampRef = useRef<number | null>(null);
-
-  // 地図イベントで強制再描画
-  useMapEvents({
-    move: () => setRefresh(r => r + 1),
-    zoom: () => setRefresh(r => r + 1),
-  });
-
-  // 半径（メートル）→ピクセル
-  const pixelRadius = useCirclePixelRadius(center, radius);
 
   useEffect(() => {
     let frame: number;
