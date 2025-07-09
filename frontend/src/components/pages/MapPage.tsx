@@ -10,31 +10,13 @@ import LogPane from '../organisms/LogPane';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CustomCircle from '../atoms/CustomCircle';
-import { getDistanceMeters } from '../../hooks/usePrayDistance';
+import ShrineMarker from '../atoms/ShrineMarker';
 import useDebugLog from '../../hooks/useDebugLog';
 import { useSubscription } from '../../hooks/useSubscription';
-import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { useBarrier } from '../../barriers/BarrierContext';
 import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
 
-function createShrineIcon(thumbnailUrl?: string) {
-  // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
-  return L.divIcon({
-    className: '',
-    html: `
-      <div class="shrine-marker-frame-anim">
-        <div class="shrine-marker-thumbnail-wrap">
-          <img src="${thumbnailUrl || NOIMAGE_SHRINE_URL}" alt="shrine" />
-          <div class="shrine-marker-thumbnail-gloss"></div>
-        </div>
-        <div class="shrine-marker-pin"></div>
-      </div>
-    `,
-    iconSize: [120, 95.5], // サムネイル+ピン
-    iconAnchor: [60, 95.5], // 下端中央
-    popupAnchor: [0, -95.5],
-  });
-}
+
 
 const debugCurrentIcon = new L.Icon({
   iconUrl: 'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',
@@ -197,7 +179,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         />
         <Pane name="barrierPane" style={{ zIndex: 399 }}>
           {/* 半透明円は従来通り */}
-          <CustomCircle center={centerArray} radius={prayDistance} barrierType="normal" pane="barrierPane" />
+          <CustomCircle center={centerArray} radius={prayDistance} />
         </Pane>
         {/* アニメーション */}
         <BarrierAnimationOverlay radius={prayDistance} barrierType={barrierName} />
@@ -210,19 +192,11 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         {shrines.map((s) => {
           const currentPosition = debugMode ? center : position;
           return (
-            <Marker
+            <ShrineMarker
               key={s.id}
-              position={[s.lat, s.lng]}
-              icon={createShrineIcon(s.thumbnailUrl)}
-              eventHandlers={{
-                click: () => {
-                  if (currentPosition) {
-                    const dist = getDistanceMeters(currentPosition[0], currentPosition[1], s.lat, s.lng);
-                    debugLog(`[DEBUG] 神社クリック: ${s.name} | 神社座標: [${s.lat}, ${s.lng}] | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 距離: ${dist.toFixed(2)}m`);
-                  }
-                  onShowShrine(s.id);
-                },
-              }}
+              shrine={s}
+              currentPosition={currentPosition}
+              onShowShrine={onShowShrine}
             />
           );
         })}
