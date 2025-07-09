@@ -42,59 +42,6 @@ const debugCurrentIcon = new L.Icon({
   iconAnchor: [16, 32],
 });
 
-
-function BarrierAnimationAbsolute({
-  radius,
-  barrierType,
-}: {
-  radius: number;
-  barrierType: string;
-}) {
-  const map = useMap();
-  const [pixelRadius, setPixelRadius] = useState(0);
-
-  const recalcPixel = () => {
-    if (!map) return;
-    const c = map.getCenter();
-    const point = map.latLngToContainerPoint(c);
-    const pointX = L.point(point.x + 1, point.y);
-    const latLngX = map.containerPointToLatLng(pointX);
-    const metersPerPixel = map.distance(c, latLngX);
-    setPixelRadius(radius / metersPerPixel);
-  };
-
-  useEffect(() => {
-    recalcPixel();
-  }, [map, radius]);
-
-  // ズームやスクロール中も追従
-  useMapEvents({
-    move: recalcPixel,
-    zoom: recalcPixel,
-  });
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        pointerEvents: 'none',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 410,
-      }}
-    >
-      <svg width={pixelRadius * 2} height={pixelRadius * 2} style={{ overflow: 'visible' }}>
-        <g transform={`translate(${pixelRadius},${pixelRadius})`}>
-          {barrierType === 'wave' && <AnimatedPulseCircle pixelRadius={pixelRadius} />}
-          {barrierType === 'search' && <AnimatedRadarCircle pixelRadius={pixelRadius} />}
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
@@ -251,12 +198,9 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         <Pane name="barrierPane" style={{ zIndex: 399 }}>
           {/* 半透明円は従来通り */}
           <CustomCircle center={centerArray} radius={prayDistance} barrierType="normal" pane="barrierPane" />
-          {/* アニメーションもbarrierPane内で絶対配置 */}
-          <BarrierAnimationAbsolute
-  radius={prayDistance}
-  barrierType={barrierName}
-/>
         </Pane>
+        {/* アニメーション */}
+        <BarrierAnimationOverlay radius={prayDistance} barrierType={barrierName} />
         {/* デバッグ用: 現在地ピン */}
         {position && (
           <Marker position={position} icon={debugCurrentIcon}>

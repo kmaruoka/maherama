@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+import { useMap } from 'react-leaflet';
 import AnimatedPulseCircle from '../atoms/AnimatedPulseCircle';
 import AnimatedRadarCircle from '../atoms/AnimatedRadarCircle';
 import useMapCenterPixelRadius from '../../hooks/useMapCenterPixelRadius';
@@ -9,9 +11,10 @@ export default function BarrierAnimationOverlay({
   radius: number;
   barrierType: string;
 }) {
+  const map = useMap();
   const pixelRadius = useMapCenterPixelRadius(radius);
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'absolute',
@@ -28,6 +31,7 @@ export default function BarrierAnimationOverlay({
           {barrierType === 'search' && <AnimatedRadarCircle pixelRadius={pixelRadius} />}
         </g>
       </svg>
-    </div>
+    </div>,
+    map.getContainer(),
   );
 }
