@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { useMap } from 'react-leaflet';
 import AnimatedPulseCircle from '../atoms/AnimatedPulseCircle';
 import AnimatedRadarCircle from '../atoms/AnimatedRadarCircle';
-import useMapCenterPixelRadius from '../../hooks/useMapCenterPixelRadius';
+import useMapCenterPixelGeometry from '../../hooks/useMapCenterPixelGeometry';
 
 export default function BarrierAnimationOverlay({
   radius,
@@ -12,14 +12,14 @@ export default function BarrierAnimationOverlay({
   barrierType: string;
 }) {
   const map = useMap();
-  const pixelRadius = useMapCenterPixelRadius(radius);
+  const { x, y, pixelRadius } = useMapCenterPixelGeometry(radius);
 
   return createPortal(
     <div
       style={{
         position: 'absolute',
-        left: '50%',
-        top: '50%',
+        left: x,
+        top: y,
         pointerEvents: 'none',
         transform: 'translate(-50%, -50%)',
         zIndex: 410,
