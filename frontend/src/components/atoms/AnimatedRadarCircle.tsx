@@ -1,7 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useMap, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import { useCirclePixelRadius } from '../../hooks/useCirclePixelRadius';
 
 interface AnimatedRadarCircleProps {
   pixelRadius: number;

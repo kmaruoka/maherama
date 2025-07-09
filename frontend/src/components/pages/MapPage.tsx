@@ -46,30 +46,28 @@ const debugCurrentIcon = new L.Icon({
 
 
 function BarrierAnimationAbsolute({
-  center,
   radius,
   barrierType,
 }: {
-  center: [number, number];
   radius: number;
   barrierType: string;
 }) {
   const map = useMap();
-  const [pixel, setPixel] = useState({ x: 0, y: 0, pixelRadius: 0 });
+  const [pixelRadius, setPixelRadius] = useState(0);
 
   const recalcPixel = () => {
     if (!map) return;
-    const point = map.latLngToContainerPoint(center);
+    const c = map.getCenter();
+    const point = map.latLngToContainerPoint(c);
     const pointX = L.point(point.x + 1, point.y);
     const latLngX = map.containerPointToLatLng(pointX);
-    const metersPerPixel = map.distance(center, latLngX);
-    const pixelRadius = radius / metersPerPixel;
-    setPixel({ x: point.x, y: point.y, pixelRadius });
+    const metersPerPixel = map.distance(c, latLngX);
+    setPixelRadius(radius / metersPerPixel);
   };
 
   useEffect(() => {
-    recalcPixel(); // center変更時に即再計算
-  }, [map, center, radius]);
+    recalcPixel();
+  }, [map, radius]);
 
   // ズームやスクロール中も追従
   useMapEvents({
@@ -81,17 +79,17 @@ function BarrierAnimationAbsolute({
     <div
       style={{
         position: 'absolute',
-        left: pixel.x,
-        top: pixel.y,
+        left: '50%',
+        top: '50%',
         pointerEvents: 'none',
         transform: 'translate(-50%, -50%)',
         zIndex: 410,
       }}
     >
-      <svg width={pixel.pixelRadius * 2} height={pixel.pixelRadius * 2} style={{ overflow: 'visible' }}>
-        <g transform={`translate(${pixel.pixelRadius},${pixel.pixelRadius})`}>
-          {barrierType === 'wave' && <AnimatedPulseCircle pixelRadius={pixel.pixelRadius} />}
-          {barrierType === 'search' && <AnimatedRadarCircle pixelRadius={pixel.pixelRadius} />}
+      <svg width={pixelRadius * 2} height={pixelRadius * 2} style={{ overflow: 'visible' }}>
+        <g transform={`translate(${pixelRadius},${pixelRadius})`}>
+          {barrierType === 'wave' && <AnimatedPulseCircle pixelRadius={pixelRadius} />}
+          {barrierType === 'search' && <AnimatedRadarCircle pixelRadius={pixelRadius} />}
         </g>
       </svg>
     </div>
@@ -258,7 +256,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           <CustomCircle center={centerArray} radius={prayDistance} barrierType="normal" pane="barrierPane" />
           {/* アニメーションもbarrierPane内で絶対配置 */}
           <BarrierAnimationAbsolute
-  center={centerArray}
   radius={prayDistance}
   barrierType={barrierName}
 />
