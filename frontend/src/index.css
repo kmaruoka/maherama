@@ -4,6 +4,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap');
 
 :root {
+  --color-prayable: #4caf50;
+  --color-remote-prayable: #2196f3;
+  --color-unprayable: #9e9e9e;
   --color-background: #f8f5e4;
   --color-surface: #fffbe6;
   --color-primary: #bfa14a;
@@ -64,11 +67,6 @@ html, body {
   overflow-y: auto;
 }
 
-.shrine-marker-icon img {
-  border-radius: 50%;
-  object-fit: cover;
-}
-
 .shrine-theme {
   position: relative;
   filter: sepia(0.2) brightness(0.95) saturate(1.2);
@@ -106,13 +104,16 @@ html, body {
   z-index: 10 !important;
 }
 
+.shrine-marker-icon img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .shrine-marker-frame-anim {
   position: relative;
   width: 120px;
   height: 67.5px;
   border-radius: 0;
-  border: 2px solid var(--color-primary);
-  box-shadow: 0 0 24px 8px var(--color-shadow), 0 0 0 2px var(--color-surface);
   background: var(--color-surface);
   overflow: visible;
   display: flex;
@@ -120,6 +121,15 @@ html, body {
   justify-content: center;
   padding: 0px;
   box-sizing: border-box;
+  z-index: 2;
+}
+.shrine-marker-frame-border {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  border: 2px solid var(--color-primary);
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 0;
 }
 .shrine-marker-thumbnail-wrap {
   position: relative;
@@ -135,12 +145,13 @@ html, body {
   width: 100%;
   height: 100%;
   border-radius: 0;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
   position: relative;
-  z-index: 1;
+  z-index: 0;
   background: var(--color-surface);
 }
+
 .shrine-marker-thumbnail-gloss {
   pointer-events: none;
   position: absolute;
@@ -303,7 +314,6 @@ nav.d-flex.position-fixed {
 /* 図鑑収録済み（参拝済み） */
 .shrine-marker-zukan {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 0 24px 8px var(--color-shadow), 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary) !important;
 }
 
 .shrine-marker-zukan .shrine-marker-pin::after {
@@ -312,90 +322,107 @@ nav.d-flex.position-fixed {
 
 /* 参拝可能（距離内） */
 .shrine-marker-prayable {
-  border-color: #4caf50 !important;
-  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.3), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50 !important;
-  animation: shrine-prayable-pulse 2s ease-in-out infinite;
+  border-color: var(--color-prayable) !important;
 }
 
 .shrine-marker-prayable .shrine-marker-pin::after {
-  border-top-color: #4caf50 !important;
+  border-top-color: var(--color-prayable) !important;
 }
-
-@keyframes shrine-prayable-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.shrine-marker-prayable .shrine-marker-frame-border {
+  border-color: var(--color-prayable) !important;
 }
 
 /* 遥拝可能 */
 .shrine-marker-remote-prayable {
-  border-color: #2196f3 !important;
-  box-shadow: 0 0 24px 8px rgba(33, 150, 243, 0.3), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3 !important;
-  animation: shrine-remote-prayable-glow 3s ease-in-out infinite;
+  border-color: var(--color-remote-prayable) !important;
 }
 
 .shrine-marker-remote-prayable .shrine-marker-pin::after {
-  border-top-color: #2196f3 !important;
+  border-top-color: var(--color-remote-prayable) !important;
+}
+.shrine-marker-remote-prayable .shrine-marker-frame-border {
+  border-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-remote-prayable-glow 3s ease-in-out infinite;
 }
 
 @keyframes shrine-remote-prayable-glow {
   0%, 100% { 
+    transform: scale(1);
     box-shadow: 0 0 24px 8px rgba(33, 150, 243, 0.3), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3;
   }
   50% { 
+    transform: scale(1.03);
     box-shadow: 0 0 32px 12px rgba(33, 150, 243, 0.5), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3;
   }
 }
 
 /* 参拝不可（距離外） */
 .shrine-marker-unprayable {
-  border-color: #9e9e9e !important;
-  box-shadow: 0 0 16px 4px rgba(158, 158, 158, 0.2), 0 0 0 2px var(--color-surface) !important;
+  border-color: var(--color-unprayable) !important;
   opacity: 0.7;
 }
 
 .shrine-marker-unprayable .shrine-marker-pin::after {
-  border-top-color: #9e9e9e !important;
+  border-top-color: var(--color-unprayable) !important;
 }
-
-.shrine-marker-unprayable .shrine-marker-thumbnail-gloss {
-  animation: none;
-  opacity: 0.3;
+.shrine-marker-unprayable .shrine-marker-frame-border {
+  border-color: var(--color-unprayable) !important;
 }
 
 /* 遥拝不可（制限到達） */
 .shrine-marker-remote-unavailable {
-  border-color: #f44336 !important;
-  box-shadow: 0 0 16px 4px rgba(244, 67, 54, 0.2), 0 0 0 2px var(--color-surface) !important;
+  border-color: var(--color-unprayable) !important;
   opacity: 0.8;
 }
 
 .shrine-marker-remote-unavailable .shrine-marker-pin::after {
-  border-top-color: #f44336 !important;
+  border-top-color: var(--color-unprayable) !important;
+}
+.shrine-marker-remote-unavailable .shrine-marker-frame-border {
+  border-color: var(--color-unprayable) !important;
 }
 
 /* 複合状態の優先順位 */
 /* 図鑑収録済み + 参拝可能 */
 .shrine-marker-zukan.shrine-marker-prayable {
-  border-color: #4caf50 !important;
-  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.4), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50, 0 0 0 6px var(--color-primary) !important;
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-zukan.shrine-marker-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-prayable-pulse 2s ease-in-out infinite;
 }
 
 /* 図鑑収録済み + 遥拝可能 */
 .shrine-marker-zukan.shrine-marker-remote-prayable {
-  border-color: #2196f3 !important;
-  box-shadow: 0 0 24px 8px rgba(33, 150, 243, 0.4), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3, 0 0 0 6px var(--color-primary) !important;
+  border-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-zukan.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-remote-prayable-glow 3s ease-in-out infinite;
 }
 
 /* 参拝可能 + 遥拝可能 */
 .shrine-marker-prayable.shrine-marker-remote-prayable {
-  border-color: #4caf50 !important;
-  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.4), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50, 0 0 0 6px #2196f3 !important;
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-prayable-pulse 2s ease-in-out infinite;
 }
 
 /* 最高優先度：図鑑収録済み + 参拝可能 + 遥拝可能 */
 .shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable {
-  border-color: #4caf50 !important;
-  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.5), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50, 0 0 0 6px var(--color-primary), 0 0 0 8px #2196f3 !important;
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-prayable-pulse 2s ease-in-out infinite;
+}
+.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-frame-border {
+  border-color: var(--color-prayable) !important;
 }
 
 /* マーカー状態の説明ツールチップ */
@@ -443,17 +470,46 @@ nav.d-flex.position-fixed {
 }
 
 .shrine-marker-status-icon.prayable {
-  background: #4caf50;
+  background: var(--color-prayable);
 }
 
 .shrine-marker-status-icon.remote-prayable {
-  background: #2196f3;
+  background: var(--color-remote-prayable);
 }
 
 .shrine-marker-status-icon.unprayable {
-  background: #9e9e9e;
+  background: var(--color-unprayable);
 }
 
 .shrine-marker-status-icon.remote-unavailable {
-  background: #f44336;
+  background: var(--color-unprayable);
+}
+
+/* 参拝・遥拝ボタンの色統一 */
+.btn-pray {
+  background: var(--color-prayable);
+  border-color: var(--color-prayable);
+  color: #fff;
+}
+.btn-pray:disabled, .btn-pray.disabled {
+  background: var(--color-unprayable);
+  border-color: var(--color-unprayable);
+  color: #fff;
+}
+.btn-remote-pray {
+  background: var(--color-remote-prayable);
+  border-color: var(--color-remote-prayable);
+  color: #fff;
+}
+.btn-remote-pray:disabled, .btn-remote-pray.disabled {
+  background: var(--color-unprayable);
+  border-color: var(--color-unprayable);
+  color: #fff;
+}
+
+.shrine-marker-unprayable.shrine-marker-remote-prayable .shrine-marker-frame-border {
+  border-color: var(--color-remote-prayable) !important;
+}
+.shrine-marker-unprayable.shrine-marker-remote-prayable .shrine-marker-pin::after {
+  border-top-color: var(--color-remote-prayable) !important;
 }

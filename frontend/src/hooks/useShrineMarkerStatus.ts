@@ -12,9 +12,9 @@ export interface ShrineMarkerStatus {
   today_worship_count: number;
 }
 
-export function useShrineMarkerStatus(shrineId: number | null, userId: number | null) {
+export function useShrineMarkerStatus(shrineId: number | null, userId: number | null, todayWorshipCount?: number, todayRemotePrayCount?: number) {
   return useQuery<ShrineMarkerStatus>({
-    queryKey: ['shrine-marker-status', shrineId, userId],
+    queryKey: ['shrine-marker-status', shrineId, userId, todayWorshipCount, todayRemotePrayCount],
     queryFn: async () => {
       if (!shrineId || !userId) throw new Error('神社IDまたはユーザーIDが未設定です');
       const res = await fetch(`${API_BASE}/shrines/${shrineId}/marker-status`, {

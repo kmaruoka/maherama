@@ -11,6 +11,7 @@ import useCurrentPosition from '../../hooks/useCurrentPosition';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { getDistanceMeters } from '../../hooks/usePrayDistance';
+import { useWorshipLimit } from '../../hooks/usePrayDistance';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -39,7 +40,7 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
   return result;
 }
 
-export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
+export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; shrines: { id: number }[] }) {
   const { data } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
@@ -51,6 +52,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
   const [debugMode] = useLocalStorageState('debugMode', false);
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
   const [prayDistance, setPrayDistance] = useState<number | null>(null);
+  const { data: worshipLimit } = useWorshipLimit(userId);
 
   // 追加: 参拝距離をAPIから取得
   useEffect(() => {
@@ -188,16 +190,30 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
           'x-user-id': String(userId || 1)
         },
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '遥拝に失敗しました');
+      let error;
+      try {
+        error = await response.json();
+      } catch (e) {
+        error = {};
       }
-      return response.json();
+      if (!response.ok) {
+        if (response.status >= 500) {
+          throw new Error('サーバーエラーです。時間をおいて再度お試しください');
+        } else {
+          throw new Error(error.error || '遥拝に失敗しました');
+        }
+      }
+      return error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
+      // 全神社分のマーカー状態をinvalidate
+      if (shrines) {
+        shrines.forEach(s => {
+          queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', s.id, userId] });
+        });
+      }
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
   });
@@ -226,7 +242,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
           <div className="d-flex align-items-center gap-2 mt-2">
             <div className="catalog-count modal-item-text small">参拝数: {data.count}</div>
             <button
-              className="btn btn-primary btn-sm"
+              className="btn btn-pray btn-sm"
               onClick={() => prayMutation.mutate(data.id)}
               disabled={!canPray}
               title={!currentPosition ? '位置情報が取得できません' : !data ? '神社情報が読み込まれていません' : `距離: ${distance !== null ? distance.toFixed(2) : '計算中'}m / 半径: ${radius}m`}
@@ -234,9 +250,9 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
               参拝
             </button>
             <button
-              className="btn btn-success btn-sm"
+              className="btn btn-remote-pray btn-sm"
               onClick={() => remotePrayMutation.mutate()}
-              disabled={remotePrayMutation.isPending}
+              disabled={remotePrayMutation.isPending || (worshipLimit && worshipLimit.today_worship_count >= worshipLimit.max_worship_count)}
             >
               {remotePrayMutation.isPending ? '遥拝中...' : '遥拝'}
             </button>

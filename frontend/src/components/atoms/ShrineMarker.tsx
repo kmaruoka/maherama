@@ -1,9 +1,11 @@
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
-import { usePrayDistance, useCanPray } from '../../hooks/usePrayDistance';
+import { usePrayDistance, useCanPray, useWorshipLimit } from '../../hooks/usePrayDistance';
 import useDebugLog from '../../hooks/useDebugLog';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
+import { useState, useEffect } from 'react';
 
 interface Shrine {
   id: number;
@@ -30,11 +32,13 @@ function createShrineIcon(
   // 状態に応じたCSSクラスを決定
   const statusClasses = [];
   if (isInZukan) statusClasses.push('shrine-marker-zukan');
-  if (isPrayable) statusClasses.push('shrine-marker-prayable');
-  if (isRemotePrayable) statusClasses.push('shrine-marker-remote-prayable');
+  if (isPrayable) {
+    statusClasses.push('shrine-marker-prayable');
+  } else if (isRemotePrayable) {
+    statusClasses.push('shrine-marker-remote-prayable');
+  }
   if (isUnprayable) statusClasses.push('shrine-marker-unprayable');
   if (isRemoteUnavailable) statusClasses.push('shrine-marker-remote-unavailable');
-  
   const statusClassString = statusClasses.join(' ');
   
   // 状態アイコンを決定
@@ -48,7 +52,7 @@ function createShrineIcon(
   } else if (isRemotePrayable) {
     statusIcon = '<div class="shrine-marker-status-icon remote-prayable">遥</div>';
   } else if (isUnprayable) {
-    statusIcon = '<div class="shrine-marker-status-icon unprayable">×</div>';
+    statusIcon = '<div class="shrine-marker-status-icon unprayable">遠</div>';
   } else if (isRemoteUnavailable) {
     statusIcon = '<div class="shrine-marker-status-icon remote-unavailable">限</div>';
   }
@@ -81,6 +85,7 @@ function createShrineIcon(
     className: '',
     html: `
       <div class="shrine-marker-frame-anim ${statusClassString}">
+        <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
           <img src="${thumbnailUrl || NOIMAGE_SHRINE_URL}" alt="shrine" />
           <div class="shrine-marker-thumbnail-gloss"></div>
@@ -99,21 +104,27 @@ function createShrineIcon(
 export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: ShrineMarkerProps) {
   const debugLog = useDebugLog();
   const [userId] = useLocalStorageState<number | null>('userId', null);
-  
-  // APIから参拝可能距離を取得（ShrinePaneと同じロジック）
-  const { prayDistance, isLoading: isPrayDistanceLoading } = usePrayDistance(userId);
-  
-  // 参拝可能判定（ShrinePaneと同じロジック）
-  const { distance, canPray } = useCanPray(currentPosition, shrine.lat, shrine.lng, prayDistance);
-  
-  // 状態を決定（仮の値）
-  const isInZukan = false; // 元の状態では固定値
-  const isRemotePrayable = false; // 元の状態では固定値
-  const isUnprayable = !isPrayDistanceLoading && prayDistance !== null && distance !== null && !canPray;
-  const isRemoteUnavailable = false; // 元の状態では固定値
 
-  // デバッグ情報を出力
-  if (currentPosition && !isPrayDistanceLoading) {
+  const { data: worshipLimit } = useWorshipLimit(userId);
+  const [todayRemotePrayCount, setTodayRemotePrayCount] = useState<number | undefined>(undefined);
+  const { data: markerStatus } = useShrineMarkerStatus(shrine.id, userId, worshipLimit?.today_worship_count, todayRemotePrayCount);
+  useEffect(() => {
+    if (markerStatus && typeof markerStatus.today_remote_pray_count === 'number') {
+      setTodayRemotePrayCount(markerStatus.today_remote_pray_count);
+    }
+  }, [markerStatus?.today_remote_pray_count]);
+
+  // 参拝距離・現在地から距離計算
+  const { prayDistance, isLoading: isPrayDistanceLoading } = usePrayDistance(userId);
+  const { distance, canPray } = useCanPray(currentPosition, shrine.lat, shrine.lng, prayDistance);
+
+  // 状態をAPI値で決定
+  const isInZukan = markerStatus?.is_in_zukan ?? false;
+  const isRemotePrayable = (markerStatus?.can_remote_pray ?? false) && (markerStatus?.today_remote_pray_count === 0);
+  const isUnprayable = !isPrayDistanceLoading && prayDistance !== null && distance !== null && !canPray;
+  const isRemoteUnavailable = markerStatus ? (markerStatus.today_remote_pray_count > 0 || !markerStatus.can_remote_pray) : false;
+
+  if (currentPosition && !isPrayDistanceLoading && markerStatus) {
     debugLog(`[DEBUG] マーカー状態: ${shrine.name} | 距離: ${distance?.toFixed(2)}m | API参拝可能距離: ${prayDistance}m | 参拝可能: ${canPray} | 図鑑収録: ${isInZukan} | 遥拝可能: ${isRemotePrayable}`);
   }
 
