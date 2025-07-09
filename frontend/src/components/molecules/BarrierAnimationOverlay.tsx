@@ -13,6 +13,8 @@ export default function BarrierAnimationOverlay({
 }) {
   const map = useMap();
   const { x, y, pixelRadius } = useMapCenterPixelGeometry(radius);
+  const MARGIN = 6; // strokeやblur分の余白
+  const adjustedRadius = pixelRadius + MARGIN;
 
   return createPortal(
     <div

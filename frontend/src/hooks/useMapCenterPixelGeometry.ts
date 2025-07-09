@@ -16,10 +16,13 @@ export default function useMapCenterPixelGeometry(radius: number): MapCenterPixe
     if (!map) return;
     const center = map.getCenter();
     const point = map.latLngToContainerPoint(center);
-    const pointX = L.point(point.x + 1, point.y);
-    const latLngX = map.containerPointToLatLng(pointX);
-    const metersPerPixel = map.distance([center.lat, center.lng], [latLngX.lat, latLngX.lng]);
-    setGeom({ x: point.x, y: point.y, pixelRadius: radius / metersPerPixel });
+    // 東方向にradiusメートル離れた緯度経度を計算
+    const R = 6378137; // 地球半径[m]
+    const dLng = (radius / (R * Math.cos((center.lat * Math.PI) / 180))) * (180 / Math.PI);
+    const edge = { lat: center.lat, lng: center.lng + dLng };
+    const edgePoint = map.latLngToContainerPoint(edge);
+    const pixelRadius = Math.abs(edgePoint.x - point.x);
+    setGeom({ x: point.x, y: point.y, pixelRadius });
   };
 
   useEffect(recalc, [radius, map]);
