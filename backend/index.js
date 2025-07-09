@@ -2175,3 +2175,61 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
   }
   res.json({ received: true });
 });
+
+// 神社マーカーの状態を取得するAPI
+app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  const userId = parseInt(req.headers['x-user-id']) || 1;
+  
+  if (isNaN(shrineId) || shrineId <= 0) {
+    return res.status(400).json({ error: 'Invalid shrine ID' });
+  }
+  
+  try {
+    // 1. 合計参拝回数（図鑑収録済みかどうか）
+    const shrineStats = await prisma.shrinePrayStats.findFirst({
+      where: { shrine_id: shrineId, user_id: userId }
+    });
+    const totalPrayCount = shrineStats ? shrineStats.count : 0;
+    const isInZukan = totalPrayCount > 0;
+    
+    // 2. 当日参拝回数（遥拝可能かどうか）
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayRemotePrayCount = await prisma.remotePray.count({
+      where: {
+        user_id: userId,
+        shrine_id: shrineId,
+        prayed_at: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
+    });
+    
+    // 3. 遥拝回数制限
+    const maxWorshipCount = await getUserWorshipCount(userId);
+    const todayWorshipCount = await getTodayWorshipCount(userId);
+    const canRemotePray = todayWorshipCount < maxWorshipCount && todayRemotePrayCount === 0;
+    
+    // 4. 参拝可能距離
+    const prayDistance = await getUserPrayDistance(userId);
+    
+    res.json({
+      shrine_id: shrineId,
+      total_pray_count: totalPrayCount,
+      is_in_zukan: isInZukan,
+      today_remote_pray_count: todayRemotePrayCount,
+      can_remote_pray: canRemotePray,
+      pray_distance: prayDistance,
+      max_worship_count: maxWorshipCount,
+      today_worship_count: todayWorshipCount
+    });
+  } catch (err) {
+    console.error('Error fetching shrine marker status:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});

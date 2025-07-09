@@ -15,6 +15,7 @@ import useDebugLog from '../../hooks/useDebugLog';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useBarrier } from '../../barriers/BarrierContext';
 import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 
@@ -34,6 +35,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const [center, setCenter] = useState<[number, number]>(defaultCenter);
   const [zoom] = useState<number>(defaultZoom);
   const [mapReady, setMapReady] = useState(false);
+  const queryClient = useQueryClient();
 
   const { clientLogs, addClientLog } = useClientLogs();
   const {
@@ -67,6 +69,13 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         });
     }
   }, [userId]);
+
+  // 参拝後にマーカー状態を更新する関数
+  const handleShrineClick = (shrineId: number) => {
+    // 参拝後にマーカー状態のクエリを無効化
+    queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', shrineId, userId] });
+    onShowShrine(shrineId);
+  };
 
   // GPS追従（通常モード）
   useEffect(() => {
@@ -196,7 +205,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
               key={s.id}
               shrine={s}
               currentPosition={currentPosition}
-              onShowShrine={onShowShrine}
+              onShowShrine={handleShrineClick}
             />
           );
         })}

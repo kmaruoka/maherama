@@ -1,35 +1,58 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../config/api';
 
-export function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371000; // 地球半径(m)
-  const toRad = (x: number) => x * Math.PI / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+// Haversine公式による距離計算（メートル）
+export function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000; // 地球の半径（メートル）
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
-export function getRadiusFromSlots(slots: number) {
+// スロット数から半径を計算
+export function getRadiusFromSlots(slots: number): number {
   if (slots === 0) return 100;
   return 100 * Math.pow(2, slots);
 }
 
-export function usePrayDistance(userId: number | null) {
-  return useQuery<{ pray_distance: number }>({
-    queryKey: ['pray-distance', userId],
-    queryFn: async () => {
-      if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await fetch(`${API_BASE}/users/${userId}/pray-distance`, {
-        headers: { 'x-user-id': String(userId) },
+// APIから参拝可能距離を取得するフック
+export function usePrayDistance(userId: number | null): { prayDistance: number | null; isLoading: boolean } {
+  const [prayDistance, setPrayDistance] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!userId) {
+      setPrayDistance(null);
+      return;
+    }
+
+    setIsLoading(true);
+    fetch(`${API_BASE}/users/${userId}/pray-distance`, {
+      headers: { 'x-user-id': String(userId) }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (typeof data.pray_distance === 'number') {
+          setPrayDistance(data.pray_distance);
+        } else {
+          setPrayDistance(100); // デフォルト値
+        }
+      })
+      .catch(() => {
+        setPrayDistance(100); // エラー時のデフォルト値
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-      if (!res.ok) throw new Error('参拝距離の取得に失敗しました');
-      return res.json();
-    },
-    enabled: !!userId,
-  });
+  }, [userId]);
+
+  return { prayDistance, isLoading };
 }
 
 export function useWorshipLimit(userId: number | null) {
@@ -93,6 +116,25 @@ export function useLevelInfo(userId: number | null) {
     },
     enabled: !!userId,
   });
+}
+
+// 参拝可能判定を行うフック
+export function useCanPray(
+  position: [number, number] | null,
+  shrineLat: number,
+  shrineLng: number,
+  prayDistance: number | null
+): { distance: number | null; canPray: boolean } {
+  return useMemo(() => {
+    if (!position || prayDistance === null) {
+      return { distance: null, canPray: false };
+    }
+    
+    const distance = getDistanceMeters(position[0], position[1], shrineLat, shrineLng);
+    const canPray = !isNaN(distance) && !isNaN(prayDistance) && distance <= prayDistance;
+    
+    return { distance, canPray };
+  }, [position, shrineLat, shrineLng, prayDistance]);
 }
 
 export default function usePrayDistanceOld(

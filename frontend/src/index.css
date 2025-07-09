@@ -297,3 +297,163 @@ nav.d-flex.position-fixed {
   from { stroke-dashoffset: 0; }
   to { stroke-dashoffset: -50; }
 }
+
+/* --- 神社マーカー状態別スタイル --- */
+
+/* 図鑑収録済み（参拝済み） */
+.shrine-marker-zukan {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 24px 8px var(--color-shadow), 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary) !important;
+}
+
+.shrine-marker-zukan .shrine-marker-pin::after {
+  border-top-color: var(--color-primary) !important;
+}
+
+/* 参拝可能（距離内） */
+.shrine-marker-prayable {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.3), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50 !important;
+  animation: shrine-prayable-pulse 2s ease-in-out infinite;
+}
+
+.shrine-marker-prayable .shrine-marker-pin::after {
+  border-top-color: #4caf50 !important;
+}
+
+@keyframes shrine-prayable-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 遥拝可能 */
+.shrine-marker-remote-prayable {
+  border-color: #2196f3 !important;
+  box-shadow: 0 0 24px 8px rgba(33, 150, 243, 0.3), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3 !important;
+  animation: shrine-remote-prayable-glow 3s ease-in-out infinite;
+}
+
+.shrine-marker-remote-prayable .shrine-marker-pin::after {
+  border-top-color: #2196f3 !important;
+}
+
+@keyframes shrine-remote-prayable-glow {
+  0%, 100% { 
+    box-shadow: 0 0 24px 8px rgba(33, 150, 243, 0.3), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3;
+  }
+  50% { 
+    box-shadow: 0 0 32px 12px rgba(33, 150, 243, 0.5), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3;
+  }
+}
+
+/* 参拝不可（距離外） */
+.shrine-marker-unprayable {
+  border-color: #9e9e9e !important;
+  box-shadow: 0 0 16px 4px rgba(158, 158, 158, 0.2), 0 0 0 2px var(--color-surface) !important;
+  opacity: 0.7;
+}
+
+.shrine-marker-unprayable .shrine-marker-pin::after {
+  border-top-color: #9e9e9e !important;
+}
+
+.shrine-marker-unprayable .shrine-marker-thumbnail-gloss {
+  animation: none;
+  opacity: 0.3;
+}
+
+/* 遥拝不可（制限到達） */
+.shrine-marker-remote-unavailable {
+  border-color: #f44336 !important;
+  box-shadow: 0 0 16px 4px rgba(244, 67, 54, 0.2), 0 0 0 2px var(--color-surface) !important;
+  opacity: 0.8;
+}
+
+.shrine-marker-remote-unavailable .shrine-marker-pin::after {
+  border-top-color: #f44336 !important;
+}
+
+/* 複合状態の優先順位 */
+/* 図鑑収録済み + 参拝可能 */
+.shrine-marker-zukan.shrine-marker-prayable {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.4), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50, 0 0 0 6px var(--color-primary) !important;
+}
+
+/* 図鑑収録済み + 遥拝可能 */
+.shrine-marker-zukan.shrine-marker-remote-prayable {
+  border-color: #2196f3 !important;
+  box-shadow: 0 0 24px 8px rgba(33, 150, 243, 0.4), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3, 0 0 0 6px var(--color-primary) !important;
+}
+
+/* 参拝可能 + 遥拝可能 */
+.shrine-marker-prayable.shrine-marker-remote-prayable {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.4), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50, 0 0 0 6px #2196f3 !important;
+}
+
+/* 最高優先度：図鑑収録済み + 参拝可能 + 遥拝可能 */
+.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable {
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 24px 8px rgba(76, 175, 80, 0.5), 0 0 0 2px var(--color-surface), 0 0 0 4px #4caf50, 0 0 0 6px var(--color-primary), 0 0 0 8px #2196f3 !important;
+}
+
+/* マーカー状態の説明ツールチップ */
+.shrine-marker-status-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: var(--box-shadow);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.shrine-marker-frame-anim:hover .shrine-marker-status-tooltip {
+  opacity: 1;
+}
+
+/* 状態アイコン */
+.shrine-marker-status-icon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+  z-index: 10;
+}
+
+.shrine-marker-status-icon.zukan {
+  background: var(--color-primary);
+}
+
+.shrine-marker-status-icon.prayable {
+  background: #4caf50;
+}
+
+.shrine-marker-status-icon.remote-prayable {
+  background: #2196f3;
+}
+
+.shrine-marker-status-icon.unprayable {
+  background: #9e9e9e;
+}
+
+.shrine-marker-status-icon.remote-unavailable {
+  background: #f44336;
+}

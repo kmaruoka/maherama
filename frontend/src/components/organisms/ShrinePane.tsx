@@ -10,6 +10,7 @@ import useDebugLog from '../../hooks/useDebugLog';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
+import { getDistanceMeters } from '../../hooks/usePrayDistance';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -126,16 +127,6 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
   const currentPosition = debugMode ? debugCenter : position;
 
   // 距離計算（Haversine公式）
-  function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
-    const R = 6371000; // 地球半径(m)
-    const toRad = (x: number) => x * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
   function getRadiusFromSlots(slots: number) {
     if (slots === 0) return 100;
     return 100 * Math.pow(2, slots);
@@ -143,14 +134,18 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
 
   // 参拝可能かどうかを判定
   const radius = prayDistance !== null ? prayDistance : getRadiusFromSlots(0);
-  const distance = (currentPosition && data) ? Number(getDistanceMeters(Number(currentPosition[0]), Number(currentPosition[1]), Number(data.lat), Number(data.lng))) : null;
-  // 小数点誤差を吸収して比較
-  const canPray = typeof distance === 'number' && typeof radius === 'number' && !isNaN(distance) && !isNaN(radius) && (Math.floor(distance * 100) / 100) <= (Math.floor(radius * 100) / 100);
+  const distance = (currentPosition && data) ? getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng) : null;
+  
+  // 距離判定（小数点誤差を吸収して比較）
+  const canPray = distance !== null && 
+    !isNaN(distance) && 
+    !isNaN(radius) && 
+    distance <= radius;
 
   // デバッグ情報を出力
   useEffect(() => {
     if (currentPosition && data) {
-      const d = Number(getDistanceMeters(Number(currentPosition[0]), Number(currentPosition[1]), Number(data.lat), Number(data.lng)));
+      const d = getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng);
       debugLog(`[DEBUG] 神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${d.toFixed(2)}m (typeof: ${typeof d}) | 半径: ${radius}m (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
     }
   }, [currentPosition, data, radius, canPray, debugMode, debugLog]);
@@ -163,7 +158,10 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
       }
       const res = await fetch(`${API_BASE}/shrines/${id}/pray`, {
         method: 'POST',
-        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        headers: {
+          ...(body ? { 'Content-Type': 'application/json' } : {}),
+          'x-user-id': String(userId || 1)
+        },
         body,
       });
       if (!res.ok) {
@@ -176,6 +174,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
   });
@@ -186,6 +185,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-user-id': String(userId || 1)
         },
       });
       if (!response.ok) {
@@ -197,6 +197,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
   });
