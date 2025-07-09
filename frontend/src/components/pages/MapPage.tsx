@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { MapContainer, TileLayer, Marker, Pane, SVGOverlay, useMap, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Pane } from 'react-leaflet';
 import '../../setupLeaflet';
 import { MAPBOX_API_KEY, API_BASE } from '../../config/api';
 import useLogs, { useClientLogs } from '../../hooks/useLogs';
@@ -15,9 +15,7 @@ import useDebugLog from '../../hooks/useDebugLog';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { useBarrier } from '../../barriers/BarrierContext';
-import AnimatedPulseCircle from '../atoms/AnimatedPulseCircle';
-import AnimatedRadarCircle from '../atoms/AnimatedRadarCircle';
-import { useMapEvents } from 'react-leaflet';
+import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
 
 function createShrineIcon(thumbnailUrl?: string) {
   // 大きな16:9サムネイル＋枠＋アニメーション光沢＋ピン（三角形）
@@ -45,58 +43,6 @@ const debugCurrentIcon = new L.Icon({
 });
 
 
-function BarrierAnimationAbsolute({
-  center,
-  radius,
-  barrierType,
-}: {
-  center: [number, number];
-  radius: number;
-  barrierType: string;
-}) {
-  const map = useMap();
-  const [pixel, setPixel] = useState({ x: 0, y: 0, pixelRadius: 0 });
-
-  const recalcPixel = () => {
-    if (!map) return;
-    const point = map.latLngToContainerPoint(center);
-    const pointX = L.point(point.x + 1, point.y);
-    const latLngX = map.containerPointToLatLng(pointX);
-    const metersPerPixel = map.distance(center, latLngX);
-    const pixelRadius = radius / metersPerPixel;
-    setPixel({ x: point.x, y: point.y, pixelRadius });
-  };
-
-  useEffect(() => {
-    recalcPixel(); // center変更時に即再計算
-  }, [map, center, radius]);
-
-  // ズームやスクロール中も追従
-  useMapEvents({
-    move: recalcPixel,
-    zoom: recalcPixel,
-  });
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: pixel.x,
-        top: pixel.y,
-        pointerEvents: 'none',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 410,
-      }}
-    >
-      <svg width={pixel.pixelRadius * 2} height={pixel.pixelRadius * 2} style={{ overflow: 'visible' }}>
-        <g transform={`translate(${pixel.pixelRadius},${pixel.pixelRadius})`}>
-          {barrierType === 'wave' && <AnimatedPulseCircle pixelRadius={pixel.pixelRadius} />}
-          {barrierType === 'search' && <AnimatedRadarCircle pixelRadius={pixel.pixelRadius} />}
-        </g>
-      </svg>
-    </div>
-  );
-}
 
 
 
@@ -256,13 +202,9 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         <Pane name="barrierPane" style={{ zIndex: 399 }}>
           {/* 半透明円は従来通り */}
           <CustomCircle center={centerArray} radius={prayDistance} barrierType="normal" pane="barrierPane" />
-          {/* アニメーションもbarrierPane内で絶対配置 */}
-          <BarrierAnimationAbsolute
-  center={centerArray}
-  radius={prayDistance}
-  barrierType={barrierName}
-/>
         </Pane>
+        {/* アニメーション */}
+        <BarrierAnimationOverlay radius={prayDistance} barrierType={barrierName} />
         {/* デバッグ用: 現在地ピン */}
         {position && (
           <Marker position={position} icon={debugCurrentIcon}>
