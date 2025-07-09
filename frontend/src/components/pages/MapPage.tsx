@@ -42,10 +42,6 @@ const debugCurrentIcon = new L.Icon({
   iconAnchor: [16, 32],
 });
 
-
-
-
-
 export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onShowShrine: (id: number) => void; onShowUser?: (id: number) => void; onShowDiety?: (id: number) => void }) {
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
