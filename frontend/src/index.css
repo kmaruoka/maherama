@@ -344,21 +344,6 @@ nav.d-flex.position-fixed {
   border-color: var(--color-remote-prayable) !important;
 }
 
-.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
-  animation: shrine-remote-prayable-glow 3s ease-in-out infinite;
-}
-
-@keyframes shrine-remote-prayable-glow {
-  0%, 100% { 
-    transform: scale(1);
-    box-shadow: 0 0 24px 8px rgba(33, 150, 243, 0.3), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3;
-  }
-  50% { 
-    transform: scale(1.03);
-    box-shadow: 0 0 32px 12px rgba(33, 150, 243, 0.5), 0 0 0 2px var(--color-surface), 0 0 0 4px #2196f3;
-  }
-}
-
 /* 参拝不可（距離外） */
 .shrine-marker-unprayable {
   border-color: var(--color-unprayable) !important;
@@ -512,4 +497,9 @@ nav.d-flex.position-fixed {
 }
 .shrine-marker-unprayable.shrine-marker-remote-prayable .shrine-marker-pin::after {
   border-top-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-prayable .shrine-marker-frame-border,
+.shrine-marker-prayable.shrine-marker-unprayable .shrine-marker-frame-border {
+  border-color: var(--color-prayable) !important;
 }

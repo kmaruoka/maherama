@@ -208,12 +208,8 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
-      // 全神社分のマーカー状態をinvalidate
-      if (shrines) {
-        shrines.forEach(s => {
-          queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', s.id, userId] });
-        });
-      }
+      // 全神社分のマーカー状態キャッシュを完全削除
+      queryClient.removeQueries({ queryKey: ['shrine-marker-status'] });
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
   });
