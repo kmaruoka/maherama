@@ -3,6 +3,8 @@ import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
 import type { Period, RankingItem } from './RankingPane';
 import { useState, useEffect } from 'react';
+import ImageUploadModal from '../molecules/ImageUploadModal';
+import ImageVoteButton from '../atoms/ImageVoteButton';
 import { API_BASE } from '../../config/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
@@ -53,6 +55,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
   const [prayDistance, setPrayDistance] = useState<number | null>(null);
   const { data: worshipLimit } = useWorshipLimit(userId);
+  const [showUpload, setShowUpload] = useState(false);
 
   // 追加: 参拝距離をAPIから取得
   useEffect(() => {
@@ -226,15 +229,31 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
   return (
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
-        <img
-          src={data.thumbnailUrl ? data.thumbnailUrl : NOIMAGE_SHRINE_URL}
-          alt="サムネイル"
-          className="rounded shadow"
-          style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
-        />
+        <div style={{ position: 'relative' }}>
+          <img
+            src={data.thumbnailUrl ? data.thumbnailUrl : NOIMAGE_SHRINE_URL}
+            alt="サムネイル"
+            className="rounded shadow"
+            style={{ width: '6rem', height: '6rem', objectFit: 'cover' }}
+          />
+          <button
+            type="button"
+            className="btn btn-sm btn-light"
+            style={{ position: 'absolute', top: 0, right: 0 }}
+            onClick={() => setShowUpload(true)}
+          >
+            ⬆
+          </button>
+          <div style={{ position: 'absolute', bottom: 0, right: 0 }}>
+            <ImageVoteButton voted={false} onVote={() => {}} />
+          </div>
+        </div>
         <div>
           <div className="modal-title">{data.name}</div>
           {data.kana && <div className="modal-kana">{data.kana}</div>}
+          {data.thumbnailBy && (
+            <div className="small text-muted">by {data.thumbnailBy}</div>
+          )}
           <div className="d-flex align-items-center gap-2 mt-2">
             <div className="catalog-count modal-item-text small">参拝数: {data.count}</div>
             <button
@@ -333,6 +352,17 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
       </div>
       
       <div className="text-muted small">収録日: {formatDate(data.registeredAt)}</div>
+      <ImageUploadModal
+        isOpen={showUpload}
+        onClose={() => setShowUpload(false)}
+        onUpload={async (img) => {
+          await fetch(`${API_BASE}/shrines/${id}/images`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-user-id': String(userId) },
+            body: JSON.stringify({ imageData: img })
+          });
+        }}
+      />
     </>
   );
-} 
+}
