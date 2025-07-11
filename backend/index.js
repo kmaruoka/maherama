@@ -777,6 +777,8 @@ app.get('/dieties/:id', async (req, res) => {
         kana: true,
         description: true,
         registered_at: true,
+        thumbnailUrl: true,
+        thumbnailBy: true,
         shrine_dieties: {
           select: {
             shrine: {
@@ -807,6 +809,88 @@ app.get('/dieties/:id', async (req, res) => {
     res.json(formatted);
   } catch (err) {
     console.error('Error fetching diety:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 神様画像アップロード
+app.post('/dieties/:id/images', authenticateJWT, async (req, res) => {
+  const dietyId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  if (isNaN(dietyId) || dietyId <= 0) {
+    return res.status(400).json({ error: 'Invalid diety ID' });
+  }
+  try {
+    const { imageData } = req.body;
+    if (!imageData) return res.status(400).json({ error: 'No image data' });
+    const Jimp = require('jimp');
+    const fs = require('fs');
+    const folder = `uploads/${new Date().toISOString().slice(0,7).replace('-', '')}`;
+    fs.mkdirSync(folder, { recursive: true });
+    const buffer = Buffer.from(imageData.split(',')[1], 'base64');
+    const img = await Jimp.read(buffer);
+    const sizes = { marker: 64, thumb: 200, large: 800 };
+    for (const [key, size] of Object.entries(sizes)) {
+      const clone = img.clone().cover(size, size);
+      await clone.quality(80).writeAsync(`${folder}/diety${dietyId}-u${userId}_s${key}.jpg`);
+    }
+    await prisma.dietyImage.create({
+      data: {
+        diety_id: dietyId,
+        user_id: userId,
+        image_url: `${folder}/diety${dietyId}-u${userId}_sthumb.jpg`,
+        voting_month: new Date().toISOString().slice(0,7).replace('-', ''),
+      }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error uploading diety image:', err);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
+  const dietyId = parseInt(req.params.id, 10);
+  if (isNaN(dietyId) || dietyId <= 0) {
+    return res.status(400).json({ error: 'Invalid diety ID' });
+  }
+  try {
+    const month = new Date().toISOString().slice(0,7).replace('-', '');
+    const prev = new Date();
+    prev.setMonth(prev.getMonth() - 1);
+    const prevMonth = prev.toISOString().slice(0,7).replace('-', '');
+    const images = await prisma.dietyImage.findMany({
+      where: { diety_id: dietyId, voting_month: { in: [month, prevMonth] } },
+      include: { user: true, votes: true },
+      orderBy: { uploaded_at: 'desc' }
+    });
+    res.json(images.map(img => ({
+      id: img.id,
+      imageUrl: img.image_url,
+      user: { id: img.user_id, name: img.user.name },
+      votes: img.votes.length,
+      isWinner: img.is_winner
+    })));
+  } catch (err) {
+    console.error('Error fetching diety images:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/diety-images/:id/vote', authenticateJWT, async (req, res) => {
+  const imageId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  if (isNaN(imageId) || imageId <= 0) {
+    return res.status(400).json({ error: 'Invalid image ID' });
+  }
+  try {
+    await prisma.dietyImageVote.create({ data: { diety_image_id: imageId, user_id: userId } });
+    res.json({ success: true });
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(400).json({ error: 'Already voted' });
+    }
+    console.error('Error voting diety image:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
@@ -2230,6 +2314,88 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching shrine marker status:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// 画像アップロードAPI
+app.post('/shrines/:id/images', authenticateJWT, async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  if (isNaN(shrineId) || shrineId <= 0) {
+    return res.status(400).json({ error: 'Invalid shrine ID' });
+  }
+  try {
+    const { imageData } = req.body;
+    if (!imageData) return res.status(400).json({ error: 'No image data' });
+    const Jimp = require('jimp');
+    const folder = `uploads/${new Date().toISOString().slice(0,7).replace('-', '')}`;
+    const fs = require('fs');
+    fs.mkdirSync(folder, { recursive: true });
+    const buffer = Buffer.from(imageData.split(',')[1], 'base64');
+    const image = await Jimp.read(buffer);
+    const sizes = { marker: 64, thumb: 200, large: 800 };
+    for (const [key, size] of Object.entries(sizes)) {
+      const clone = image.clone().cover(size, size);
+      await clone.quality(80).writeAsync(`${folder}/shrine${shrineId}-u${userId}_s${key}.jpg`);
+    }
+    await prisma.shrineImage.create({
+      data: {
+        shrine_id: shrineId,
+        user_id: userId,
+        image_url: `${folder}/shrine${shrineId}-u${userId}_sthumb.jpg`,
+        voting_month: new Date().toISOString().slice(0,7).replace('-', ''),
+      }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error uploading image:', err);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+app.get('/shrines/:id/images', authenticateJWT, async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  if (isNaN(shrineId) || shrineId <= 0) {
+    return res.status(400).json({ error: 'Invalid shrine ID' });
+  }
+  try {
+    const month = new Date().toISOString().slice(0,7).replace('-', '');
+    const prev = new Date();
+    prev.setMonth(prev.getMonth() - 1);
+    const prevMonth = prev.toISOString().slice(0,7).replace('-', '');
+    const images = await prisma.shrineImage.findMany({
+      where: { shrine_id: shrineId, voting_month: { in: [month, prevMonth] } },
+      include: { user: true, votes: true },
+      orderBy: { uploaded_at: 'desc' }
+    });
+    res.json(images.map(img => ({
+      id: img.id,
+      imageUrl: img.image_url,
+      user: { id: img.user_id, name: img.user.name },
+      votes: img.votes.length,
+      isWinner: img.is_winner
+    })));
+  } catch (err) {
+    console.error('Error fetching images:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/shrine-images/:id/vote', authenticateJWT, async (req, res) => {
+  const imageId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  if (isNaN(imageId) || imageId <= 0) {
+    return res.status(400).json({ error: 'Invalid image ID' });
+  }
+  try {
+    await prisma.imageVote.create({ data: { shrine_image_id: imageId, user_id: userId } });
+    res.json({ success: true });
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(400).json({ error: 'Already voted' });
+    }
+    console.error('Error voting image:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

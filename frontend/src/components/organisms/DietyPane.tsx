@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import useDietyDetail from '../../hooks/useDietyDetail';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
@@ -7,6 +7,9 @@ import RankingPane from './RankingPane';
 import type { Period, RankingItem } from './RankingPane';
 import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
 import { NOIMAGE_DIETY_URL } from '../../constants';
+import { API_BASE } from '../../config/api';
+import ImageUploadModal from '../molecules/ImageUploadModal';
+import ImageVoteButton from '../atoms/ImageVoteButton';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItem[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -28,6 +31,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
 
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(Number(idFromParams));
+  const [showUpload, setShowUpload] = useState(false);
 
   if (!idFromParams) {
     return <div className="p-3">神様IDが指定されていません</div>;
@@ -44,15 +48,30 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
   return (
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
-        <img
-          src={NOIMAGE_DIETY_URL}
-          alt="サムネイル"
-          className="rounded shadow"
-          style={{ width: '6rem', height: '6rem', objectFit: 'contain' }}
-        />
+        <div style={{ position: 'relative' }}>
+          <img
+            src={diety.thumbnailUrl ? diety.thumbnailUrl : NOIMAGE_DIETY_URL}
+            alt="サムネイル"
+            className="rounded shadow"
+            style={{ width: '6rem', height: '6rem', objectFit: 'cover' }}
+          />
+          <button
+            className="btn btn-sm btn-light"
+            style={{ position: 'absolute', top: 0, right: 0 }}
+            onClick={() => setShowUpload(true)}
+          >
+            ⬆
+          </button>
+          <div style={{ position: 'absolute', bottom: 0, right: 0 }}>
+            <ImageVoteButton voted={false} onVote={() => {}} />
+          </div>
+        </div>
         <div>
           <div className="modal-title">{diety.name}</div>
           {diety.kana && <div className="modal-kana">{diety.kana}</div>}
+          {diety.thumbnailBy && (
+            <div className="small text-muted">by {diety.thumbnailBy}</div>
+          )}
           <div className="catalog-count modal-item-text small mt-2">参拝数: {diety.count}</div>
         </div>
       </div>
@@ -91,6 +110,17 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
           <p className="text-body-secondary small">{diety.description}</p>
         </div>
       )}
+      <ImageUploadModal
+        isOpen={showUpload}
+        onClose={() => setShowUpload(false)}
+        onUpload={async (img) => {
+          await fetch(`${API_BASE}/dieties/${idFromParams}/images`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageData: img })
+          });
+        }}
+      />
     </>
   );
 }

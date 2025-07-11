@@ -6,6 +6,8 @@ export interface DietyDetail {
   name: string;
   kana?: string;
   description?: string;
+  thumbnailUrl?: string;
+  thumbnailBy?: string;
   count: number;
   shrines: Array<{ id: number; name: string; kana?: string }>;
 }
