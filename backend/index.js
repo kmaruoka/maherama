@@ -3,6 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs');
 // Stripe初期化（APIキーが設定されている場合のみ）
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
@@ -30,6 +34,7 @@ const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
@@ -2232,4 +2237,219 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
     console.error('Error fetching shrine marker status:', err);
     res.status(500).json({ error: 'DB error' });
   }
+});
+
+// アップロード設定
+const upload = multer({
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('画像ファイルのみアップロード可能です'));
+    }
+    cb(null, true);
+  }
+});
+
+// 保存先ディレクトリ作成
+function ensureDirSync(dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+// 画像リサイズ設定
+const sizes = {
+  marker: 64,
+  thumbnail: 256,
+  original: 1024
+};
+
+// ファイル名生成
+function getImageFileName(type, id, userId, size, ext = 'jpg') {
+  return `${type}${id}-u${userId}_s${size}.${ext}`;
+}
+
+// yyyyMM取得
+function getYYYYMM() {
+  const now = new Date();
+  return `${now.getFullYear()}${('0' + (now.getMonth() + 1)).slice(-2)}`;
+}
+
+// Shrine画像アップロードAPI
+app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  if (isNaN(shrineId) || !req.file) {
+    return res.status(400).json({ error: 'IDまたは画像が不正です' });
+  }
+  try {
+    const yyyymm = getYYYYMM();
+    const dir = path.join(__dirname, 'uploads', yyyymm);
+    ensureDirSync(dir);
+    // 3サイズ保存
+    const markerPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'marker'));
+    const thumbPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'thumbnail'));
+    const origPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'original'));
+    await sharp(req.file.buffer).resize(sizes.marker, sizes.marker).jpeg({ quality: 90 }).toFile(markerPath);
+    await sharp(req.file.buffer).resize(sizes.thumbnail, sizes.thumbnail).jpeg({ quality: 90 }).toFile(thumbPath);
+    await sharp(req.file.buffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
+    // DB登録
+    const imageUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'original')}`;
+    const markerUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'marker')}`;
+    const thumbUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'thumbnail')}`;
+    const votingMonth = yyyymm;
+    const newImage = await prisma.shrineImage.create({
+      data: {
+        shrine_id: shrineId,
+        user_id: userId,
+        image_url: imageUrl,
+        marker_url: markerUrl,
+        thumbnail_url: thumbUrl,
+        original_url: imageUrl,
+        voting_month: votingMonth
+      }
+    });
+    res.json({ success: true, image: newImage });
+  } catch (err) {
+    console.error('Shrine画像アップロード失敗:', err);
+    res.status(500).json({ error: '画像アップロード失敗' });
+  }
+});
+
+// Diety画像アップロードAPI
+app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), async (req, res) => {
+  const dietyId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  if (isNaN(dietyId) || !req.file) {
+    return res.status(400).json({ error: 'IDまたは画像が不正です' });
+  }
+  try {
+    const yyyymm = getYYYYMM();
+    const dir = path.join(__dirname, 'uploads', yyyymm);
+    ensureDirSync(dir);
+    // 3サイズ保存
+    const markerPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'marker'));
+    const thumbPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'thumbnail'));
+    const origPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'original'));
+    await sharp(req.file.buffer).resize(sizes.marker, sizes.marker).jpeg({ quality: 90 }).toFile(markerPath);
+    await sharp(req.file.buffer).resize(sizes.thumbnail, sizes.thumbnail).jpeg({ quality: 90 }).toFile(thumbPath);
+    await sharp(req.file.buffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
+    // DB登録
+    const imageUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'original')}`;
+    const markerUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'marker')}`;
+    const thumbUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'thumbnail')}`;
+    const votingMonth = yyyymm;
+    const newImage = await prisma.dietyImage.create({
+      data: {
+        diety_id: dietyId,
+        user_id: userId,
+        image_url: imageUrl,
+        marker_url: markerUrl,
+        thumbnail_url: thumbUrl,
+        original_url: imageUrl,
+        voting_month: votingMonth
+      }
+    });
+    res.json({ success: true, image: newImage });
+  } catch (err) {
+    console.error('Diety画像アップロード失敗:', err);
+    res.status(500).json({ error: '画像アップロード失敗' });
+  }
+});
+
+// 画像リスト取得API（神社）
+app.get('/shrines/:id/images', async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  if (isNaN(shrineId)) return res.status(400).json({ error: 'Invalid shrine ID' });
+  try {
+    const votingMonth = req.query.votingMonth;
+    const where = { shrine_id: shrineId };
+    if (votingMonth) {
+      where.voting_month = votingMonth;
+    }
+    const images = await prisma.shrineImage.findMany({
+      where,
+      include: { user: { select: { id: true, name: true } }, votes: true },
+      orderBy: [{ is_winner: 'desc' }, { uploaded_at: 'desc' }]
+    });
+    res.json(images);
+  } catch (err) {
+    console.error('神社画像リスト取得失敗:', err);
+    res.status(500).json({ error: '画像リスト取得失敗' });
+  }
+});
+
+// 画像リスト取得API（神様）
+app.get('/dieties/:id/images', async (req, res) => {
+  const dietyId = parseInt(req.params.id, 10);
+  if (isNaN(dietyId)) return res.status(400).json({ error: 'Invalid diety ID' });
+  try {
+    const images = await prisma.dietyImage.findMany({
+      where: { diety_id: dietyId },
+      include: { user: { select: { id: true, name: true } }, votes: true },
+      orderBy: [{ is_winner: 'desc' }, { uploaded_at: 'desc' }]
+    });
+    res.json(images);
+  } catch (err) {
+    console.error('神様画像リスト取得失敗:', err);
+    res.status(500).json({ error: '画像リスト取得失敗' });
+  }
+});
+
+// 投票API（神社画像）
+app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req, res) => {
+  const shrineId = parseInt(req.params.shrineId, 10);
+  const imageId = parseInt(req.params.imageId, 10);
+  const userId = req.user.id;
+  if (isNaN(shrineId) || isNaN(imageId)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    // 投票権チェック（図鑑登録済みユーザーのみ）
+    const hasBook = await prisma.shrineBook.findUnique({ where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } } });
+    if (!hasBook) return res.status(403).json({ error: '投票権がありません（参拝履歴なし）' });
+    // 既存投票削除（1ユーザー1票）
+    await prisma.imageVote.deleteMany({ where: { user_id: userId, shrine_image_id: imageId } });
+    // 投票
+    await prisma.imageVote.create({ data: { user_id: userId, shrine_image_id: imageId } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('神社画像投票失敗:', err);
+    res.status(500).json({ error: '投票失敗' });
+  }
+});
+
+// 投票API（神様画像）
+app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, res) => {
+  const dietyId = parseInt(req.params.dietyId, 10);
+  const imageId = parseInt(req.params.imageId, 10);
+  const userId = req.user.id;
+  if (isNaN(dietyId) || isNaN(imageId)) return res.status(400).json({ error: 'Invalid ID' });
+  try {
+    // 投票権チェック（図鑑登録済みユーザーのみ）
+    const hasBook = await prisma.dietyBook.findUnique({ where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } } });
+    if (!hasBook) return res.status(403).json({ error: '投票権がありません（参拝履歴なし）' });
+    // 既存投票削除（1ユーザー1票）
+    await prisma.dietyImageVote.deleteMany({ where: { user_id: userId, diety_image_id: imageId } });
+    // 投票
+    await prisma.dietyImageVote.create({ data: { user_id: userId, diety_image_id: imageId } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('神様画像投票失敗:', err);
+    res.status(500).json({ error: '投票失敗' });
+  }
+});
+
+// 投票・審査期間設定取得API
+app.get('/voting/settings', async (req, res) => {
+  try {
+    const settings = await prisma.votingSettings.findFirst({ orderBy: { updated_at: 'desc' } });
+    res.json(settings || { voting_period_days: 20, review_period_days: 10 });
+  } catch (err) {
+    console.error('投票設定取得失敗:', err);
+    res.status(500).json({ error: '設定取得失敗' });
+  }
+});
+
+// すべての未定義APIはJSONで404を返す
+app.use((req, res) => {
+  res.status(404).json({ error: 'API not found' });
 });

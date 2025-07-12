@@ -471,6 +471,12 @@ nav.d-flex.position-fixed {
 }
 
 /* 参拝・遥拝ボタンの色統一 */
+.btn, .btn-pray, .btn-remote-pray {
+  background: none !important;
+  color: inherit !important;
+  border: none !important;
+  box-shadow: none !important;
+}
 .btn-pray {
   background: var(--color-prayable);
   border-color: var(--color-prayable);

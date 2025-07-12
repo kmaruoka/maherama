@@ -52,6 +52,7 @@ model Diety {
   diety_pray_stats_daily DietyPrayStatsDaily[]
   diety_pray_stats_yearly DietyPrayStatsYearly[]
   diety_books DietyBook[]
+  diety_images DietyImage[]
 }
 
 model ShrineDiety {
@@ -98,6 +99,8 @@ model User {
   image_votes ImageVote[]
   shrine_applications ShrineApplication[]
   user_subscriptions UserSubscription[]
+  diety_images DietyImage[]
+  diety_image_votes DietyImageVote[]
 }
 
 model Follow {
@@ -347,10 +350,31 @@ model ShrineImage {
   user       User     @relation(fields: [user_id], references: [id])
   user_id    Int
   image_url  String
+  thumbnail_url String?  // サムネイル用画像URL
+  marker_url String?     // マーカー用画像URL
+  original_url String?   // オリジナル画像URL
   uploaded_at DateTime @default(now())
   voting_month String  // 投票対象月（YYYY-MM形式）
   is_winner  Boolean @default(false)
+  is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
   votes      ImageVote[]
+}
+
+model DietyImage {
+  id         Int      @id @default(autoincrement())
+  diety      Diety    @relation(fields: [diety_id], references: [id])
+  diety_id   Int
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  image_url  String
+  thumbnail_url String?  // サムネイル用画像URL
+  marker_url String?     // マーカー用画像URL
+  original_url String?   // オリジナル画像URL
+  uploaded_at DateTime @default(now())
+  voting_month String  // 投票対象月（YYYY-MM形式）
+  is_winner  Boolean @default(false)
+  is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
+  votes      DietyImageVote[]
 }
 
 model ImageVote {
@@ -362,6 +386,24 @@ model ImageVote {
   voted_at      DateTime   @default(now())
 
   @@unique([shrine_image_id, user_id])
+}
+
+model DietyImageVote {
+  id            Int        @id @default(autoincrement())
+  diety_image   DietyImage @relation(fields: [diety_image_id], references: [id])
+  diety_image_id Int
+  user          User       @relation(fields: [user_id], references: [id])
+  user_id       Int
+  voted_at      DateTime   @default(now())
+
+  @@unique([diety_image_id, user_id])
+}
+
+model VotingSettings {
+  id                Int      @id @default(autoincrement())
+  voting_period_days Int     @default(20) // 投票期間（日数）
+  review_period_days Int     @default(10) // 審査期間（日数）
+  updated_at        DateTime @default(now())
 }
 
 model ShrineApplication {
