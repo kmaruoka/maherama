@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSkin } from '../../skins/SkinContext';
 
 interface AnimatedRadarCircleProps {
   pixelRadius: number;
 }
 
-const DURATION = 2000; // ms 1周の時間
-const BEAM_COLOR = '#39ff14'; // 鮮やかな緑
+const DURATION = 4000; // ms 1周の時間
 const BEAM_WIDTH = 2; // 線の太さ
 const TAIL_COUNT = 12; // 尾の本数
 const TAIL_WIDTH_DEG = 10; // 尾の各扇形の幅
 const TAIL_STEP_DEG = 3; // 尾の各扇形の角度ずらし
 
 export default function AnimatedRadarCircle({ pixelRadius }: AnimatedRadarCircleProps) {
+  const { skin } = useSkin();
   const [angle, setAngle] = useState(0); // 0~360
   const lastTimestampRef = useRef<number | null>(null);
 
@@ -62,7 +63,7 @@ export default function AnimatedRadarCircle({ pixelRadius }: AnimatedRadarCircle
       <path
         key={i}
         d={describeSector(0, 0, pixelRadius, tailAngle, tailAngle + TAIL_WIDTH_DEG)}
-        fill={`rgba(57,255,20,${opacity})`}
+        fill={`${skin.colors.surface}${Math.floor(opacity * 255).toString(16).padStart(2, '0')}`}
       />
     );
   });
@@ -80,7 +81,7 @@ export default function AnimatedRadarCircle({ pixelRadius }: AnimatedRadarCircle
         y1={0}
         x2={beamX}
         y2={beamY}
-        stroke={BEAM_COLOR}
+        stroke={skin.colors.surface}
         strokeWidth={BEAM_WIDTH}
         opacity={1}
         filter="url(#glow)"

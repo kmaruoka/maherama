@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSkin } from '../../skins/SkinContext';
 
 interface AnimatedPulseCircleProps {
   pixelRadius: number;
@@ -8,12 +9,12 @@ function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3);
 }
 
-const RING_COLOR = 'white';
 const RING_OPACITY = 1;
 const RING_WIDTH = 5;
 const DURATION = 1800; // ms
 
 export default function AnimatedPulseCircle({ pixelRadius }: AnimatedPulseCircleProps) {
+  const { skin } = useSkin();
   const [animT, setAnimT] = useState(0);
   const lastTimestampRef = useRef<number | null>(null);
 
@@ -52,7 +53,7 @@ export default function AnimatedPulseCircle({ pixelRadius }: AnimatedPulseCircle
       cy={0}
       r={ring.r}
       fill="none"
-      stroke={RING_COLOR}
+      stroke={skin.colors.surface}
       strokeWidth={RING_WIDTH}
       opacity={RING_OPACITY * ring.opacity}
     />
