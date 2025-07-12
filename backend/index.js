@@ -7,6 +7,9 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const { LEVEL_SYSTEM } = require('../shared/dist/constants/levelSystem');
+const { addExperience: addExpShared } = require('../shared/dist/utils/expSystem');
+const { EXP_REWARDS } = require('../shared/dist/constants/expRewards');
 // Stripe初期化（APIキーが設定されている場合のみ）
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
@@ -39,17 +42,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
 
-// 経験値獲得の種類
-const EXP_REWARDS = {
-  PRAY: 10,           // 参拝
-  REMOTE_PRAY: 10,    // 遥拝
-  IMAGE_POST: 10,     // 画像投稿
-  HISTORY_POST: 10,   // 伝承投稿
-  TITLE_ACQUISITION: 50, // 称号獲得（基本）
-  SHRINE_APPROVAL: 500,  // 神社申請→承認
-};
 
-// 経験値を追加し、レベルアップをチェックする
+
+// 経験値を追加し、レベルアップをチェックする（shared/utils/expSystem.tsを使用）
 async function addExperience(userId, expAmount) {
   return await prisma.$transaction(async (tx) => {
     const user = await tx.user.findUnique({
@@ -61,44 +56,34 @@ async function addExperience(userId, expAmount) {
       throw new Error(`User not found: ${userId}`);
     }
 
-    const newExp = user.exp + expAmount;
-    
-    const currentLevelMaster = await tx.levelMaster.findUnique({
-      where: { level: user.level }
-    });
+    // shared/utils/expSystem.tsのaddExperience関数を使用
+    const expResult = addExpShared(user.exp, expAmount === EXP_REWARDS.PRAY ? 'PRAY' : 'REMOTE_PRAY');
 
-    if (!currentLevelMaster) {
-      console.error(`Level master not found for level: ${user.level}, user: ${userId}`);
-      throw new Error(`Level master not found for level: ${user.level}`);
-    }
-
-    const nextLevelMaster = await tx.levelMaster.findUnique({
-      where: { level: user.level + 1 }
-    });
-
-    let newLevel = user.level;
-    let levelUp = false;
+    // レベルアップ時のAP獲得量をLevelMasterテーブルから取得
     let abilityPointsGained = 0;
-
-    if (nextLevelMaster && newExp >= nextLevelMaster.required_exp) {
-      newLevel = nextLevelMaster.level;
-      levelUp = true;
-      abilityPointsGained = 1;
+    if (expResult.leveledUp) {
+      const levelMaster = await tx.levelMaster.findUnique({
+        where: { level: expResult.newLevel },
+        select: { ability_points: true }
+      });
+      if (levelMaster) {
+        abilityPointsGained = levelMaster.ability_points;
+      }
     }
 
     await tx.user.update({
       where: { id: userId },
       data: {
-        exp: newExp,
-        level: newLevel,
+        exp: expResult.newExp,
+        level: expResult.newLevel,
         ability_points: user.ability_points + abilityPointsGained
       }
     });
 
     return {
-      newLevel,
-      levelUp,
-      abilityPointsGained
+      newLevel: expResult.newLevel,
+      levelUp: expResult.leveledUp,
+      abilityPointsGained: abilityPointsGained
     };
   });
 }
@@ -367,24 +352,7 @@ async function addLog(message, type = 'normal') {
   });
 }
 
-// 古い経験値システム（後方互換性のため残す）
-async function gainExp(userId, amount) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return;
-  let exp = user.exp + amount;
-  let level = user.level;
-  let abilityPoints = user.ability_points;
-  let required = (level + 1) * (level + 1) * 10;
-  while (exp >= required) {
-    level += 1;
-    abilityPoints += 100;
-    required = (level + 1) * (level + 1) * 10;
-  }
-  await prisma.user.update({
-    where: { id: userId },
-    data: { exp, level, ability_points: abilityPoints },
-  });
-}
+// 古い経験値システムは削除（shared/utils/expSystem.tsに統一）
 
 // 全神社（参拝数0も含む）を返すAPI
 app.get('/shrines/all', async (req, res) => {
@@ -821,8 +789,6 @@ app.get('/dieties/:id', async (req, res) => {
         kana: true,
         description: true,
         registered_at: true,
-        thumbnailUrl: true,
-        thumbnailBy: true,
         shrine_dieties: {
           select: {
             shrine: {
@@ -831,6 +797,12 @@ app.get('/dieties/:id', async (req, res) => {
           }
         }
       }
+    });
+
+    // サムネイル画像と投稿者名をDietyImageから取得
+    const dietyImage = await prisma.dietyImage.findFirst({
+      where: { diety_id: id, is_current_thumbnail: true },
+      include: { user: true }
     });
 
     const countData = await prisma.dietyPrayStats.aggregate({
@@ -847,7 +819,9 @@ app.get('/dieties/:id', async (req, res) => {
       ...diety,
       count: totalCount,
       registeredAt: diety.registered_at,
-      shrines: diety.shrine_dieties.map(sd => sd.shrine)
+      shrines: diety.shrine_dieties.map(sd => sd.shrine),
+      thumbnailUrl: dietyImage?.thumbnail_url || null,
+      thumbnailBy: dietyImage?.user?.name || null
     };
 
     res.json(formatted);
@@ -1619,7 +1593,22 @@ app.get('/users/:id/titles', authenticateJWT, async (req, res) => {
       include: { title: true },
       orderBy: { awarded_at: 'desc' },
     });
-    res.json(titles.map(t => ({ id: t.title.id, name: t.title.name })));
+    // name_templateとembed_dataを合成
+    const result = titles.map(t => {
+      let name = t.title.name_template;
+      if (t.embed_data && typeof t.embed_data === 'object') {
+        for (const key of Object.keys(t.embed_data)) {
+          name = name.replace(new RegExp(`<\{${key}\}>`, 'g'), t.embed_data[key]);
+        }
+      }
+      return {
+        id: t.id,
+        name,
+        template: t.title.name_template,
+        embed_data: t.embed_data
+      };
+    });
+    res.json(result);
   } catch (err) {
     console.error('Error fetching user titles:', err);
     res.status(500).json({ error: 'DB error' });
@@ -2223,8 +2212,7 @@ app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
 
 if (require.main === module) {
   app.listen(port, () => {
-    addLog('システム: サーバーを起動しました', 'system');
-    console.log(`Server listening on port ${port}`);
+    console.log(`Server is running on port ${port}`);
   });
 }
 

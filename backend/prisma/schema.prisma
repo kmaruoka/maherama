@@ -13,6 +13,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Area {
+  id         Int      @id @default(autoincrement())
+  code       String   @unique // 地域コード
+  name       String   // 地域名
+  parentCode String?  // 親地域コード
+  parent     Area?    @relation("AreaHierarchy", fields: [parentCode], references: [code])
+  children   Area[]   @relation("AreaHierarchy")
+  shrines    Shrine[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
 model Shrine {
   id                        Int                      @id @default(autoincrement())
   name                      String // 神社名
@@ -20,6 +32,8 @@ model Shrine {
   location                  String // 所在地
   lat                       Float // 緯度
   lng                       Float // 経度
+  area_id                   Int? // 地域ID
+  area                      Area? @relation(fields: [area_id], references: [id])
   registered_at             DateTime                 @default(now())
   shrine_dieties            ShrineDiety[]
   shrine_prays              ShrinePray[]
@@ -298,6 +312,7 @@ model LevelMaster {
   required_exp  Int // 必要経験値
   pray_distance Int // 参拝距離（メートル）
   worship_count Int // 1日の遥拝回数
+  ability_points Int // レベルアップ時の能力ポイント獲得量
 }
 
 model AbilityMaster {
@@ -337,10 +352,14 @@ model AbilityLog {
 
 model TitleMaster {
   id              Int         @id @default(autoincrement())
-  name            String
-  condition_type  String // 'area_complete', 'consecutive_pray', 'monthly_rank', 'yearly_rank'
-  condition_value String? // 条件値（地域名、神社名、年月など）
-  exp_reward      Int
+  code            String      @unique // システム内一意の称号コード（テンプレ名）
+  name_template   String      // 表示テンプレ（例: 月間参拝数1位<{shrine}><{period}>）
+  description     String?     // 説明テンプレ
+  type            String      // 称号種別（'area_complete', 'consecutive_pray', 'ranking'など）
+  exp_reward      Int         // 経験値報酬
+  ability_reward  Json?       // 能力値報酬など（必要なら）
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
   userTitles      UserTitle[]
 }
 
@@ -351,8 +370,10 @@ model UserTitle {
   title      TitleMaster @relation(fields: [title_id], references: [id])
   title_id   Int
   awarded_at DateTime    @default(now())
+  embed_data Json?       // 埋め込みデータ（例: {"shrine":"明治神宮","period":"2025-04"}）
+  is_equipped Boolean    @default(false) // 装備中か
 
-  @@unique([user_id, title_id])
+  @@unique([user_id, title_id, embed_data])
 }
 
 model ShrineImage {

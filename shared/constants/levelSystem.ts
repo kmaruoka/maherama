@@ -6,7 +6,7 @@ export const LEVEL_SYSTEM = {
   BASE_WORSHIP_COUNT: 1,   // レベル0の基本遥拝回数
   
   // レベルアップ時の能力ポイント獲得
-  ABILITY_POINTS_PER_LEVEL: 1,
+  ABILITY_POINTS_PER_LEVEL: 100,  // 10から100に戻す（6日前の設定）
   
   // サブスクリプション効果
   SUBSCRIPTION_EFFECTS: {

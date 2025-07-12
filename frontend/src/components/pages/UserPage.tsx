@@ -14,6 +14,7 @@ import { useSkin } from '../../skins/SkinContext';
 import { NOIMAGE_USER_URL } from '../../constants';
 import { CustomButton } from '../atoms/CustomButton';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
+import CustomLink from '../atoms/CustomLink';
 
 interface UserPageProps {
   id?: number;
@@ -196,19 +197,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
         </div>
       </div>
 
-      <div className="mb-3">
-        {titles.length > 0 && (
-          <div className="mt-2">
-            <div className="modal-subtitle">称号</div>
-            <ul className="list-unstyled">
-              {titles.map(t => (
-                <li key={t.id}>🏆 {t.name}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
       <div className="modal-section">
         <div className="modal-subtitle">よく参拝する神社</div>
         <RankingPane
@@ -311,6 +299,51 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
               能力初期化サブスクリプション購入（Stripe）
             </button>
           </div>
+        </div>
+      )}
+      {titles.length > 0 && (
+        <div className="mt-4">
+          <div className="modal-subtitle">称号</div>
+          <ul className="list-unstyled">
+            {titles.map(t => (
+              <li key={t.id} style={{ whiteSpace: 'nowrap' }}>
+                🏆 {t.template && t.embed_data ? (
+                  <span style={{ display: 'inline', whiteSpace: 'nowrap' }}>
+                    {t.template.split(/(<\{[^}]+\}>)/g).map((part, idx) => {
+                      if (part.startsWith('<{') && part.endsWith('}>')) {
+                        const key = part.slice(2, -2);
+                        if (key === 'shrine' && t.embed_data?.shrine && t.embed_data?.shrine_id) {
+                          return (
+                            <CustomLink key={idx} type="shrine" onClick={() => onShowShrine && onShowShrine(t.embed_data?.shrine_id)}>
+                              {t.embed_data?.shrine}
+                            </CustomLink>
+                          );
+                        }
+                        if (key === 'diety' && t.embed_data?.diety && t.embed_data?.diety_id) {
+                          return (
+                            <CustomLink key={idx} type="diety" onClick={() => onShowDiety && onShowDiety(t.embed_data?.diety_id)}>
+                              {t.embed_data?.diety}
+                            </CustomLink>
+                          );
+                        }
+                        if (key === 'period' && t.embed_data?.period) {
+                          return (
+                            <CustomLink key={idx} type="default" onClick={() => alert(`称号獲得者一覧: ${(t.embed_data?.shrine || t.embed_data?.diety || '')} ${t.embed_data?.period}`)}>
+                              {t.embed_data?.period}
+                            </CustomLink>
+                          );
+                        }
+                        // 他の埋め込みデータもそのまま表示
+                        return t.embed_data?.[key] || '';
+                      }
+                      // part内の改行を除去して返す
+                      return part.replace(/\r?\n/g, '');
+                    })}
+                  </span>
+                ) : t.name}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </>

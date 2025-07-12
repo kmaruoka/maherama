@@ -4,6 +4,8 @@ import { API_BASE, apiCall } from '../config/api';
 export interface UserTitle {
   id: number;
   name: string;
+  template?: string;
+  embed_data?: Record<string, any>;
 }
 
 export default function useUserTitles(userId: number | undefined | null) {

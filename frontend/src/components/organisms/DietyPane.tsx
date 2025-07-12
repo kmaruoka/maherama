@@ -28,7 +28,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
   const idFromParams = id || paramId;
 
   // デバッグ用ログ
-  console.log('DietyPage - ID from params:', idFromParams, 'Type:', typeof idFromParams);
+  // console.log('DietyPage - ID from params:', idFromParams, 'Type:', typeof idFromParams);
 
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(Number(idFromParams));

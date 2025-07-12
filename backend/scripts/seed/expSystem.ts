@@ -30,20 +30,32 @@ export async function addExperience(
     // 共有ライブラリで経験値計算
     const expResult = addExpShared(user.exp, 'PRAY'); // デフォルトでPRAYを使用
     
+    // レベルアップ時のAP獲得量をLevelMasterテーブルから取得
+    let abilityPointsGained = 0;
+    if (expResult.leveledUp) {
+      const levelMaster = await tx.levelMaster.findUnique({
+        where: { level: expResult.newLevel },
+        select: { ability_points: true }
+      });
+      if (levelMaster) {
+        abilityPointsGained = levelMaster.ability_points;
+      }
+    }
+    
     // ユーザー情報を更新
     await tx.user.update({
       where: { id: userId },
       data: {
         exp: expResult.newExp,
         level: expResult.newLevel,
-        ability_points: user.ability_points + (expResult.leveledUp ? 1 : 0)
+        ability_points: user.ability_points + abilityPointsGained
       }
     });
 
     return {
       newLevel: expResult.newLevel,
       levelUp: expResult.leveledUp,
-      abilityPointsGained: expResult.leveledUp ? 1 : 0
+      abilityPointsGained: abilityPointsGained
     };
   });
 }

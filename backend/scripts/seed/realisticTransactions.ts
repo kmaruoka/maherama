@@ -170,6 +170,235 @@ async function simulateZukan(prisma: PrismaClient) {
   console.log('📚 図鑑データは実際のAPIが自動生成します');
 }
 
+// 週番号を取得する関数を追加
+function getWeekNumber(date: Date): number {
+  // ISO 8601週番号（1年の最初の木曜日を含む週が第1週）
+  const tempDate = new Date(date.getTime());
+  tempDate.setHours(0, 0, 0, 0);
+  // 木曜日に合わせる
+  tempDate.setDate(tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7));
+  const week1 = new Date(tempDate.getFullYear(), 0, 4);
+  return (
+    1 + Math.round(
+      ((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7
+    )
+  );
+}
+
+// 週間ランキング1位に経験値・能力値のみ付与する関数（称号なし）
+async function awardWeeklyRewards(
+  prisma: PrismaClient, 
+  currentDate: Date
+) {
+  console.log(`🏆 週間ランキング1位の報酬付与処理を開始...`);
+  
+  const dateFormat = (date: Date) => `${date.getFullYear()}-W${String(getWeekNumber(date)).padStart(2, '0')}`;
+  const periodLabel = dateFormat(currentDate);
+  
+  try {
+    // 神社ランキング1位を取得
+    const shrineStats = await prisma.shrinePrayStatsWeekly.findMany({
+      orderBy: { count: 'desc' },
+      include: { 
+        shrine: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } }
+      },
+      take: 1,
+    });
+    
+    // 神様ランキング1位を取得
+    const dietyStats = await prisma.dietyPrayStatsWeekly.findMany({
+      orderBy: { count: 'desc' },
+      include: { 
+        diety: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } }
+      },
+      take: 1,
+    });
+    
+    // 神社ランキング1位に経験値・能力値を付与
+    if (shrineStats.length > 0 && shrineStats[0].count > 0) {
+      const topShrine = shrineStats[0];
+      const expReward = 100; // 週間は100EXP
+      
+      // 経験値を付与
+      await prisma.user.update({
+        where: { id: topShrine.user.id },
+        data: { exp: { increment: expReward } }
+      });
+      
+      console.log(`🏆 神社ランキング1位: ${topShrine.user.name} が週間報酬を獲得 (${expReward}EXP)`);
+    }
+    
+    // 神様ランキング1位に経験値・能力値を付与
+    if (dietyStats.length > 0 && dietyStats[0].count > 0) {
+      const topDiety = dietyStats[0];
+      const expReward = 100; // 週間は100EXP
+      
+      // 経験値を付与
+      await prisma.user.update({
+        where: { id: topDiety.user.id },
+        data: { exp: { increment: expReward } }
+      });
+      
+      console.log(`🏆 神様ランキング1位: ${topDiety.user.name} が週間報酬を獲得 (${expReward}EXP)`);
+    }
+    
+  } catch (error) {
+    console.error(`❌ 週間ランキング報酬付与エラー:`, error);
+  }
+}
+
+// ランキング1位の人に称号を付与する汎用関数
+async function awardRankingTitles(
+  prisma: PrismaClient, 
+  period: 'yearly' | 'monthly', 
+  currentDate: Date
+) {
+  console.log(`🏆 ${period}ランキング1位の称号付与処理を開始...`);
+  
+  const periodText = {
+    yearly: '年間',
+    monthly: '月間'
+  }[period];
+  
+  const dateFormat = {
+    yearly: (date: Date) => `${date.getFullYear()}`,
+    monthly: (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  }[period];
+  
+  const periodLabel = dateFormat(currentDate);
+  
+  try {
+    // 神社ごとに1位ユーザーを取得
+    let shrineStats;
+    switch (period) {
+      case 'yearly':
+        shrineStats = await prisma.shrinePrayStatsYearly.findMany({
+          orderBy: [{ shrine_id: 'asc' }, { count: 'desc' }],
+          include: { shrine: true, user: true },
+        });
+        break;
+      case 'monthly':
+        shrineStats = await prisma.shrinePrayStatsMonthly.findMany({
+          orderBy: [{ shrine_id: 'asc' }, { count: 'desc' }],
+          include: { shrine: true, user: true },
+        });
+        break;
+    }
+    // 神社ごとに1位ユーザーを抽出
+    const shrineTopMap = new Map();
+    for (const stat of shrineStats) {
+      if (!shrineTopMap.has(stat.shrine_id) && stat.count > 0) {
+        shrineTopMap.set(stat.shrine_id, stat);
+      }
+    }
+    // 神社ごとに称号付与
+    for (const [shrineId, topShrine] of shrineTopMap.entries()) {
+      const titleName = `${periodText}参拝数1位<${topShrine.shrine.name}><${periodLabel}>`;
+      const titleMaster = await prisma.titleMaster.findFirst({
+        where: { code: `${period}_rank_shrine` }
+      });
+      if (!titleMaster) {
+        console.log(`❌ ${period}_rank_shrine の称号テンプレートが見つかりません`);
+        continue;
+      }
+      await prisma.userTitle.upsert({
+        where: {
+          user_id_title_id_embed_data: {
+            user_id: topShrine.user.id,
+            title_id: titleMaster.id,
+            embed_data: {
+              shrine: topShrine.shrine.name,
+              shrine_id: topShrine.shrine.id,
+              period: periodLabel
+            }
+          }
+        },
+        update: {},
+        create: {
+          user_id: topShrine.user.id,
+          title_id: titleMaster.id,
+          embed_data: {
+            shrine: topShrine.shrine.name,
+            shrine_id: topShrine.shrine.id,
+            period: periodLabel
+          }
+        }
+      });
+      await prisma.user.update({
+        where: { id: topShrine.user.id },
+        data: { exp: { increment: titleMaster.exp_reward } }
+      });
+      console.log(`🏆 神社ランキング1位: ${topShrine.user.name} が「${titleName}」を獲得 (${titleMaster.exp_reward}EXP)`);
+    }
+    // 神様ごとに1位ユーザーを取得
+    let dietyStats;
+    switch (period) {
+      case 'yearly':
+        dietyStats = await prisma.dietyPrayStatsYearly.findMany({
+          orderBy: [{ diety_id: 'asc' }, { count: 'desc' }],
+          include: { diety: true, user: true },
+        });
+        break;
+      case 'monthly':
+        dietyStats = await prisma.dietyPrayStatsMonthly.findMany({
+          orderBy: [{ diety_id: 'asc' }, { count: 'desc' }],
+          include: { diety: true, user: true },
+        });
+        break;
+    }
+    // 神様ごとに1位ユーザーを抽出
+    const dietyTopMap = new Map();
+    for (const stat of dietyStats) {
+      if (!dietyTopMap.has(stat.diety_id) && stat.count > 0) {
+        dietyTopMap.set(stat.diety_id, stat);
+      }
+    }
+    // 神様ごとに称号付与
+    for (const [dietyId, topDiety] of dietyTopMap.entries()) {
+      const titleName = `${periodText}参拝数1位<${topDiety.diety.name}><${periodLabel}>`;
+      const titleMaster = await prisma.titleMaster.findFirst({
+        where: { code: `${period}_rank_diety` }
+      });
+      if (!titleMaster) {
+        console.log(`❌ ${period}_rank_diety の称号テンプレートが見つかりません`);
+        continue;
+      }
+      await prisma.userTitle.upsert({
+        where: {
+          user_id_title_id_embed_data: {
+            user_id: topDiety.user.id,
+            title_id: titleMaster.id,
+            embed_data: {
+              diety: topDiety.diety.name,
+              diety_id: topDiety.diety.id,
+              period: periodLabel
+            }
+          }
+        },
+        update: {},
+        create: {
+          user_id: topDiety.user.id,
+          title_id: titleMaster.id,
+          embed_data: {
+            diety: topDiety.diety.name,
+            diety_id: topDiety.diety.id,
+            period: periodLabel
+          }
+        }
+      });
+      await prisma.user.update({
+        where: { id: topDiety.user.id },
+        data: { exp: { increment: titleMaster.exp_reward } }
+      });
+      console.log(`🏆 神様ランキング1位: ${topDiety.user.name} が「${titleName}」を獲得 (${titleMaster.exp_reward}EXP)`);
+    }
+  } catch (error) {
+    console.error(`❌ ${period}ランキング称号付与エラー:`, error);
+  }
+}
+
 export async function seedRealisticTransactions(prisma: PrismaClient) {
   console.log('🚀 リアルなトランザクションデータの生成を開始...');
   
@@ -205,8 +434,41 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
 
   // 日付を1日ずつ進めて参拝をシミュレート
   const currentDate = new Date(START_DATE);
+  let prevYear = currentDate.getFullYear();
+  let prevMonth = currentDate.getMonth();
+  let prevWeek = getWeekNumber(currentDate);
   
   while (currentDate <= END_DATE) {
+    // 年切り替え判定
+    const currentYear = currentDate.getFullYear();
+    if (currentYear !== prevYear) {
+      // 年間ランキング1位に称号を付与
+      await awardRankingTitles(prisma, 'yearly', new Date(prevYear, 11, 31));
+      console.log(`\n🗓 年度切り替え: ${prevYear}→${currentYear} 年間ランキングをリセット`);
+      await prisma.shrinePrayStatsYearly.deleteMany();
+      await prisma.dietyPrayStatsYearly.deleteMany();
+      prevYear = currentYear;
+    }
+    // 月切り替え判定
+    const currentMonth = currentDate.getMonth();
+    if (currentMonth !== prevMonth) {
+      // 月間ランキング1位に称号を付与
+      await awardRankingTitles(prisma, 'monthly', new Date(currentDate.getFullYear(), prevMonth, 0));
+      console.log(`\n🗓 月度切り替え: ${prevMonth + 1}→${currentMonth + 1} 月間ランキングをリセット`);
+      await prisma.shrinePrayStatsMonthly.deleteMany();
+      await prisma.dietyPrayStatsMonthly.deleteMany();
+      prevMonth = currentMonth;
+    }
+    // 週切り替え判定
+    const currentWeek = getWeekNumber(currentDate);
+    if (currentWeek !== prevWeek) {
+      // 週間ランキング1位に経験値・能力値のみ付与（称号なし）
+      await awardWeeklyRewards(prisma, new Date(currentDate.getTime() - 24 * 60 * 60 * 1000));
+      console.log(`\n🗓 週切り替え: ${prevWeek}→${currentWeek} 週間ランキングをリセット`);
+      await prisma.shrinePrayStatsWeekly.deleteMany();
+      await prisma.dietyPrayStatsWeekly.deleteMany();
+      prevWeek = currentWeek;
+    }
     console.log(`📅 ${currentDate.toISOString().split('T')[0]} の参拝をシミュレート中...`);
     
     for (const [userId, activity] of Object.entries(USER_ACTIVITY_LEVELS)) {

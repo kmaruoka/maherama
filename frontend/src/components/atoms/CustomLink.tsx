@@ -8,11 +8,12 @@ export default function CustomLink({ onClick, children, className = '', type = '
     type === 'user' ? 'tag-link tag-user' :
     'custom-link';
   return (
-    <div
+    <span
       className={`${typeClass}${className ? ' ' + className : ''}`.trim()}
       onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : undefined }}
     >
       {children}
-    </div>
+    </span>
   );
 }

@@ -3,33 +3,110 @@ import { PrismaClient } from '@prisma/client';
 export async function seedTitle(prisma: PrismaClient) {
   await prisma.titleMaster.createMany({
     data: [
-      // 地域制覇系称号
-      { id: 1, name: '全神社制覇<大阪市西区>', condition_type: 'area_complete', condition_value: '大阪市西区', exp_reward: 500 },
-      { id: 2, name: '全神社制覇<大阪府>', condition_type: 'area_complete', condition_value: '大阪府', exp_reward: 1000 },
-      { id: 3, name: '全神社制覇<東京都>', condition_type: 'area_complete', condition_value: '東京都', exp_reward: 1000 },
-      { id: 4, name: '全神社制覇<京都府>', condition_type: 'area_complete', condition_value: '京都府', exp_reward: 1000 },
-      { id: 5, name: '全神社制覇<奈良県>', condition_type: 'area_complete', condition_value: '奈良県', exp_reward: 800 },
-      
-      // 連続参拝系称号
-      { id: 6, name: '21日参り<伏見稲荷大社>', condition_type: 'consecutive_pray', condition_value: '伏見稲荷大社', exp_reward: 200 },
-      { id: 7, name: '21日参り<明治神宮>', condition_type: 'consecutive_pray', condition_value: '明治神宮', exp_reward: 200 },
-      { id: 8, name: '21日参り<伊勢神宮>', condition_type: 'consecutive_pray', condition_value: '伊勢神宮', exp_reward: 300 },
-      
-      // 月間ランキング系称号（動的に生成されるため、テンプレート的なもの）
-      { id: 9, name: '月間参拝数1位<神社名><年月>', condition_type: 'monthly_rank_shrine', condition_value: null, exp_reward: 200 },
-      { id: 10, name: '月間参拝数1位<神様名><年月>', condition_type: 'monthly_rank_diety', condition_value: null, exp_reward: 200 },
-      
-      // 年間ランキング系称号（動的に生成されるため、テンプレート的なもの）
-      { id: 11, name: '年間参拝数1位<神社名><年>', condition_type: 'yearly_rank_shrine', condition_value: null, exp_reward: 1000 },
-      { id: 12, name: '年間参拝数1位<神様名><年>', condition_type: 'yearly_rank_diety', condition_value: null, exp_reward: 1000 },
-      
-      // その他の称号
-      { id: 13, name: '初参拝', condition_type: 'first_pray', condition_value: null, exp_reward: 50 },
-      { id: 14, name: '百社参り', condition_type: 'shrine_count', condition_value: '100', exp_reward: 500 },
-      { id: 15, name: '千社参り', condition_type: 'shrine_count', condition_value: '1000', exp_reward: 2000 },
-      { id: 16, name: '万社参り', condition_type: 'shrine_count', condition_value: '10000', exp_reward: 10000 },
-      { id: 17, name: '神社申請者', condition_type: 'shrine_application', condition_value: null, exp_reward: 100 },
-      { id: 18, name: '神社承認者', condition_type: 'shrine_approval', condition_value: null, exp_reward: 500 },
+      // 地域制覇系称号テンプレート
+      {
+        code: 'area_complete',
+        name_template: '全神社制覇<{area}>',
+        description: '指定エリアの全神社を制覇した証',
+        type: 'area_complete',
+        exp_reward: 1000
+      },
+      // 連続参拝系称号テンプレート
+      {
+        code: 'consecutive_pray',
+        name_template: '21日参り<{shrine}>',
+        description: '指定神社で21日連続参拝した証',
+        type: 'consecutive_pray',
+        exp_reward: 200
+      },
+      // 週間ランキング系称号テンプレート
+      {
+        code: 'weekly_rank_shrine',
+        name_template: '週間参拝数1位<{shrine}><{period}>',
+        description: '週間で最も多く参拝した神社1位',
+        type: 'weekly_rank_shrine',
+        exp_reward: 100
+      },
+      {
+        code: 'weekly_rank_diety',
+        name_template: '週間参拝数1位<{diety}><{period}>',
+        description: '週間で最も多く参拝した神様1位',
+        type: 'weekly_rank_diety',
+        exp_reward: 100
+      },
+      // 月間ランキング系称号テンプレート
+      {
+        code: 'monthly_rank_shrine',
+        name_template: '月間参拝数1位<{shrine}><{period}>',
+        description: '月間で最も多く参拝した神社1位',
+        type: 'monthly_rank_shrine',
+        exp_reward: 200
+      },
+      {
+        code: 'monthly_rank_diety',
+        name_template: '月間参拝数1位<{diety}><{period}>',
+        description: '月間で最も多く参拝した神様1位',
+        type: 'monthly_rank_diety',
+        exp_reward: 200
+      },
+      // 年間ランキング系称号テンプレート
+      {
+        code: 'yearly_rank_shrine',
+        name_template: '年間参拝数1位<{shrine}><{period}>',
+        description: '年間で最も多く参拝した神社1位',
+        type: 'yearly_rank_shrine',
+        exp_reward: 1000
+      },
+      {
+        code: 'yearly_rank_diety',
+        name_template: '年間参拝数1位<{diety}><{period}>',
+        description: '年間で最も多く参拝した神様1位',
+        type: 'yearly_rank_diety',
+        exp_reward: 1000
+      },
+      // その他の称号テンプレート
+      {
+        code: 'first_pray',
+        name_template: '初参拝',
+        description: '初めて参拝した証',
+        type: 'first_pray',
+        exp_reward: 50
+      },
+      {
+        code: 'shrine_count_100',
+        name_template: '百社参り',
+        description: '100社参拝達成',
+        type: 'shrine_count',
+        exp_reward: 500
+      },
+      {
+        code: 'shrine_count_1000',
+        name_template: '千社参り',
+        description: '1000社参拝達成',
+        type: 'shrine_count',
+        exp_reward: 2000
+      },
+      {
+        code: 'shrine_count_10000',
+        name_template: '万社参り',
+        description: '10000社参拝達成',
+        type: 'shrine_count',
+        exp_reward: 10000
+      },
+      {
+        code: 'shrine_application',
+        name_template: '神社申請者',
+        description: '神社申請を行った証',
+        type: 'shrine_application',
+        exp_reward: 100
+      },
+      {
+        code: 'shrine_approval',
+        name_template: '神社承認者',
+        description: '神社承認を行った証',
+        type: 'shrine_approval',
+        exp_reward: 500
+      }
     ],
     skipDuplicates: true,
   });
