@@ -1,5 +1,6 @@
 import { EXP_REWARDS, ExpRewardType } from '../constants/expRewards';
 import { LEVEL_SYSTEM } from '../constants/levelSystem';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 /**
  * 経験値からレベルを計算
@@ -28,9 +29,9 @@ export function calculateExpToNextLevel(currentExp: number): number {
 }
 
 /**
- * 経験値獲得時の処理
+ * 経験値獲得時の処理（ピュア関数）
  */
-export function addExperience(
+export function getExperienceResult(
   currentExp: number,
   rewardType: ExpRewardType
 ): {
@@ -60,4 +61,62 @@ export function addExperience(
  */
 export function calculateAbilityPoints(level: number): number {
   return level * LEVEL_SYSTEM.ABILITY_POINTS_PER_LEVEL;
+}
+
+/**
+ * DB更新付き: 経験値・レベル・APを更新し、詳細ログも出力
+ */
+export async function addExperience(
+  prisma: PrismaClient,
+  userId: number,
+  expAmount: number
+): Promise<{ newLevel: number; levelUp: boolean; abilityPointsGained: number }> {
+  return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { id: true, level: true, exp: true, ability_points: true }
+    });
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+    
+    // 直接expAmountを使用（rewardTypeの判定を削除）
+    const oldLevel = calculateLevel(user.exp);
+    const newExp = user.exp + expAmount;
+    const newLevel = calculateLevel(newExp);
+    const leveledUp = newLevel > oldLevel;
+    
+    // レベルアップ時のAP獲得量をLevelMasterテーブルから取得
+    let abilityPointsGained = 0;
+    if (leveledUp) {
+      for (let lv = oldLevel + 1; lv <= newLevel; lv++) {
+        const levelMaster = await tx.levelMaster.findUnique({
+          where: { level: lv },
+          select: { ability_points: true }
+        });
+        if (levelMaster) {
+          abilityPointsGained += levelMaster.ability_points;
+          console.log(`[AP加算デバッグ] ユーザー${userId} レベル${lv}でAP+${levelMaster.ability_points}（合計: ${abilityPointsGained}）`);
+        } else {
+          console.error(`[AP加算エラー] LevelMasterにレベル${lv}のデータがありません`);
+        }
+      }
+      console.log(`[AP詳細] ユーザー${userId} レベルアップ: ${oldLevel}→${newLevel}, 獲得AP: ${abilityPointsGained}, 更新前AP: ${user.ability_points}, 更新後AP: ${user.ability_points + abilityPointsGained}`);
+    }
+    
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        exp: newExp,
+        level: newLevel,
+        ability_points: user.ability_points + abilityPointsGained
+      }
+    });
+    
+    return {
+      newLevel: newLevel,
+      levelUp: leveledUp,
+      abilityPointsGained: abilityPointsGained
+    };
+  });
 } 

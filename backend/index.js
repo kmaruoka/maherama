@@ -8,8 +8,9 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const { LEVEL_SYSTEM } = require('../shared/dist/constants/levelSystem');
-const { addExperience: addExpShared } = require('../shared/dist/utils/expSystem');
+const { addExperience } = require('../shared/dist/utils/expSystem');
 const { EXP_REWARDS } = require('../shared/dist/constants/expRewards');
+
 // Stripe初期化（APIキーが設定されている場合のみ）
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
@@ -44,49 +45,7 @@ const REMOTE_INTERVAL_DAYS = 7;
 
 
 
-// 経験値を追加し、レベルアップをチェックする（shared/utils/expSystem.tsを使用）
-async function addExperience(userId, expAmount) {
-  return await prisma.$transaction(async (tx) => {
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { id: true, level: true, exp: true, ability_points: true }
-    });
 
-    if (!user) {
-      throw new Error(`User not found: ${userId}`);
-    }
-
-    // shared/utils/expSystem.tsのaddExperience関数を使用
-    const expResult = addExpShared(user.exp, expAmount === EXP_REWARDS.PRAY ? 'PRAY' : 'REMOTE_PRAY');
-
-    // レベルアップ時のAP獲得量をLevelMasterテーブルから取得
-    let abilityPointsGained = 0;
-    if (expResult.leveledUp) {
-      const levelMaster = await tx.levelMaster.findUnique({
-        where: { level: expResult.newLevel },
-        select: { ability_points: true }
-      });
-      if (levelMaster) {
-        abilityPointsGained = levelMaster.ability_points;
-      }
-    }
-
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        exp: expResult.newExp,
-        level: expResult.newLevel,
-        ability_points: user.ability_points + abilityPointsGained
-      }
-    });
-
-    return {
-      newLevel: expResult.newLevel,
-      levelUp: expResult.leveledUp,
-      abilityPointsGained: abilityPointsGained
-    };
-  });
-}
 
 // ユーザーの現在の参拝距離を取得
 async function getUserPrayDistance(userId) {
@@ -499,7 +458,7 @@ app.get('/shrines/:id', async (req, res) => {
       dieties: shrine.shrine_dieties.map(sd => sd.diety)
     };
     // dieties配列をログ出力
-    console.log('API /shrines/:id dieties:', formattedShrine.dieties);
+    //console.log('API /shrines/:id dieties:', formattedShrine.dieties);
     
     res.json(formattedShrine);
   } catch (err) {
@@ -549,7 +508,7 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
       const dist = R * c;
       if (dist > prayDistance) {
         // 追加: 距離不足の参拝をログ出力
-        console.log('[距離不足参拝] userId:', userId, 'shrineId:', id, 'dist:', dist, 'radius:', prayDistance, 'req:', { lat: req.body.lat, lng: req.body.lng }, 'shrine:', { lat: shrine.lat, lng: shrine.lng });
+        console.error('[距離不足参拝] userId:', userId, 'shrineId:', id, 'dist:', dist, 'radius:', prayDistance, 'req:', { lat: req.body.lat, lng: req.body.lng }, 'shrine:', { lat: shrine.lat, lng: shrine.lng });or
         return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
       }
     } else {
@@ -564,7 +523,7 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
       create: { user_id: userId, shrine_id: id, last_prayed_at: new Date() }
     });
     // 取得した祭神IDをログ出力
-    console.log('shrine_dieties:', shrine.shrine_dieties);
+    //console.log('shrine_dieties:', shrine.shrine_dieties);
     const shrineStats = await prisma.shrinePrayStats.findFirst({ where: { shrine_id: id, user_id: userId } });
     if (shrineStats) {
       await prisma.shrinePrayStats.update({ where: { id: shrineStats.id }, data: { count: shrineStats.count + 1 } });
@@ -632,7 +591,7 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
     });
     
     // 新しい経験値システムで経験値を追加
-    const expResult = await addExperience(userId, EXP_REWARDS.PRAY);
+    const expResult = await addExperience(prisma, userId, EXP_REWARDS.PRAY);
     
     await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
     res.json({ 
@@ -708,7 +667,7 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
     });
     
     // 新しい経験値システムで経験値を追加
-    const expResult = await addExperience(userId, EXP_REWARDS.REMOTE_PRAY);
+    const expResult = await addExperience(prisma, userId, EXP_REWARDS.REMOTE_PRAY);
     
     await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
     res.json({ 
@@ -772,7 +731,7 @@ app.get('/dieties/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   
   // デバッグ用ログ
-  console.log('Diety ID parameter:', req.params.id, 'Parsed ID:', id);
+  //console.log('Diety ID parameter:', req.params.id, 'Parsed ID:', id);
   
   // IDが無効な値の場合はエラーを返す
   if (isNaN(id) || id <= 0) {
@@ -942,7 +901,7 @@ function authenticateJWT(req, res, next) {
     const userIdFromHeader = req.headers['x-user-id'];
     const userId = userIdFromHeader ? parseInt(userIdFromHeader, 10) : 3;
     req.user = { id: userId };
-    console.log('開発環境: 認証バイパス、ユーザーID:', req.user.id);
+    //console.log('開発環境: 認証バイパス、ユーザーID:', req.user.id);
     return next();
   }
   
@@ -1643,10 +1602,10 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
   const abilityId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   
-  console.log('能力獲得リクエスト:', { abilityId, userId });
+  //console.log('能力獲得リクエスト:', { abilityId, userId });
   
   if (isNaN(abilityId) || abilityId <= 0) {
-    console.log('無効な能力ID:', abilityId);
+    console.error('無効な能力ID:', abilityId);
     return res.status(400).json({ error: 'Invalid ability ID' });
   }
   
@@ -1656,13 +1615,13 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
       include: { prerequisite_ability: true }
     });
     if (!ability) {
-      console.log('能力が見つかりません:', abilityId);
+      console.error('能力が見つかりません:', abilityId);
       return res.status(404).json({ error: 'Ability not found' });
     }
     
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      console.log('ユーザーが見つかりません:', userId);
+      console.error('ユーザーが見つかりません:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
     
@@ -1672,7 +1631,7 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
         where: { user_id_ability_id: { user_id: userId, ability_id: ability.prerequisite_ability_id } }
       });
       if (!prerequisite) {
-        console.log('前提能力が未獲得:', { userId, prerequisiteAbilityId: ability.prerequisite_ability_id });
+        console.error('前提能力が未獲得:', { userId, prerequisiteAbilityId: ability.prerequisite_ability_id });
         return res.status(400).json({ error: 'Prerequisite ability not acquired' });
       }
     }
@@ -1683,22 +1642,22 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
     });
     
     if (existing) {
-      console.log('既に獲得済みの能力:', { userId, abilityId });
+      console.error('既に獲得済みの能力:', { userId, abilityId });
       return res.status(400).json({ error: 'Ability already acquired' });
     }
     
-    console.log('能力情報:', { 
-      userId: user.id, 
-      abilityPoints: user.ability_points, 
-      abilityCost: ability.cost
-    });
+    // console.log('能力情報:', { 
+    //   userId: user.id, 
+    //   abilityPoints: user.ability_points, 
+    //   abilityCost: ability.cost
+    // });
     
     if (user.ability_points < ability.cost) {
-      console.log('能力ポイント不足:', { current: user.ability_points, required: ability.cost });
+      console.error('能力ポイント不足:', { current: user.ability_points, required: ability.cost });
       return res.status(400).json({ error: 'Insufficient ability points' });
     }
     
-    console.log('能力獲得処理開始');
+    //console.log('能力獲得処理開始');
     
     // 新しい能力を獲得
     await prisma.$transaction(async (tx) => {
@@ -1718,7 +1677,7 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
       });
     });
     
-    console.log('能力獲得成功');
+    //console.log('能力獲得成功');
     res.json({ success: true, cost: ability.cost });
   } catch (err) {
     console.error('能力獲得エラー:', err);

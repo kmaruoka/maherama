@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { addExperience } from '../../../shared/dist/utils/expSystem';
 
 // 週番号を取得する関数
 function getWeekNumber(date: Date): number {
@@ -141,10 +142,7 @@ export async function awardRankingTitles(
       });
       
       // 経験値を付与
-      await prisma.user.update({
-        where: { id: topShrine.user.id },
-        data: { exp: { increment: titleMaster.exp_reward } }
-      });
+      await addExperience(prisma, topShrine.user.id, titleMaster.exp_reward);
       
       console.log(`🏆 神社ランキング1位: ${topShrine.user.name} が「${titleName}」を獲得 (${titleMaster.exp_reward}EXP)`);
     }
@@ -182,10 +180,7 @@ export async function awardRankingTitles(
       });
       
       // 経験値を付与
-      await prisma.user.update({
-        where: { id: topDiety.user.id },
-        data: { exp: { increment: titleMaster.exp_reward } }
-      });
+      await addExperience(prisma, topDiety.user.id, titleMaster.exp_reward);
       
       console.log(`🏆 神様ランキング1位: ${topDiety.user.name} が「${titleName}」を獲得 (${titleMaster.exp_reward}EXP)`);
     }

@@ -4,61 +4,10 @@ import {
   LEVEL_SYSTEM,
   calculateLevel,
   calculateRequiredExp,
-  addExperience as addExpShared,
   calculatePrayDistance,
   calculateWorshipCount
 } from '../../../shared';
 
-// 経験値を追加し、レベルアップをチェックする
-export async function addExperience(
-  prisma: PrismaClient,
-  userId: number,
-  expAmount: number
-): Promise<{ newLevel: number; levelUp: boolean; abilityPointsGained: number }> {
-  // トランザクションで経験値追加とレベルアップを処理
-  return await prisma.$transaction(async (tx) => {
-    // ユーザー情報を取得
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { id: true, level: true, exp: true, ability_points: true }
-    });
-
-    if (!user) {
-      throw new Error(`User not found: ${userId}`);
-    }
-
-    // 共有ライブラリで経験値計算
-    const expResult = addExpShared(user.exp, 'PRAY'); // デフォルトでPRAYを使用
-    
-    // レベルアップ時のAP獲得量をLevelMasterテーブルから取得
-    let abilityPointsGained = 0;
-    if (expResult.leveledUp) {
-      const levelMaster = await tx.levelMaster.findUnique({
-        where: { level: expResult.newLevel },
-        select: { ability_points: true }
-      });
-      if (levelMaster) {
-        abilityPointsGained = levelMaster.ability_points;
-      }
-    }
-    
-    // ユーザー情報を更新
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        exp: expResult.newExp,
-        level: expResult.newLevel,
-        ability_points: user.ability_points + abilityPointsGained
-      }
-    });
-
-    return {
-      newLevel: expResult.newLevel,
-      levelUp: expResult.leveledUp,
-      abilityPointsGained: abilityPointsGained
-    };
-  });
-}
 
 // ユーザーの現在の参拝距離を取得
 export async function getUserPrayDistance(

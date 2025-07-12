@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 import dotenv from 'dotenv';
 const { EARTH_RADIUS_METERS } = require('../../../shared/utils/distance');
+import { addExperience } from '../../../shared/dist/utils/expSystem';
 
 dotenv.config();
 
@@ -223,10 +224,7 @@ async function awardWeeklyRewards(
       const expReward = 100; // 週間は100EXP
       
       // 経験値を付与
-      await prisma.user.update({
-        where: { id: topShrine.user.id },
-        data: { exp: { increment: expReward } }
-      });
+      await addExperience(prisma, topShrine.user.id, expReward);
       
       console.log(`🏆 神社ランキング1位: ${topShrine.user.name} が週間報酬を獲得 (${expReward}EXP)`);
     }
@@ -237,10 +235,7 @@ async function awardWeeklyRewards(
       const expReward = 100; // 週間は100EXP
       
       // 経験値を付与
-      await prisma.user.update({
-        where: { id: topDiety.user.id },
-        data: { exp: { increment: expReward } }
-      });
+      await addExperience(prisma, topDiety.user.id, expReward);
       
       console.log(`🏆 神様ランキング1位: ${topDiety.user.name} が週間報酬を獲得 (${expReward}EXP)`);
     }
@@ -327,10 +322,7 @@ async function awardRankingTitles(
           }
         }
       });
-      await prisma.user.update({
-        where: { id: topShrine.user.id },
-        data: { exp: { increment: titleMaster.exp_reward } }
-      });
+      await addExperience(prisma, topShrine.user.id, titleMaster.exp_reward);
       console.log(`🏆 神社ランキング1位: ${topShrine.user.name} が「${titleName}」を獲得 (${titleMaster.exp_reward}EXP)`);
     }
     // 神様ごとに1位ユーザーを取得
@@ -389,10 +381,7 @@ async function awardRankingTitles(
           }
         }
       });
-      await prisma.user.update({
-        where: { id: topDiety.user.id },
-        data: { exp: { increment: titleMaster.exp_reward } }
-      });
+      await addExperience(prisma, topDiety.user.id, titleMaster.exp_reward);
       console.log(`🏆 神様ランキング1位: ${topDiety.user.name} が「${titleName}」を獲得 (${titleMaster.exp_reward}EXP)`);
     }
   } catch (error) {
@@ -535,16 +524,16 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   console.log('👥 フォロー関係をシミュレート中...');
   await simulateFollows(prisma);
 
-  // 図鑑データは実際のAPIが自動生成するので不要
-  console.log('📚 図鑑データは実際のAPIが自動生成します');
+  // 最終的なユーザーAP状況を確認
+  console.log('\n📊 最終的なユーザーAP状況:');
+  const finalUsers = await prisma.user.findMany({
+    select: { id: true, name: true, level: true, exp: true, ability_points: true },
+    orderBy: { id: 'asc' }
+  });
+  
+  for (const user of finalUsers) {
+    console.log(`[最終AP] ユーザー${user.id}(${user.name}): レベル${user.level}, EXP${user.exp}, AP${user.ability_points}`);
+  }
 
-  // 統計データは実際のAPIが自動生成するので不要
-  console.log('📊 統計データは実際のAPIが自動生成します');
-
-  console.log('✅ リアルなトランザクションデータの生成が完了しました！');
+  console.log('✅ トランザクションデータの生成が完了しました！');
 }
-
-// 統計データを再計算（実際のAPIが自動生成するので不要）
-async function recalculateStats(prisma: PrismaClient) {
-  console.log('📊 統計データは実際のAPIが自動生成します');
-} 

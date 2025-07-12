@@ -9,6 +9,7 @@
     "dev": "tsc --watch"
   },
   "devDependencies": {
+    "@prisma/client": "^6.11.1",
     "typescript": "^5.8.3"
   },
   "files": [
