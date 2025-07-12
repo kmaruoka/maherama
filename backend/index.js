@@ -571,6 +571,12 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
     }
     // --- 参拝ログ保存 ---
     await prisma.shrinePray.create({ data: { shrine_id: id, user_id: userId } });
+    // 図鑑（ShrineBook）も登録・最終参拝日時を更新
+    await prisma.shrineBook.upsert({
+      where: { user_id_shrine_id: { user_id: userId, shrine_id: id } },
+      update: { last_prayed_at: new Date() },
+      create: { user_id: userId, shrine_id: id, last_prayed_at: new Date() }
+    });
     // 取得した祭神IDをログ出力
     console.log('shrine_dieties:', shrine.shrine_dieties);
     const shrineStats = await prisma.shrinePrayStats.findFirst({ where: { shrine_id: id, user_id: userId } });
@@ -626,6 +632,12 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
       } else {
         await prisma.dietyPrayStatsWeekly.create({ data: { diety_id: dietyId, user_id: userId, count: 1, rank: 1 } });
       }
+      // DietyBookもupsertで最終参拝日時を更新
+      await prisma.dietyBook.upsert({
+        where: { user_id_diety_id: { user_id: userId, diety_id: sd.diety_id } },
+        update: { last_prayed_at: new Date() },
+        create: { user_id: userId, diety_id: sd.diety_id, last_prayed_at: new Date() }
+      });
     }
     // 更新後の総参拝数を取得
     const totalCount = await prisma.shrinePrayStats.aggregate({

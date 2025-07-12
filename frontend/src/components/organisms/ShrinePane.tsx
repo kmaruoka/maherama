@@ -3,7 +3,7 @@ import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
 import type { Period, RankingItem } from './RankingPane';
 import { useState, useEffect } from 'react';
-import ImageUploadModal from '../molecules/ImageUploadModal';
+import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import ImageVoteButton from '../atoms/ImageVoteButton';
 import { API_BASE } from '../../config/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,6 @@ import { getDistanceMeters } from '../../hooks/usePrayDistance';
 import { useWorshipLimit } from '../../hooks/usePrayDistance';
 import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import { CustomButton } from '../atoms/CustomButton';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {

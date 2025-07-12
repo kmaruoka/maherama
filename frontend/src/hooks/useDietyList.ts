@@ -6,6 +6,7 @@ export interface DietyListItem {
   name: string;
   count: number;
   registeredAt: string;
+  lastPrayedAt?: string;
 }
 
 
@@ -16,7 +17,12 @@ export default function useDietyList() {
     queryFn: async () => {
       const res = await apiCall(`${API_BASE}/users/me/dieties-visited`);
       if (!res.ok) throw new Error('Failed to fetch user dieties');
-      return res.json();
+      const data = await res.json();
+      // last_prayed_atをlastPrayedAtに変換
+      return data.map((item: any) => ({
+        ...item,
+        lastPrayedAt: item.last_prayed_at || undefined
+      }));
     },
   });
 }

@@ -4,12 +4,13 @@ import './CustomCatalogListItem.css';
 interface CustomCatalogListItemProps {
   name: string;
   count: number;
-  recordedDate?: string;
+  recordedDate: string;
+  lastPrayedAt?: string;
   onClick?: () => void;
   countLabel?: string;
 }
 
-export default function CustomCatalogListItem({ name, count, recordedDate, onClick, countLabel = '参拝数' }: CustomCatalogListItemProps) {
+export default function CustomCatalogListItem({ name, count, recordedDate, lastPrayedAt, onClick, countLabel = '参拝数' }: CustomCatalogListItemProps) {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -25,6 +26,9 @@ export default function CustomCatalogListItem({ name, count, recordedDate, onCli
       <div className="catalog-list-col catalog-list-date">
         {recordedDate && (
           <CustomText className="small text-muted">収録日: {formatDate(recordedDate)}</CustomText>
+        )}
+        {lastPrayedAt && (
+          <CustomText className="small text-muted">最終参拝: {formatDate(lastPrayedAt)}</CustomText>
         )}
       </div>
     </div>

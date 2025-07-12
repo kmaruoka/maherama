@@ -11,6 +11,7 @@ interface Item {
   name: string;
   count: number;
   registeredAt: string;
+  lastPrayedAt?: string;
 }
 
 export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
@@ -40,6 +41,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       name={item.name}
       count={item.count}
       registeredAt={item.registeredAt}
+      lastPrayedAt={item.lastPrayedAt}
       onClick={() => {
         if (tab === 'shrine' && onShowShrine) {
           setTimeout(() => onShowShrine(item.id), 0);
@@ -100,6 +102,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
               name={item.name}
               count={item.count}
               recordedDate={item.registeredAt}
+              lastPrayedAt={item.lastPrayedAt}
               onClick={() => {
                 if (tab === 'shrine' && onShowShrine) {
                   setTimeout(() => onShowShrine(item.id), 0);

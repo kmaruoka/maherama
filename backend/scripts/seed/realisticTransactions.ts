@@ -195,9 +195,15 @@ async function simulateRemotePray(prisma: PrismaClient, userId: number, shrineId
     }
 
     return true;
-  } catch (error) {
-    console.error(`遥拝シミュレーションエラー (User: ${userId}, Shrine: ${shrineId}):`, error);
-    return false;
+  } catch (error: any) {
+    // P2002（ユニーク制約違反）は無視、それ以外は画面に出す
+    if (error.code === 'P2002') {
+      // 重複はスルー
+      return false;
+    } else {
+      console.error(`遥拝シミュレーションエラー (User: ${userId}, Shrine: ${shrineId}):`, error);
+      return false;
+    }
   }
 }
 

@@ -254,6 +254,7 @@ model ShrineBook {
   shrine        Shrine   @relation(fields: [shrine_id], references: [id])
   shrine_id     Int
   registered_at DateTime @default(now())
+  last_prayed_at DateTime? // 追加
 
   @@id([user_id, shrine_id])
 }
@@ -264,6 +265,7 @@ model DietyBook {
   diety         Diety    @relation(fields: [diety_id], references: [id])
   diety_id      Int
   registered_at DateTime @default(now())
+  last_prayed_at DateTime? // 追加
 
   @@id([user_id, diety_id])
 }
