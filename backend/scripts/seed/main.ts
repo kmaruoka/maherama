@@ -13,16 +13,17 @@ import { seedShrineImage } from './shrineImage';
 const prisma = new PrismaClient();
 
 async function main() {
+  await seedLevel(prisma); // ←最初に呼ぶ
   const shrineIds = await seedShrine(prisma);
   await seedDiety(prisma);
   await seedShrineDiety(prisma, shrineIds);
   await seedUser(prisma);
-  await seedRealisticTransactions(prisma);
   await seedSubscription(prisma);
   await seedAbility(prisma);
   await seedTitle(prisma);
-  await seedLevel(prisma);
   await seedShrineImage(prisma);
+  // 全マスターデータが揃った後にトランザクションデータを生成
+  await seedRealisticTransactions(prisma);
   console.log("✅ Seeding completed.");
 }
 

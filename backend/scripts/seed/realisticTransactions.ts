@@ -1,4 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const API_PORT = process.env.PORT || '3000';
 
 // ========================================
 // 設定（ここを変更してシミュレーションを調整）
@@ -13,13 +19,13 @@ const MAX_PRAYS_PER_DAY = 5; // 1日あたりの最大参拝回数
 const USER_ACTIVITY_LEVELS = {
   1: { maxLevel: 1, startDate: START_DATE }, // 開始直後で停止（初心者）
   2: { maxLevel: 10, startDate: new Date(START_DATE.getTime() + 30 * 24 * 60 * 60 * 1000) }, // 30日後に開始、レベル10で停止
-  3: { maxLevel: 30, startDate: new Date(START_DATE.getTime() + 60 * 24 * 60 * 60 * 1000) }, // 60日後に開始、レベル30で停止
-  4: { maxLevel: 50, startDate: new Date(START_DATE.getTime() + 90 * 24 * 60 * 60 * 1000) }, // 90日後に開始、レベル50で停止
-  5: { maxLevel: 70, startDate: new Date(START_DATE.getTime() + 120 * 24 * 60 * 60 * 1000) }, // 120日後に開始、レベル70で停止
-  6: { maxLevel: 90, startDate: new Date(START_DATE.getTime() + 150 * 24 * 60 * 60 * 1000) }, // 150日後に開始、レベル90で停止
-  7: { maxLevel: 100, startDate: new Date(START_DATE.getTime() + 180 * 24 * 60 * 60 * 1000) }, // 180日後に開始、レベル100で停止
-  8: { maxLevel: 100, startDate: new Date(START_DATE.getTime() + 210 * 24 * 60 * 60 * 1000) }, // 210日後に開始、レベル100で停止
-  9: { maxLevel: 100, startDate: new Date(START_DATE.getTime() + 240 * 24 * 60 * 60 * 1000) }, // 240日後に開始、レベル100で停止
+  3: { maxLevel: 20, startDate: new Date(START_DATE.getTime() + 60 * 24 * 60 * 60 * 1000) }, // 60日後に開始、レベル20で停止
+  4: { maxLevel: 30, startDate: new Date(START_DATE.getTime() + 90 * 24 * 60 * 60 * 1000) }, // 90日後に開始、レベル30で停止
+  5: { maxLevel: 40, startDate: new Date(START_DATE.getTime() + 120 * 24 * 60 * 60 * 1000) }, // 120日後に開始、レベル40で停止
+  6: { maxLevel: 50, startDate: new Date(START_DATE.getTime() + 150 * 24 * 60 * 60 * 1000) }, // 150日後に開始、レベル50で停止
+  7: { maxLevel: 60, startDate: new Date(START_DATE.getTime() + 180 * 24 * 60 * 60 * 1000) }, // 180日後に開始、レベル60で停止
+  8: { maxLevel: 70, startDate: new Date(START_DATE.getTime() + 210 * 24 * 60 * 60 * 1000) }, // 210日後に開始、レベル70で停止
+  9: { maxLevel: 80, startDate: new Date(START_DATE.getTime() + 240 * 24 * 60 * 60 * 1000) }, // 240日後に開始、レベル80で停止
   10: { maxLevel: 100, startDate: new Date(START_DATE.getTime() + 270 * 24 * 60 * 60 * 1000) }, // 270日後に開始、レベル100で停止
 };
 
@@ -51,157 +57,70 @@ function calculateLevel(exp: number): number {
   return level - 1;
 }
 
-// 参拝APIをシミュレート
+// 参拝APIをシミュレート（実際のAPIを呼び出し）
 async function simulatePray(prisma: PrismaClient, userId: number, shrineId: number, prayDate: Date) {
   try {
-    // 参拝記録を作成
-    await prisma.shrinePray.create({
-      data: {
-        shrine_id: shrineId,
-        user_id: userId,
-        time: prayDate
+    // 神社の位置情報を取得
+    const shrine = await prisma.shrine.findUnique({
+      where: { id: shrineId },
+      select: { lat: true, lng: true }
+    });
+
+    if (!shrine) {
+      console.error(`神社が見つかりません: ${shrineId}`);
+      return false;
+    }
+
+    // 実際の参拝APIを呼び出し
+    const response = await axios.post(`http://localhost:${API_PORT}/shrines/${shrineId}/pray`, {
+      lat: shrine.lat,
+      lng: shrine.lng
+    }, {
+      headers: {
+        'x-user-id': userId.toString()
       }
     });
 
-    // 統計を更新
-    const existingStats = await prisma.shrinePrayStats.findFirst({
-      where: { shrine_id: shrineId, user_id: userId }
-    });
-
-    if (existingStats) {
-      await prisma.shrinePrayStats.update({
-        where: { id: existingStats.id },
-        data: { count: existingStats.count + 1 }
-      });
+    if (response.status === 200) {
+      console.log(`✅ 参拝成功: ユーザー${userId}が神社${shrineId}を参拝`);
+      return true;
     } else {
-      await prisma.shrinePrayStats.create({
-        data: {
-          shrine_id: shrineId,
-          user_id: userId,
-          count: 1,
-          rank: 1
-        }
-      });
+      console.error(`❌ 参拝失敗: ユーザー${userId}が神社${shrineId}を参拝 - ${response.status}`);
+      return false;
     }
-
-    // ユーザーの経験値を更新
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (user) {
-      const newExp = user.exp + 10; // 参拝で10経験値
-      const newLevel = calculateLevel(newExp);
-      
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          exp: newExp,
-          level: newLevel,
-          ability_points: user.ability_points + (newLevel > user.level ? 10 : 0) // レベルアップ時に10ポイント追加
-        }
-      });
-    }
-
-    // ログを追加
-    const shrine = await prisma.shrine.findUnique({
-      where: { id: shrineId },
-      select: { name: true }
-    });
-
-    if (shrine) {
-      await prisma.log.create({
-        data: {
-          message: `<user:${userId}:${user?.name || 'Unknown'}>が<shrine:${shrineId}:${shrine.name}>を参拝しました`,
-          type: 'normal',
-          time: prayDate
-        }
-      });
-    }
-
-    return true;
   } catch (error) {
     console.error(`参拝シミュレーションエラー (User: ${userId}, Shrine: ${shrineId}):`, error);
     return false;
   }
 }
 
-// 遥拝APIをシミュレート
+// 遥拝APIをシミュレート（実際のAPIを呼び出し）
 async function simulateRemotePray(prisma: PrismaClient, userId: number, shrineId: number, prayDate: Date) {
   try {
-    // 遥拝記録を作成
-    await prisma.remotePray.create({
-      data: {
-        shrine_id: shrineId,
-        user_id: userId,
-        prayed_at: prayDate
+    // 実際の遥拝APIを呼び出し
+    const response = await axios.post(`http://localhost:${API_PORT}/shrines/${shrineId}/remote-pray`, {}, {
+      headers: {
+        'x-user-id': userId.toString()
       }
     });
 
-    // 統計を更新（参拝と同じ）
-    const existingStats = await prisma.shrinePrayStats.findFirst({
-      where: { shrine_id: shrineId, user_id: userId }
-    });
-
-    if (existingStats) {
-      await prisma.shrinePrayStats.update({
-        where: { id: existingStats.id },
-        data: { count: existingStats.count + 1 }
-      });
+    if (response.status === 200) {
+      console.log(`✅ 遥拝成功: ユーザー${userId}が神社${shrineId}を遥拝`);
+      return true;
     } else {
-      await prisma.shrinePrayStats.create({
-        data: {
-          shrine_id: shrineId,
-          user_id: userId,
-          count: 1,
-          rank: 1
-        }
-      });
+      console.error(`❌ 遥拝失敗: ユーザー${userId}が神社${shrineId}を遥拝 - ${response.status}`);
+      return false;
     }
-
-    // ユーザーの経験値を更新
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (user) {
-      const newExp = user.exp + 10; // 遥拝でも10経験値
-      const newLevel = calculateLevel(newExp);
-      
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          exp: newExp,
-          level: newLevel,
-          ability_points: user.ability_points + (newLevel > user.level ? 10 : 0)
-        }
-      });
-    }
-
-    // ログを追加
-    const shrine = await prisma.shrine.findUnique({
-      where: { id: shrineId },
-      select: { name: true }
-    });
-
-    if (shrine) {
-      await prisma.log.create({
-        data: {
-          message: `<user:${userId}:${user?.name || 'Unknown'}>が<shrine:${shrineId}:${shrine.name}>を遥拝しました`,
-          type: 'normal',
-          time: prayDate
-        }
-      });
-    }
-
-    return true;
   } catch (error: any) {
-    // P2002（ユニーク制約違反）は無視、それ以外は画面に出す
-    if (error.code === 'P2002') {
-      // 重複はスルー
+    // 遥拝回数制限エラーは正常な動作
+    if (error.response && error.response.status === 400 && error.response.data.error && error.response.data.error.includes('遥拝は1日に')) {
+      console.log(`ℹ️ 遥拝制限: ユーザー${userId}の遥拝回数制限に達しました`);
       return false;
     } else {
       console.error(`遥拝シミュレーションエラー (User: ${userId}, Shrine: ${shrineId}):`, error);
+      if (error.response) {
+        console.error(`レスポンス詳細: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      }
       return false;
     }
   }
@@ -238,52 +157,9 @@ async function simulateFollows(prisma: PrismaClient) {
   }
 }
 
-// 図鑑データをシミュレート
+// 図鑑データをシミュレート（実際のAPIが自動生成するので不要）
 async function simulateZukan(prisma: PrismaClient) {
-  // 各ユーザーが参拝した神社を図鑑に追加
-  const shrinePrays = await prisma.shrinePray.findMany({
-    select: { user_id: true, shrine_id: true }
-  });
-
-  for (const pray of shrinePrays) {
-    await prisma.shrineBook.upsert({
-      where: {
-        user_id_shrine_id: {
-          user_id: pray.user_id,
-          shrine_id: pray.shrine_id
-        }
-      },
-      update: {},
-      create: {
-        user_id: pray.user_id,
-        shrine_id: pray.shrine_id
-      }
-    });
-  }
-
-  // 神様の図鑑も追加（簡易版）
-  const users = await prisma.user.findMany({ select: { id: true } });
-  const dieties = await prisma.diety.findMany({ select: { id: true } });
-
-  for (const user of users) {
-    for (const diety of dieties) {
-      if (Math.random() < 0.3) { // 30%の確率で図鑑に追加
-        await prisma.dietyBook.upsert({
-          where: {
-            user_id_diety_id: {
-              user_id: user.id,
-              diety_id: diety.id
-            }
-          },
-          update: {},
-          create: {
-            user_id: user.id,
-            diety_id: diety.id
-          }
-        });
-      }
-    }
-  }
+  console.log('📚 図鑑データは実際のAPIが自動生成します');
 }
 
 export async function seedRealisticTransactions(prisma: PrismaClient) {
@@ -292,6 +168,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   // 既存のトランザクションデータをクリア
   await prisma.shrinePray.deleteMany();
   await prisma.remotePray.deleteMany();
+  await prisma.dietyPray.deleteMany();
   await prisma.shrinePrayStats.deleteMany();
   await prisma.shrinePrayStatsYearly.deleteMany();
   await prisma.shrinePrayStatsMonthly.deleteMany();
@@ -304,6 +181,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   await prisma.shrineBook.deleteMany();
   await prisma.dietyBook.deleteMany();
   await prisma.log.deleteMany();
+  await prisma.abilityLog.deleteMany();
 
   // 神社の位置情報とIDを取得
   const shrinePositions = await getShrinePositions(prisma);
@@ -322,25 +200,17 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
     
     for (const [userId, activity] of Object.entries(USER_ACTIVITY_LEVELS)) {
       const userIdNum = parseInt(userId);
-      
-      // ユーザーの開始日をチェック
-      if (currentDate < activity.startDate) {
-        continue;
-      }
-
-      // ユーザーの現在レベルを取得
-      const user = await prisma.user.findUnique({
-        where: { id: userIdNum }
-      });
-
-      if (!user || user.level >= activity.maxLevel) {
-        continue;
-      }
+      if (currentDate < activity.startDate) continue;
 
       // その日の参拝回数を決定
       const dailyPrayCount = Math.floor(Math.random() * MAX_PRAYS_PER_DAY) + 1;
-      
       for (let i = 0; i < dailyPrayCount; i++) {
+        // 参拝・遥拝ごとに毎回レベルを取得
+        const user = await prisma.user.findUnique({
+          where: { id: userIdNum }
+        });
+        if (!user || user.level >= activity.maxLevel) break; // その日の残りもスキップ
+
         // 参拝するか遥拝するかを決定
         const isRemotePray = Math.random() < REMOTE_PRAY_PROBABILITY;
         const prayProbability = isRemotePray ? REMOTE_PRAY_PROBABILITY : PRAY_PROBABILITY;
@@ -348,11 +218,9 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
         if (Math.random() < prayProbability) {
           // ランダムに神社を選択
           const shrineId = shrineIds[Math.floor(Math.random() * shrineIds.length)];
-          
           // 参拝時刻をランダムに設定（その日の9時〜18時の間）
           const prayTime = new Date(currentDate);
           prayTime.setHours(9 + Math.floor(Math.random() * 9), Math.floor(Math.random() * 60), Math.floor(Math.random() * 60));
-          
           if (isRemotePray) {
             await simulateRemotePray(prisma, userIdNum, shrineId, prayTime);
           } else {
@@ -361,7 +229,6 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
         }
       }
     }
-    
     // 次の日へ
     currentDate.setDate(currentDate.getDate() + 1);
   }
@@ -370,144 +237,16 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   console.log('👥 フォロー関係をシミュレート中...');
   await simulateFollows(prisma);
 
-  // 図鑑データをシミュレート
-  console.log('📚 図鑑データをシミュレート中...');
-  await simulateZukan(prisma);
+  // 図鑑データは実際のAPIが自動生成するので不要
+  console.log('📚 図鑑データは実際のAPIが自動生成します');
 
-  // 統計データを再計算
-  console.log('📊 統計データを再計算中...');
-  await recalculateStats(prisma);
+  // 統計データは実際のAPIが自動生成するので不要
+  console.log('📊 統計データは実際のAPIが自動生成します');
 
   console.log('✅ リアルなトランザクションデータの生成が完了しました！');
 }
 
-// 統計データを再計算
+// 統計データを再計算（実際のAPIが自動生成するので不要）
 async function recalculateStats(prisma: PrismaClient) {
-  // 通算統計を再計算
-  const shrinePrays = await prisma.shrinePray.groupBy({
-    by: ['shrine_id', 'user_id'],
-    _count: { shrine_id: true }
-  });
-
-  for (const pray of shrinePrays) {
-    await prisma.shrinePrayStats.upsert({
-      where: {
-        shrine_id_user_id: {
-          shrine_id: pray.shrine_id,
-          user_id: pray.user_id
-        }
-      },
-      update: { count: pray._count.shrine_id || 0 },
-      create: {
-        shrine_id: pray.shrine_id,
-        user_id: pray.user_id,
-        count: pray._count.shrine_id || 0,
-        rank: 1
-      }
-    });
-  }
-
-  // 年別統計を再計算（簡易版）
-  const currentYear = new Date().getFullYear();
-  const yearStart = new Date(currentYear, 0, 1);
-  const yearEnd = new Date(currentYear + 1, 0, 1);
-
-  const yearlyPrays = await prisma.shrinePray.groupBy({
-    by: ['shrine_id', 'user_id'],
-    where: {
-      time: {
-        gte: yearStart,
-        lt: yearEnd
-      }
-    },
-    _count: { shrine_id: true }
-  });
-
-  for (const pray of yearlyPrays) {
-    await prisma.shrinePrayStatsYearly.upsert({
-      where: {
-        shrine_id_user_id: {
-          shrine_id: pray.shrine_id,
-          user_id: pray.user_id
-        }
-      },
-      update: { count: pray._count.shrine_id || 0 },
-      create: {
-        shrine_id: pray.shrine_id,
-        user_id: pray.user_id,
-        count: pray._count.shrine_id || 0,
-        rank: 1
-      }
-    });
-  }
-
-  // 月別統計を再計算（簡易版）
-  const currentMonth = new Date().getMonth();
-  const monthStart = new Date(currentYear, currentMonth, 1);
-  const monthEnd = new Date(currentYear, currentMonth + 1, 1);
-
-  const monthlyPrays = await prisma.shrinePray.groupBy({
-    by: ['shrine_id', 'user_id'],
-    where: {
-      time: {
-        gte: monthStart,
-        lt: monthEnd
-      }
-    },
-    _count: { shrine_id: true }
-  });
-
-  for (const pray of monthlyPrays) {
-    await prisma.shrinePrayStatsMonthly.upsert({
-      where: {
-        shrine_id_user_id: {
-          shrine_id: pray.shrine_id,
-          user_id: pray.user_id
-        }
-      },
-      update: { count: pray._count.shrine_id || 0 },
-      create: {
-        shrine_id: pray.shrine_id,
-        user_id: pray.user_id,
-        count: pray._count.shrine_id || 0,
-        rank: 1
-      }
-    });
-  }
-
-  // 週別統計を再計算（簡易版）
-  const currentWeek = new Date();
-  currentWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
-  currentWeek.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(currentWeek);
-  weekEnd.setDate(weekEnd.getDate() + 7);
-
-  const weeklyPrays = await prisma.shrinePray.groupBy({
-    by: ['shrine_id', 'user_id'],
-    where: {
-      time: {
-        gte: currentWeek,
-        lt: weekEnd
-      }
-    },
-    _count: { shrine_id: true }
-  });
-
-  for (const pray of weeklyPrays) {
-    await prisma.shrinePrayStatsWeekly.upsert({
-      where: {
-        shrine_id_user_id: {
-          shrine_id: pray.shrine_id,
-          user_id: pray.user_id
-        }
-      },
-      update: { count: pray._count.shrine_id || 0 },
-      create: {
-        shrine_id: pray.shrine_id,
-        user_id: pray.user_id,
-        count: pray._count.shrine_id || 0,
-        rank: 1
-      }
-    });
-  }
+  console.log('📊 統計データは実際のAPIが自動生成します');
 } 

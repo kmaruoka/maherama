@@ -84,6 +84,8 @@ const USER_ACTIVITY_LEVELS = {
    - `ShrinePray`テーブル: 実際の参拝記録
    - `RemotePray`テーブル: 遥拝記録
    - 経験値とレベルアップも自動計算
+   - **同じ神社に何度でも遥拝できます（ユニーク制約なし）**
+   - 1日の遥拝回数はレベルや能力解放で決まります（API側で制御）
 
 2. **統計データ**
    - `ShrinePrayStats`: 通算統計
@@ -121,6 +123,21 @@ const USER_ACTIVITY_LEVELS = {
 - マスターデータ（神社・神様・ユーザー）は事前にseedされている必要があります
 - 大量のデータを生成するため、実行には時間がかかります
 - 設定を変更した場合は、再度seedを実行してください
+
+## 推奨リセット・シード手順（PowerShell例）
+
+```powershell
+# backend
+cd C:\repos\github\kmaruoka\maherama\backend
+npx prisma migrate reset --force --skip-seed
+Start-Process powershell -ArgumentList "cd C:\repos\github\kmaruoka\maherama\backend; npm start"
+Start-Sleep -Seconds 3
+npx prisma db seed
+
+# frontend
+cd C:\repos\github\kmaruoka\maherama\frontend
+npm run dev
+```
 
 ## トラブルシューティング
 

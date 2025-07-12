@@ -276,7 +276,7 @@ model RemotePray {
   shrine_id Int
   prayed_at DateTime @default(now())
 
-  @@unique([user_id, shrine_id])
+  // @@unique([user_id, shrine_id]) を削除
 }
 
 model UserSubscription {

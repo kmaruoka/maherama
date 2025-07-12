@@ -68,6 +68,7 @@ async function addExperience(userId, expAmount) {
     });
 
     if (!currentLevelMaster) {
+      console.error(`Level master not found for level: ${user.level}, user: ${userId}`);
       throw new Error(`Level master not found for level: ${user.level}`);
     }
 
@@ -731,7 +732,13 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
     });
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
-    res.status(500).json({ error: 'DB error' });
+    console.error('Error details:', {
+      userId: parseInt(req.headers['x-user-id']) || 1,
+      shrineId: id,
+      error: err.message,
+      stack: err.stack
+    });
+    res.status(500).json({ error: 'DB error', details: err.message });
   }
 });
 
