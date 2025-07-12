@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import CustomLogLine, { type LogItem } from '../molecules/CustomLogLine';
 import { useSkin } from '../../skins/SkinContext';
 
@@ -25,6 +25,12 @@ function hexToRgba(hex: string, alpha: number) {
 export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser, debugLogs }: LogPaneProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { skin } = useSkin();
+  const expandedRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isExpanded && expandedRef.current) {
+      expandedRef.current.scrollTop = expandedRef.current.scrollHeight;
+    }
+  }, [isExpanded, logs]);
 
   const handlePaneClick = (e: React.MouseEvent) => {
     // リンクやボタンがクリックされた場合は拡大・縮小しない
@@ -50,11 +56,9 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         className={`log-pane log-pane-collapsed`}
         onClick={handlePaneClick}
         style={{
-          cursor: 'pointer',
-          paddingBottom: '2.5rem',
-          position: 'relative',
           background: getLogPaneBg(),
           color: skin.colors.logText,
+          cursor: 'pointer',
         }}
       >
         {debugLogs && debugLogs.length > 0 && (
@@ -69,9 +73,9 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         {logs.length === 0 && !loading && !error && (
           <div className="px-2 py-1 text-secondary">ログがありません</div>
         )}
-        {logs.slice(0, 1).map((l, i) => (
-          <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
-        ))}
+        {logs.length > 0 && (
+          <CustomLogLine log={logs[0]} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
+        )}
       </div>
     );
   }
@@ -82,13 +86,9 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)' }} onClick={() => setIsExpanded(false)} />
       <div
         className={`log-pane log-pane-expanded`}
+        ref={expandedRef}
         style={{
           cursor: 'pointer',
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: '3rem',
-          zIndex: 10000,
           background: getLogPaneBg(),
           color: skin.colors.logText,
         }}
@@ -105,7 +105,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
           <div className="px-2 py-1 text-secondary">ログがありません</div>)}
-        {logs.map((l, i) => (
+        {logs.slice().reverse().map((l, i) => (
           <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
         ))}
       </div>

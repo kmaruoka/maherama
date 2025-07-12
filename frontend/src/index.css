@@ -40,7 +40,7 @@ html, body {
 
 .log-pane {
   position: fixed;
-  bottom: 3rem;
+  bottom: 56px;
   left: 0;
   right: 0;
   max-height: 12rem;
@@ -48,7 +48,7 @@ html, body {
   background-color: var(--color-surface);
   color: var(--color-text);
   font-size: 0.875rem;
-  z-index: 9999;
+  z-index: 800;
   border-top: 1px solid var(--color-border);
   transition: max-height 0.3s ease;
 }
