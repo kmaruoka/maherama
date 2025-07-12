@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { EARTH_RADIUS_METERS, addMetersToLng } from '../../../shared/utils/distance';
 
 export interface MapCenterPixelGeometry {
   x: number;
@@ -17,9 +18,7 @@ export default function useMapCenterPixelGeometry(radius: number): MapCenterPixe
     const center = map.getCenter();
     const point = map.latLngToContainerPoint(center);
     // 東方向にradiusメートル離れた緯度経度を計算
-    const R = 6378137; // 地球半径[m]
-    const dLng = (radius / (R * Math.cos((center.lat * Math.PI) / 180))) * (180 / Math.PI);
-    const edge = { lat: center.lat, lng: center.lng + dLng };
+    const edge = { lat: center.lat, lng: addMetersToLng(center.lat, center.lng, radius) };
     const edgePoint = map.latLngToContainerPoint(edge);
     const pixelRadius = Math.abs(edgePoint.x - point.x);
     setGeom({ x: point.x, y: point.y, pixelRadius });

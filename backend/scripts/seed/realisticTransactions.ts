@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
 import dotenv from 'dotenv';
+const { EARTH_RADIUS_METERS } = require('../../../shared/utils/distance');
 
 dotenv.config();
 
@@ -123,7 +124,7 @@ async function simulateRemotePray(prisma: PrismaClient, userId: number, shrineId
 
 // 距離計算（Haversine公式）
 function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000;
+  const R = EARTH_RADIUS_METERS;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
   const a =

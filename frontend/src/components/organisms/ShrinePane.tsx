@@ -232,7 +232,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
   useEffect(() => {
     if (currentPosition && data) {
       const d = getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng);
-      debugLog(`[DEBUG] 神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${d.toFixed(2)}m (typeof: ${typeof d}) | 半径: ${radius}m (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
+      debugLog(`神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${d.toFixed(2)}m (typeof: ${typeof d}) | 半径: ${radius}m (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
     }
   }, [currentPosition, data, radius, canPray, debugMode, debugLog]);
 

@@ -4,6 +4,11 @@ export interface Coordinates {
   lng: number;
 }
 
+// 地球の半径（メートル）
+export const EARTH_RADIUS_METERS = 6371000;
+// 地球の円周（メートル）
+export const EARTH_CIRCUMFERENCE_METERS = 2 * Math.PI * EARTH_RADIUS_METERS;
+
 /**
  * 2点間の距離を計算（メートル単位）
  * Haversine formulaを使用
@@ -12,7 +17,7 @@ export function calculateDistance(
   point1: Coordinates,
   point2: Coordinates
 ): number {
-  const R = 6371000; // 地球の半径（メートル）
+  const R = EARTH_RADIUS_METERS; // 地球の半径（メートル）
   const dLat = toRadians(point2.lat - point1.lat);
   const dLng = toRadians(point2.lng - point1.lng);
   
@@ -69,4 +74,11 @@ export function calculateWorshipCount(
   
   // 基本回数 + レベルによる増加 + 能力による増加 + サブスクリプション効果
   return BASE_WORSHIP_COUNT + Math.floor(level / 10) + worshipAbility + subscriptionBoost;
+} 
+
+/**
+ * 指定した緯度・経度から、東方向に指定距離（メートル）だけ移動した経度を返す
+ */
+export function addMetersToLng(lat: number, lng: number, meters: number): number {
+  return lng + (meters / (EARTH_RADIUS_METERS * Math.cos(lat * Math.PI / 180))) * (180 / Math.PI);
 } 
