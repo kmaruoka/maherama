@@ -1,35 +1,79 @@
 import { PrismaClient } from '@prisma/client';
-import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// OpenCage APIで住所から座標を取得
-async function geocode(location: string): Promise<{ lat: number; lng: number }> {
-  const res = await axios.get('https://api.opencagedata.com/geocode/v1/json', {
-    params: {
-      key: 'bb9388bfa20f4f7c80c37c54d8627615',
-      q: location,
-      language: 'ja',
-    },
-  });
-  const result = res.data.results[0];
-  if (!result) throw new Error(`住所に対する座標が見つかりません: ${location}`);
-  return {
-    lat: result.geometry.lat,
-    lng: result.geometry.lng,
+interface GeoJSONFeature {
+  type: string;
+  properties: {
+    '@id'?: string;
+    amenity?: string;
+    name?: string;
+    religion?: string;
+    'name:ja'?: string;
+    'name:ja_kana'?: string;
+    [key: string]: any;
   };
+  geometry: {
+    type: string;
+    coordinates: [number, number];
+  };
+  id: string;
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+interface GeoJSONData {
+  type: string;
+  features: GeoJSONFeature[];
+}
+
+function buildAddress(props: any): string {
+  // addr:province, addr:city, addr:quarter, addr:block_number, addr:postcode
+  const parts = [
+    props['addr:province'] || '',
+    props['addr:city'] || '',
+    props['addr:quarter'] || '',
+    props['addr:block_number'] || ''
+  ];
+  // 空文字を除外して連結
+  const address = parts.filter(Boolean).join('');
+  return address;
+}
 
 export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
-  const shrines = [
-    { name: '天村雲神社', kana: 'あめのむらくもじんじゃ', location: '徳島県吉野川市山川町村雲１３３', lat: 34.067, lng: 134.283 },
-    { name: '蜂須神社', kana: 'はちすじんじゃ', location: '徳島県鳴門市大麻町板東牛ノ宮東１８', lat: 34.123, lng: 134.567 },
-    { name: '子浦神社', kana: 'こうらじんじゃ', location: '静岡県賀茂郡南伊豆町子浦１０００', lat: 34.567, lng: 138.765 },
-    { name: '綱敷天神社御旅社', kana: 'つなしきてんじんしゃおたびしゃ', location: '大阪府大阪市北区梅田３丁目１−１', lat: 34.702485, lng: 135.495951 },
-    { name: '露天神社', kana: 'つゆのてんじんじゃ', location: '大阪府大阪市北区曽根崎２丁目５−４', lat: 34.699731, lng: 135.501180 },
-    { name: '大阪天満宮', kana: 'おおさかてんまんぐう', location: '大阪府大阪市北区天神橋２丁目１−８', lat: 34.698056, lng: 135.515000 },
-  ];
-  const result = await prisma.shrine.createMany({ data: shrines, skipDuplicates: true });
+  // shrines.jsonファイルを読み込み
+  const jsonPath = path.join(__dirname, 'shrines.json');
+  const jsonData = fs.readFileSync(jsonPath, 'utf-8');
+  const geoJsonData: GeoJSONData = JSON.parse(jsonData);
+
+  // 神社データを変換
+  const shrines = geoJsonData.features
+    .filter(feature => 
+      feature.properties.amenity === 'place_of_worship' && 
+      feature.properties.religion === 'shinto' &&
+      feature.properties.name // 名前があるもののみ
+    )
+    .map(feature => {
+      const [lng, lat] = feature.geometry.coordinates;
+      const location = buildAddress(feature.properties);
+      return {
+        name: feature.properties.name || feature.properties['name:ja'] || '無名神社',
+        kana: feature.properties['name:ja_kana'] || '',
+        location: location,
+        lat: lat,
+        lng: lng,
+      };
+    })
+    .filter(shrine => shrine.name !== '無名神社'); // 名前がない神社は除外
+
+  console.log(`Found ${shrines.length} shrines from JSON data`);
+
+  // データベースに挿入
+  const result = await prisma.shrine.createMany({ 
+    data: shrines, 
+    skipDuplicates: true 
+  });
+
+  console.log(`Inserted ${result.count} shrines`);
+
   const allShrines = await prisma.shrine.findMany({ select: { id: true } });
   return allShrines.map(s => s.id);
 }

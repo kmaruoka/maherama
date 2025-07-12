@@ -124,9 +124,10 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
   const isUnprayable = !isPrayDistanceLoading && prayDistance !== null && distance !== null && !canPray;
   const isRemoteUnavailable = markerStatus ? (markerStatus.today_remote_pray_count > 0 || !markerStatus.can_remote_pray) : false;
 
-  if (currentPosition && !isPrayDistanceLoading && markerStatus) {
-    debugLog(`[DEBUG] マーカー状態: ${shrine.name} | 距離: ${distance?.toFixed(2)}m | API参拝可能距離: ${prayDistance}m | 参拝可能: ${canPray} | 図鑑収録: ${isInZukan} | 遥拝可能: ${isRemotePrayable}`);
-  }
+  // // 参拝距離取得・判定に関する重要な調査用ログだけ直接console.logで出力
+  // if (currentPosition && !isPrayDistanceLoading && markerStatus) {
+  //   console.log(`[調査] マーカー状態: ${shrine.name} | 距離: ${distance?.toFixed(2)}m | API参拝可能距離: ${prayDistance}m | 参拝可能: ${canPray} | 図鑑収録: ${isInZukan} | 遥拝可能: ${isRemotePrayable}`);
+  // }
 
   return (
     <Marker
@@ -142,7 +143,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
       eventHandlers={{
         click: () => {
           if (currentPosition) {
-            debugLog(`[DEBUG] 神社クリック: ${shrine.name} | 神社座標: [${shrine.lat}, ${shrine.lng}] | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 距離: ${distance?.toFixed(2)}m | 参拝可能距離: ${prayDistance}m | 図鑑収録: ${isInZukan} | 参拝可能: ${canPray} | 遥拝可能: ${isRemotePrayable}`);
+            debugLog(`神社クリック: ${shrine.name} | 神社座標: [${shrine.lat}, ${shrine.lng}] | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 距離: ${distance?.toFixed(2)}m | 参拝可能距離: ${prayDistance}m | 図鑑収録: ${isInZukan} | 参拝可能: ${canPray} | 遥拝可能: ${isRemotePrayable}`);
           }
           onShowShrine(shrine.id);
         },

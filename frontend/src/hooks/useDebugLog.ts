@@ -19,5 +19,10 @@ export function addDebugLog(msg: string) {
 }
 
 export default function useDebugLog() {
-  return useCallback((msg: string) => addDebugLog(msg), []);
+  return useCallback((msg: string) => {
+    const now = new Date();
+    const ms = now.getMilliseconds().toString().padStart(3, '0');
+    const timestamp = `${now.toISOString()}.${ms}`;
+    console.log(`%c[DEBUG] [${timestamp}] ${msg}`, 'color: #1976d2; font-weight: bold;');
+  }, []);
 } 

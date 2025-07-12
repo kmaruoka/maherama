@@ -1,4 +1,4 @@
-console.log('import.meta.env', import.meta.env);
+import useDebugLog from '../hooks/useDebugLog';
 
 // API_BASEの設定
 const getApiBase = () => {
@@ -37,8 +37,7 @@ export async function apiCall(url: string, options: RequestInit = {}): Promise<R
   // 認証ヘッダーを追加（デフォルト値があるため常に追加）
   headers['x-user-id'] = String(userId);
 
-  // デバッグログ
-  console.log('API Call:', url, 'User ID:', userId, 'Headers:', headers);
+  // debugLog(`API Call: ${url} User ID: ${userId} Headers: ${JSON.stringify(headers)}`); // ← linterエラー回避のためコメントアウト
 
   const response = await fetch(url, {
     ...options,

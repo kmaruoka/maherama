@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { MapContainer, TileLayer, Marker, Pane } from 'react-leaflet';
@@ -16,6 +16,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { useBarrier } from '../../barriers/BarrierContext';
 import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
 import { useQueryClient } from '@tanstack/react-query';
+import { getDistanceMeters } from '../../hooks/usePrayDistance';
 
 
 
@@ -168,7 +169,16 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     }
   }, [center, position, debugMode, debugLog]);
 
-  const centerArray: [number, number] = debugMode ? center : (position || defaultCenter);
+  // center: 現在地 or デバッグ中心
+  const centerArray = debugMode ? center : (position || defaultCenter);
+
+  // 参拝半径10倍以内の神社だけ表示
+  const filteredShrines = useMemo(() => {
+    if (!centerArray || !prayDistance) return shrines;
+    return shrines.filter(s =>
+      getDistanceMeters(centerArray[0], centerArray[1], s.lat, s.lng) <= prayDistance * 10
+    );
+  }, [shrines, centerArray, prayDistance]);
 
   return (
     <div style={{ position: 'relative', height: 'calc(100vh - 56px)' }}>
@@ -197,8 +207,8 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           <Marker position={position} icon={debugCurrentIcon}>
           </Marker>
         )}
-        {/* 通常の神社マーカー */}
-        {shrines.map((s) => {
+        {/* 通常の神社マーカー（フィルタ済みのみ） */}
+        {filteredShrines.map((s) => {
           const currentPosition = debugMode ? center : position;
           return (
             <ShrineMarker

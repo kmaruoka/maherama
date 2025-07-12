@@ -13,6 +13,7 @@ import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
 import { NOIMAGE_USER_URL } from '../../constants';
 import { CustomButton } from '../atoms/CustomButton';
+import { useLevelInfo } from '../../hooks/usePrayDistance';
 
 interface UserPageProps {
   id?: number;
@@ -33,6 +34,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
 
   const { data: titles = [] } = useUserTitles(displayId ?? undefined);
   const { data: abilities = [], refetch: refetchAbilities } = useAbilityList(displayId);
+  const { data: levelInfo } = useLevelInfo(displayId);
 
   const { data: userShrineRankingsByPeriod, isLoading: isUserShrineRankingLoading } = useUserShrineRankings(displayId ?? undefined);
   const { data: userDietyRankingsByPeriod, isLoading: isUserDietyRankingLoading } = useUserDietyRankings(displayId ?? undefined);
@@ -125,7 +127,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
   const thumbnailUrl = (userInfo as { thumbnailUrl?: string } | undefined)?.thumbnailUrl || NOIMAGE_USER_URL;
 
   if (currentUserId && currentUserId === displayId) {
-    console.log('abilities:', abilities);
+    // console.log('abilities:', abilities); // ← デバッグ用ログ削除
   }
 
   return (
@@ -187,7 +189,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
           </div>
           <div className="d-flex gap-3">
             <span>レベル: {userInfo.level}</span>
-            <span>参拝距離: {userInfo.pray_distance}m</span>
+            <span>参拝距離: {levelInfo?.stats.pray_distance ?? '...'}m</span>
             <span>遥拝回数: {userInfo.worship_count}回/日</span>
             <span>経験値: {userInfo.exp}</span>
           </div>

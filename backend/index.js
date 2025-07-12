@@ -154,6 +154,18 @@ async function getUserPrayDistance(userId) {
 
   const totalDistance = baseDistance + additionalDistance;
   
+  // --- 調査用ログ出力 ---
+  // console.log('[調査] getUserPrayDistance:', {
+  //   userId,
+  //   userLevel: user.level,
+  //   baseDistance,
+  //   additionalDistance,
+  //   activeSubscription: !!activeSubscription,
+  //   totalDistance,
+  //   returnValue: activeSubscription ? totalDistance * 2 : totalDistance
+  // });
+  // ---
+
   if (activeSubscription) {
     return totalDistance * 2;
   }
@@ -530,6 +542,9 @@ app.get('/shrines/:id', async (req, res) => {
 
 app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  // 追加: 参拝API呼び出し時に必ずログ出力
+  const userId = parseInt(req.headers['x-user-id']) || 1;
+  // console.log('[参拝API呼び出し] userId:', userId, 'shrineId:', id, 'req.body:', req.body); // ← デバッグ用ログをコメントアウト
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
   }
@@ -565,6 +580,8 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       const dist = R * c;
       if (dist > prayDistance) {
+        // 追加: 距離不足の参拝をログ出力
+        console.log('[距離不足参拝] userId:', userId, 'shrineId:', id, 'dist:', dist, 'radius:', prayDistance, 'req:', { lat: req.body.lat, lng: req.body.lng }, 'shrine:', { lat: shrine.lat, lng: shrine.lng });
         return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
       }
     } else {
@@ -665,6 +682,9 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
 
 app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  // 追加: 遥拝API呼び出し時に必ずログ出力
+  const userId = parseInt(req.headers['x-user-id']) || 1;
+  //console.log('[遥拝API呼び出し] userId:', userId, 'shrineId:', id);
   try {
     const shrine = await prisma.shrine.findUnique({
       where: { id },
@@ -2029,7 +2049,6 @@ app.get('/users/:id', authenticateJWT, async (req, res) => {
       level: user.level,
       exp: user.exp,
       ability_points: user.ability_points,
-      pray_distance: prayDistance,
       worship_count: worshipCount,
       today_worship_count: todayWorshipCount,
       following_count: followingCount,
@@ -2556,3 +2575,30 @@ app.get('/voting/settings', async (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ error: 'API not found' });
 });
+
+// --- ログをファイルにも出力する仕組みを追加 ---
+const LOG_DIR = path.join(__dirname, 'logs');
+if (!fs.existsSync(LOG_DIR)) {
+  fs.mkdirSync(LOG_DIR, { recursive: true });
+}
+function getLogFilePath() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = ('0' + (now.getMonth() + 1)).slice(-2);
+  const d = ('0' + now.getDate()).slice(-2);
+  return path.join(LOG_DIR, `backend-${y}${m}${d}.log`);
+}
+function appendLogToFile(level, ...args) {
+  const msg = `[${new Date().toISOString()}][${level}] ` + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n';
+  fs.appendFile(getLogFilePath(), msg, () => {});
+}
+const origLog = console.log;
+const origError = console.error;
+console.log = (...args) => {
+  origLog(...args);
+  appendLogToFile('INFO', ...args);
+};
+console.error = (...args) => {
+  origError(...args);
+  appendLogToFile('ERROR', ...args);
+};

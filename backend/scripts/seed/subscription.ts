@@ -23,4 +23,19 @@ export async function seedSubscription(prisma: PrismaClient) {
     data: subscriptions, 
     skipDuplicates: true 
   });
+
+  // 偶数IDユーザーだけrange_multiplierサブスクリプションを付与
+  const MAX_USER_ID = 10; // Assuming a maximum user ID for demonstration
+  for (let userId = 1; userId <= MAX_USER_ID; userId++) {
+    if (userId % 2 === 0) {
+      await prisma.userSubscription.create({
+        data: {
+          user_id: userId,
+          subscription_type: 'range_multiplier',
+          is_active: true,
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        }
+      });
+    }
+  }
 } 
