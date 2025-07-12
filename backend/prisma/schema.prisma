@@ -48,13 +48,11 @@ model Diety {
   diety_prays              DietyPray[]
   diety_pray_stats         DietyPrayStats[]
   diety_pray_stats_monthly DietyPrayStatsMonthly[]
-  diety_pray_stats_weekly  DietyPrayStatsWeekly[]
-  diety_pray_stats_daily   DietyPrayStatsDaily[]
-  diety_pray_stats_yearly  DietyPrayStatsYearly[]
-  diety_books              DietyBook[]
-  diety_images             DietyImage[]
-  thumbnailUrl             String? // サムネイル画像URL
-  thumbnailBy              String? // サムネイル投稿ユーザー名
+  diety_pray_stats_weekly DietyPrayStatsWeekly[]
+  diety_pray_stats_daily DietyPrayStatsDaily[]
+  diety_pray_stats_yearly DietyPrayStatsYearly[]
+  diety_books DietyBook[]
+  diety_images DietyImage[]
 }
 
 model ShrineDiety {
@@ -86,23 +84,23 @@ model User {
   diety_books               DietyBook[]
   shrine_pray_stats         ShrinePrayStats[]
   shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
-  shrine_pray_stats_weekly  ShrinePrayStatsWeekly[]
-  shrine_pray_stats_daily   ShrinePrayStatsDaily[]
-  shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
-  diety_pray_stats          DietyPrayStats[]
-  diety_pray_stats_monthly  DietyPrayStatsMonthly[]
-  diety_pray_stats_weekly   DietyPrayStatsWeekly[]
-  diety_pray_stats_daily    DietyPrayStatsDaily[]
-  diety_pray_stats_yearly   DietyPrayStatsYearly[]
-  userAbilities             UserAbility[]
-  abilityLogs               AbilityLog[]
-  userTitles                UserTitle[]
-  shrine_images             ShrineImage[]
-  diety_images              DietyImage[]
-  image_votes               ImageVote[]
-  diety_image_votes         DietyImageVote[]
-  shrine_applications       ShrineApplication[]
-  user_subscriptions        UserSubscription[]
+  shrine_pray_stats_weekly ShrinePrayStatsWeekly[]
+  shrine_pray_stats_daily ShrinePrayStatsDaily[]
+  shrine_pray_stats_yearly ShrinePrayStatsYearly[]
+  diety_pray_stats DietyPrayStats[]
+  diety_pray_stats_monthly DietyPrayStatsMonthly[]
+  diety_pray_stats_weekly DietyPrayStatsWeekly[]
+  diety_pray_stats_daily DietyPrayStatsDaily[]
+  diety_pray_stats_yearly DietyPrayStatsYearly[]
+  userAbilities UserAbility[]
+  abilityLogs AbilityLog[]
+  userTitles UserTitle[]
+  shrine_images ShrineImage[]
+  image_votes ImageVote[]
+  shrine_applications ShrineApplication[]
+  user_subscriptions UserSubscription[]
+  diety_images DietyImage[]
+  diety_image_votes DietyImageVote[]
 }
 
 model Follow {
@@ -356,16 +354,37 @@ model UserTitle {
 }
 
 model ShrineImage {
-  id           Int         @id @default(autoincrement())
-  shrine       Shrine      @relation(fields: [shrine_id], references: [id])
-  shrine_id    Int
-  user         User        @relation(fields: [user_id], references: [id])
-  user_id      Int
-  image_url    String
-  uploaded_at  DateTime    @default(now())
-  voting_month String // 投票対象月（YYYY-MM形式）
-  is_winner    Boolean     @default(false)
-  votes        ImageVote[]
+  id         Int      @id @default(autoincrement())
+  shrine     Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id  Int
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  image_url  String
+  thumbnail_url String?  // サムネイル用画像URL
+  marker_url String?     // マーカー用画像URL
+  original_url String?   // オリジナル画像URL
+  uploaded_at DateTime @default(now())
+  voting_month String  // 投票対象月（YYYY-MM形式）
+  is_winner  Boolean @default(false)
+  is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
+  votes      ImageVote[]
+}
+
+model DietyImage {
+  id         Int      @id @default(autoincrement())
+  diety      Diety    @relation(fields: [diety_id], references: [id])
+  diety_id   Int
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  image_url  String
+  thumbnail_url String?  // サムネイル用画像URL
+  marker_url String?     // マーカー用画像URL
+  original_url String?   // オリジナル画像URL
+  uploaded_at DateTime @default(now())
+  voting_month String  // 投票対象月（YYYY-MM形式）
+  is_winner  Boolean @default(false)
+  is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
+  votes      DietyImageVote[]
 }
 
 model ImageVote {
@@ -379,45 +398,39 @@ model ImageVote {
   @@unique([shrine_image_id, user_id])
 }
 
-model DietyImage {
-  id           Int              @id @default(autoincrement())
-  diety        Diety            @relation(fields: [diety_id], references: [id])
-  diety_id     Int
-  user         User             @relation(fields: [user_id], references: [id])
-  user_id      Int
-  image_url    String
-  uploaded_at  DateTime         @default(now())
-  voting_month String
-  is_winner    Boolean          @default(false)
-  votes        DietyImageVote[]
-}
-
 model DietyImageVote {
-  id             Int        @id @default(autoincrement())
-  diety_image    DietyImage @relation(fields: [diety_image_id], references: [id])
+  id            Int        @id @default(autoincrement())
+  diety_image   DietyImage @relation(fields: [diety_image_id], references: [id])
   diety_image_id Int
-  user           User       @relation(fields: [user_id], references: [id])
-  user_id        Int
-  voted_at       DateTime   @default(now())
+  user          User       @relation(fields: [user_id], references: [id])
+  user_id       Int
+  voted_at      DateTime   @default(now())
 
   @@unique([diety_image_id, user_id])
 }
 
+model VotingSettings {
+  id                Int      @id @default(autoincrement())
+  voting_period_days Int     @default(20) // 投票期間（日数）
+  review_period_days Int     @default(10) // 審査期間（日数）
+  updated_at        DateTime @default(now())
+}
+
 model ShrineApplication {
-  id          Int       @id @default(autoincrement())
-  user        User      @relation(fields: [user_id], references: [id])
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [user_id], references: [id])
   user_id     Int
-  name        String // 神社名
-  kana        String? // 読み
-  location    String // 所在地
-  lat         Float // 緯度
-  lng         Float // 経度
-  founded     String? // 創建
-  history     String? // 歴史・伝承
-  festivals   String? // 祭礼
-  description String? // 説明文
-  status      String    @default("pending") // pending, approved, rejected
-  applied_at  DateTime  @default(now())
+  name        String   // 神社名
+  kana        String?  // 読み
+  location    String   // 所在地
+  lat         Float    // 緯度
+  lng         Float    // 経度
+  founded     String?  // 創建
+  history     String?  // 歴史・伝承
+  festivals   String?  // 祭礼
+  description String?  // 説明文
+  status      String   @default("pending") // pending, approved, rejected
+  applied_at  DateTime @default(now())
   reviewed_at DateTime?
-  reviewed_by String? // レビュー担当者
+  reviewed_by String?  // レビュー担当者
 }

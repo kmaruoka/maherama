@@ -12,6 +12,7 @@ import useFollowers from '../../hooks/useFollowers';
 import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
 import { NOIMAGE_USER_URL } from '../../constants';
+import { CustomButton } from '../atoms/CustomButton';
 
 interface UserPageProps {
   id?: number;
@@ -161,19 +162,25 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
             </div>
             {currentUserId && currentUserId !== displayId && (
               userInfo.is_following ? (
-                <button
-                  className="btn btn-danger btn-sm"
+                <CustomButton
+                  color="#dc3545"
+                  hoverColor="#a71d2a"
+                  disabledColor="#f5b7b1"
                   onClick={handleUnfollow}
+                  style={{ fontSize: 16, padding: '4px 16px' }}
                 >
                   フォロー解除
-                </button>
+                </CustomButton>
               ) : (
-                <button
-                  className="btn btn-success btn-sm"
+                <CustomButton
+                  color="#28a745"
+                  hoverColor="#218838"
+                  disabledColor="#b1dfbb"
                   onClick={handleFollow}
+                  style={{ fontSize: 16, padding: '4px 16px' }}
                 >
                   フォローする
-                </button>
+                </CustomButton>
               )
             )}
 

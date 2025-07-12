@@ -14,6 +14,10 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { getDistanceMeters } from '../../hooks/usePrayDistance';
 import { useWorshipLimit } from '../../hooks/usePrayDistance';
+import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { ImageUploadModal } from '../molecules/ImageUploadModal';
+import { CustomButton } from '../atoms/CustomButton';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -42,7 +46,7 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
   return result;
 }
 
-export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; shrines: { id: number }[] }) {
+export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { data } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
@@ -55,7 +59,85 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
   const [prayDistance, setPrayDistance] = useState<number | null>(null);
   const { data: worshipLimit } = useWorshipLimit(userId);
-  const [showUpload, setShowUpload] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [imageList, setImageList] = useState<any[]>([]);
+  const [imageListLoading, setImageListLoading] = useState(false);
+  const [imageListError, setImageListError] = useState<string | null>(null);
+
+  // 画像リスト取得
+  useEffect(() => {
+    if (!id) return;
+    setImageListLoading(true);
+    // 前月のYYYYMMを計算
+    const now = new Date();
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const yyyymm = `${prevMonth.getFullYear()}${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+    fetch(`${API_BASE}/shrines/${id}/images?votingMonth=${yyyymm}`)
+      .then(res => res.json())
+      .then(json => setImageList(json))
+      .catch(e => setImageListError('画像リスト取得失敗'))
+      .finally(() => setImageListLoading(false));
+  }, [id, rankRefreshKey]);
+
+  const handleUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch(`${API_BASE}/shrines/${id}/images/upload`, {
+        method: 'POST',
+        headers: {
+          'x-user-id': String(userId || 1),
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('アップロード失敗');
+      }
+      
+      // 成功時はデータ再取得
+      setRankRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('アップロードエラー:', error);
+      alert('アップロードに失敗しました。');
+    }
+  };
+
+  const handleVote = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/shrines/${id}/images/vote`, {
+        method: 'POST',
+        headers: {
+          'x-user-id': String(userId || 1),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        let errorMsg = '投票失敗';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+          const text = await response.text();
+          if (text.startsWith('<!DOCTYPE')) {
+            errorMsg = 'サーバーエラーまたはAPIが見つかりません';
+          } else {
+            errorMsg = text;
+          }
+        }
+        throw new Error(errorMsg);
+      }
+      
+      // 成功時はデータ再取得
+      setRankRefreshKey(prev => prev + 1);
+      alert('投票しました！');
+    } catch (error) {
+      console.error('投票エラー:', error);
+      alert(error instanceof Error ? error.message : '投票に失敗しました。');
+    }
+  };
 
   // 追加: 参拝距離をAPIから取得
   useEffect(() => {
@@ -211,8 +293,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
-      // 全神社分のマーカー状態キャッシュを完全削除
-      queryClient.removeQueries({ queryKey: ['shrine-marker-status'] });
+      queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
   });
@@ -226,27 +307,67 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
     return <div className="p-3">Loading...</div>;
   }
 
+  // 画像ごとの投票
+  const handleImageVote = async (imageId: number) => {
+    try {
+      const response = await fetch(`${API_BASE}/shrines/${id}/images/${imageId}/vote`, {
+        method: 'POST',
+        headers: {
+          'x-user-id': String(userId || 1),
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) {
+        let errorMsg = '投票失敗';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+          const text = await response.text();
+          if (text.startsWith('<!DOCTYPE')) {
+            errorMsg = 'サーバーエラーまたはAPIが見つかりません';
+          } else {
+            errorMsg = text;
+          }
+        }
+        throw new Error(errorMsg);
+      }
+      setRankRefreshKey(prev => prev + 1);
+      alert('投票しました！');
+    } catch (error) {
+      console.error('投票エラー:', error);
+      alert(error instanceof Error ? error.message : '投票に失敗しました。');
+    }
+  };
+
   return (
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
-        <div style={{ position: 'relative' }}>
-          <img
-            src={data.thumbnailUrl ? data.thumbnailUrl : NOIMAGE_SHRINE_URL}
-            alt="サムネイル"
-            className="rounded shadow"
-            style={{ width: '6rem', height: '6rem', objectFit: 'cover' }}
-          />
-          <button
-            type="button"
-            className="btn btn-sm btn-light"
-            style={{ position: 'absolute', top: 0, right: 0 }}
-            onClick={() => setShowUpload(true)}
-          >
-            ⬆
-          </button>
-          <div style={{ position: 'absolute', bottom: 0, right: 0 }}>
-            <ImageVoteButton voted={false} onVote={() => {}} />
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <img src={data.thumbnailUrl ? data.thumbnailUrl : NOIMAGE_SHRINE_URL} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
+          {/* 右上ボタン */}
+          <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
+            <button 
+              onClick={() => setIsUploadModalOpen(true)}
+              style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
+              title="画像アップロード"
+            >
+              <FaCloudUploadAlt size={20} />
+            </button>
+            <button 
+              onClick={handleVote}
+              style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
+              title="サムネイル投票"
+            >
+              <FaVoteYea size={20} />
+            </button>
           </div>
+          {/* 左下 byユーザー */}
+          {data.thumbnailBy && (
+            <div style={{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>
+              by {data.thumbnailBy}
+            </div>
+          )}
         </div>
         <div>
           <div className="modal-title">{data.name}</div>
@@ -256,21 +377,27 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
           )}
           <div className="d-flex align-items-center gap-2 mt-2">
             <div className="catalog-count modal-item-text small">参拝数: {data.count}</div>
-            <button
-              className="btn btn-pray btn-sm"
+            <CustomButton
+              color="#28a745"
+              hoverColor="#218838"
+              disabledColor="#b1dfbb"
               onClick={() => prayMutation.mutate(data.id)}
               disabled={!canPray}
+              style={{ fontSize: 16, padding: '4px 16px' }}
               title={!currentPosition ? '位置情報が取得できません' : !data ? '神社情報が読み込まれていません' : `距離: ${distance !== null ? distance.toFixed(2) : '計算中'}m / 半径: ${radius}m`}
             >
               参拝
-            </button>
-            <button
-              className="btn btn-remote-pray btn-sm"
+            </CustomButton>
+            <CustomButton
+              color="#007bff"
+              hoverColor="#0056b3"
+              disabledColor="#b8daff"
               onClick={() => remotePrayMutation.mutate()}
               disabled={remotePrayMutation.isPending || (worshipLimit && worshipLimit.today_worship_count >= worshipLimit.max_worship_count)}
+              style={{ fontSize: 16, padding: '4px 16px' }}
             >
               {remotePrayMutation.isPending ? '遥拝中...' : '遥拝'}
-            </button>
+            </CustomButton>
           </div>
           {currentPosition && data && (
             <div className="text-muted small mt-1">
@@ -352,17 +479,45 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, shrines }: { i
       </div>
       
       <div className="text-muted small">収録日: {formatDate(data.registeredAt)}</div>
+
+      {/* アップロードモーダル */}
       <ImageUploadModal
-        isOpen={showUpload}
-        onClose={() => setShowUpload(false)}
-        onUpload={async (img) => {
-          await fetch(`${API_BASE}/shrines/${id}/images`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-user-id': String(userId) },
-            body: JSON.stringify({ imageData: img })
-          });
-        }}
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUpload={handleUpload}
+        title={`${data?.name || '神社'}の画像をアップロード`}
       />
+
+      {/* サムネイル投票候補 */}
+      <div className="modal-section">
+        <div className="modal-subtitle">サムネイル投票候補</div>
+        {imageListLoading ? (
+          <div>画像読み込み中...</div>
+        ) : imageListError ? (
+          <div className="text-danger">{imageListError}</div>
+        ) : imageList.length === 0 ? (
+          <div>投票候補画像がありません</div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+            {imageList.map(img => (
+              <div key={img.id} style={{ border: '1px solid #ccc', borderRadius: 8, padding: 8, width: 120, textAlign: 'center', position: 'relative' }}>
+                <img src={img.thumbnail_url || img.image_url} alt="候補画像" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} />
+                <div style={{ fontSize: 12, margin: '4px 0' }}>by {img.user?.name || '不明'}</div>
+                <CustomButton
+                  color="#28a745"
+                  hoverColor="#218838"
+                  disabledColor="#b1dfbb"
+                  onClick={() => handleImageVote(img.id)}
+                  style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}
+                >
+                  <FaVoteYea /> 投票
+                </CustomButton>
+                <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>投票数: {img.votes?.length || 0}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </>
   );
 }
