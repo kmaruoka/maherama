@@ -95,9 +95,9 @@ function createShrineIcon(
         <div class="shrine-marker-status-tooltip">${tooltipText}</div>
       </div>
     `,
-    iconSize: [120, 95.5], // サムネイル+ピン
-    iconAnchor: [60, 85.5], // 下端中央
-    popupAnchor: [0, -95.5],
+    iconSize: [120, 140], // サムネイル+ピン
+    iconAnchor: [60, 140], // 下端中央
+    popupAnchor: [0, -140],
   });
 }
 

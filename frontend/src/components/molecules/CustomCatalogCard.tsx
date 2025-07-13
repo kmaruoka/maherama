@@ -21,7 +21,7 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
   };
   return (
     <div className="card" style={{ width: '220px' }} onClick={onClick} role="button">
-      <CustomImage src={imageSrc} alt={name} />
+      <CustomImage src={imageSrc} alt={name} aspectRatio="1/1" />
       <div className="card-body p-2">
         <div className="fw-bold mb-1">{name}</div>
         <div className="catalog-count mb-1">参拝数: {count}</div>

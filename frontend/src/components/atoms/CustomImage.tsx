@@ -8,7 +8,7 @@ interface CustomImageProps {
   aspectRatio?: string; // 例: '16/9', '4/3' など
 }
 
-export default function CustomImage({ src, alt = '', className = '', style = {}, aspectRatio = '16/9' }: CustomImageProps) {
+export default function CustomImage({ src, alt = '', className = '', style = {}, aspectRatio = '1/1' }: CustomImageProps) {
   return (
     <div
       className={className}
