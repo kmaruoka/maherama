@@ -7,6 +7,7 @@ export interface DietyListItem {
   count: number;
   registeredAt: string;
   lastPrayedAt?: string;
+  thumbnailUrl?: string;
 }
 
 
@@ -21,7 +22,8 @@ export default function useDietyList() {
       // last_prayed_atをlastPrayedAtに変換
       return data.map((item: any) => ({
         ...item,
-        lastPrayedAt: item.last_prayed_at || undefined
+        lastPrayedAt: item.last_prayed_at || undefined,
+        thumbnailUrl: item.thumbnailUrl || undefined
       }));
     },
   });

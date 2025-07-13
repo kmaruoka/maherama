@@ -16,7 +16,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { useBarrier } from '../../barriers/BarrierContext';
 import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
 import { useQueryClient } from '@tanstack/react-query';
-import { calculateDistance, EARTH_CIRCUMFERENCE_METERS } from '../../../../shared/utils/distance';
+import { calculateDistance, EARTH_CIRCUMFERENCE_METERS } from "../../../backend/shared/utils/distance";
 
 
 const debugCurrentIcon = new L.Icon({

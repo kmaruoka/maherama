@@ -15,6 +15,7 @@ import { NOIMAGE_USER_URL } from '../../constants';
 import { CustomButton } from '../atoms/CustomButton';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
+import { useSubscription } from '../../hooks/useSubscription';
 
 interface UserPageProps {
   id?: number;
@@ -42,6 +43,8 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
 
   const { data: followingUsers, isLoading: isFollowingLoading, error: followingError, refetch: refetchFollowing } = useFollowing(displayId ?? undefined);
   const { data: followerUsers, isLoading: isFollowersLoading, error: followersError, refetch: refetchFollowers } = useFollowers(displayId ?? undefined);
+
+  const { data: subscription } = useSubscription(displayId ?? null);
 
   const { skin } = useSkin();
 
@@ -253,51 +256,45 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                   {a.purchased ? (
                     <span className="ms-2 text-success" style={{ fontWeight: 500 }}>解放済み</span>
                   ) : (
-                    <button
-                      className="btn btn-xs ms-2 px-2 py-0"
-                      style={{
-                        background: a.can_purchase ? skin.colors.surface : skin.colors.disabled,
-                        color: a.can_purchase ? skin.colors.text : skin.colors.textMuted,
-                        border: `1px solid ${a.can_purchase ? skin.colors.primary : skin.colors.disabled}`,
-                        borderRadius: '1em',
-                        fontWeight: 500,
-                        fontSize: '0.95em',
-                        opacity: a.can_purchase ? 1 : 0.6,
-                        minWidth: 90
-                      }}
+                    <CustomButton
+                      color={skin.colors.surface}
+                      textColor={skin.colors.text}
+                      hoverColor={skin.colors.primary}
+                      disabledColor={skin.colors.disabled}
+                      style={{ fontSize: '0.95em', minWidth: 90, marginLeft: 8 }}
                       onClick={() => acquireAbility(a.id)}
                       disabled={!a.can_purchase}
                       title={a.description}
                     >
-                      <span className="ms-1 small">能力値 {a.cost} を消費して解放</span>
-                    </button>
+                      能力値 {a.cost} を消費して解放
+                    </CustomButton>
                   )}
                 </div>
               ))}
-            <button
-              className="btn btn-sm mt-2"
-              style={{
-                background: skin.colors.accent,
-                color: skin.colors.surface,
-                border: `2px solid ${skin.colors.accent}`,
-                borderRadius: skin.borderRadius,
-                fontWeight: 500,
-                boxShadow: skin.boxShadow,
-                transition: 'background 0.2s, color 0.2s',
-              }}
-              onClick={resetAbilities}
-              onMouseOver={e => { e.currentTarget.style.background = skin.colors.surface; e.currentTarget.style.color = skin.colors.accent; }}
-              onMouseOut={e => { e.currentTarget.style.background = skin.colors.accent; e.currentTarget.style.color = skin.colors.surface; }}
-            >
-              能力初期化（有料）
-            </button>
-            <button
-              className="btn btn-outline-primary btn-sm mt-2"
-              style={{ marginLeft: 8 }}
-              onClick={handleBuyResetAbilities}
-            >
-              能力初期化サブスクリプション購入（Stripe）
-            </button>
+            {/* サブスク権限判定 */}
+            {subscription?.subscriptions?.some(s => s.subscription_type === 'reset_abilities' && s.is_active) ? (
+              <CustomButton
+                color={skin.colors.accent}
+                textColor={skin.colors.surface}
+                hoverColor={skin.colors.surface}
+                disabledColor={skin.colors.disabled}
+                style={{ fontWeight: 500, marginTop: 8 }}
+                onClick={resetAbilities}
+              >
+                能力初期化（有料）
+              </CustomButton>
+            ) : (
+              <CustomButton
+                color={skin.colors.surface}
+                textColor={skin.colors.text}
+                hoverColor={skin.colors.primary}
+                disabledColor={skin.colors.disabled}
+                style={{ fontWeight: 500, marginTop: 8 }}
+                onClick={handleBuyResetAbilities}
+              >
+                能力初期化サブスクリプション購入（Stripe）
+              </CustomButton>
+            )}
           </div>
         </div>
       )}

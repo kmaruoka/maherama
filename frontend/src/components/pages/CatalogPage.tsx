@@ -35,7 +35,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
     ) * mul;
   });
 
-  const renderItem = (item: Item) => (
+  const renderItem = (item: Item & { thumbnailUrl?: string }) => (
     <CustomCatalogCard
       key={item.id}
       name={item.name}
@@ -54,6 +54,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       countLabel="参拝数"
       type={tab}
       dateLabel="収録日"
+      thumbnailUrl={tab === 'diety' ? item.thumbnailUrl : undefined}
     />
   );
 

@@ -4,6 +4,7 @@ interface CustomButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
   color?: string; // 通常色
   hoverColor?: string; // ホバー時
   disabledColor?: string; // 無効時
+  textColor?: string; // 文字色
   children: React.ReactNode;
 }
 
@@ -15,6 +16,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   color = defaultColor,
   hoverColor = defaultHoverColor,
   disabledColor = defaultDisabledColor,
+  textColor,
   disabled,
   style,
   children,
@@ -32,7 +34,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
       disabled={disabled}
       style={{
         background,
-        color: '#fff',
+        color: textColor ?? '#fff',
         border: 'none',
         borderRadius: 4,
         padding: '6px 16px',

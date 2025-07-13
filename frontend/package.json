@@ -4,12 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --force",
-    "build": "tsc -b && vite build",
-    "build:check": "tsc --noEmit",
-    "lint": "eslint . --fix",
-    "preview": "vite preview",
-    "clean": "rm -rf node_modules/.vite dist"
+    "dev": "vite"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",

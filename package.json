@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "cd backend && npm start"
+    "start": "echo 'Please run npm start in frontend/backend'"
   },
   "devDependencies": {
     "@types/react": "^19.1.8",

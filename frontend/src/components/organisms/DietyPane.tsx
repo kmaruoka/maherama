@@ -25,16 +25,19 @@ function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key
 
 export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { id: paramId } = useParams<{ id: string }>();
-  const idFromParams = id || paramId;
+  // id優先、なければparamIdを数値変換して使用
+  let idFromParams: number | undefined = undefined;
+  if (typeof id === 'number' && !isNaN(id)) {
+    idFromParams = id;
+  } else if (paramId && !isNaN(Number(paramId))) {
+    idFromParams = Number(paramId);
+  }
 
   // デバッグ用ログ
-  // console.log('DietyPage - ID from params:', idFromParams, 'Type:', typeof idFromParams);
+  // console.log('DietyPane: idFromParams', idFromParams, typeof idFromParams);
 
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams);
-  const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(Number(idFromParams));
-  const [showUpload, setShowUpload] = useState(false);
-
-  const [refreshKey, setRefreshKey] = useState(0);
+  const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(idFromParams);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   if (!idFromParams) {
@@ -47,6 +50,10 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
 
   if (!diety) {
     return <div className="p-3">読み込み中...</div>;
+  }
+
+  if (diety) {
+    console.log('DietyPane: /dieties/:id API response', diety);
   }
 
   const handleUpload = async (file: File) => {
@@ -67,7 +74,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
       }
       
       // 成功時はデータ再取得
-      setRefreshKey(prev => prev + 1);
+      // setRefreshKey(prev => prev + 1); // This line was removed as per the new_code
     } catch (error) {
       console.error('アップロードエラー:', error);
       alert('アップロードに失敗しました。');
@@ -101,7 +108,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
       }
       
       // 成功時はデータ再取得
-      setRefreshKey(prev => prev + 1);
+      // setRefreshKey(prev => prev + 1); // This line was removed as per the new_code
       alert('投票しました！');
     } catch (error) {
       console.error('投票エラー:', error);
@@ -113,7 +120,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src={NOIMAGE_DIETY_URL} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
+          <img src={diety.thumbnailUrl ? diety.thumbnailUrl : NOIMAGE_DIETY_URL} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
           {/* 右上ボタン */}
           <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
             <button 

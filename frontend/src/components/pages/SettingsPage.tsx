@@ -5,6 +5,7 @@ import { useSkin } from '../../skins/SkinContext';
 import { skins } from '../../skins';
 import { useBarrier } from '../../barriers/BarrierContext';
 import { barriers } from '../../barriers';
+import CustomButton from '../atoms/CustomButton';
 
 export default function SettingsPage() {
   const [userId, setUserId] = useLocalStorageState<number | null>('userId', null);
@@ -62,12 +63,15 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-        <button
-          className="btn btn-primary mt-2"
+        <CustomButton
+          color="#007bff"
+          hoverColor="#0056b3"
+          disabledColor="#b8daff"
+          style={{ marginTop: 8 }}
           onClick={handleLogin}
         >
           ログイン
-        </button>
+        </CustomButton>
       </div>
     );
   }
@@ -84,12 +88,15 @@ export default function SettingsPage() {
             </div>
           );
         })()}
-        <button
-          className="btn btn-secondary btn-sm"
+        <CustomButton
+          color="#6c757d"
+          hoverColor="#495057"
+          disabledColor="#ced4da"
+          style={{ marginLeft: 8 }}
           onClick={handleLogout}
         >
           ログアウト
-        </button>
+        </CustomButton>
       </div>
       <div className="d-flex align-items-center justify-content-between">
         <span>デバッグモード</span>

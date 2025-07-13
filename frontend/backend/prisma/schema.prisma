@@ -1,0 +1,459 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Area {
+  id         Int      @id @default(autoincrement())
+  code       String   @unique // 地域コード
+  name       String   // 地域名
+  parentCode String?  // 親地域コード
+  parent     Area?    @relation("AreaHierarchy", fields: [parentCode], references: [code])
+  children   Area[]   @relation("AreaHierarchy")
+  shrines    Shrine[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Shrine {
+  id                        Int                      @id @default(autoincrement())
+  name                      String // 神社名
+  kana                      String? // 読み
+  location                  String // 所在地
+  lat                       Float // 緯度
+  lng                       Float // 経度
+  area_id                   Int? // 地域ID
+  area                      Area? @relation(fields: [area_id], references: [id])
+  registered_at             DateTime                 @default(now())
+  shrine_dieties            ShrineDiety[]
+  shrine_prays              ShrinePray[]
+  shrine_pray_stats         ShrinePrayStats[]
+  shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
+  shrine_pray_stats_weekly  ShrinePrayStatsWeekly[]
+  shrine_pray_stats_daily   ShrinePrayStatsDaily[]
+  shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
+  shrine_books              ShrineBook[]
+  shrine_images             ShrineImage[]
+  thumbnailUrl              String? // サムネイル画像URL
+  thumbnailBy               String? // サムネイル投稿ユーザー名
+  founded                   String? // 創建
+  history                   String? // 歴史・伝承
+  festivals                 String? // 祭礼
+  description               String? // 説明文
+}
+
+model Diety {
+  id                       Int                     @id @default(autoincrement())
+  name                     String
+  kana                     String?
+  description              String?
+  registered_at            DateTime                @default(now())
+  shrine_dieties           ShrineDiety[]
+  diety_prays              DietyPray[]
+  diety_pray_stats         DietyPrayStats[]
+  diety_pray_stats_monthly DietyPrayStatsMonthly[]
+  diety_pray_stats_weekly DietyPrayStatsWeekly[]
+  diety_pray_stats_daily DietyPrayStatsDaily[]
+  diety_pray_stats_yearly DietyPrayStatsYearly[]
+  diety_books DietyBook[]
+  diety_images DietyImage[]
+}
+
+model ShrineDiety {
+  shrine    Shrine @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  diety     Diety  @relation(fields: [diety_id], references: [id])
+  diety_id  Int
+
+  @@id([shrine_id, diety_id])
+}
+
+model Log {
+  id      Int      @id @default(autoincrement())
+  message String
+  type    String   @default("normal")
+  time    DateTime @default(now())
+}
+
+model User {
+  id                        Int                      @id @default(autoincrement())
+  name                      String
+  level                     Int                      @default(0)
+  exp                       Int                      @default(0)
+  ability_points            Int                      @default(0)
+  thumbnailUrl              String? // ユーザーサムネイル画像URL
+  following                 Follow[]                 @relation("follows")
+  followers                 Follow[]                 @relation("followedBy")
+  shrine_books              ShrineBook[]
+  diety_books               DietyBook[]
+  shrine_pray_stats         ShrinePrayStats[]
+  shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
+  shrine_pray_stats_weekly ShrinePrayStatsWeekly[]
+  shrine_pray_stats_daily ShrinePrayStatsDaily[]
+  shrine_pray_stats_yearly ShrinePrayStatsYearly[]
+  diety_pray_stats DietyPrayStats[]
+  diety_pray_stats_monthly DietyPrayStatsMonthly[]
+  diety_pray_stats_weekly DietyPrayStatsWeekly[]
+  diety_pray_stats_daily DietyPrayStatsDaily[]
+  diety_pray_stats_yearly DietyPrayStatsYearly[]
+  userAbilities UserAbility[]
+  abilityLogs AbilityLog[]
+  userTitles UserTitle[]
+  shrine_images ShrineImage[]
+  image_votes ImageVote[]
+  shrine_applications ShrineApplication[]
+  user_subscriptions UserSubscription[]
+  diety_images DietyImage[]
+  diety_image_votes DietyImageVote[]
+}
+
+model Follow {
+  follower     User @relation("follows", fields: [follower_id], references: [id])
+  follower_id  Int
+  following    User @relation("followedBy", fields: [following_id], references: [id])
+  following_id Int
+
+  @@id([follower_id, following_id])
+}
+
+model ShrinePray {
+  id        Int      @id @default(autoincrement())
+  shrine    Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  time      DateTime @default(now())
+}
+
+model DietyPray {
+  id       Int      @id @default(autoincrement())
+  diety    Diety    @relation(fields: [diety_id], references: [id])
+  diety_id Int
+  user_id  Int
+  time     DateTime @default(now())
+}
+
+model ShrinePrayStats {
+  id        Int    @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  user      User   @relation(fields: [user_id], references: [id])
+  count     Int
+
+  @@unique([shrine_id, user_id])
+}
+
+model ShrinePrayStatsMonthly {
+  id        Int    @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  user      User   @relation(fields: [user_id], references: [id])
+  count     Int
+
+  @@unique([shrine_id, user_id])
+}
+
+model ShrinePrayStatsWeekly {
+  id        Int    @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  user      User   @relation(fields: [user_id], references: [id])
+  count     Int
+
+  @@unique([shrine_id, user_id])
+}
+
+model ShrinePrayStatsDaily {
+  id        Int    @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  user      User   @relation(fields: [user_id], references: [id])
+  count     Int
+
+  @@unique([shrine_id, user_id])
+}
+
+model ShrinePrayStatsYearly {
+  id        Int    @id @default(autoincrement())
+  rank      Int
+  shrine    Shrine @relation(fields: [shrine_id], references: [id])
+  shrine_id Int
+  user_id   Int
+  user      User   @relation(fields: [user_id], references: [id])
+  count     Int
+
+  @@unique([shrine_id, user_id])
+}
+
+model DietyPrayStats {
+  id       Int   @id @default(autoincrement())
+  rank     Int
+  diety    Diety @relation(fields: [diety_id], references: [id])
+  diety_id Int
+  user_id  Int
+  user     User  @relation(fields: [user_id], references: [id])
+  count    Int
+
+  @@unique([diety_id, user_id])
+}
+
+model DietyPrayStatsMonthly {
+  id       Int   @id @default(autoincrement())
+  rank     Int
+  diety    Diety @relation(fields: [diety_id], references: [id])
+  diety_id Int
+  user_id  Int
+  user     User  @relation(fields: [user_id], references: [id])
+  count    Int
+
+  @@unique([diety_id, user_id])
+}
+
+model DietyPrayStatsWeekly {
+  id       Int   @id @default(autoincrement())
+  rank     Int
+  diety    Diety @relation(fields: [diety_id], references: [id])
+  diety_id Int
+  user_id  Int
+  user     User  @relation(fields: [user_id], references: [id])
+  count    Int
+
+  @@unique([diety_id, user_id])
+}
+
+model DietyPrayStatsDaily {
+  id       Int   @id @default(autoincrement())
+  rank     Int
+  diety    Diety @relation(fields: [diety_id], references: [id])
+  diety_id Int
+  user_id  Int
+  user     User  @relation(fields: [user_id], references: [id])
+  count    Int
+
+  @@unique([diety_id, user_id])
+}
+
+model DietyPrayStatsYearly {
+  id       Int   @id @default(autoincrement())
+  rank     Int
+  diety    Diety @relation(fields: [diety_id], references: [id])
+  diety_id Int
+  user_id  Int
+  user     User  @relation(fields: [user_id], references: [id])
+  count    Int
+
+  @@unique([diety_id, user_id])
+}
+
+model ShrineBook {
+  user          User     @relation(fields: [user_id], references: [id])
+  user_id       Int
+  shrine        Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id     Int
+  registered_at DateTime @default(now())
+  last_prayed_at DateTime? // 追加
+
+  @@id([user_id, shrine_id])
+}
+
+model DietyBook {
+  user          User     @relation(fields: [user_id], references: [id])
+  user_id       Int
+  diety         Diety    @relation(fields: [diety_id], references: [id])
+  diety_id      Int
+  registered_at DateTime @default(now())
+  last_prayed_at DateTime? // 追加
+
+  @@id([user_id, diety_id])
+}
+
+model RemotePray {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  shrine_id Int
+  prayed_at DateTime @default(now())
+
+  // @@unique([user_id, shrine_id]) を削除
+}
+
+model UserSubscription {
+  id                     Int       @id @default(autoincrement())
+  user                   User      @relation(fields: [user_id], references: [id])
+  user_id                Int
+  subscription_type      String // 'range_multiplier', 'worship_boost', 'reset_abilities'
+  expires_at             DateTime
+  created_at             DateTime  @default(now())
+  stripe_subscription_id String? // StripeのサブスクリプションID
+  billing_cycle_start    DateTime? // 課金サイクル開始日
+  billing_cycle_end      DateTime? // 課金サイクル終了日
+  is_active              Boolean   @default(true) // アクティブなサブスクリプションかどうか
+}
+
+model LevelMaster {
+  id            Int @id @default(autoincrement())
+  level         Int @unique
+  required_exp  Int // 必要経験値
+  pray_distance Int // 参拝距離（メートル）
+  worship_count Int // 1日の遥拝回数
+  ability_points Int // レベルアップ時の能力ポイント獲得量
+}
+
+model AbilityMaster {
+  id                      Int             @id @default(autoincrement())
+  name                    String
+  description             String // 能力の説明文
+  cost                    Int // 取得コスト
+  effect_type             String // 'range', 'worship', 'skin', 'image_post', 'history_post', 'shrine_apply', 'approval'
+  effect_value            Int
+  prerequisite_ability_id Int?
+  prerequisite_ability    AbilityMaster?  @relation("Prerequisite", fields: [prerequisite_ability_id], references: [id])
+  dependent_abilities     AbilityMaster[] @relation("Prerequisite")
+  userAbilities           UserAbility[]
+  abilityLogs             AbilityLog[]
+}
+
+model UserAbility {
+  id          Int           @id @default(autoincrement())
+  user        User          @relation(fields: [user_id], references: [id])
+  user_id     Int
+  ability     AbilityMaster @relation(fields: [ability_id], references: [id])
+  ability_id  Int
+  acquired_at DateTime      @default(now())
+
+  @@unique([user_id, ability_id])
+}
+
+model AbilityLog {
+  id           Int           @id @default(autoincrement())
+  user         User          @relation(fields: [user_id], references: [id])
+  user_id      Int
+  ability      AbilityMaster @relation(fields: [ability_id], references: [id])
+  ability_id   Int
+  points_spent Int
+  acquired_at  DateTime      @default(now())
+}
+
+model TitleMaster {
+  id              Int         @id @default(autoincrement())
+  code            String      @unique // システム内一意の称号コード（テンプレ名）
+  name_template   String      // 表示テンプレ（例: 月間参拝数1位<{shrine}><{period}>）
+  description     String?     // 説明テンプレ
+  type            String      // 称号種別（'area_complete', 'consecutive_pray', 'ranking'など）
+  exp_reward      Int         // 経験値報酬
+  ability_reward  Json?       // 能力値報酬など（必要なら）
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  userTitles      UserTitle[]
+}
+
+model UserTitle {
+  id         Int         @id @default(autoincrement())
+  user       User        @relation(fields: [user_id], references: [id])
+  user_id    Int
+  title      TitleMaster @relation(fields: [title_id], references: [id])
+  title_id   Int
+  awarded_at DateTime    @default(now())
+  embed_data Json?       // 埋め込みデータ（例: {"shrine":"明治神宮","period":"2025-04"}）
+  is_equipped Boolean    @default(false) // 装備中か
+
+  @@unique([user_id, title_id, embed_data])
+}
+
+model ShrineImage {
+  id         Int      @id @default(autoincrement())
+  shrine     Shrine   @relation(fields: [shrine_id], references: [id])
+  shrine_id  Int
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  image_url  String
+  thumbnail_url String?  // サムネイル用画像URL
+  marker_url String?     // マーカー用画像URL
+  original_url String?   // オリジナル画像URL
+  uploaded_at DateTime @default(now())
+  voting_month String  // 投票対象月（YYYY-MM形式）
+  is_winner  Boolean @default(false)
+  is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
+  votes      ImageVote[]
+}
+
+model DietyImage {
+  id         Int      @id @default(autoincrement())
+  diety      Diety    @relation(fields: [diety_id], references: [id])
+  diety_id   Int
+  user       User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  image_url  String
+  thumbnail_url String?  // サムネイル用画像URL
+  marker_url String?     // マーカー用画像URL
+  original_url String?   // オリジナル画像URL
+  uploaded_at DateTime @default(now())
+  voting_month String  // 投票対象月（YYYY-MM形式）
+  is_winner  Boolean @default(false)
+  is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
+  votes      DietyImageVote[]
+}
+
+model ImageVote {
+  id              Int         @id @default(autoincrement())
+  shrine_image    ShrineImage @relation(fields: [shrine_image_id], references: [id])
+  shrine_image_id Int
+  user            User        @relation(fields: [user_id], references: [id])
+  user_id         Int
+  voted_at        DateTime    @default(now())
+
+  @@unique([shrine_image_id, user_id])
+}
+
+model DietyImageVote {
+  id            Int        @id @default(autoincrement())
+  diety_image   DietyImage @relation(fields: [diety_image_id], references: [id])
+  diety_image_id Int
+  user          User       @relation(fields: [user_id], references: [id])
+  user_id       Int
+  voted_at      DateTime   @default(now())
+
+  @@unique([diety_image_id, user_id])
+}
+
+model VotingSettings {
+  id                Int      @id @default(autoincrement())
+  voting_period_days Int     @default(20) // 投票期間（日数）
+  review_period_days Int     @default(10) // 審査期間（日数）
+  updated_at        DateTime @default(now())
+}
+
+model ShrineApplication {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [user_id], references: [id])
+  user_id     Int
+  name        String   // 神社名
+  kana        String?  // 読み
+  location    String   // 所在地
+  lat         Float    // 緯度
+  lng         Float    // 経度
+  founded     String?  // 創建
+  history     String?  // 歴史・伝承
+  festivals   String?  // 祭礼
+  description String?  // 説明文
+  status      String   @default("pending") // pending, approved, rejected
+  applied_at  DateTime @default(now())
+  reviewed_at DateTime?
+  reviewed_by String?  // レビュー担当者
+}

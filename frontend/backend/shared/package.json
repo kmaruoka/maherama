@@ -1,0 +1,21 @@
+{
+  "name": "@maherama/shared",
+  "version": "1.0.0",
+  "description": "Shared utilities and types for Maherama",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@prisma/client": "^6.11.1",
+    "@types/node": "^24.0.13",
+    "typescript": "^5.8.3"
+  },
+  "files": [
+    "constants/**/*",
+    "utils/**/*",
+    "types/**/*"
+  ]
+}

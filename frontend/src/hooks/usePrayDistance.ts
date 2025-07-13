@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../config/api';
-import { EARTH_RADIUS_METERS, calculateDistance } from '../../../shared/utils/distance';
+import { EARTH_RADIUS_METERS, calculateDistance } from "../../backend/shared/utils/distance";
 
 // 2点間の距離計算はcalculateDistanceを使う
 export function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {

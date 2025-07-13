@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { EARTH_RADIUS_METERS, addMetersToLng } from '../../../shared/utils/distance';
+import { EARTH_RADIUS_METERS, addMetersToLng } from "../../backend/shared/utils/distance";
 
 export interface MapCenterPixelGeometry {
   x: number;
