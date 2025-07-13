@@ -158,7 +158,6 @@ html, body {
   top: 0; left: 0; width: 100%; height: 100%;
   background: linear-gradient(120deg, rgba(255,255,255,0.0) 40%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.0) 60%);
   transform: translateX(-100%) skewX(-20deg);
-  animation: shrine-gloss-anim 2.2s linear infinite;
   z-index: 2;
 }
 .shrine-marker-pin {
@@ -320,6 +319,15 @@ nav.d-flex.position-fixed {
   border-top-color: var(--color-primary) !important;
 }
 
+/* 距離による透過度制御 */
+.shrine-marker-in-range {
+  opacity: 1;
+}
+
+.shrine-marker-out-of-range {
+  opacity: 0.5;
+}
+
 /* 参拝可能（距離内） */
 .shrine-marker-prayable {
   border-color: var(--color-prayable) !important;
@@ -330,6 +338,9 @@ nav.d-flex.position-fixed {
 }
 .shrine-marker-prayable .shrine-marker-frame-border {
   border-color: var(--color-prayable) !important;
+}
+.shrine-marker-prayable .shrine-marker-thumbnail-gloss {
+  animation: shrine-gloss-anim 2s linear infinite;
 }
 
 /* 遥拝可能 */
@@ -347,7 +358,6 @@ nav.d-flex.position-fixed {
 /* 参拝不可（距離外） */
 .shrine-marker-unprayable {
   border-color: var(--color-unprayable) !important;
-  opacity: 0.7;
 }
 
 .shrine-marker-unprayable .shrine-marker-pin::after {
@@ -360,7 +370,6 @@ nav.d-flex.position-fixed {
 /* 遥拝不可（制限到達） */
 .shrine-marker-remote-unavailable {
   border-color: var(--color-unprayable) !important;
-  opacity: 0.8;
 }
 
 .shrine-marker-remote-unavailable .shrine-marker-pin::after {

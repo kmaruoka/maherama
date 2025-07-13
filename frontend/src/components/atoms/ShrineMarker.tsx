@@ -27,7 +27,8 @@ function createShrineIcon(
   isPrayable: boolean = false,
   isRemotePrayable: boolean = false,
   isUnprayable: boolean = false,
-  isRemoteUnavailable: boolean = false
+  isRemoteUnavailable: boolean = false,
+  isInRange: boolean = false
 ) {
   // 状態に応じたCSSクラスを決定
   const statusClasses = [];
@@ -39,6 +40,14 @@ function createShrineIcon(
   }
   if (isUnprayable) statusClasses.push('shrine-marker-unprayable');
   if (isRemoteUnavailable) statusClasses.push('shrine-marker-remote-unavailable');
+  
+  // 距離による透過度クラスを追加
+  if (isInRange) {
+    statusClasses.push('shrine-marker-in-range');
+  } else {
+    statusClasses.push('shrine-marker-out-of-range');
+  }
+  
   const statusClassString = statusClasses.join(' ');
   
   // 状態アイコンを決定
@@ -138,7 +147,8 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
         canPray,
         isRemotePrayable,
         isUnprayable,
-        isRemoteUnavailable
+        isRemoteUnavailable,
+        canPray
       )}
       eventHandlers={{
         click: () => {
