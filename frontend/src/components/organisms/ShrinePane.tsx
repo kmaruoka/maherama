@@ -13,6 +13,7 @@ import useCurrentPosition from '../../hooks/useCurrentPosition';
 import { useSubscription } from '../../hooks/useSubscription';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { getDistanceMeters } from '../../hooks/usePrayDistance';
+import { formatDistance } from '../../../backend/shared/utils/distance';
 import { useWorshipLimit } from '../../hooks/usePrayDistance';
 import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
@@ -232,7 +233,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
   useEffect(() => {
     if (currentPosition && data) {
       const d = getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng);
-      debugLog(`神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${d.toFixed(2)}m (typeof: ${typeof d}) | 半径: ${radius}m (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
+      debugLog(`神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${formatDistance(d)} (typeof: ${typeof d}) | 半径: ${formatDistance(radius)} (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
     }
   }, [currentPosition, data, radius, canPray, debugMode, debugLog]);
 
@@ -383,7 +384,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
               onClick={() => prayMutation.mutate(data.id)}
               disabled={!canPray}
               style={{ fontSize: 16, padding: '4px 16px' }}
-              title={!currentPosition ? '位置情報が取得できません' : !data ? '神社情報が読み込まれていません' : `距離: ${distance !== null ? distance.toFixed(2) : '計算中'}m / 半径: ${radius}m`}
+              title={!currentPosition ? '位置情報が取得できません' : !data ? '神社情報が読み込まれていません' : `距離: ${formatDistance(distance)} / 半径: ${formatDistance(radius)}`}
             >
               参拝
             </CustomButton>
@@ -400,7 +401,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
           </div>
           {currentPosition && data && (
             <div className="text-muted small mt-1">
-              距離: {distance !== null ? distance.toFixed(2) : '計算中'}m / 参拝可能距離: {radius}m
+              距離: {formatDistance(distance)} / 参拝可能距離: {formatDistance(radius)}
             </div>
           )}
           {canPray === false && currentPosition && data && (

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { seedShrine } from './shrine';
+import { seedShrine, seedShrinesFromTxt } from './shrine';
 import { seedDiety } from './diety';
 import { seedShrineDiety } from './shrineDiety';
 import { seedUser } from './user';
@@ -17,6 +17,8 @@ async function main() {
   const shrineIds = await seedShrine(prisma);
   await seedDiety(prisma);
   await seedShrineDiety(prisma, shrineIds);
+  // shrines.txtの神社・祭神リレーションも追加
+  await seedShrinesFromTxt(prisma, '../scripts/shrines.txt');
   await seedUser(prisma);
   await seedSubscription(prisma);
   await seedAbility(prisma);

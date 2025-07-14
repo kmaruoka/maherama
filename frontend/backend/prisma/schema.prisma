@@ -50,6 +50,8 @@ model Shrine {
   history                   String? // 歴史・伝承
   festivals                 String? // 祭礼
   description               String? // 説明文
+
+  @@unique([name, location])
 }
 
 model Diety {

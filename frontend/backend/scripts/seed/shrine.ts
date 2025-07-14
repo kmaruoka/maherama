@@ -38,6 +38,77 @@ function buildAddress(props: any): string {
   return address;
 }
 
+/**
+ * shrines.txtから神社データを追加し、祭神リレーションも作成
+ */
+import * as readline from 'readline';
+
+export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.isAbsolute(txtPath) ? txtPath : path.join(__dirname, '..', txtPath);
+  const fileContent = fs.readFileSync(filePath, 'utf-8');
+  const lines = fileContent.split('\n').filter(line => line.trim() !== '');
+  if (lines.length < 2) return;
+  const header = lines[0].split(/\t|\s{2,}/).map(h => h.trim());
+  const nameIdx = header.findIndex(h => h.includes('name'));
+  const locationIdx = header.findIndex(h => h.includes('location'));
+  const latIdx = header.findIndex(h => h.includes('lat'));
+  const lngIdx = header.findIndex(h => h.includes('long'));
+  const dietiesIdx = header.findIndex(h => h.includes('dieties'));
+
+  // 祭神名→ID辞書
+  const allDieties = await prisma.diety.findMany({ select: { id: true, name: true } });
+  const dietyNameToId = new Map<string, number>();
+  for (const d of allDieties) {
+    dietyNameToId.set(d.name.replace(/\s/g, ''), d.id);
+  }
+
+  let inserted = 0, relInserted = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(/\t|\s{2,}/);
+    if (cols.length < 4) continue;
+    const name = cols[nameIdx]?.trim();
+    const location = cols[locationIdx]?.trim();
+    // 緯度・経度の区切りがカンマやタブ混在なので両方対応
+    let lat = cols[latIdx]?.trim();
+    let lng = cols[lngIdx]?.trim();
+    if (lat && lat.includes(',')) {
+      [lat, lng] = lat.split(',').map(s => s.trim());
+    } else if (lng && lng.includes(',')) {
+      [lng, lat] = lng.split(',').map(s => s.trim());
+    }
+    const latNum = parseFloat(lat);
+    const lngNum = parseFloat(lng);
+    if (!name || isNaN(latNum) || isNaN(lngNum)) continue;
+    // 神社を追加
+    const shrine = await prisma.shrine.upsert({
+      where: { name_location: { name, location } },
+      update: { lat: latNum, lng: lngNum },
+      create: { name, location, lat: latNum, lng: lngNum },
+    });
+    inserted++;
+    // 祭神リレーション
+    if (dietiesIdx >= 0 && cols[dietiesIdx]) {
+      // カンマ・読点・全角カンマ区切り対応
+      const raw = cols[dietiesIdx].replace(/、/g, ',').replace(/，/g, ',');
+      const names = raw.split(',').map(s => s.trim()).filter(Boolean);
+      for (const dietyName of names) {
+        const id = dietyNameToId.get(dietyName.replace(/\s/g, ''));
+        if (id) {
+          await prisma.shrineDiety.upsert({
+            where: { shrine_id_diety_id: { shrine_id: shrine.id, diety_id: id } },
+            update: {},
+            create: { shrine_id: shrine.id, diety_id: id },
+          });
+          relInserted++;
+        }
+      }
+    }
+  }
+  console.log(`shrines.txtから神社${inserted}件、祭神リレーション${relInserted}件を追加/更新しました`);
+}
+
 export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
   // shrines.jsonファイルを読み込み
   const jsonPath = path.join(__dirname, 'shrines.json');

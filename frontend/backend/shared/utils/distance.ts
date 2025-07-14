@@ -82,3 +82,15 @@ export function calculateWorshipCount(
 export function addMetersToLng(lat: number, lng: number, meters: number): number {
   return lng + (meters / (EARTH_RADIUS_METERS * Math.cos(lat * Math.PI / 180))) * (180 / Math.PI);
 } 
+
+/**
+ * 距離を見やすい単位（mまたはkm）で文字列化
+ * 1000m未満はm、小数点2桁。1000m以上はkm、小数点2桁。
+ */
+export function formatDistance(distance: number | null): string {
+  if (distance === null || isNaN(distance)) return '計算中';
+  if (distance >= 1000) {
+    return `${(distance / 1000).toFixed(2)}km`;
+  }
+  return `${distance.toFixed(2)}m`;
+} 
