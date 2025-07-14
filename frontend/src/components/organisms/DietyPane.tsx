@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import useDietyDetail from '../../hooks/useDietyDetail';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
@@ -11,6 +11,7 @@ import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import { API_BASE } from '../../config/api';
+import { useQueryClient } from '@tanstack/react-query';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItem[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -39,6 +40,14 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(idFromParams);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [thumbCache, setThumbCache] = useState(Date.now());
+  const [thumbnailUrl, setThumbnailUrl] = useState(diety?.thumbnailUrl);
+
+  useEffect(() => {
+    setThumbnailUrl(diety?.thumbnailUrl);
+  }, [diety?.thumbnailUrl]);
+
+  const queryClient = useQueryClient();
 
   if (!idFromParams) {
     return <div className="p-3">神様IDが指定されていません</div>;
@@ -73,8 +82,22 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
         throw new Error('アップロード失敗');
       }
       
+      const result = await response.json();
+      
       // 成功時はデータ再取得
-      // setRefreshKey(prev => prev + 1); // This line was removed as per the new_code
+      queryClient.invalidateQueries({ queryKey: ['diety-detail', idFromParams] });
+      if (result.image?.thumbnail_url) {
+        setThumbnailUrl(result.image.thumbnail_url);
+        setThumbCache(Date.now());
+      }
+      setThumbCache(Date.now()); // キャッシュバスターを更新
+      
+      // 即採用された場合のメッセージ
+      if (result.isCurrentThumbnail) {
+        alert('画像がアップロードされ、即座にサムネイルとして採用されました！');
+      } else {
+        alert('画像がアップロードされました。投票期間後に審査されます。');
+      }
     } catch (error) {
       console.error('アップロードエラー:', error);
       alert('アップロードに失敗しました。');
@@ -120,7 +143,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src={diety.thumbnailUrl ? diety.thumbnailUrl : NOIMAGE_DIETY_URL} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
+          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
           {/* 右上ボタン */}
           <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
             <button 
@@ -130,28 +153,26 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
             >
               <FaCloudUploadAlt size={20} />
             </button>
-            <button 
-              onClick={handleVote}
-              style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-              title="サムネイル投票"
-            >
-              <FaVoteYea size={20} />
-            </button>
+            {diety.thumbnailUrl && diety.thumbnailUrl !== NOIMAGE_DIETY_URL && (
+              <button 
+                onClick={handleVote}
+                style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
+                title="サムネイル投票"
+              >
+                <FaVoteYea size={20} />
+              </button>
+            )}
           </div>
           {/* 左下 byユーザー */}
-          {/* thumbnailByUser is not defined in the original code, so this block is commented out */}
-          {/* {thumbnailByUser && (
+          {diety.thumbnailBy && (
             <div style={{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>
-              by <Link to={`/users/${thumbnailByUser.id}`} style={{ color: '#fff', textDecoration: 'underline' }}>{thumbnailByUser.name}</Link>
+              by {diety.thumbnailBy}
             </div>
-          )} */}
+          )}
         </div>
         <div>
           <div className="modal-title">{diety.name}</div>
           {diety.kana && <div className="modal-kana">{diety.kana}</div>}
-          {diety.thumbnailBy && (
-            <div className="small text-muted">by {diety.thumbnailBy}</div>
-          )}
           <div className="catalog-count modal-item-text small mt-2">参拝数: {diety.count}</div>
         </div>
       </div>

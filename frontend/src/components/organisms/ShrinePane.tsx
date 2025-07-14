@@ -63,6 +63,12 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageListLoading, setImageListLoading] = useState(false);
   const [imageListError, setImageListError] = useState<string | null>(null);
+  const [thumbCache, setThumbCache] = useState(Date.now());
+  const [thumbnailUrl, setThumbnailUrl] = useState(data?.thumbnailUrl);
+
+  useEffect(() => {
+    setThumbnailUrl(data?.thumbnailUrl);
+  }, [data?.thumbnailUrl]);
 
   // 画像リスト取得
   useEffect(() => {
@@ -96,8 +102,21 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
         throw new Error('アップロード失敗');
       }
       
+      const result = await response.json();
+      
       // 成功時はデータ再取得
       setRankRefreshKey(prev => prev + 1);
+      queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
+      if (result.image?.thumbnail_url) {
+        setThumbnailUrl(result.image.thumbnail_url);
+        setThumbCache(Date.now());
+      }
+      if (result.isCurrentThumbnail) {
+        alert('画像がアップロードされ、即座にサムネイルとして採用されました！');
+      } else {
+        alert('画像がアップロードされました。投票期間後に審査されます。');
+      }
     } catch (error) {
       console.error('アップロードエラー:', error);
       alert('アップロードに失敗しました。');
@@ -344,7 +363,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
     <>
       <div className="d-flex align-items-start gap-3 mb-4">
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src={data.thumbnailUrl ? data.thumbnailUrl : NOIMAGE_SHRINE_URL} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
+          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
           {/* 右上ボタン */}
           <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
             <button 
@@ -354,13 +373,15 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
             >
               <FaCloudUploadAlt size={20} />
             </button>
-            <button 
-              onClick={handleVote}
-              style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-              title="サムネイル投票"
-            >
-              <FaVoteYea size={20} />
-            </button>
+            {data.thumbnailUrl && data.thumbnailUrl !== NOIMAGE_SHRINE_URL && (
+              <button 
+                onClick={handleVote}
+                style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
+                title="サムネイル投票"
+              >
+                <FaVoteYea size={20} />
+              </button>
+            )}
           </div>
           {/* 左下 byユーザー */}
           {data.thumbnailBy && (
@@ -372,9 +393,6 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
         <div>
           <div className="modal-title">{data.name}</div>
           {data.kana && <div className="modal-kana">{data.kana}</div>}
-          {data.thumbnailBy && (
-            <div className="small text-muted">by {data.thumbnailBy}</div>
-          )}
           <div className="d-flex align-items-center gap-2 mt-2">
             <div className="catalog-count modal-item-text small">参拝数: {data.count}</div>
             <CustomButton

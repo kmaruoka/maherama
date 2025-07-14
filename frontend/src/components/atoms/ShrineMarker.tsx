@@ -96,7 +96,7 @@ function createShrineIcon(
       <div class="shrine-marker-frame-anim ${statusClassString}">
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
-          <img src="${thumbnailUrl || NOIMAGE_SHRINE_URL}" alt="shrine" />
+          <img src="${(thumbnailUrl || NOIMAGE_SHRINE_URL) + '?t=' + Date.now()}" alt="shrine" />
           <div class="shrine-marker-thumbnail-gloss"></div>
         </div>
         <div class="shrine-marker-pin"></div>

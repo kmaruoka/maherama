@@ -55,11 +55,13 @@ model Shrine {
 }
 
 model Diety {
-  id                       Int                     @id @default(autoincrement())
-  name                     String
-  kana                     String?
-  description              String?
-  registered_at            DateTime                @default(now())
+  id           Int      @id @default(autoincrement())
+  name         String
+  kana         String?
+  description  String?
+  registered_at DateTime @default(now())
+  thumbnailUrl String?
+  thumbnailBy  String?
   shrine_dieties           ShrineDiety[]
   diety_prays              DietyPray[]
   diety_pray_stats         DietyPrayStats[]

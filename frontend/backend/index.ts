@@ -38,7 +38,7 @@ const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
@@ -2380,7 +2380,7 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
   }
   try {
     const yyyymm = getYYYYMM();
-    const dir = path.join(__dirname, 'uploads', yyyymm);
+    const dir = path.join(__dirname, '..', 'uploads', yyyymm);
     ensureDirSync(dir);
     // 3サイズ保存
     const markerPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'marker'));
@@ -2394,6 +2394,12 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
     const markerUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'marker')}`;
     const thumbUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'thumbnail')}`;
     const votingMonth = yyyymm;
+    
+    // 現在のサムネイルがあるかチェック
+    const currentThumbnail = await prisma.shrineImage.findFirst({
+      where: { shrine_id: shrineId, is_current_thumbnail: true }
+    });
+    
     const newImage = await prisma.shrineImage.create({
       data: {
         shrine_id: shrineId,
@@ -2402,10 +2408,24 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
         marker_url: markerUrl,
         thumbnail_url: thumbUrl,
         original_url: imageUrl,
-        voting_month: votingMonth
+        voting_month: votingMonth,
+        is_current_thumbnail: !currentThumbnail // サムネイルがない場合は即採用
       }
     });
-    res.json({ success: true, image: newImage });
+    
+    // サムネイルがない場合は神社テーブルも更新
+    if (!currentThumbnail) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      await prisma.shrine.update({
+        where: { id: shrineId },
+        data: {
+          thumbnailUrl: thumbUrl,
+          thumbnailBy: user?.name || '不明'
+        }
+      });
+    }
+    
+    res.json({ success: true, image: newImage, isCurrentThumbnail: !currentThumbnail });
   } catch (err) {
     console.error('Shrine画像アップロード失敗:', err);
     res.status(500).json({ error: '画像アップロード失敗' });
@@ -2421,7 +2441,7 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
   }
   try {
     const yyyymm = getYYYYMM();
-    const dir = path.join(__dirname, 'uploads', yyyymm);
+    const dir = path.join(__dirname, '..', 'uploads', yyyymm);
     ensureDirSync(dir);
     // 3サイズ保存
     const markerPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'marker'));
@@ -2435,6 +2455,12 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
     const markerUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'marker')}`;
     const thumbUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'thumbnail')}`;
     const votingMonth = yyyymm;
+    
+    // 現在のサムネイルがあるかチェック
+    const currentThumbnail = await prisma.dietyImage.findFirst({
+      where: { diety_id: dietyId, is_current_thumbnail: true }
+    });
+    
     const newImage = await prisma.dietyImage.create({
       data: {
         diety_id: dietyId,
@@ -2443,10 +2469,24 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
         marker_url: markerUrl,
         thumbnail_url: thumbUrl,
         original_url: imageUrl,
-        voting_month: votingMonth
+        voting_month: votingMonth,
+        is_current_thumbnail: !currentThumbnail // サムネイルがない場合は即採用
       }
     });
-    res.json({ success: true, image: newImage });
+    
+    // サムネイルがない場合は神様テーブルも更新
+    if (!currentThumbnail) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      await prisma.diety.update({
+        where: { id: dietyId },
+        data: {
+          thumbnailUrl: thumbUrl,
+          thumbnailBy: user?.name || '不明'
+        }
+      });
+    }
+    
+    res.json({ success: true, image: newImage, isCurrentThumbnail: !currentThumbnail });
   } catch (err) {
     console.error('Diety画像アップロード失敗:', err);
     res.status(500).json({ error: '画像アップロード失敗' });
