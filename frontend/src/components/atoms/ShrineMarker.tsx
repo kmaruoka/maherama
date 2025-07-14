@@ -5,7 +5,7 @@ import { usePrayDistance, useCanPray, useWorshipLimit } from '../../hooks/usePra
 import useDebugLog from '../../hooks/useDebugLog';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface Shrine {
   id: number;
@@ -97,7 +97,7 @@ function createShrineIcon(
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
           <img src="${(thumbnailUrl || NOIMAGE_SHRINE_URL) + '?t=' + Date.now()}" alt="shrine" />
-          <div class="shrine-marker-thumbnail-gloss"></div>
+          <div class="shrine-marker-thumbnail-gloss ${isPrayable ? 'active' : ''}"></div>
         </div>
         <div class="shrine-marker-pin"></div>
         ${statusIcon}
@@ -133,23 +133,30 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
   const isUnprayable = !isPrayDistanceLoading && prayDistance !== null && distance !== null && !canPray;
   const isRemoteUnavailable = markerStatus ? (markerStatus.today_remote_pray_count > 0 || !markerStatus.can_remote_pray) : false;
 
-  // // 参拝距離取得・判定に関する重要な調査用ログだけ直接console.logで出力
-  // if (currentPosition && !isPrayDistanceLoading && markerStatus) {
-  //   console.log(`[調査] マーカー状態: ${shrine.name} | 距離: ${distance?.toFixed(2)}m | API参拝可能距離: ${prayDistance}m | 参拝可能: ${canPray} | 図鑑収録: ${isInZukan} | 遥拝可能: ${isRemotePrayable}`);
-  // }
+  // createShrineIconをuseMemoでキャッシュ（DOM再生成を最小化）
+  const icon = useMemo(() => {
+    return createShrineIcon(
+      shrine.thumbnailUrl,
+      isInZukan,
+      canPray,
+      isRemotePrayable,
+      isUnprayable,
+      isRemoteUnavailable,
+      canPray
+    );
+  }, [
+    shrine.thumbnailUrl,
+    isInZukan,
+    canPray,
+    isRemotePrayable,
+    isUnprayable,
+    isRemoteUnavailable
+  ]);
 
   return (
     <Marker
       position={[shrine.lat, shrine.lng]}
-      icon={createShrineIcon(
-        shrine.thumbnailUrl,
-        isInZukan,
-        canPray,
-        isRemotePrayable,
-        isUnprayable,
-        isRemoteUnavailable,
-        canPray
-      )}
+      icon={icon}
       eventHandlers={{
         click: () => {
           if (currentPosition) {

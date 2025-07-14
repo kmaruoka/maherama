@@ -159,6 +159,13 @@ html, body {
   background: linear-gradient(120deg, rgba(255,255,255,0.0) 40%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.0) 60%);
   transform: translateX(-100%) skewX(-20deg);
   z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.shrine-marker-thumbnail-gloss.active {
+  transform: translateX(calc(-120% + 240% * var(--gloss-progress, 0))) skewX(-20deg);
+  opacity: var(--gloss-opacity, 0);
 }
 .shrine-marker-pin {
   position: absolute;
@@ -338,9 +345,6 @@ nav.d-flex.position-fixed {
 }
 .shrine-marker-prayable .shrine-marker-frame-border {
   border-color: var(--color-prayable) !important;
-}
-.shrine-marker-prayable .shrine-marker-thumbnail-gloss {
-  animation: shrine-gloss-anim 2s linear infinite;
 }
 
 /* 遥拝可能 */
