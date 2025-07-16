@@ -65,6 +65,8 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
   }
 
   let inserted = 0, relInserted = 0;
+  const shrineDietyPairs: { shrine_id: number; diety_id: number }[] = [];
+  
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(/\t|\s{2,}/);
     if (cols.length < 4) continue;
@@ -88,7 +90,7 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
       create: { name, location, lat: latNum, lng: lngNum },
     });
     inserted++;
-    // 祭神リレーション
+    // 祭神リレーション（既存を消さずに新規のみ追加）
     if (dietiesIdx >= 0 && cols[dietiesIdx]) {
       // カンマ・読点・全角カンマ区切り対応
       const raw = cols[dietiesIdx].replace(/、/g, ',').replace(/，/g, ',');
@@ -96,17 +98,25 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
       for (const dietyName of names) {
         const id = dietyNameToId.get(dietyName.replace(/\s/g, ''));
         if (id) {
-          await prisma.shrineDiety.upsert({
-            where: { shrine_id_diety_id: { shrine_id: shrine.id, diety_id: id } },
-            update: {},
-            create: { shrine_id: shrine.id, diety_id: id },
+          shrineDietyPairs.push({
+            shrine_id: shrine.id,
+            diety_id: id
           });
-          relInserted++;
         }
       }
     }
   }
-  console.log(`shrines.txtから神社${inserted}件、祭神リレーション${relInserted}件を追加/更新しました`);
+  
+  // 祭神リレーションを一括で新規追加（既存はそのまま）
+  if (shrineDietyPairs.length > 0) {
+    await prisma.shrineDiety.createMany({
+      data: shrineDietyPairs,
+      skipDuplicates: true,
+    });
+    relInserted = shrineDietyPairs.length;
+  }
+  
+  console.log(`shrines.txtから神社${inserted}件、祭神リレーション${relInserted}件を追加しました（既存データは保持）`);
 }
 
 export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
@@ -114,6 +124,13 @@ export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
   const jsonPath = path.join(__dirname, 'shrines.json');
   const jsonData = fs.readFileSync(jsonPath, 'utf-8');
   const geoJsonData: GeoJSONData = JSON.parse(jsonData);
+
+  // 祭神名→ID辞書
+  const allDieties = await prisma.diety.findMany({ select: { id: true, name: true } });
+  const dietyNameToId = new Map<string, number>();
+  for (const d of allDieties) {
+    dietyNameToId.set(d.name.replace(/\s/g, ''), d.id);
+  }
 
   // 神社データを変換
   const shrines = geoJsonData.features
@@ -131,6 +148,7 @@ export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
         location: location,
         lat: lat,
         lng: lng,
+        saijin: feature.properties['shinto:saijin'] || '',
       };
     })
     .filter(shrine => shrine.name !== '無名神社'); // 名前がない神社は除外
@@ -139,12 +157,43 @@ export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
 
   // データベースに挿入
   const result = await prisma.shrine.createMany({ 
-    data: shrines, 
+    data: shrines.map(({ saijin, ...rest }) => rest), 
     skipDuplicates: true 
   });
 
   console.log(`Inserted ${result.count} shrines`);
 
-  const allShrines = await prisma.shrine.findMany({ select: { id: true } });
+  // 神社ID逆引き用
+  const allShrines = await prisma.shrine.findMany({ select: { id: true, name: true, location: true } });
+  const shrineKeyToId = new Map<string, number>();
+  for (const s of allShrines) {
+    shrineKeyToId.set(`${s.name}__${s.location}`, s.id);
+  }
+
+  // 祭神リレーション生成
+  const shrineDietyPairs: { shrine_id: number; diety_id: number }[] = [];
+  for (const shrine of shrines) {
+    if (!shrine.saijin) continue;
+    // カンマ・読点・全角カンマ区切り対応
+    const raw = shrine.saijin.replace(/、/g, ',').replace(/，/g, ',');
+    const names = raw.split(',').map(s => s.trim()).filter(Boolean);
+    const shrineId = shrineKeyToId.get(`${shrine.name}__${shrine.location}`);
+    if (!shrineId) continue;
+    for (const dietyName of names) {
+      const id = dietyNameToId.get(dietyName.replace(/\s/g, ''));
+      if (id) {
+        shrineDietyPairs.push({ shrine_id: shrineId, diety_id: id });
+      }
+    }
+  }
+  if (shrineDietyPairs.length > 0) {
+    await prisma.shrineDiety.createMany({
+      data: shrineDietyPairs,
+      skipDuplicates: true,
+    });
+    console.log(`shrines.jsonから祭神リレーション${shrineDietyPairs.length}件を追加しました（既存データは保持）`);
+  }
+
   return allShrines.map(s => s.id);
 }
+

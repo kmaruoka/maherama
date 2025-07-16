@@ -1518,25 +1518,55 @@ app.get('/users/:id/shrines-visited', authenticateJWT, async (req, res) => {
 app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
   try {
+    // まずDietyPrayStatsからdiety_idとcountを取得
     const stats = await prisma.dietyPrayStats.findMany({
       where: { user_id: userId },
-      include: { diety: true },
+      select: { 
+        diety_id: true, 
+        count: true 
+      },
       orderBy: { count: 'desc' },
     });
+    
+    if (stats.length === 0) {
+      return res.json([]);
+    }
+    
+    // diety_idのリストを作成
+    const dietyIds = stats.map(s => s.diety_id);
+    
+    // Dietyテーブルから神様情報を取得
+    const dieties = await prisma.diety.findMany({
+      where: { id: { in: dietyIds } },
+      select: { 
+        id: true, 
+        name: true, 
+        registered_at: true 
+      }
+    });
+    
     // 各神様のサムネイルを取得
-    const dietyIds = stats.map(s => s.diety.id);
     const thumbnails = await prisma.dietyImage.findMany({
       where: { diety_id: { in: dietyIds }, is_current_thumbnail: true },
       select: { diety_id: true, thumbnail_url: true }
     });
+    
     const thumbMap = Object.fromEntries(thumbnails.map(t => [t.diety_id, t.thumbnail_url]));
-    const result = stats.map(s => ({
-      id: s.diety.id,
-      name: s.diety.name,
-      count: s.count,
-      registeredAt: s.diety.registered_at,
-      thumbnailUrl: thumbMap[s.diety.id] || null
-    }));
+    const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
+    
+    const result = stats.map(s => {
+      const diety = dietyMap[s.diety_id];
+      if (!diety) return null;
+      
+      return {
+        id: diety.id,
+        name: diety.name,
+        count: s.count,
+        registeredAt: diety.registered_at,
+        thumbnailUrl: thumbMap[diety.id] || null
+      };
+    }).filter(Boolean);
+    
     res.json(result);
   } catch (err) {
     console.error('Error fetching user dieties:', err);
@@ -1550,17 +1580,47 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
     return res.status(400).json({ error: 'Invalid user ID' });
   }
   try {
+    // まずDietyPrayStatsからdiety_idとcountを取得
     const stats = await prisma.dietyPrayStats.findMany({
       where: { user_id: userId },
-      include: { diety: true },
+      select: { 
+        diety_id: true, 
+        count: true 
+      },
       orderBy: { count: 'desc' },
     });
-    const result = stats.map(s => ({
-      id: s.diety.id,
-      name: s.diety.name,
-      count: s.count,
-      registeredAt: s.diety.registered_at
-    }));
+    
+    if (stats.length === 0) {
+      return res.json([]);
+    }
+    
+    // diety_idのリストを作成
+    const dietyIds = stats.map(s => s.diety_id);
+    
+    // Dietyテーブルから神様情報を取得
+    const dieties = await prisma.diety.findMany({
+      where: { id: { in: dietyIds } },
+      select: { 
+        id: true, 
+        name: true, 
+        registered_at: true 
+      }
+    });
+    
+    const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
+    
+    const result = stats.map(s => {
+      const diety = dietyMap[s.diety_id];
+      if (!diety) return null;
+      
+      return {
+        id: diety.id,
+        name: diety.name,
+        count: s.count,
+        registeredAt: diety.registered_at
+      };
+    }).filter(Boolean);
+    
     res.json(result);
   } catch (err) {
     console.error('Error fetching user dieties:', err);

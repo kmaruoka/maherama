@@ -31,21 +31,12 @@ export async function seedDiety(prisma: PrismaClient) {
 
   console.log(`Found ${dieties.length} dieties from TXT data`);
 
-  // データベースに個別挿入（外部キー制約違反を回避）
-  let insertedCount = 0;
-  for (const diety of dieties) {
-    try {
-      await prisma.diety.upsert({
-        where: { id: diety.id },
-        update: { name: diety.name, kana: diety.kana },
-        create: { id: diety.id, name: diety.name, kana: diety.kana }
-      });
-      insertedCount++;
-    } catch (error) {
-      console.log(`Skipped diety ${diety.id} (${diety.name}): already exists`);
-    }
-  }
-  console.log(`Inserted/Updated ${insertedCount} dieties`);
+  // データベースに一括挿入（skipDuplicatesで重複をスキップ）
+  const result = await prisma.diety.createMany({
+    data: dieties.map(({ image, ...diety }) => diety), // imageは除外
+    skipDuplicates: true,
+  });
+  console.log(`Inserted ${result.count} dieties (${dieties.length - result.count} duplicates skipped)`);
 
   // DietyImageも登録（imageが空でなければ）
   const dietyImages = dieties.filter(d => d.image).map(d => ({

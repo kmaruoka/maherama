@@ -60,8 +60,6 @@ model Diety {
   kana         String?
   description  String?
   registered_at DateTime @default(now())
-  thumbnailUrl String?
-  thumbnailBy  String?
   shrine_dieties           ShrineDiety[]
   diety_prays              DietyPray[]
   diety_pray_stats         DietyPrayStats[]
