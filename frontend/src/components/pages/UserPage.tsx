@@ -135,7 +135,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
   }
 
   return (
-    <>
+    <div style={{ padding: '16px' }}>
       <div className="d-flex align-items-center gap-3 mb-4">
         <div className="relative">
           <img
@@ -343,6 +343,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
           </ul>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -14,7 +14,6 @@ body.no-skin-padding, body.no-skin-padding #root {
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
 }
 
 .logo {
@@ -141,4 +140,9 @@ body.no-skin-padding, body.no-skin-padding #root {
   color: var(--color-text);
   opacity: 0.8;
   letter-spacing: 0.01em;
+}
+
+.menu-pane {
+  height: 56px;
+  flex-shrink: 0;
 }
