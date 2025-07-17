@@ -5,6 +5,7 @@ import useShrineList from '../../hooks/useShrineList';
 import useDietyList from '../../hooks/useDietyList';
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
+import Container from 'react-bootstrap/Container';
 
 interface Item {
   id: number;
@@ -28,7 +29,12 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   const sorted = [...items].sort((a, b) => {
     const [key, dir] = sort.split('-');
     const mul = dir === 'asc' ? 1 : -1;
-    if (key === 'name') return a.name.localeCompare(b.name) * mul;
+    if (key === 'name') {
+      // 読み仮名（kana）があればそれでソート、なければname
+      const aKana = a.kana || a.name;
+      const bKana = b.kana || b.name;
+      return aKana.localeCompare(bKana) * mul;
+    }
     if (key === 'count') return (a.count - b.count) * mul;
     return (
       new Date(a.registeredAt).getTime() - new Date(b.registeredAt).getTime()
@@ -96,7 +102,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           {sorted.map(renderItem)}
         </div>
       ) : (
-        <div className="d-grid gap-2">
+        <Container fluid>
           {sorted.map((item) => (
             <CustomCatalogListItem
               key={item.id}
@@ -115,7 +121,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
               }}
             />
           ))}
-        </div>
+        </Container>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import CustomImage from '../atoms/CustomImage';
 import { NOIMAGE_SHRINE_URL, NOIMAGE_DIETY_URL } from '../../constants';
+import Card from 'react-bootstrap/Card';
 
 interface CustomCatalogCardProps {
   name: string;
@@ -20,16 +21,16 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
   return (
-    <div className="card" style={{ width: '220px' }} onClick={onClick} role="button">
-      <CustomImage src={imageSrc} alt={name} aspectRatio="1/1" />
-      <div className="card-body p-2">
+    <Card style={{ width: '220px' }} onClick={onClick} role="button">
+      <Card.Img as={CustomImage} src={imageSrc} alt={name} aspectRatio="1/1" />
+      <Card.Body className="p-2">
         <div className="fw-bold mb-1">{name}</div>
         <div className="catalog-count mb-1">参拝数: {count}</div>
         <div className="small text-secondary">{dateLabel || '登録日'}: {formatDate(registeredAt)}</div>
         {lastPrayedAt && (
           <div className="small text-secondary">最終参拝: {formatDate(lastPrayedAt)}</div>
         )}
-      </div>
-    </div>
+      </Card.Body>
+    </Card>
   );
 } 

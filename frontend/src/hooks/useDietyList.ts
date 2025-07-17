@@ -4,6 +4,7 @@ import { API_BASE, apiCall } from '../config/api';
 export interface DietyListItem {
   id: number;
   name: string;
+  kana?: string;
   count: number;
   registeredAt: string;
   lastPrayedAt?: string;
@@ -22,8 +23,9 @@ export default function useDietyList() {
       // last_prayed_atをlastPrayedAtに変換
       return data.map((item: any) => ({
         ...item,
-        lastPrayedAt: item.last_prayed_at || undefined,
-        thumbnailUrl: item.thumbnailUrl || undefined
+        lastPrayedAt: item.last_prayed_at || item.lastPrayedAt || undefined,
+        thumbnailUrl: item.thumbnailUrl || undefined,
+        kana: item.kana || undefined
       }));
     },
   });

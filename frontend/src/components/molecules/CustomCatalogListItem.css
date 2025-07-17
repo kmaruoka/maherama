@@ -3,23 +3,4 @@
 }
 .catalog-list-item:last-child {
   border-bottom: none;
-}
-.catalog-list-col {
-  display: flex;
-  align-items: center;
-}
-.catalog-list-name {
-  min-width: 120px;
-  flex: 1 1 120px;
-  text-align: left;
-}
-.catalog-list-count {
-  min-width: 90px;
-  flex: 0 0 90px;
-  text-align: left;
-}
-.catalog-list-date {
-  min-width: 120px;
-  flex: 0 0 120px;
-  text-align: left;
 } 

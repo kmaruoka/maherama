@@ -1477,11 +1477,19 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
       include: { shrine: true },
       orderBy: { count: 'desc' },
     });
+    // ShrineBook から last_prayed_at を取得
+    const books = await prisma.shrineBook.findMany({
+      where: { user_id: userId },
+      select: { shrine_id: true, last_prayed_at: true }
+    });
+    const lastPrayedMap = Object.fromEntries(books.map(b => [b.shrine_id, b.last_prayed_at]));
     const result = stats.map(s => ({
       id: s.shrine.id,
       name: s.shrine.name,
+      kana: s.shrine.kana,
       count: s.count,
-      registeredAt: s.shrine.registered_at
+      registeredAt: s.shrine.registered_at,
+      last_prayed_at: lastPrayedMap[s.shrine.id] || null
     }));
     res.json(result);
   } catch (err) {
@@ -1527,46 +1535,47 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
       },
       orderBy: { count: 'desc' },
     });
-    
     if (stats.length === 0) {
       return res.json([]);
     }
-    
     // diety_idのリストを作成
     const dietyIds = stats.map(s => s.diety_id);
-    
     // Dietyテーブルから神様情報を取得
     const dieties = await prisma.diety.findMany({
       where: { id: { in: dietyIds } },
       select: { 
         id: true, 
         name: true, 
+        kana: true, 
         registered_at: true 
       }
     });
-    
     // 各神様のサムネイルを取得
     const thumbnails = await prisma.dietyImage.findMany({
       where: { diety_id: { in: dietyIds }, is_current_thumbnail: true },
       select: { diety_id: true, thumbnail_url: true }
     });
-    
+    // DietyBook から last_prayed_at を取得
+    const books = await prisma.dietyBook.findMany({
+      where: { user_id: userId },
+      select: { diety_id: true, last_prayed_at: true }
+    });
     const thumbMap = Object.fromEntries(thumbnails.map(t => [t.diety_id, t.thumbnail_url]));
     const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
-    
+    const lastPrayedMap = Object.fromEntries(books.map(b => [b.diety_id, b.last_prayed_at]));
     const result = stats.map(s => {
       const diety = dietyMap[s.diety_id];
       if (!diety) return null;
-      
       return {
         id: diety.id,
         name: diety.name,
+        kana: diety.kana,
         count: s.count,
         registeredAt: diety.registered_at,
-        thumbnailUrl: thumbMap[diety.id] || null
+        thumbnailUrl: thumbMap[diety.id] || null,
+        last_prayed_at: lastPrayedMap[diety.id] || null
       };
     }).filter(Boolean);
-    
     res.json(result);
   } catch (err) {
     console.error('Error fetching user dieties:', err);
@@ -1603,6 +1612,7 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
       select: { 
         id: true, 
         name: true, 
+        kana: true, 
         registered_at: true 
       }
     });
@@ -1616,6 +1626,7 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
       return {
         id: diety.id,
         name: diety.name,
+        kana: diety.kana,
         count: s.count,
         registeredAt: diety.registered_at
       };

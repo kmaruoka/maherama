@@ -1,5 +1,7 @@
 import CustomText from '../atoms/CustomText';
 import './CustomCatalogListItem.css';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
 interface CustomCatalogListItemProps {
   name: string;
@@ -16,21 +18,22 @@ export default function CustomCatalogListItem({ name, count, recordedDate, lastP
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
   return (
-    <div className="d-flex justify-content-between align-items-center py-2 px-1 catalog-list-item" onClick={onClick} role="button" style={{ cursor: onClick ? 'pointer' : undefined }}>
-      <div className="catalog-list-col catalog-list-name">
-        <CustomText className="fw-bold">{name}</CustomText>
-      </div>
-      <div className="catalog-list-col catalog-list-count">
-        <CustomText className="modal-item-text small catalog-count">{countLabel}: {count}</CustomText>
-      </div>
-      <div className="catalog-list-col catalog-list-date">
-        {recordedDate && (
-          <CustomText className="small text-muted">収録日: {formatDate(recordedDate)}</CustomText>
+    <Row className="align-items-center py-2 px-1 border-bottom" onClick={onClick} role="button" style={{ cursor: onClick ? 'pointer' : undefined }}>
+      <Col sm={5} className="fw-bold text-start">
+        <CustomText>{name}</CustomText>
+      </Col>
+      <Col sm={2} className="text-end">
+        <CustomText className="modal-item-text">{countLabel}: {count}</CustomText>
+      </Col>
+      <Col className="modal-item-text text-end flex-grow-1" style={{ minWidth: 240 }}>
+        {(recordedDate || lastPrayedAt) && (
+          <CustomText className="small text-muted" style={{ whiteSpace: 'nowrap' }}>
+            {recordedDate && `収録日: ${formatDate(recordedDate)}`}
+            {recordedDate && lastPrayedAt && ' / '}
+            {lastPrayedAt && `最終参拝: ${formatDate(lastPrayedAt)}`}
+          </CustomText>
         )}
-        {lastPrayedAt && (
-          <CustomText className="small text-muted">最終参拝: {formatDate(lastPrayedAt)}</CustomText>
-        )}
-      </div>
-    </div>
+      </Col>
+    </Row>
   );
 } 

@@ -4,6 +4,7 @@ import { API_BASE, apiCall } from '../config/api';
 export interface ShrineListItem {
   id: number;
   name: string;
+  kana?: string;
   count: number;
   registeredAt: string;
   lastPrayedAt?: string;
@@ -19,7 +20,8 @@ export default function useShrineList() {
       // last_prayed_atをlastPrayedAtに変換
       return data.map((item: any) => ({
         ...item,
-        lastPrayedAt: item.last_prayed_at || undefined
+        lastPrayedAt: item.last_prayed_at || item.lastPrayedAt || undefined,
+        kana: item.kana || undefined
       }));
     },
   });
