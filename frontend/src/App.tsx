@@ -42,8 +42,9 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <div style={{ flex: 1, overflowY: page === 'map' ? 'hidden' : 'auto' }}>
+    <>
+      <MenuPane setPage={setPage} page={page} isDialogOpen={modal !== null} />
+      <div className={page === 'map' ? '' : 'overflow-y-auto pb-56 position-relative'}>
         {renderPage()}
         {modal && (
           <Modal
@@ -85,8 +86,7 @@ function App() {
           </Modal>
         )}
       </div>
-      <MenuPane setPage={setPage} page={page} isDialogOpen={modal !== null} />
-    </div>
+    </>
   );
 }
 
