@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'; 
-import { FixedSizeGrid as Grid } from 'react-window';
+import { FixedSizeGrid as Grid, FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
 import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
@@ -115,10 +115,12 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         <div style={{ width: '100%', height: 'calc(100vh - 200px)' }}>
           <AutoSizer>
             {({ height, width }) => {
-              const CARD_WIDTH = 230;
+              const SCROLLBAR_WIDTH = 25; // 一般的なスクロールバー幅
+              const adjustedWidth = width - SCROLLBAR_WIDTH;
+              const CARD_WIDTH = 220;
               const CARD_HEIGHT = 360;
               const GAP = 10;
-              const columnCount = Math.max(1, Math.floor((width + GAP) / (CARD_WIDTH + GAP)));
+              const columnCount = Math.max(1, Math.floor((adjustedWidth + GAP / 2) / (CARD_WIDTH + GAP)));
               const rowCount = Math.ceil(sorted.length / columnCount);
               return (
                 <Grid
@@ -159,26 +161,71 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           </AutoSizer>
         </div>
       ) : (
-        <Container fluid>
-          {sorted.map((item) => (
-            <CustomCatalogListItem
-              key={item.id}
-              name={item.name}
-              count={item.count}
-              recordedDate={item.registeredAt}
-              lastPrayedAt={item.lastPrayedAt}
-              onClick={() => {
-                if (tab === 'shrine' && onShowShrine) {
-                  setTimeout(() => onShowShrine(item.id), 0);
-                } else if (tab === 'diety' && onShowDiety) {
-                  setTimeout(() => onShowDiety(item.id), 0);
-                } else if (onShowUser) {
-                  setTimeout(() => onShowUser(item.id), 0);
-                }
+        <>
+          {/* ヘッダ行 */}
+          <AutoSizer disableHeight>
+            {({ width }) => (
+              <div className="catalog-list-header" style={{
+                display: 'flex',
+                alignItems: 'center',
+                height: 56,
+                lineHeight: '56px',
+                fontWeight: 'bold',
+                borderBottom: '1px solid #ddd',
+                background: 'rgba(255,255,255,0.9)',
+                zIndex: 1,
+                width: width
+              }}>
+                <div className="catalog-list-col name" style={{ flex: 5, textAlign: 'left' }}>名前</div>
+                <div className="catalog-list-col count" style={{ flex: 2, textAlign: 'right' }}>参拝数</div>
+                <div className="catalog-list-col date" style={{ flex: 5, textAlign: 'right' }}>図鑑収録日 / 最終参拝日</div>
+              </div>
+            )}
+          </AutoSizer>
+          {/* リスト本体 */}
+          <div style={{ width: '100%', height: 'calc(100vh - 200px - 56px)' }}>
+            <AutoSizer>
+              {({ height, width }) => {
+                const LIST_ROW_HEIGHT = 56;
+                return (
+                  <List
+                    height={height}
+                    width={width}
+                    itemCount={sorted.length}
+                    itemSize={LIST_ROW_HEIGHT}
+                    itemData={{ sorted, tab, onShowShrine, onShowDiety, onShowUser }}
+                  >
+                    {({ index, style, data }) => {
+                      const { sorted, tab, onShowShrine, onShowDiety, onShowUser } = data;
+                      const item = sorted[index];
+                      return (
+                        <div style={{ ...style, width: '100%' }}>
+                          <CustomCatalogListItem
+                            key={item.id}
+                            name={item.name}
+                            count={item.count}
+                            recordedDate={item.registeredAt}
+                            lastPrayedAt={item.lastPrayedAt}
+                            showLabels={false}
+                            onClick={() => {
+                              if (tab === 'shrine' && onShowShrine) {
+                                setTimeout(() => onShowShrine(item.id), 0);
+                              } else if (tab === 'diety' && onShowDiety) {
+                                setTimeout(() => onShowDiety(item.id), 0);
+                              } else if (onShowUser) {
+                                setTimeout(() => onShowUser(item.id), 0);
+                              }
+                            }}
+                          />
+                        </div>
+                      );
+                    }}
+                  </List>
+                );
               }}
-            />
-          ))}
-        </Container>
+            </AutoSizer>
+          </div>
+        </>
       )}
     </div>
   );

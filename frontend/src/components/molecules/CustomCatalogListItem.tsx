@@ -11,31 +11,33 @@ interface CustomCatalogListItemProps {
   lastPrayedAt?: string;
   onClick?: () => void;
   countLabel?: string;
+  showLabels?: boolean; // 追加
 }
 
-export default function CustomCatalogListItem({ name, count, recordedDate, lastPrayedAt, onClick, countLabel = '参拝数' }: CustomCatalogListItemProps) {
+export default function CustomCatalogListItem({ name, count, recordedDate, lastPrayedAt, onClick, countLabel = '参拝数', showLabels = true }: CustomCatalogListItemProps) {
   const { t } = useTranslation();
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
   return (
-    <Row className="align-items-center py-2 px-1 border-bottom" onClick={onClick} role="button" style={{ cursor: onClick ? 'pointer' : undefined }}>
-      <Col sm={5} className="fw-bold text-start">
-        <CustomText>{name}</CustomText>
-      </Col>
-      <Col sm={2} className="text-end">
-        <CustomText className="modal-item-text">{t('count')}: {count}</CustomText>
-      </Col>
-      <Col className="modal-item-text text-end flex-grow-1" style={{ minWidth: 240 }}>
+    <div
+      className="catalog-list-row"
+      onClick={onClick}
+      role="button"
+      style={{ cursor: onClick ? 'pointer' : undefined, width: '100%', display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', minHeight: 56, height: 56, lineHeight: '56px', padding: '0 4px' }}
+    >
+      <div className="catalog-list-col name" style={{ flex: 5, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+      <div className="catalog-list-col count" style={{ flex: 2, textAlign: 'right' }}>{showLabels ? `${t('count')}: ` : ''}{count}</div>
+      <div className="catalog-list-col date" style={{ flex: 5, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {(recordedDate || lastPrayedAt) && (
-          <CustomText className="small text-muted" style={{ whiteSpace: 'nowrap' }}>
-            {recordedDate && `${t('registeredAt')}: ${formatDate(recordedDate)}`}
+          <span className="small text-muted">
+            {recordedDate && (showLabels ? `${t('registeredAt')}: ` : '')}{recordedDate ? formatDate(recordedDate) : ''}
             {recordedDate && lastPrayedAt && ' / '}
-            {lastPrayedAt && `${t('lastPrayedAt')}: ${formatDate(lastPrayedAt)}`}
-          </CustomText>
+            {lastPrayedAt && (showLabels ? `${t('lastPrayedAt')}: ` : '')}{lastPrayedAt ? formatDate(lastPrayedAt) : ''}
+          </span>
         )}
-      </Col>
-    </Row>
+      </div>
+    </div>
   );
 } 
