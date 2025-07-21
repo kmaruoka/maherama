@@ -467,244 +467,179 @@ app.get('/shrines/:id', async (req, res) => {
   }
 });
 
+// 共通化: 参拝・遥拝の業務ロジック
+async function prayAtShrine({
+  prisma,
+  shrineId,
+  userId,
+  logType = '参拝', // '参拝' or '遥拝'
+}) {
+  // 神社・祭神情報取得
+  const shrine = await prisma.shrine.findUnique({
+    where: { id: shrineId },
+    select: {
+      name: true,
+      shrine_dieties: {
+        select: {
+          diety: { select: { id: true, name: true } }
+        }
+      }
+    }
+  });
+  if (!shrine) {
+    throw new Error('Not found');
+  }
+
+  // 参拝/遥拝記録
+  if (logType === '参拝') {
+    await prisma.shrinePray.create({ data: { shrine_id: shrineId, user_id: userId } });
+  } else {
+    await prisma.remotePray.create({ data: { shrine_id: shrineId, user_id: userId, prayed_at: new Date() } });
+  }
+
+  // ShrineBook更新
+  await prisma.shrineBook.upsert({
+    where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } },
+    update: { last_prayed_at: new Date() },
+    create: { user_id: userId, shrine_id: shrineId, last_prayed_at: new Date() }
+  });
+
+  // ShrinePrayStats系
+  const statsTables = [
+    { model: prisma.shrinePrayStats, key: 'shrinePrayStats' },
+    { model: prisma.shrinePrayStatsYearly, key: 'shrinePrayStatsYearly' },
+    { model: prisma.shrinePrayStatsMonthly, key: 'shrinePrayStatsMonthly' },
+    { model: prisma.shrinePrayStatsWeekly, key: 'shrinePrayStatsWeekly' },
+  ];
+  for (const tbl of statsTables) {
+    const stat = await tbl.model.findFirst({ where: { shrine_id: shrineId, user_id: userId } });
+    if (stat) {
+      await tbl.model.update({ where: { id: stat.id }, data: { count: stat.count + 1 } });
+    } else {
+      await tbl.model.create({ data: { shrine_id: shrineId, user_id: userId, count: 1, rank: 1 } });
+    }
+  }
+
+  // 神様カウント・DietyBook
+  for (const sd of shrine.shrine_dieties) {
+    await prisma.dietyPray.create({ data: { diety_id: sd.diety.id, user_id: userId } });
+    const dietyId = sd.diety.id;
+    const dietyStatsTables = [
+      { model: prisma.dietyPrayStats, key: 'dietyPrayStats' },
+      { model: prisma.dietyPrayStatsYearly, key: 'dietyPrayStatsYearly' },
+      { model: prisma.dietyPrayStatsMonthly, key: 'dietyPrayStatsMonthly' },
+      { model: prisma.dietyPrayStatsWeekly, key: 'dietyPrayStatsWeekly' },
+    ];
+    for (const tbl of dietyStatsTables) {
+      const stat = await tbl.model.findFirst({ where: { diety_id: dietyId, user_id: userId } });
+      if (stat) {
+        await tbl.model.update({ where: { id: stat.id }, data: { count: stat.count + 1 } });
+      } else {
+        await tbl.model.create({ data: { diety_id: dietyId, user_id: userId, count: 1, rank: 1 } });
+      }
+    }
+    await prisma.dietyBook.upsert({
+      where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } },
+      update: { last_prayed_at: new Date() },
+      create: { user_id: userId, diety_id: dietyId, last_prayed_at: new Date() }
+    });
+  }
+
+  // 総参拝数
+  const totalCount = await prisma.shrinePrayStats.aggregate({
+    where: { shrine_id: shrineId },
+    _sum: { count: true }
+  });
+
+  // 経験値
+  const expType = logType === '参拝' ? 'PRAY' : 'REMOTE_PRAY';
+  const expReward = logType === '参拝' ? EXP_REWARDS.PRAY : EXP_REWARDS.REMOTE_PRAY;
+  const expResult = await addExperience(prisma, userId, expReward, expType);
+
+  // ログ
+  const dietyNames = shrine.shrine_dieties.map(sd => sd.diety.name);
+  const dietyNamesText = dietyNames.length > 0 ? `(${dietyNames.join('、')})` : '';
+  await addLog(`<shrine:${shrineId}:${shrine.name}>${dietyNamesText}を${logType}しました`);
+
+  return {
+    success: true,
+    count: totalCount._sum.count || 0,
+    level_up: expResult.levelUp,
+    new_level: expResult.newLevel,
+    ability_points_gained: expResult.abilityPointsGained
+  };
+}
+
+// 参拝API
 app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  // 追加: 参拝API呼び出し時に必ずログ出力
   const userId = parseInt(req.headers['x-user-id']) || 1;
-  // console.log('[参拝API呼び出し] userId:', userId, 'shrineId:', id, 'req.body:', req.body); // ← デバッグ用ログをコメントアウト
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
   }
+  if (!userId || isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
+  }
+  // 距離チェック
+  const shrine = await prisma.shrine.findUnique({ where: { id }, select: { lat: true, lng: true } });
+  if (!shrine) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  if (req.body.lat == null || req.body.lng == null) {
+    return res.status(400).json({ error: '緯度・経度がリクエストボディに含まれていません' });
+  }
+  const toRad = (x) => x * Math.PI / 180;
+  const R = 6371000;
+  const dLat = toRad(req.body.lat - shrine.lat);
+  const dLng = toRad(req.body.lng - shrine.lng);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(shrine.lat)) * Math.cos(toRad(req.body.lat)) * Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const dist = R * c;
+  const prayDistance = await getUserPrayDistance(userId);
+  if (dist > prayDistance) {
+    return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
+  }
   try {
-    // 神社名と神様リレーションも取得（diety_id全件）
-    const shrine = await prisma.shrine.findUnique({
-      where: { id },
-      select: {
-        name: true,
-        lat: true,
-        lng: true,
-        shrine_dieties: { select: { diety_id: true } }
-      }
+    const result = await prayAtShrine({
+      prisma,
+      shrineId: id,
+      userId,
+      logType: '参拝',
     });
-    if (!shrine) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-    // ユーザーIDをリクエストヘッダーから取得（なければ1）
-    const userId = parseInt(req.headers['x-user-id']) || 1;
-    if (!userId || isNaN(userId) || userId <= 0) {
-      return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
-    }
-    // 新しいレベルシステムで参拝距離を取得
-    const prayDistance = await getUserPrayDistance(userId);
-    
-    // 距離チェック
-    if (req.body.lat && req.body.lng) {
-      const toRad = (x) => x * Math.PI / 180;
-      const R = 6371000;
-      const dLat = toRad(req.body.lat - shrine.lat);
-      const dLng = toRad(req.body.lng - shrine.lng);
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(shrine.lat)) * Math.cos(toRad(req.body.lat)) * Math.sin(dLng/2) * Math.sin(dLng/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      const dist = R * c;
-      if (dist > prayDistance) {
-        // 追加: 距離不足の参拝をログ出力
-        console.error('[距離不足参拝] userId:', userId, 'shrineId:', id, 'dist:', dist, 'radius:', prayDistance, 'req:', { lat: req.body.lat, lng: req.body.lng }, 'shrine:', { lat: shrine.lat, lng: shrine.lng });
-        return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
-      }
-    } else {
-      return res.status(400).json({ error: '緯度・経度がリクエストボディに含まれていません' });
-    }
-    // --- 参拝ログ保存 ---
-    await prisma.shrinePray.create({ data: { shrine_id: id, user_id: userId } });
-    // 図鑑（ShrineBook）も登録・最終参拝日時を更新
-    await prisma.shrineBook.upsert({
-      where: { user_id_shrine_id: { user_id: userId, shrine_id: id } },
-      update: { last_prayed_at: new Date() },
-      create: { user_id: userId, shrine_id: id, last_prayed_at: new Date() }
-    });
-    // 取得した祭神IDをログ出力
-    //console.log('shrine_dieties:', shrine.shrine_dieties);
-    const shrineStats = await prisma.shrinePrayStats.findFirst({ where: { shrine_id: id, user_id: userId } });
-    if (shrineStats) {
-      await prisma.shrinePrayStats.update({ where: { id: shrineStats.id }, data: { count: shrineStats.count + 1 } });
-    } else {
-      await prisma.shrinePrayStats.create({ data: { shrine_id: id, user_id: userId, count: 1, rank: 1 } });
-    }
-    const shrineStatsYearly = await prisma.shrinePrayStatsYearly.findFirst({ where: { shrine_id: id, user_id: userId } });
-    if (shrineStatsYearly) {
-      await prisma.shrinePrayStatsYearly.update({ where: { id: shrineStatsYearly.id }, data: { count: shrineStatsYearly.count + 1 } });
-    } else {
-      await prisma.shrinePrayStatsYearly.create({ data: { shrine_id: id, user_id: userId, count: 1, rank: 1 } });
-    }
-    const shrineStatsMonthly = await prisma.shrinePrayStatsMonthly.findFirst({ where: { shrine_id: id, user_id: userId } });
-    if (shrineStatsMonthly) {
-      await prisma.shrinePrayStatsMonthly.update({ where: { id: shrineStatsMonthly.id }, data: { count: shrineStatsMonthly.count + 1 } });
-    } else {
-      await prisma.shrinePrayStatsMonthly.create({ data: { shrine_id: id, user_id: userId, count: 1, rank: 1 } });
-    }
-    const shrineStatsWeekly = await prisma.shrinePrayStatsWeekly.findFirst({ where: { shrine_id: id, user_id: userId } });
-    if (shrineStatsWeekly) {
-      await prisma.shrinePrayStatsWeekly.update({ where: { id: shrineStatsWeekly.id }, data: { count: shrineStatsWeekly.count + 1 } });
-    } else {
-      await prisma.shrinePrayStatsWeekly.create({ data: { shrine_id: id, user_id: userId, count: 1, rank: 1 } });
-    }
-    // --- 神様カウント ---
-    // shrine.shrine_dietiesが配列で全件取得できているか再確認し、全てのdiety_idに対して+1
-    for (const sd of shrine.shrine_dieties) {
-      await prisma.dietyPray.create({ data: { diety_id: sd.diety_id, user_id: userId } });
-      const dietyId = sd.diety_id;
-      const dietyStats = await prisma.dietyPrayStats.findFirst({ where: { diety_id: dietyId, user_id: userId } });
-      if (dietyStats) {
-        await prisma.dietyPrayStats.update({ where: { id: dietyStats.id }, data: { count: dietyStats.count + 1 } });
-      } else {
-        await prisma.dietyPrayStats.create({ data: { diety_id: dietyId, user_id: userId, count: 1, rank: 1 } });
-      }
-      const dietyStatsYearly = await prisma.dietyPrayStatsYearly.findFirst({ where: { diety_id: dietyId, user_id: userId } });
-      if (dietyStatsYearly) {
-        await prisma.dietyPrayStatsYearly.update({ where: { id: dietyStatsYearly.id }, data: { count: dietyStatsYearly.count + 1 } });
-      } else {
-        await prisma.dietyPrayStatsYearly.create({ data: { diety_id: dietyId, user_id: userId, count: 1, rank: 1 } });
-      }
-      const dietyStatsMonthly = await prisma.dietyPrayStatsMonthly.findFirst({ where: { diety_id: dietyId, user_id: userId } });
-      if (dietyStatsMonthly) {
-        await prisma.dietyPrayStatsMonthly.update({ where: { id: dietyStatsMonthly.id }, data: { count: dietyStatsMonthly.count + 1 } });
-      } else {
-        await prisma.dietyPrayStatsMonthly.create({ data: { diety_id: dietyId, user_id: userId, count: 1, rank: 1 } });
-      }
-      const dietyStatsWeekly = await prisma.dietyPrayStatsWeekly.findFirst({ where: { diety_id: dietyId, user_id: userId } });
-      if (dietyStatsWeekly) {
-        await prisma.dietyPrayStatsWeekly.update({ where: { id: dietyStatsWeekly.id }, data: { count: dietyStatsWeekly.count + 1 } });
-      } else {
-        await prisma.dietyPrayStatsWeekly.create({ data: { diety_id: dietyId, user_id: userId, count: 1, rank: 1 } });
-      }
-      // DietyBookもupsertで最終参拝日時を更新
-      await prisma.dietyBook.upsert({
-        where: { user_id_diety_id: { user_id: userId, diety_id: sd.diety_id } },
-        update: { last_prayed_at: new Date() },
-        create: { user_id: userId, diety_id: sd.diety_id, last_prayed_at: new Date() }
-      });
-    }
-    // 更新後の総参拝数を取得
-    const totalCount = await prisma.shrinePrayStats.aggregate({
-      where: { shrine_id: id },
-      _sum: { count: true }
-    });
-    
-    // 新しい経験値システムで経験値を追加
-    const expResult = await addExperience(prisma, userId, EXP_REWARDS.PRAY, 'PRAY');
-    await addLog(`<shrine:${id}:${shrine.name}>を参拝しました`);
-    res.json({ 
-      success: true, 
-      count: totalCount._sum.count || 0,
-      level_up: expResult.levelUp,
-      new_level: expResult.newLevel,
-      ability_points_gained: expResult.abilityPointsGained
-    });
+    res.json(result);
   } catch (err) {
     console.error('Error praying at shrine:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });
 
+// 遥拝API
 app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  // 追加: 遥拝API呼び出し時に必ずログ出力
   const userId = parseInt(req.headers['x-user-id']) || 1;
-  //console.log('[遥拝API呼び出し] userId:', userId, 'shrineId:', id);
+  if (isNaN(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid shrine ID' });
+  }
+  if (!userId || isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
+  }
+  // 遥拝回数チェック
+  const maxWorshipCount = await getUserWorshipCount(userId);
+  const todayWorshipCount = await getTodayWorshipCount(userId);
+  if (todayWorshipCount >= maxWorshipCount) {
+    return res.status(400).json({ error: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）` });
+  }
   try {
-    const shrine = await prisma.shrine.findUnique({
-      where: { id },
-      select: { name: true, shrine_dieties: { select: { diety_id: true } } }
+    const result = await prayAtShrine({
+      prisma,
+      shrineId: id,
+      userId,
+      logType: '遥拝',
     });
-    if (!shrine) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-    
-    // ユーザーIDをリクエストヘッダーから取得（なければ1）
-    const userId = parseInt(req.headers['x-user-id']) || 1;
-    const now = new Date();
-    
-    // 新しいレベルシステムで遥拝回数制限をチェック
-    const maxWorshipCount = await getUserWorshipCount(userId);
-    const todayWorshipCount = await getTodayWorshipCount(userId);
-    
-    if (todayWorshipCount >= maxWorshipCount) {
-      return res.status(400).json({ 
-        error: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）` 
-      });
-    }
-    
-    // 遥拝記録を追加
-    await prisma.remotePray.create({
-      data: { shrine_id: id, user_id: userId, prayed_at: now }
-    });
-    
-    // ShrinePrayStatsテーブルも更新
-    const existingStats = await prisma.shrinePrayStats.findFirst({
-      where: { shrine_id: id, user_id: userId }
-    });
-    if (existingStats) {
-      await prisma.shrinePrayStats.update({
-        where: { id: existingStats.id },
-        data: { count: existingStats.count + 1 }
-      });
-    } else {
-      await prisma.shrinePrayStats.create({
-        data: {
-          shrine_id: id,
-          user_id: userId,
-          count: 1,
-          rank: 1
-        }
-      });
-    }
-    // 週間ランキング用テーブルも更新
-    const weeklyStats = await prisma.shrinePrayStatsWeekly.findFirst({ where: { shrine_id: id, user_id: userId } });
-    if (weeklyStats) {
-      await prisma.shrinePrayStatsWeekly.update({ where: { id: weeklyStats.id }, data: { count: weeklyStats.count + 1 } });
-    } else {
-      await prisma.shrinePrayStatsWeekly.create({ data: { shrine_id: id, user_id: userId, count: 1, rank: 1 } });
-    }
-    // 月間ランキング用テーブルも更新
-    const monthlyStats = await prisma.shrinePrayStatsMonthly.findFirst({ where: { shrine_id: id, user_id: userId } });
-    if (monthlyStats) {
-      await prisma.shrinePrayStatsMonthly.update({ where: { id: monthlyStats.id }, data: { count: monthlyStats.count + 1 } });
-    } else {
-      await prisma.shrinePrayStatsMonthly.create({ data: { shrine_id: id, user_id: userId, count: 1, rank: 1 } });
-    }
-    // 年間ランキング用テーブルも更新
-    const yearlyStats = await prisma.shrinePrayStatsYearly.findFirst({ where: { shrine_id: id, user_id: userId } });
-    if (yearlyStats) {
-      await prisma.shrinePrayStatsYearly.update({ where: { id: yearlyStats.id }, data: { count: yearlyStats.count + 1 } });
-    } else {
-      await prisma.shrinePrayStatsYearly.create({ data: { shrine_id: id, user_id: userId, count: 1, rank: 1 } });
-    }
-    
-    // 総参拝数
-    const totalCount = await prisma.shrinePrayStats.aggregate({
-      where: { shrine_id: id },
-      _sum: { count: true }
-    });
-    
-    // 新しい経験値システムで経験値を追加
-    const expResult = await addExperience(prisma, userId, EXP_REWARDS.REMOTE_PRAY, 'REMOTE_PRAY');
-    await addLog(`<shrine:${id}:${shrine.name}>を遥拝しました`);
-    res.json({ 
-      success: true, 
-      count: totalCount._sum.count || 0,
-      level_up: expResult.levelUp,
-      new_level: expResult.newLevel,
-      ability_points_gained: expResult.abilityPointsGained
-    });
+    res.json(result);
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
-    console.error('Error details:', {
-      userId: parseInt(req.headers['x-user-id']) || 1,
-      shrineId: id,
-      error: err.message,
-      stack: err.stack
-    });
-    res.status(500).json({ error: 'DB error', details: err.message });
+    res.status(500).json({ error: 'DB error' });
   }
 });
 
