@@ -1,4 +1,6 @@
-import { useState } from 'react'; 
+import { useState, useCallback } from 'react'; 
+import { FixedSizeGrid as Grid } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
 import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
 import useShrineList from '../../hooks/useShrineList';
@@ -7,6 +9,7 @@ import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import Container from 'react-bootstrap/Container';
 import { useTranslation } from 'react-i18next';
+import type { GridChildComponentProps } from 'react-window';
 
 interface Item {
   id: number;
@@ -14,6 +17,15 @@ interface Item {
   count: number;
   registeredAt: string;
   lastPrayedAt?: string;
+}
+
+interface GridItemData {
+  sorted: (Item & { thumbnailUrl?: string })[];
+  columnCount: number;
+  CARD_WIDTH: number;
+  CARD_HEIGHT: number;
+  GAP: number;
+  renderItem: (item: Item & { thumbnailUrl?: string }) => React.ReactNode;
 }
 
 export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
@@ -43,7 +55,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
     ) * mul;
   });
 
-  const renderItem = (item: Item & { thumbnailUrl?: string }) => (
+  const renderItem = useCallback((item: Item & { thumbnailUrl?: string }) => (
     <CustomCatalogCard
       key={item.id}
       name={item.name}
@@ -64,7 +76,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       dateLabel={t('recordedDate')}
       thumbnailUrl={tab === 'diety' ? item.thumbnailUrl : undefined}
     />
-  );
+  ), [tab, onShowShrine, onShowDiety, onShowUser, t]);
 
   return (
     <div className="p-3">
@@ -100,8 +112,51 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         </select>
       </div>
       {style === 'card' ? (
-        <div className="d-grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, 220px)' }}>
-          {sorted.map(renderItem)}
+        <div style={{ width: '100%', height: 'calc(100vh - 200px)' }}>
+          <AutoSizer>
+            {({ height, width }) => {
+              const CARD_WIDTH = 230;
+              const CARD_HEIGHT = 360;
+              const GAP = 10;
+              const columnCount = Math.max(1, Math.floor((width + GAP) / (CARD_WIDTH + GAP)));
+              const rowCount = Math.ceil(sorted.length / columnCount);
+              return (
+                <Grid
+                  columnCount={columnCount}
+                  rowCount={rowCount}
+                  columnWidth={CARD_WIDTH + GAP}
+                  rowHeight={CARD_HEIGHT + GAP}
+                  width={width}
+                  height={height}
+                  itemData={{ sorted, columnCount, CARD_WIDTH, CARD_HEIGHT, GAP, renderItem }}
+                >
+                  {({ columnIndex, rowIndex, style: cellStyle, data }: GridChildComponentProps<GridItemData>) => {
+                    const { sorted, columnCount, CARD_WIDTH, CARD_HEIGHT, GAP, renderItem } = data;
+                    const index = rowIndex * columnCount + columnIndex;
+                    if (index >= sorted.length) return null;
+                    return (
+                      <div
+                        style={{
+                          ...cellStyle,
+                          left: cellStyle.left,
+                          top: cellStyle.top,
+                          width: CARD_WIDTH,
+                          height: CARD_HEIGHT,
+                          margin: GAP / 2,
+                          boxSizing: 'border-box',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {renderItem(sorted[index])}
+                      </div>
+                    );
+                  }}
+                </Grid>
+              );
+            }}
+          </AutoSizer>
         </div>
       ) : (
         <Container fluid>
