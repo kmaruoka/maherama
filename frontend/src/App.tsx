@@ -16,15 +16,6 @@ function App() {
   const [modal, setModal] = useState<ModalType>(null);
   useSkin();
 
-  // 地図ページだけbodyにno-skin-paddingクラスを付与
-  useEffect(() => {
-    if (page === 'map') {
-      document.body.classList.add('no-skin-padding');
-    } else {
-      document.body.classList.remove('no-skin-padding');
-    }
-  }, [page]);
-
   // ページ切り替え用
   const renderPage = () => {
     switch (page) {
@@ -43,7 +34,7 @@ function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div className={page === 'map' ? 'flex-grow-1' : 'overflow-y-auto pb-56 position-relative flex-grow-1'}>
+      <div className="overflow-y-auto pb-56 position-relative flex-grow-1">
         {renderPage()}
         {modal && (
           <Modal

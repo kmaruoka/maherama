@@ -80,10 +80,18 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
     );
   }
 
-  // 拡大時はbackdropを追加
+  // 拡大時はbackdropを追加（親要素の下部に絶対配置）
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 800 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)' }} onClick={() => setIsExpanded(false)} />
+    <>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0,0,0,0.2)',
+          zIndex: 799,
+        }}
+        onClick={() => setIsExpanded(false)}
+      />
       <div
         className={`log-pane log-pane-expanded`}
         ref={expandedRef}
@@ -91,6 +99,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
           cursor: 'pointer',
           background: getLogPaneBg(),
           color: skin.colors.logText,
+          zIndex: 800,
         }}
         onClick={handlePaneClick}
       >
@@ -109,6 +118,6 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
           <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
         ))}
       </div>
-    </div>
+    </>
   );
 }

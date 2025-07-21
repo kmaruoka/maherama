@@ -38,11 +38,17 @@ html, body {
   color: var(--color-text);
 }
 
+body, #root, .log-pane, .log-pane-expanded {
+  font-family: inherit;
+}
+
 .log-pane {
-  position: fixed;
-  bottom: 56px;
+  position: absolute;
   left: 0;
   right: 0;
+  bottom: 0;
+  width: 100%;
+  font-family: inherit;
   max-height: 12rem;
   overflow-y: auto;
   background-color: var(--color-surface);

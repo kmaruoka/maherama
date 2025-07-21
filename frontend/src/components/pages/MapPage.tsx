@@ -272,8 +272,9 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
             />
           );
         })}
+        {/* ログペインを地図下部に素直に配置。レイアウトはLogPane自身や親のCSSに委ねる */}
+        <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} onShowUser={onShowUser} onShowDiety={onShowDiety} />
       </MapContainer>
-      <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} onShowUser={onShowUser} onShowDiety={onShowDiety} />
     </div>
   );
 }
