@@ -16,6 +16,7 @@ import { CustomButton } from '../atoms/CustomButton';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
 import { useSubscription } from '../../hooks/useSubscription';
+import { useTranslation } from 'react-i18next';
 
 interface UserPageProps {
   id?: number;
@@ -25,6 +26,7 @@ interface UserPageProps {
 }
 
 export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: UserPageProps) {
+  const { t } = useTranslation();
   const [currentUserId] = useLocalStorageState<number | null>('userId', null);
   const displayId = id ?? currentUserId;
 
@@ -116,15 +118,15 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
   };
 
   if (!displayId) {
-    return <div className="p-3">ユーザーIDが指定されていません</div>;
+    return <div className="p-3">{t('userIdNotSpecified')}</div>;
   }
 
   if (isLoading) {
-    return <div className="p-3">読み込み中...</div>;
+    return <div className="p-3">{t('loading')}</div>;
   }
 
   if (!userInfo) {
-    return <div className="p-3">ユーザーが見つかりません</div>;
+    return <div className="p-3">{t('userNotFound')}</div>;
   }
 
   // 型安全なサムネイル取得
@@ -156,7 +158,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
               style={{ cursor: 'pointer' }}
               onClick={() => setShowFollowingModal(true)}
             >
-              フォロー: {userInfo.following_count}
+              {t('following')}: {userInfo.following_count}
             </div>
             <div
               role="button"
@@ -164,7 +166,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
               style={{ cursor: 'pointer' }}
               onClick={() => setShowFollowerModal(true)}
             >
-              フォロワー: {userInfo.follower_count}
+              {t('followers')}: {userInfo.follower_count}
             </div>
             {currentUserId && currentUserId !== displayId && (
               userInfo.is_following ? (
@@ -175,7 +177,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                   onClick={handleUnfollow}
                   style={{ fontSize: 16, padding: '4px 16px' }}
                 >
-                  フォロー解除
+                  {t('unfollow')}
                 </CustomButton>
               ) : (
                 <CustomButton
@@ -185,23 +187,23 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                   onClick={handleFollow}
                   style={{ fontSize: 16, padding: '4px 16px' }}
                 >
-                  フォローする
+                  {t('follow')}
                 </CustomButton>
               )
             )}
 
           </div>
           <div className="d-flex gap-3">
-            <span>レベル: {userInfo.level}</span>
-            <span>参拝距離: {levelInfo?.stats.pray_distance ?? '...'}m</span>
-            <span>遥拝回数: {userInfo.worship_count}回/日</span>
-            <span>経験値: {userInfo.exp}</span>
+            <span>{t('level')}: {userInfo.level}</span>
+            <span>{t('prayDistanceMeters')}: {levelInfo?.stats.pray_distance ?? '...'}m</span>
+            <span>{t('remotePrayCount')}: {userInfo.worship_count}回/日</span>
+            <span>{t('exp')}: {userInfo.exp}</span>
           </div>
         </div>
       </div>
 
       <div className="modal-section">
-        <div className="modal-subtitle">よく参拝する神社</div>
+        <div className="modal-subtitle">{t('oftenPrayedShrines')}</div>
         <RankingPane
           itemsByPeriod={userShrineRankingsByPeriod}
           type="shrine"
@@ -212,7 +214,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
       <FollowModal
         isOpen={showFollowingModal}
         onClose={() => setShowFollowingModal(false)}
-        title="フォロー中"
+        title={t('followingUsers')}
         users={followingUsers}
         isLoading={isFollowingLoading}
         error={followingError}
@@ -221,14 +223,14 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
       <FollowModal
         isOpen={showFollowerModal}
         onClose={() => setShowFollowerModal(false)}
-        title="フォロワー"
+        title={t('followers')}
         users={followerUsers}
         isLoading={isFollowersLoading}
         error={followersError}
         onUserClick={onShowUser}
       />
       <div className="modal-section">
-        <div className="modal-subtitle">よく参拝する神様</div>
+        <div className="modal-subtitle">{t('oftenPrayedDeities')}</div>
         <RankingPane
           itemsByPeriod={userDietyRankingsByPeriod}
           type="diety"
@@ -239,8 +241,8 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
 
       {currentUserId && currentUserId === displayId && (
         <div className="mb-3">
-          <div className="modal-subtitle">能力解放</div>
-          <div className="modal-subtitle">能力値: {userInfo.ability_points}</div>
+          <div className="modal-subtitle">{t('abilityUnlock')}</div>
+          <div className="modal-subtitle">{t('abilityPoints')}: {userInfo.ability_points}</div>
           <div className="d-grid gap-1">
             {abilities
               .filter(a => a.can_purchase || a.purchased)
@@ -254,7 +256,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                     {a.name}
                   </span>
                   {a.purchased ? (
-                    <span className="ms-2 text-success" style={{ fontWeight: 500 }}>解放済み</span>
+                    <span className="ms-2 text-success" style={{ fontWeight: 500 }}>{t('unlocked')}</span>
                   ) : (
                     <CustomButton
                       color={skin.colors.surface}
@@ -266,7 +268,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                       disabled={!a.can_purchase}
                       title={a.description}
                     >
-                      能力値 {a.cost} を消費して解放
+                      {t('consumeAbilityPoints', { cost: a.cost })}
                     </CustomButton>
                   )}
                 </div>
@@ -281,7 +283,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                 style={{ fontWeight: 500, marginTop: 8 }}
                 onClick={resetAbilities}
               >
-                能力初期化（有料）
+                {t('abilityReset')}
               </CustomButton>
             ) : (
               <CustomButton
@@ -292,7 +294,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
                 style={{ fontWeight: 500, marginTop: 8 }}
                 onClick={handleBuyResetAbilities}
               >
-                能力初期化サブスクリプション購入（Stripe）
+                {t('buyAbilityReset')}
               </CustomButton>
             )}
           </div>
@@ -300,7 +302,7 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
       )}
       {titles.length > 0 && (
         <div className="mt-4">
-          <div className="modal-subtitle">称号</div>
+          <div className="modal-subtitle">{t('titles')}</div>
           <ul className="list-unstyled">
             {titles.map(t => (
               <li key={t.id} style={{ whiteSpace: 'nowrap' }}>

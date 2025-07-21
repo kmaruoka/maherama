@@ -6,6 +6,7 @@ import useDietyList from '../../hooks/useDietyList';
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import Container from 'react-bootstrap/Container';
+import { useTranslation } from 'react-i18next';
 
 interface Item {
   id: number;
@@ -16,6 +17,7 @@ interface Item {
 }
 
 export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'shrine' | 'diety'>('shrine');
   const [sort, setSort] = useState('registeredAt-desc');
   const [style, setStyle] = useState<'card' | 'list'>('card');
@@ -57,9 +59,9 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           setTimeout(() => onShowUser(item.id), 0);
         }
       }}
-      countLabel="参拝数"
+      countLabel={t('count')}
       type={tab}
-      dateLabel="収録日"
+      dateLabel={t('recordedDate')}
       thumbnailUrl={tab === 'diety' ? item.thumbnailUrl : undefined}
     />
   );
@@ -72,8 +74,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         onSelect={k => k && setTab(k as 'shrine' | 'diety')}
         className="mb-2"
       >
-        <Tab eventKey="shrine" title="神社" />
-        <Tab eventKey="diety" title="神様" />
+        <Tab eventKey="shrine" title={t('shrine')} />
+        <Tab eventKey="diety" title={t('diety')} />
       </Tabs>
       <div className="d-flex gap-2 mb-3">
         <select
@@ -81,20 +83,20 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
-          <option value="registeredAt-desc">収録日(新しい順)</option>
-          <option value="registeredAt-asc">収録日(古い順)</option>
-          <option value="name-asc">名前(昇順)</option>
-          <option value="name-desc">名前(降順)</option>
-          <option value="count-desc">参拝数(多い順)</option>
-          <option value="count-asc">参拝数(少ない順)</option>
+          <option value="registeredAt-desc">{t('sortByRegisteredDateDesc')}</option>
+          <option value="registeredAt-asc">{t('sortByRegisteredDateAsc')}</option>
+          <option value="name-asc">{t('sortByNameAsc')}</option>
+          <option value="name-desc">{t('sortByNameDesc')}</option>
+          <option value="count-desc">{t('sortByCountDesc')}</option>
+          <option value="count-asc">{t('sortByCountAsc')}</option>
         </select>
         <select
           className="form-select skin-select"
           value={style}
           onChange={(e) => setStyle(e.target.value as 'card' | 'list')}
         >
-          <option value="card">カード</option>
-          <option value="list">リスト</option>
+          <option value="card">{t('card')}</option>
+          <option value="list">{t('list')}</option>
         </select>
       </div>
       {style === 'card' ? (

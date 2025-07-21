@@ -6,6 +6,7 @@ import useDebugLog from '../../hooks/useDebugLog';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Shrine {
   id: number;
@@ -30,6 +31,8 @@ function createShrineIcon(
   isRemoteUnavailable: boolean = false,
   isInRange: boolean = false
 ) {
+  const { t } = useTranslation();
+  
   // 状態に応じたCSSクラスを決定
   const statusClasses = [];
   if (isInZukan) statusClasses.push('shrine-marker-zukan');
@@ -69,25 +72,25 @@ function createShrineIcon(
   // ツールチップテキストを決定
   let tooltipText = '';
   if (isInZukan && isPrayable && isRemotePrayable) {
-    tooltipText = '図鑑収録済み・参拝可能・遥拝可能';
+    tooltipText = t('shrineMarkerZukanPrayableRemote');
   } else if (isInZukan && isPrayable) {
-    tooltipText = '図鑑収録済み・参拝可能';
+    tooltipText = t('shrineMarkerZukanPrayable');
   } else if (isInZukan && isRemotePrayable) {
-    tooltipText = '図鑑収録済み・遥拝可能';
+    tooltipText = t('shrineMarkerZukanRemote');
   } else if (isPrayable && isRemotePrayable) {
-    tooltipText = '参拝可能・遥拝可能';
+    tooltipText = t('shrineMarkerPrayableRemote');
   } else if (isInZukan) {
-    tooltipText = '図鑑収録済み';
+    tooltipText = t('shrineMarkerZukan');
   } else if (isPrayable) {
-    tooltipText = '参拝可能';
+    tooltipText = t('shrineMarkerPrayable');
   } else if (isRemotePrayable) {
-    tooltipText = '遥拝可能';
+    tooltipText = t('shrineMarkerRemote');
   } else if (isUnprayable) {
-    tooltipText = '参拝不可（距離外）';
+    tooltipText = t('shrineMarkerUnprayable');
   } else if (isRemoteUnavailable) {
-    tooltipText = '遥拝不可（制限到達）';
+    tooltipText = t('shrineMarkerRemoteUnavailable');
   } else {
-    tooltipText = '未参拝';
+    tooltipText = t('shrineMarkerUnprayed');
   }
 
   return L.divIcon({

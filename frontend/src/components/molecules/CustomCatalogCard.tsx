@@ -1,6 +1,7 @@
 import CustomImage from '../atoms/CustomImage';
 import { NOIMAGE_SHRINE_URL, NOIMAGE_DIETY_URL } from '../../constants';
 import Card from 'react-bootstrap/Card';
+import { useTranslation } from 'react-i18next';
 
 interface CustomCatalogCardProps {
   name: string;
@@ -14,6 +15,7 @@ interface CustomCatalogCardProps {
   dateLabel?: string;
 }
 export default function CustomCatalogCard({ name, count, registeredAt, lastPrayedAt, onClick, countLabel = '参拝数', type, thumbnailUrl, dateLabel }: CustomCatalogCardProps) {
+  const { t } = useTranslation();
   const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_URL;
   const imageSrc = thumbnailUrl || noImage;
   const formatDate = (dateStr: string) => {
@@ -25,10 +27,10 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
       <Card.Img as={CustomImage} src={imageSrc} alt={name} aspectRatio="1/1" />
       <Card.Body className="p-2">
         <div className="fw-bold mb-1">{name}</div>
-        <div className="catalog-count mb-1">参拝数: {count}</div>
-        <div className="small text-secondary">{dateLabel || '登録日'}: {formatDate(registeredAt)}</div>
+        <div className="catalog-count mb-1">{t('count')}: {count}</div>
+        <div className="small text-secondary">{t(dateLabel || 'registeredAt')}: {formatDate(registeredAt)}</div>
         {lastPrayedAt && (
-          <div className="small text-secondary">最終参拝: {formatDate(lastPrayedAt)}</div>
+          <div className="small text-secondary">{t('lastPrayedAt')}: {formatDate(lastPrayedAt)}</div>
         )}
       </Card.Body>
     </Card>

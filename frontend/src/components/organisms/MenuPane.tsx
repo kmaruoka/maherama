@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import CustomMenuItem from '../atoms/CustomMenuItem';
 import { useSkin } from '../../skins/SkinContext';
+import { useTranslation } from 'react-i18next';
 
 export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (page: 'map' | 'catalog' | 'user' | 'settings') => void, page: 'map' | 'catalog' | 'user' | 'settings', isDialogOpen?: boolean }) {
   useSkin();
+  const { t } = useTranslation();
   
   // 最後に選択したメニューを記憶する状態
   const [lastSelectedMenu, setLastSelectedMenu] = useState<'map' | 'catalog' | 'user' | 'settings'>(page);
@@ -31,10 +33,10 @@ export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (pa
       }}
       onClick={handleNavClick}
     >
-      <CustomMenuItem onClick={() => handleMenuItemClick('map')} active={lastSelectedMenu === 'map'}>地図</CustomMenuItem>
-      <CustomMenuItem onClick={() => handleMenuItemClick('catalog')} active={lastSelectedMenu === 'catalog'}>図鑑</CustomMenuItem>
-      <CustomMenuItem onClick={() => handleMenuItemClick('user')} active={lastSelectedMenu === 'user'}>ユーザー</CustomMenuItem>
-      <CustomMenuItem onClick={() => handleMenuItemClick('settings')} active={lastSelectedMenu === 'settings'}>設定</CustomMenuItem>
+      <CustomMenuItem onClick={() => handleMenuItemClick('map')} active={lastSelectedMenu === 'map'}>{t('map')}</CustomMenuItem>
+      <CustomMenuItem onClick={() => handleMenuItemClick('catalog')} active={lastSelectedMenu === 'catalog'}>{t('catalog')}</CustomMenuItem>
+      <CustomMenuItem onClick={() => handleMenuItemClick('user')} active={lastSelectedMenu === 'user'}>{t('user')}</CustomMenuItem>
+      <CustomMenuItem onClick={() => handleMenuItemClick('settings')} active={lastSelectedMenu === 'settings'}>{t('settings')}</CustomMenuItem>
     </nav>
   );
 }

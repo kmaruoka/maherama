@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.7",
+    "i18next": "^25.3.2",
     "jsonwebtoken": "^9.0.2",
-    "react-bootstrap": "^2.10.10"
+    "react-bootstrap": "^2.10.10",
+    "react-i18next": "^15.6.0"
   }
 }

@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import { API_BASE } from '../../config/api';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItem[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -25,6 +26,7 @@ function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key
 }
 
 export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
+  const { t } = useTranslation();
   const { id: paramId } = useParams<{ id: string }>();
   // id優先、なければparamIdを数値変換して使用
   let idFromParams: number | undefined = undefined;
@@ -50,15 +52,15 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
   const queryClient = useQueryClient();
 
   if (!idFromParams) {
-    return <div className="p-3">神様IDが指定されていません</div>;
+    return <div className="p-3">{t('dietyIdNotSpecified')}</div>;
   }
 
   if (dietyError) {
-    return <div className="p-3 text-danger">神様情報の取得に失敗しました</div>;
+    return <div className="p-3 text-danger">{t('dietyInfoError')}</div>;
   }
 
   if (!diety) {
-    return <div className="p-3">読み込み中...</div>;
+    return <div className="p-3">{t('loading')}</div>;
   }
 
   if (diety) {
@@ -94,13 +96,13 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
       
       // 即採用された場合のメッセージ
       if (result.isCurrentThumbnail) {
-        alert('画像がアップロードされ、即座にサムネイルとして採用されました！');
+        alert(t('uploadSuccess'));
       } else {
-        alert('画像がアップロードされました。投票期間後に審査されます。');
+        alert(t('uploadPending'));
       }
     } catch (error) {
       console.error('アップロードエラー:', error);
-      alert('アップロードに失敗しました。');
+      alert(t('uploadError'));
     }
   };
 
@@ -132,10 +134,10 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
       
       // 成功時はデータ再取得
       // setRefreshKey(prev => prev + 1); // This line was removed as per the new_code
-      alert('投票しました！');
+      alert(t('voteSuccess'));
     } catch (error) {
       console.error('投票エラー:', error);
-      alert(error instanceof Error ? error.message : '投票に失敗しました。');
+      alert(error instanceof Error ? error.message : t('voteError'));
     }
   };
 
@@ -149,7 +151,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
             <button 
               onClick={() => setIsUploadModalOpen(true)}
               style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-              title="画像アップロード"
+              title={t('imageUpload')}
             >
               <FaCloudUploadAlt size={20} />
             </button>
@@ -157,7 +159,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
               <button 
                 onClick={handleVote}
                 style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-                title="サムネイル投票"
+                title={t('thumbnailVote')}
               >
                 <FaVoteYea size={20} />
               </button>
@@ -166,20 +168,20 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
           {/* 左下 byユーザー */}
           {diety.thumbnailBy && (
             <div style={{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>
-              by {diety.thumbnailBy}
+              {t('by')} {diety.thumbnailBy}
             </div>
           )}
         </div>
         <div>
           <div className="modal-title">{diety.name}</div>
           {diety.kana && <div className="modal-kana">{diety.kana}</div>}
-          <div className="catalog-count modal-item-text small mt-2">参拝数: {diety.count}</div>
+          <div className="catalog-count modal-item-text small mt-2">{t('count')}: {diety.count}</div>
         </div>
       </div>
 
       {diety.shrines.length > 0 && (
         <div className="modal-section">
-          <div className="modal-subtitle">祀られている神社</div>
+          <div className="modal-subtitle">{t('enshrinedShrines')}</div>
           <div className="d-flex flex-wrap gap-2">
             {diety.shrines.map((shrine) => (
               <CustomLink
@@ -196,7 +198,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
 
       {/* ランキング表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle">参拝ランキング</div>
+        <div className="modal-subtitle">{t('prayRanking')}</div>
         <RankingPane
           itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
           type="user"
@@ -207,7 +209,7 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
 
       {diety.description && (
         <div className="modal-section">
-          <div className="modal-subtitle">説明</div>
+          <div className="modal-subtitle">{t('description')}</div>
           <p className="text-body-secondary small">{diety.description}</p>
         </div>
       )}

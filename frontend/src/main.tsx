@@ -7,6 +7,7 @@ import './App.css';
 import App from './App.tsx';
 import { SkinProvider } from './skins/SkinContext';
 import { BarrierProvider } from './barriers/BarrierContext';
+import './config/i18n';
 
 const queryClient = new QueryClient();
 

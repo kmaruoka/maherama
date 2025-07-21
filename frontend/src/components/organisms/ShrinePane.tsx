@@ -18,6 +18,7 @@ import { useWorshipLimit } from '../../hooks/usePrayDistance';
 import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { CustomButton } from '../atoms/CustomButton';
+import { useTranslation } from 'react-i18next';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -47,6 +48,7 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
 }
 
 export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
+  const { t } = useTranslation();
   const { data } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
@@ -81,9 +83,9 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
     fetch(`${API_BASE}/shrines/${id}/images?votingMonth=${yyyymm}`)
       .then(res => res.json())
       .then(json => setImageList(json))
-      .catch(e => setImageListError('画像リスト取得失敗'))
+      .catch(e => setImageListError(t('imageListError')))
       .finally(() => setImageListLoading(false));
-  }, [id, rankRefreshKey]);
+  }, [id, rankRefreshKey, t]);
 
   const handleUpload = async (file: File) => {
     try {
@@ -113,13 +115,13 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
         setThumbCache(Date.now());
       }
       if (result.isCurrentThumbnail) {
-        alert('画像がアップロードされ、即座にサムネイルとして採用されました！');
+        alert(t('uploadSuccess'));
       } else {
-        alert('画像がアップロードされました。投票期間後に審査されます。');
+        alert(t('uploadPending'));
       }
     } catch (error) {
       console.error('アップロードエラー:', error);
-      alert('アップロードに失敗しました。');
+      alert(t('uploadError'));
     }
   };
 
@@ -151,10 +153,10 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
       
       // 成功時はデータ再取得
       setRankRefreshKey(prev => prev + 1);
-      alert('投票しました！');
+      alert(t('voteSuccess'));
     } catch (error) {
       console.error('投票エラー:', error);
-      alert(error instanceof Error ? error.message : '投票に失敗しました。');
+      alert(error instanceof Error ? error.message : t('voteError'));
     }
   };
 
@@ -273,7 +275,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
       if (!res.ok) {
         const error = await res.json();
         debugLog(`[ERROR] 参拝失敗: ${error.error || '不明なエラー'}`);
-        throw new Error(error.error || '参拝に失敗しました');
+        throw new Error(error.error || t('prayError'));
       }
       return res.json();
     },
@@ -302,9 +304,9 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
       }
       if (!response.ok) {
         if (response.status >= 500) {
-          throw new Error('サーバーエラーです。時間をおいて再度お試しください');
+          throw new Error(t('serverError'));
         } else {
-          throw new Error(error.error || '遥拝に失敗しました');
+          throw new Error(error.error || t('remotePrayError'));
         }
       }
       return error;
@@ -323,7 +325,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
   };
 
   if (!data) {
-    return <div className="p-3">Loading...</div>;
+    return <div className="p-3">{t('loading')}</div>;
   }
 
   // 画像ごとの投票
@@ -352,10 +354,10 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
         throw new Error(errorMsg);
       }
       setRankRefreshKey(prev => prev + 1);
-      alert('投票しました！');
+      alert(t('voteSuccess'));
     } catch (error) {
       console.error('投票エラー:', error);
-      alert(error instanceof Error ? error.message : '投票に失敗しました。');
+      alert(error instanceof Error ? error.message : t('voteError'));
     }
   };
 
@@ -369,7 +371,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
             <button 
               onClick={() => setIsUploadModalOpen(true)}
               style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-              title="画像アップロード"
+              title={t('imageUpload')}
             >
               <FaCloudUploadAlt size={20} />
             </button>
@@ -377,7 +379,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
               <button 
                 onClick={handleVote}
                 style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-                title="サムネイル投票"
+                title={t('thumbnailVote')}
               >
                 <FaVoteYea size={20} />
               </button>
@@ -386,7 +388,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
           {/* 左下 byユーザー */}
           {data.thumbnailBy && (
             <div style={{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>
-              by {data.thumbnailBy}
+              {t('by')} {data.thumbnailBy}
             </div>
           )}
         </div>
@@ -394,7 +396,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
           <div className="modal-title">{data.name}</div>
           {data.kana && <div className="modal-kana">{data.kana}</div>}
           <div className="d-flex align-items-center gap-2 mt-2">
-            <div className="catalog-count modal-item-text small">参拝数: {data.count}</div>
+            <div className="catalog-count modal-item-text small">{t('count')}: {data.count}</div>
             <CustomButton
               color="#28a745"
               hoverColor="#218838"
@@ -402,9 +404,9 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
               onClick={() => prayMutation.mutate(data.id)}
               disabled={!canPray}
               style={{ fontSize: 16, padding: '4px 16px' }}
-              title={!currentPosition ? '位置情報が取得できません' : !data ? '神社情報が読み込まれていません' : `距離: ${formatDistance(distance)} / 半径: ${formatDistance(radius)}`}
+              title={!currentPosition ? t('locationUnavailable') : !data ? t('shrineInfoUnavailable') : `${t('distance')}: ${formatDistance(distance)} / ${t('radius')}: ${formatDistance(radius)}`}
             >
-              参拝
+              {t('pray')}
             </CustomButton>
             <CustomButton
               color="#007bff"
@@ -414,17 +416,17 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
               disabled={remotePrayMutation.isPending || (worshipLimit && worshipLimit.today_worship_count >= worshipLimit.max_worship_count)}
               style={{ fontSize: 16, padding: '4px 16px' }}
             >
-              {remotePrayMutation.isPending ? '遥拝中...' : '遥拝'}
+              {remotePrayMutation.isPending ? t('remotePraying') : t('remotePray')}
             </CustomButton>
           </div>
           {currentPosition && data && (
             <div className="text-muted small mt-1">
-              距離: {formatDistance(distance)} / 参拝可能距離: {formatDistance(radius)}
+              {t('distance')}: {formatDistance(distance)} / {t('radius')}: {formatDistance(radius)}
             </div>
           )}
           {canPray === false && currentPosition && data && (
             <div className="text-danger small mt-1">
-              現在地が神社から離れすぎています
+              {t('tooFar')}
             </div>
           )}
           {prayMutation.error && (
@@ -440,20 +442,20 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
       
       {data.founded && (
         <div className="modal-section">
-          <div className="modal-subtitle">創建</div>
+          <div className="modal-subtitle">{t('founded')}</div>
           <div>{data.founded}</div>
         </div>
       )}
       
       {data.description && (
         <div className="modal-section">
-          <div className="modal-subtitle">説明</div>
+          <div className="modal-subtitle">{t('description')}</div>
           <div className="small text-body-secondary">{data.description}</div>
         </div>
       )}
       
       <div className="modal-section">
-        <div className="modal-subtitle">祭神</div>
+        <div className="modal-subtitle">{t('enshrinedDeities')}</div>
         <div className="d-flex flex-wrap gap-2">
           {data.dieties && data.dieties.length > 0 ? (
             data.dieties.map(d => (
@@ -466,28 +468,28 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
               </CustomLink>
             ))
           ) : (
-            <span className="text-muted">祭神情報なし</span>
+            <span className="text-muted">{t('noDeityInfo')}</span>
           )}
         </div>
       </div>
       
       {data.history && (
         <div className="modal-section">
-          <div className="modal-subtitle">歴史・伝承</div>
+          <div className="modal-subtitle">{t('history')}</div>
           <div className="small">{data.history}</div>
         </div>
       )}
       
       {data.festivals && (
         <div className="modal-section">
-          <div className="modal-subtitle">祭礼</div>
+          <div className="modal-subtitle">{t('festivals')}</div>
           <div className="small">{data.festivals}</div>
         </div>
       )}
 
       {/* ランキング表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle">参拝ランキング</div>
+        <div className="modal-subtitle">{t('prayRanking')}</div>
         <RankingPane
           itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
           type="user"
@@ -496,7 +498,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
         />
       </div>
       
-      <div className="text-muted small">収録日: {formatDate(data.registeredAt)}</div>
+      <div className="text-muted small">{t('recordedDate')}: {formatDate(data.registeredAt)}</div>
 
       {/* アップロードモーダル */}
       <ImageUploadModal
@@ -508,19 +510,19 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
 
       {/* サムネイル投票候補 */}
       <div className="modal-section">
-        <div className="modal-subtitle">サムネイル投票候補</div>
+        <div className="modal-subtitle">{t('thumbnailVoteCandidates')}</div>
         {imageListLoading ? (
-          <div>画像読み込み中...</div>
+          <div>{t('loadingImages')}</div>
         ) : imageListError ? (
           <div className="text-danger">{imageListError}</div>
         ) : imageList.length === 0 ? (
-          <div>投票候補画像がありません</div>
+          <div>{t('noVoteCandidates')}</div>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
             {imageList.map(img => (
               <div key={img.id} style={{ border: '1px solid #ccc', borderRadius: 8, padding: 8, width: 120, textAlign: 'center', position: 'relative' }}>
                 <img src={img.thumbnail_url || img.image_url} alt="候補画像" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} />
-                <div style={{ fontSize: 12, margin: '4px 0' }}>by {img.user?.name || '不明'}</div>
+                <div style={{ fontSize: 12, margin: '4px 0' }}>{t('by')} {img.user?.name || t('unknown')}</div>
                 <CustomButton
                   color="#28a745"
                   hoverColor="#218838"
@@ -528,9 +530,9 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
                   onClick={() => handleImageVote(img.id)}
                   style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}
                 >
-                  <FaVoteYea /> 投票
+                  <FaVoteYea /> {t('vote')}
                 </CustomButton>
-                <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>投票数: {img.votes?.length || 0}</div>
+                <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{t('voteCount')}: {img.votes?.length || 0}</div>
               </div>
             ))}
           </div>
