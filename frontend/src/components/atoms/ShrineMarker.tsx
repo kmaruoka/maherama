@@ -29,10 +29,9 @@ function createShrineIcon(
   isRemotePrayable: boolean = false,
   isUnprayable: boolean = false,
   isRemoteUnavailable: boolean = false,
-  isInRange: boolean = false
+  isInRange: boolean = false,
+  tooltipText: string = ''
 ) {
-  const { t } = useTranslation();
-  
   // 状態に応じたCSSクラスを決定
   const statusClasses = [];
   if (isInZukan) statusClasses.push('shrine-marker-zukan');
@@ -69,30 +68,6 @@ function createShrineIcon(
     statusIcon = '<div class="shrine-marker-status-icon remote-unavailable">限</div>';
   }
 
-  // ツールチップテキストを決定
-  let tooltipText = '';
-  if (isInZukan && isPrayable && isRemotePrayable) {
-    tooltipText = t('shrineMarkerZukanPrayableRemote');
-  } else if (isInZukan && isPrayable) {
-    tooltipText = t('shrineMarkerZukanPrayable');
-  } else if (isInZukan && isRemotePrayable) {
-    tooltipText = t('shrineMarkerZukanRemote');
-  } else if (isPrayable && isRemotePrayable) {
-    tooltipText = t('shrineMarkerPrayableRemote');
-  } else if (isInZukan) {
-    tooltipText = t('shrineMarkerZukan');
-  } else if (isPrayable) {
-    tooltipText = t('shrineMarkerPrayable');
-  } else if (isRemotePrayable) {
-    tooltipText = t('shrineMarkerRemote');
-  } else if (isUnprayable) {
-    tooltipText = t('shrineMarkerUnprayable');
-  } else if (isRemoteUnavailable) {
-    tooltipText = t('shrineMarkerRemoteUnavailable');
-  } else {
-    tooltipText = t('shrineMarkerUnprayed');
-  }
-
   return L.divIcon({
     className: '',
     html: `
@@ -114,6 +89,7 @@ function createShrineIcon(
 }
 
 export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: ShrineMarkerProps) {
+  const { t } = useTranslation();
   const debugLog = useDebugLog();
   const [userId] = useLocalStorageState<number | null>('userId', null);
 
@@ -136,6 +112,31 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
   const isUnprayable = !isPrayDistanceLoading && prayDistance !== null && distance !== null && !canPray;
   const isRemoteUnavailable = markerStatus ? (markerStatus.today_remote_pray_count > 0 || !markerStatus.can_remote_pray) : false;
 
+  // ツールチップテキストを決定
+  const tooltipText = useMemo(() => {
+    if (isInZukan && canPray && isRemotePrayable) {
+      return t('shrineMarkerZukanPrayableRemote');
+    } else if (isInZukan && canPray) {
+      return t('shrineMarkerZukanPrayable');
+    } else if (isInZukan && isRemotePrayable) {
+      return t('shrineMarkerZukanRemote');
+    } else if (canPray && isRemotePrayable) {
+      return t('shrineMarkerPrayableRemote');
+    } else if (isInZukan) {
+      return t('shrineMarkerZukan');
+    } else if (canPray) {
+      return t('shrineMarkerPrayable');
+    } else if (isRemotePrayable) {
+      return t('shrineMarkerRemote');
+    } else if (isUnprayable) {
+      return t('shrineMarkerUnprayable');
+    } else if (isRemoteUnavailable) {
+      return t('shrineMarkerRemoteUnavailable');
+    } else {
+      return t('shrineMarkerUnprayed');
+    }
+  }, [t, isInZukan, canPray, isRemotePrayable, isUnprayable, isRemoteUnavailable]);
+
   // createShrineIconをuseMemoでキャッシュ（DOM再生成を最小化）
   const icon = useMemo(() => {
     return createShrineIcon(
@@ -145,7 +146,8 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
       isRemotePrayable,
       isUnprayable,
       isRemoteUnavailable,
-      canPray
+      canPray,
+      tooltipText
     );
   }, [
     shrine.thumbnailUrl,
@@ -153,7 +155,8 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
     canPray,
     isRemotePrayable,
     isUnprayable,
-    isRemoteUnavailable
+    isRemoteUnavailable,
+    tooltipText
   ]);
 
   return (
