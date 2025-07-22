@@ -10,6 +10,7 @@ import Tab from 'react-bootstrap/Tab';
 import Container from 'react-bootstrap/Container';
 import { useTranslation } from 'react-i18next';
 import type { GridChildComponentProps } from 'react-window';
+import { CARD_WIDTH, CARD_HEIGHT } from '../../constants';
 
 interface Item {
   id: number;
@@ -117,9 +118,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
             {({ height, width }) => {
               const SCROLLBAR_WIDTH = 25; // 一般的なスクロールバー幅
               const adjustedWidth = width - SCROLLBAR_WIDTH;
-              const CARD_WIDTH = 220;
-              const CARD_HEIGHT = 360;
-              const GAP = 10;
+              const GAP = 8;
               const columnCount = Math.max(1, Math.floor((adjustedWidth + GAP / 2) / (CARD_WIDTH + GAP)));
               const rowCount = Math.ceil(sorted.length / columnCount);
               return (

@@ -2,6 +2,7 @@ import CustomImage from '../atoms/CustomImage';
 import { NOIMAGE_SHRINE_URL, NOIMAGE_DIETY_URL } from '../../constants';
 import Card from 'react-bootstrap/Card';
 import { useTranslation } from 'react-i18next';
+import './CustomCatalogCard.css';
 
 interface CustomCatalogCardProps {
   name: string;
@@ -23,16 +24,27 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
   return (
-    <Card style={{ width: '220px' }} onClick={onClick} role="button">
-      <Card.Img as={CustomImage} src={imageSrc} alt={name} aspectRatio="1/1" />
-      <Card.Body className="p-2">
-        <div className="fw-bold mb-1">{name}</div>
-        <div className="catalog-count mb-1">{t('count')}: {count}</div>
-        <div className="small text-secondary">{t(dateLabel || 'registeredAt')}: {formatDate(registeredAt)}</div>
+    <div className="catalog-card" onClick={onClick} role="button">
+      <div className="catalog-card__thumbnail">
+        <img src={imageSrc} alt={name} />
+      </div>
+      <div className="catalog-card__body">
+        <div className="catalog-card__title">{name}</div>
+        <div className="catalog-card__row">
+          <span className="catalog-card__label">{t('count')}:</span>
+          <span className="catalog-card__item">{count}</span>
+        </div>
+        <div className="catalog-card__row">
+          <span className="catalog-card__label">{t('registeredAt')}:</span>
+          <span className="catalog-card__item">{formatDate(registeredAt)}</span>
+        </div>
         {lastPrayedAt && (
-          <div className="small text-secondary">{t('lastPrayedAt')}: {formatDate(lastPrayedAt)}</div>
+          <div className="catalog-card__row">
+            <span className="catalog-card__label">{t('lastPrayedAt')}:</span>
+            <span className="catalog-card__item">{formatDate(lastPrayedAt)}</span>
+          </div>
         )}
-      </Card.Body>
-    </Card>
+      </div>
+    </div>
   );
 } 

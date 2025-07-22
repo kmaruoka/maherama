@@ -94,13 +94,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
   const [userId] = useLocalStorageState<number | null>('userId', null);
 
   const { data: worshipLimit } = useWorshipLimit(userId);
-  const [todayRemotePrayCount, setTodayRemotePrayCount] = useState<number | undefined>(undefined);
-  const { data: markerStatus } = useShrineMarkerStatus(shrine.id, userId, worshipLimit?.today_worship_count, todayRemotePrayCount);
-  useEffect(() => {
-    if (markerStatus && typeof markerStatus.today_remote_pray_count === 'number') {
-      setTodayRemotePrayCount(markerStatus.today_remote_pray_count);
-    }
-  }, [markerStatus?.today_remote_pray_count]);
+  const { data: markerStatus } = useShrineMarkerStatus(shrine.id, userId, worshipLimit?.today_worship_count);
 
   // 参拝距離・現在地から距離計算
   const { prayDistance, isLoading: isPrayDistanceLoading } = usePrayDistance(userId);

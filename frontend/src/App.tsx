@@ -4,9 +4,10 @@ import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
 import ShrinePane from './components/organisms/ShrinePane';
 import DietyPage from './components/organisms/DietyPane';
-import UserPage from './components/pages/UserPage';
+import UserPane from './components/organisms/UserPane';
 import SettingsPage from './components/pages/SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
+import UserPage from './components/pages/UserPage';
 import { useSkin } from './skins/SkinContext';
 
 type ModalType = { type: 'shrine' | 'diety' | 'user', id: number } | null;
@@ -20,11 +21,11 @@ function App() {
   const renderPage = () => {
     switch (page) {
       case 'map':
-        return <MapPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowUser={id => setModal({ type: 'user', id })} />;
+        return <MapPage onShowShrine={(id: number) => setModal({ type: 'shrine', id })} onShowUser={(id: number) => setModal({ type: 'user', id })} />;
       case 'catalog':
-        return <CatalogPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />;
+        return <CatalogPage onShowShrine={(id: number) => setModal({ type: 'shrine', id })} onShowDiety={(id: number) => setModal({ type: 'diety', id })} onShowUser={(id: number) => setModal({ type: 'user', id })} />;
       case 'user':
-        return <UserPage onShowShrine={id => setModal({ type: 'shrine', id })} onShowDiety={id => setModal({ type: 'diety', id })} onShowUser={id => setModal({ type: 'user', id })} />;
+        return <UserPage onShowShrine={(id: number) => setModal({ type: 'shrine', id })} onShowDiety={(id: number) => setModal({ type: 'diety', id })} onShowUser={(id: number) => setModal({ type: 'user', id })} />;
       case 'settings':
         return <SettingsPage />;
       default:
@@ -45,8 +46,8 @@ function App() {
             contentClassName="custom-modal-content-force"
           >
             <Modal.Body>
-              <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1 }}>
-                <Button variant="light" onClick={() => setModal(null)} className="border-0 custom-close-btn">
+              <div className="pane__close-btn-outer">
+                <Button variant="light" onClick={() => setModal(null)} className="border-0 pane__close-btn">
                   <span aria-hidden="true">×</span>
                 </Button>
               </div>
@@ -65,7 +66,7 @@ function App() {
                 />
               )}
               {modal.type === 'user' && (
-                <UserPage
+                <UserPane
                   id={modal.id}
                   onShowShrine={id => setModal({ type: 'shrine', id })}
                   onShowDiety={id => setModal({ type: 'diety', id })}

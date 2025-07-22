@@ -100,7 +100,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   box-shadow: 0 0 0 2px var(--color-primary)33 !important;
 }
 
-.custom-close-btn {
+.pane__close-btn {
   background: var(--color-surface) !important;
   color: var(--color-accent) !important;
   border-radius: 0.75rem !important;
@@ -113,9 +113,16 @@ body.no-skin-padding, body.no-skin-padding #root {
   box-shadow: 0 1px 4px 0 rgba(0,0,0,0.08);
   transition: background 0.2s, color 0.2s;
 }
-.custom-close-btn:hover {
+.pane__close-btn:hover {
   background: var(--color-accent) !important;
   color: var(--color-surface) !important;
+}
+
+.pane__close-btn-outer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
 }
 
 /* --- カスタムスクロールバー --- */

@@ -25,7 +25,7 @@ function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key
   };
 }
 
-export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void }) {
+export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }) {
   const { t } = useTranslation();
   const { id: paramId } = useParams<{ id: string }>();
   // id優先、なければparamIdを数値変換して使用
@@ -54,11 +54,9 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
   if (!idFromParams) {
     return <div className="p-3">{t('dietyIdNotSpecified')}</div>;
   }
-
   if (dietyError) {
     return <div className="p-3 text-danger">{t('dietyInfoError')}</div>;
   }
-
   if (!diety) {
     return <div className="p-3">{t('loading')}</div>;
   }
@@ -142,40 +140,24 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
   };
 
   return (
-    <>
-      <div className="d-flex align-items-start gap-3 mb-4">
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
-          {/* 右上ボタン */}
-          <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
-            <button 
-              onClick={() => setIsUploadModalOpen(true)}
-              style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-              title={t('imageUpload')}
-            >
-              <FaCloudUploadAlt size={20} />
-            </button>
+    <div>
+      <div className="pane__header">
+        <div className="pane__thumbnail">
+          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <div className="pane__thumbnail-actions">
+            <button className="pane__icon-btn" onClick={() => setIsUploadModalOpen(true)} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
             {diety.thumbnailUrl && diety.thumbnailUrl !== NOIMAGE_DIETY_URL && (
-              <button 
-                onClick={handleVote}
-                style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-                title={t('thumbnailVote')}
-              >
-                <FaVoteYea size={20} />
-              </button>
+              <button className="pane__icon-btn" onClick={handleVote} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
             )}
           </div>
-          {/* 左下 byユーザー */}
           {diety.thumbnailBy && (
-            <div style={{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>
-              {t('by')} {diety.thumbnailBy}
-            </div>
+            <div className="pane__thumbnail-by">{t('by')} {diety.thumbnailBy}</div>
           )}
         </div>
-        <div>
-          <div className="modal-title">{diety.name}</div>
-          {diety.kana && <div className="modal-kana">{diety.kana}</div>}
-          <div className="catalog-count modal-item-text small mt-2">{t('count')}: {diety.count}</div>
+        <div className="pane__info">
+          <div className="pane__title">{diety.name}</div>
+          {diety.kana && <div className="pane__kana">{diety.kana}</div>}
+          <div className="pane__count">{t('count')}: {diety.count}</div>
         </div>
       </div>
 
@@ -221,6 +203,6 @@ export default function DietyPane({ id, onShowShrine, onShowUser }: { id?: numbe
         onUpload={handleUpload}
         title={`${diety?.name || '神様'}の画像をアップロード`}
       />
-    </>
+    </div>
   );
 }

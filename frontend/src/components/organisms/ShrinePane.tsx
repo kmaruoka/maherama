@@ -47,7 +47,7 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
   return result;
 }
 
-export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
+export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }) {
   const { t } = useTranslation();
   const { data } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
@@ -362,79 +362,24 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
   };
 
   return (
-    <>
-      <div className="d-flex align-items-start gap-3 mb-4">
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} alt="サムネイル" style={{ width: 256, height: 256, objectFit: 'cover', borderRadius: 8 }} />
-          {/* 右上ボタン */}
-          <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
-            <button 
-              onClick={() => setIsUploadModalOpen(true)}
-              style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-              title={t('imageUpload')}
-            >
-              <FaCloudUploadAlt size={20} />
-            </button>
+    <div>
+      <div className="pane__header">
+        <div className="pane__thumbnail">
+          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <div className="pane__thumbnail-actions">
+            <button className="pane__icon-btn" onClick={() => setIsUploadModalOpen(true)} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
             {data.thumbnailUrl && data.thumbnailUrl !== NOIMAGE_SHRINE_URL && (
-              <button 
-                onClick={handleVote}
-                style={{ background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }} 
-                title={t('thumbnailVote')}
-              >
-                <FaVoteYea size={20} />
-              </button>
+              <button className="pane__icon-btn" onClick={handleVote} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
             )}
           </div>
-          {/* 左下 byユーザー */}
           {data.thumbnailBy && (
-            <div style={{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>
-              {t('by')} {data.thumbnailBy}
-            </div>
+            <div className="pane__thumbnail-by">{t('by')} {data.thumbnailBy}</div>
           )}
         </div>
-        <div>
-          <div className="modal-title">{data.name}</div>
-          {data.kana && <div className="modal-kana">{data.kana}</div>}
-          <div className="d-flex align-items-center gap-2 mt-2">
-            <div className="catalog-count modal-item-text small">{t('count')}: {data.count}</div>
-            <CustomButton
-              color="#28a745"
-              hoverColor="#218838"
-              disabledColor="#b1dfbb"
-              onClick={() => prayMutation.mutate(data.id)}
-              disabled={!canPray}
-              style={{ fontSize: 16, padding: '4px 16px' }}
-              title={!currentPosition ? t('locationUnavailable') : !data ? t('shrineInfoUnavailable') : `${t('distance')}: ${formatDistance(distance)} / ${t('radius')}: ${formatDistance(radius)}`}
-            >
-              {t('pray')}
-            </CustomButton>
-            <CustomButton
-              color="#007bff"
-              hoverColor="#0056b3"
-              disabledColor="#b8daff"
-              onClick={() => remotePrayMutation.mutate()}
-              disabled={remotePrayMutation.isPending || (worshipLimit && worshipLimit.today_worship_count >= worshipLimit.max_worship_count)}
-              style={{ fontSize: 16, padding: '4px 16px' }}
-            >
-              {remotePrayMutation.isPending ? t('remotePraying') : t('remotePray')}
-            </CustomButton>
-          </div>
-          {currentPosition && data && (
-            <div className="text-muted small mt-1">
-              {t('distance')}: {formatDistance(distance)} / {t('radius')}: {formatDistance(radius)}
-            </div>
-          )}
-          {canPray === false && currentPosition && data && (
-            <div className="text-danger small mt-1">
-              {t('tooFar')}
-            </div>
-          )}
-          {prayMutation.error && (
-            <p className="text-danger small mt-2">{prayMutation.error.message}</p>
-          )}
-          {remotePrayMutation.error && (
-            <p className="text-danger small mt-2">{remotePrayMutation.error.message}</p>
-          )}
+        <div className="pane__info">
+          <div className="pane__title">{data.name}</div>
+          {data.kana && <div className="pane__kana">{data.kana}</div>}
+          <div className="pane__count">{t('count')}: {data.count}</div>
         </div>
       </div>
       
@@ -538,6 +483,6 @@ export default function ShrinePane({ id, onShowDiety, onShowUser }: { id: number
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
