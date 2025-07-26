@@ -88,6 +88,11 @@ async function simulatePray(userId: number, shrineId: number, shrinePositions: {
       console.error('[seedエラー] サーバーが起動していない、またはAPI_PORTが間違っています。');
     }
     if (error.response) {
+      // 既に参拝済みの場合は正常な動作なのでスタックトレースを出力しない
+      if (error.response.status === 400 && error.response.data.error && error.response.data.error.includes('既に参拝済み')) {
+        // 正常な動作なのでログ出力しない
+        return false;
+      }
       console.error('[seedエラー] 参拝APIエラー詳細:', error.response.status, error.response.data);
     }
     console.error('[seedエラー] 参拝シミュレーションエラー:', error.message, error.stack);
@@ -283,17 +288,25 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   let prevYear = currentDate.getFullYear();
   let prevMonth = currentDate.getMonth();
   let prevWeek = getWeekNumber(currentDate);
+  let prevDay = currentDate.getDate();
   
   while (currentDate <= END_DATE) {
+    // 日切り替え判定
+    const currentDay = currentDate.getDate();
+    if (currentDay !== prevDay) {
+      console.log(`\n🗓 日切り替え検出: ${prevDay}→${currentDay}`);
+      console.log(`\n🗓 日切り替え: ${prevDay}→${currentDay} 日次ランキングをリセット`);
+      await prisma.shrinePrayStatsDaily.deleteMany();
+      await prisma.dietyPrayStatsDaily.deleteMany();
+      prevDay = currentDay;
+    }
+    
     // 年切り替え判定
     const currentYear = currentDate.getFullYear();
     if (currentYear !== prevYear) {
       console.log(`\n🗓 年度切り替え検出: ${prevYear}→${currentYear}`);
       // 年間ランキング1位に称号を付与
       await awardRankingTitles(prisma, 'yearly', new Date(prevYear, 11, 31));
-      console.log(`\n🗓 年度切り替え: ${prevYear}→${currentYear} 年間ランキングをリセット`);
-      await prisma.shrinePrayStatsYearly.deleteMany();
-      await prisma.dietyPrayStatsYearly.deleteMany();
       prevYear = currentYear;
     }
     // 月切り替え判定
@@ -302,9 +315,6 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
       console.log(`\n🗓 月度切り替え検出: ${prevMonth + 1}→${currentMonth + 1}`);
       // 月間ランキング1位に称号を付与
       await awardRankingTitles(prisma, 'monthly', new Date(currentDate.getFullYear(), prevMonth, 0));
-      console.log(`\n🗓 月度切り替え: ${prevMonth + 1}→${currentMonth + 1} 月間ランキングをリセット`);
-      await prisma.shrinePrayStatsMonthly.deleteMany();
-      await prisma.dietyPrayStatsMonthly.deleteMany();
       prevMonth = currentMonth;
     }
     // 週切り替え判定
@@ -313,9 +323,6 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
       console.log(`\n🗓 週切り替え検出: ${prevWeek}→${currentWeek}`);
       // 週間ランキング1位に経験値・能力値のみ付与（称号なし）
       await awardWeeklyRewards(prisma, new Date(currentDate.getTime() - 24 * 60 * 60 * 1000));
-      console.log(`\n🗓 週切り替え: ${prevWeek}→${currentWeek} 週間ランキングをリセット`);
-      await prisma.shrinePrayStatsWeekly.deleteMany();
-      await prisma.dietyPrayStatsWeekly.deleteMany();
       prevWeek = currentWeek;
     }
     console.log(`📅 ${currentDate.toISOString().split('T')[0]} の参拝をシミュレート中...`);

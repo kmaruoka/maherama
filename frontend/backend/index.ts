@@ -2710,6 +2710,12 @@ async function awardWeeklyRewards(currentDate) {
     console.log(`📊 週間ランキング集計完了: ${periodLabel}`);
     console.log(`🏆 週間ランキング1位の報酬付与処理が完了しました`);
     
+    // 週間ランキングテーブルをクリア
+    console.log(`🗑️ 週間ランキングテーブルをクリア中...`);
+    await prisma.shrinePrayStatsWeekly.deleteMany();
+    await prisma.dietyPrayStatsWeekly.deleteMany();
+    console.log(`✅ 週間ランキングテーブルのクリアが完了しました`);
+    
   } catch (error) {
     console.error(`❌ 週間ランキング報酬付与エラー:`, error);
   }
@@ -2826,6 +2832,18 @@ async function awardRankingTitles(period, currentDate) {
     }
     console.log(`📊 ${periodText}ランキング集計完了`);
     console.log(`🏆 ${period}ランキング1位の称号付与処理が完了しました`);
+    
+    // ランキングテーブルをクリア
+    console.log(`🗑️ ${periodText}ランキングテーブルをクリア中...`);
+    if (period === 'yearly') {
+      await prisma.shrinePrayStatsYearly.deleteMany();
+      await prisma.dietyPrayStatsYearly.deleteMany();
+    } else {
+      await prisma.shrinePrayStatsMonthly.deleteMany();
+      await prisma.dietyPrayStatsMonthly.deleteMany();
+    }
+    console.log(`✅ ${periodText}ランキングテーブルのクリアが完了しました`);
+    
   } catch (error) {
     console.error(`❌ ${period}ランキング称号付与エラー:`, error);
   }
@@ -2852,10 +2870,22 @@ async function runPeriodicRankingAwards() {
     console.log(`🕐 定期実行: 年間ランキング集計を開始します`);
     await awardRankingTitles('yearly', new Date(now.getFullYear() - 1, 11, 31));
   }
+  
+  // 日次処理（毎日午前0時に実行）
+  if (now.getHours() === 0 && now.getMinutes() === 0) {
+    console.log(`🕐 定期実行: 日次ランキングテーブルクリアを開始します`);
+    try {
+      await prisma.shrinePrayStatsDaily.deleteMany();
+      await prisma.dietyPrayStatsDaily.deleteMany();
+      console.log(`✅ 日次ランキングテーブルのクリアが完了しました`);
+    } catch (error) {
+      console.error(`❌ 日次ランキングテーブルクリアエラー:`, error);
+    }
+  }
 }
 
-// 1時間ごとに定期実行チェック
-setInterval(runPeriodicRankingAwards, 60 * 60 * 1000); // 1時間ごと
+// 1分ごとに定期実行チェック
+setInterval(runPeriodicRankingAwards, 60 * 1000); // 1分ごと
 
 // 管理用API: ランキング集計と報酬付与を実行（type=weekly|monthly|yearly 指定で分岐）
 app.post('/admin/ranking-awards', async (req, res) => {
