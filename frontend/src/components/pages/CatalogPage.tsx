@@ -74,7 +74,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       }}
       countLabel={t('count')}
       type={tab}
-      dateLabel={t('recordedDate')}
+      dateLabel={t('registeredAt')}
       thumbnailUrl={tab === 'diety' ? item.thumbnailUrl : undefined}
     />
   ), [tab, onShowShrine, onShowDiety, onShowUser, t]);
@@ -162,9 +162,9 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           <AutoSizer disableHeight>
             {({ width }) => (
               <div className="catalog-page__list-header" style={{ width: width }}>
-                <div className="catalog-page__list-col--name">名前</div>
-                <div className="catalog-page__list-col--count">参拝数</div>
-                <div className="catalog-page__list-col--date">図鑑収録日 / 最終参拝日</div>
+                <div className="catalog-page__list-col--name">{t('name')}</div>
+                <div className="catalog-page__list-col--count">{t('count')}</div>
+                <div className="catalog-page__list-col--date">{t('registeredAt')} / {t('lastPrayedAt')}</div>
               </div>
             )}
           </AutoSizer>

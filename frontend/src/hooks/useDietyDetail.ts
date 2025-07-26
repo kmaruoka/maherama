@@ -9,6 +9,8 @@ export interface DietyDetail {
   thumbnailUrl?: string;
   thumbnailBy?: string;
   count: number;
+  registeredAt?: string;
+  lastPrayedAt?: string;
   shrines: Array<{ id: number; name: string; kana?: string }>;
 }
 

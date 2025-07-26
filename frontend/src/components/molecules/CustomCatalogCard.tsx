@@ -3,6 +3,7 @@ import { NOIMAGE_SHRINE_URL, NOIMAGE_DIETY_URL } from '../../constants';
 import Card from 'react-bootstrap/Card';
 import { useTranslation } from 'react-i18next';
 import './CustomCatalogCard.css';
+import { formatDisplayDate } from '../../utils/dateFormat';
 
 interface CustomCatalogCardProps {
   name: string;
@@ -19,10 +20,6 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
   const { t } = useTranslation();
   const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_URL;
   const imageSrc = thumbnailUrl || noImage;
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
   return (
     <div className="catalog-card" onClick={onClick} role="button">
       <div className="catalog-card__thumbnail">
@@ -36,12 +33,12 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
         </div>
         <div className="catalog-card__row">
           <span className="catalog-card__label">{t('registeredAt')}:</span>
-          <span className="catalog-card__item">{formatDate(registeredAt)}</span>
+          <span className="catalog-card__item">{formatDisplayDate(registeredAt)}</span>
         </div>
         {lastPrayedAt && (
           <div className="catalog-card__row">
             <span className="catalog-card__label">{t('lastPrayedAt')}:</span>
-            <span className="catalog-card__item">{formatDate(lastPrayedAt)}</span>
+            <span className="catalog-card__item">{formatDisplayDate(lastPrayedAt)}</span>
           </div>
         )}
       </div>

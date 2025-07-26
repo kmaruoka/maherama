@@ -10,6 +10,7 @@ export interface ShrineDetail {
   lng: number;
   count: number;
   registeredAt: string;
+  lastPrayedAt?: string;
   thumbnailUrl?: string;
   thumbnailBy?: string;
   founded?: string;

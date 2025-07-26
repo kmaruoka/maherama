@@ -19,6 +19,7 @@ import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { CustomButton } from '../atoms/CustomButton';
 import { useTranslation } from 'react-i18next';
+import { formatDisplayDate } from '../../utils/dateFormat';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -319,10 +320,6 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
     },
   });
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
 
   if (!data) {
     return <div className="p-3">{t('loading')}</div>;
@@ -443,7 +440,12 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
         />
       </div>
       
-      <div className="text-muted small">{t('recordedDate')}: {formatDate(data.registeredAt)}</div>
+      <div className="text-muted small">
+        {t('registeredAt')}: {formatDisplayDate(data.registeredAt)}
+        {data.lastPrayedAt && (
+          <> / {t('lastPrayedAt')}: {formatDisplayDate(data.lastPrayedAt)}</>
+        )}
+      </div>
 
       {/* アップロードモーダル */}
       <ImageUploadModal

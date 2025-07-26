@@ -3,6 +3,7 @@ import './CustomCatalogListItem.css';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { useTranslation } from 'react-i18next';
+import { formatDisplayDate } from '../../utils/dateFormat';
 
 interface CustomCatalogListItemProps {
   name: string;
@@ -16,10 +17,6 @@ interface CustomCatalogListItemProps {
 
 export default function CustomCatalogListItem({ name, count, recordedDate, lastPrayedAt, onClick, countLabel = '参拝数', showLabels = true }: CustomCatalogListItemProps) {
   const { t } = useTranslation();
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
   return (
     <div
       className="catalog-list-row"
@@ -32,9 +29,9 @@ export default function CustomCatalogListItem({ name, count, recordedDate, lastP
       <div className="catalog-list-col date" style={{ flex: 5, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {(recordedDate || lastPrayedAt) && (
           <span className="small text-muted">
-            {recordedDate && (showLabels ? `${t('registeredAt')}: ` : '')}{recordedDate ? formatDate(recordedDate) : ''}
+            {recordedDate && (showLabels ? `${t('registeredAt')}: ` : '')}{recordedDate ? formatDisplayDate(recordedDate) : ''}
             {recordedDate && lastPrayedAt && ' / '}
-            {lastPrayedAt && (showLabels ? `${t('lastPrayedAt')}: ` : '')}{lastPrayedAt ? formatDate(lastPrayedAt) : ''}
+            {lastPrayedAt && (showLabels ? `${t('lastPrayedAt')}: ` : '')}{lastPrayedAt ? formatDisplayDate(lastPrayedAt) : ''}
           </span>
         )}
       </div>

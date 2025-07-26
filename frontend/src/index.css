@@ -705,6 +705,7 @@ body.no-skin-padding, body.no-skin-padding #root {
 }
 
 .catalog-page__list-header {
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
   height: 56px;

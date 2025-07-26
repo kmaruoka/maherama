@@ -13,6 +13,7 @@ import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import { API_BASE } from '../../config/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { formatDisplayDate } from '../../utils/dateFormat';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItem[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -160,6 +161,18 @@ export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { i
           <div className="pane__count">{t('count')}: {diety.count}</div>
         </div>
       </div>
+
+      {(diety.registeredAt || diety.lastPrayedAt) && (
+        <div className="text-muted small">
+          {diety.registeredAt && (
+            <>{t('registeredAt')}: {formatDisplayDate(diety.registeredAt)}</>
+          )}
+          {diety.registeredAt && diety.lastPrayedAt && <> / </>}
+          {diety.lastPrayedAt && (
+            <>{t('lastPrayedAt')}: {formatDisplayDate(diety.lastPrayedAt)}</>
+          )}
+        </div>
+      )}
 
       {diety.shrines.length > 0 && (
         <div className="modal-section">
