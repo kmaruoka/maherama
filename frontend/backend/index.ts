@@ -556,10 +556,10 @@ async function prayAtShrine({
   const expReward = logType === '参拝' ? EXP_REWARDS.PRAY : EXP_REWARDS.REMOTE_PRAY;
   const expResult = await addExperience(prisma, userId, expReward, expType);
 
-  // ログ
-  const dietyNames = shrine.shrine_dieties.map(sd => sd.diety.name);
-  const dietyNamesText = dietyNames.length > 0 ? `(${dietyNames.join('、')})` : '';
-  await addLog(`<shrine:${shrineId}:${shrine.name}>${dietyNamesText}を${logType}しました`);
+  // ログ（神社と神様の両方をリンク表示）
+  const dietyLinks = shrine.shrine_dieties.map(sd => `<diety:${sd.diety.id}:${sd.diety.name}>`);
+  const dietyLinksText = dietyLinks.length > 0 ? `(${dietyLinks.join('、')})` : '';
+  await addLog(`<shrine:${shrineId}:${shrine.name}>${dietyLinksText}を${logType}しました`);
 
   return {
     success: true,
