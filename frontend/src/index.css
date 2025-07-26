@@ -1387,3 +1387,17 @@ nav.d-flex.position-fixed {
   word-break: break-word;
   overflow-wrap: anywhere;
 }
+
+.pane__close-btn {
+  background: var(--color-surface) !important;
+  color: var(--color-accent) !important;
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 1.5rem;
+  padding: 0;
+  min-height: auto;
+}
+.pane__close-btn:hover {
+  background: var(--color-accent) !important;
+  color: var(--color-surface) !important;
+}
