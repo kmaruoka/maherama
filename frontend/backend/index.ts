@@ -601,6 +601,22 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   if (dist > prayDistance) {
     return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
   }
+  
+  // 参拝制限チェック: 1ユーザー1日1神社につき1回のみ
+  // ShrinePrayStatsDailyテーブルで判定（データ量最適化のため）
+  const todaysPrayStats = await prisma.shrinePrayStatsDaily.findUnique({
+    where: {
+      shrine_id_user_id: {
+        shrine_id: id,
+        user_id: userId
+      }
+    }
+  });
+  
+  if (todaysPrayStats && todaysPrayStats.count > 0) {
+    return res.status(400).json({ error: 'この神社は今日既に参拝済みです' });
+  }
+  
   try {
     const result = await prayAtShrine({
       prisma,
@@ -2302,27 +2318,21 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
     const totalPrayCount = shrineStats ? shrineStats.count : 0;
     const isInZukan = totalPrayCount > 0;
     
-    // 2. 当日参拝回数（遥拝可能かどうか）
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const todayRemotePrayCount = await prisma.remotePray.count({
+    // 2. 今日の参拝済み判定（ShrinePrayStatsDailyで判定）
+    const todayPrayStats = await prisma.shrinePrayStatsDaily.findUnique({
       where: {
-        user_id: userId,
-        shrine_id: shrineId,
-        prayed_at: {
-          gte: today,
-          lt: tomorrow
+        shrine_id_user_id: {
+          shrine_id: shrineId,
+          user_id: userId
         }
       }
     });
+    const hasPrayedToday = todayPrayStats && todayPrayStats.count > 0;
     
     // 3. 遥拝回数制限
     const maxWorshipCount = await getUserWorshipCount(userId);
     const todayWorshipCount = await getTodayWorshipCount(userId);
-    const canRemotePray = todayWorshipCount < maxWorshipCount && todayRemotePrayCount === 0;
+    const canRemotePray = todayWorshipCount < maxWorshipCount; // 神社個別の制限は削除
     
     // 4. 参拝可能距離
     const prayDistance = await getUserPrayDistance(userId);
@@ -2331,7 +2341,7 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
       shrine_id: shrineId,
       total_pray_count: totalPrayCount,
       is_in_zukan: isInZukan,
-      today_remote_pray_count: todayRemotePrayCount,
+      has_prayed_today: hasPrayedToday,
       can_remote_pray: canRemotePray,
       pray_distance: prayDistance,
       max_worship_count: maxWorshipCount,

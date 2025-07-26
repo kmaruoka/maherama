@@ -16,6 +16,7 @@ import { NOIMAGE_SHRINE_URL } from '../../constants';
 import { getDistanceMeters } from '../../hooks/usePrayDistance';
 import { formatDistance } from '../../../backend/shared/utils/distance';
 import { useWorshipLimit } from '../../hooks/usePrayDistance';
+import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
 import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { CustomButton } from '../atoms/CustomButton';
@@ -76,6 +77,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     onDetailViewChange?.(detailView);
   }, [detailView, onDetailViewChange]);
   const { data: worshipLimit } = useWorshipLimit(userId);
+  const { data: markerStatus } = useShrineMarkerStatus(id, userId);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageListLoading, setImageListLoading] = useState(false);
@@ -305,6 +307,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
+    onSettled: async () => {
+      // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
+      try {
+        await queryClient.refetchQueries({ queryKey: ['shrine-marker-status', id, userId] });
+      } catch (error) {
+        console.error('Failed to refetch marker status:', error);
+      }
+    },
   });
 
   const remotePrayMutation = useMutation({
@@ -336,6 +346,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
       setRankRefreshKey(k => k + 1); // ランキングも再取得
+    },
+    onSettled: async () => {
+      // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
+      try {
+        await queryClient.refetchQueries({ queryKey: ['shrine-marker-status', id, userId] });
+      } catch (error) {
+        console.error('Failed to refetch marker status:', error);
+      }
     },
   });
 
@@ -501,7 +519,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           <CustomButton
             className="btn-pray"
             onClick={() => prayMutation.mutate(id)}
-            disabled={!canPray}
+            disabled={!canPray || markerStatus?.has_prayed_today || prayMutation.isPending}
             style={{ flex: 1 }}
           >
             {t('pray')}
@@ -509,7 +527,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           <CustomButton
             className="btn-remote-pray"
             onClick={() => remotePrayMutation.mutate()}
-            disabled={!subscription?.subscriptions?.[0]?.is_active}
+            disabled={!markerStatus?.can_remote_pray || remotePrayMutation.isPending}
             style={{ flex: 1 }}
           >
             {t('remotePray')}

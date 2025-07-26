@@ -5,16 +5,16 @@ export interface ShrineMarkerStatus {
   shrine_id: number;
   total_pray_count: number;
   is_in_zukan: boolean;
-  today_remote_pray_count: number;
+  has_prayed_today: boolean;
   can_remote_pray: boolean;
   pray_distance: number;
   max_worship_count: number;
   today_worship_count: number;
 }
 
-export function useShrineMarkerStatus(shrineId: number | null, userId: number | null, todayWorshipCount?: number, todayRemotePrayCount?: number) {
+export function useShrineMarkerStatus(shrineId: number | null, userId: number | null) {
   return useQuery<ShrineMarkerStatus>({
-    queryKey: ['shrine-marker-status', shrineId, userId, todayWorshipCount, todayRemotePrayCount],
+    queryKey: ['shrine-marker-status', shrineId, userId],
     queryFn: async () => {
       if (!shrineId || !userId) throw new Error('神社IDまたはユーザーIDが未設定です');
       const res = await fetch(`${API_BASE}/shrines/${shrineId}/marker-status`, {
