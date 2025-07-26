@@ -132,7 +132,13 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps>(({ id, onShowShrine, onS
 
   if (detailView !== 'overview') {
     return (
-      <div>
+      <div onClick={(e) => {
+        // リンクやボタンがクリックされた場合は通常表示に戻らない
+        if ((e.target as HTMLElement).closest('a, button, .custom-link')) {
+          return;
+        }
+        setDetailView('overview');
+      }} style={{ cursor: 'pointer' }}>
         {renderDetailContent()}
       </div>
     );
