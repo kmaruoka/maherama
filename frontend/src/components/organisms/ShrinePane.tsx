@@ -515,22 +515,25 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
       {/* 参拝・遥拝ボタン */}
       <div className="modal-section">
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-column gap-2">
           <CustomButton
             className="btn-pray"
             onClick={() => prayMutation.mutate(id)}
             disabled={!canPray || markerStatus?.has_prayed_today || prayMutation.isPending}
-            style={{ flex: 1 }}
+            style={{ width: '100%' }}
           >
-            {t('pray')}
+            {markerStatus?.has_prayed_today ? t('prayedToday') : t('pray')}
           </CustomButton>
           <CustomButton
             className="btn-remote-pray"
             onClick={() => remotePrayMutation.mutate()}
             disabled={!markerStatus?.can_remote_pray || remotePrayMutation.isPending}
-            style={{ flex: 1 }}
+            style={{ width: '100%' }}
           >
-            {t('remotePray')}
+            {markerStatus?.max_worship_count !== undefined && markerStatus?.today_worship_count !== undefined
+              ? `${t('remotePray')}（${t('remainingToday')}${markerStatus.max_worship_count - markerStatus.today_worship_count}）`
+              : t('remotePray')
+            }
           </CustomButton>
         </div>
         {distance !== null && (
