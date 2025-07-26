@@ -510,6 +510,7 @@ async function prayAtShrine({
     { model: prisma.shrinePrayStatsYearly, key: 'shrinePrayStatsYearly' },
     { model: prisma.shrinePrayStatsMonthly, key: 'shrinePrayStatsMonthly' },
     { model: prisma.shrinePrayStatsWeekly, key: 'shrinePrayStatsWeekly' },
+    { model: prisma.shrinePrayStatsDaily, key: 'shrinePrayStatsDaily' },
   ];
   for (const tbl of statsTables) {
     const stat = await tbl.model.findFirst({ where: { shrine_id: shrineId, user_id: userId } });
@@ -529,6 +530,7 @@ async function prayAtShrine({
       { model: prisma.dietyPrayStatsYearly, key: 'dietyPrayStatsYearly' },
       { model: prisma.dietyPrayStatsMonthly, key: 'dietyPrayStatsMonthly' },
       { model: prisma.dietyPrayStatsWeekly, key: 'dietyPrayStatsWeekly' },
+      { model: prisma.dietyPrayStatsDaily, key: 'dietyPrayStatsDaily' },
     ];
     for (const tbl of dietyStatsTables) {
       const stat = await tbl.model.findFirst({ where: { diety_id: dietyId, user_id: userId } });
