@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { API_BASE, apiCall } from '../../config/api';
 import RankingPane from './RankingPane';
@@ -30,10 +30,15 @@ export interface UserPaneRef {
   backToOverview: () => void;
 }
 
-const UserPage = forwardRef<UserPaneRef, UserPageProps>(({ id, onShowShrine, onShowDiety, onShowUser, onClose }, ref) => {
+const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: (detailView: DetailViewType) => void }>(({ id, onShowShrine, onShowDiety, onShowUser, onClose, onDetailViewChange }, ref) => {
   const { t } = useTranslation();
   const [currentUserId] = useLocalStorageState<number | null>('userId', null);
   const [detailView, setDetailView] = useState<DetailViewType>('overview');
+
+  // detailViewが変更されたときに親コンポーネントに通知
+  useEffect(() => {
+    onDetailViewChange?.(detailView);
+  }, [detailView, onDetailViewChange]);
   const displayId = id; // 他人用なので常にpropsのidを使用
 
   const {
@@ -138,7 +143,7 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps>(({ id, onShowShrine, onS
           return;
         }
         setDetailView('overview');
-      }} style={{ cursor: 'pointer' }}>
+      }} style={{ cursor: 'pointer', padding: 0, margin: 0 }}>
         {renderDetailContent()}
       </div>
     );

@@ -32,11 +32,16 @@ export interface DietyPaneRef {
   backToOverview: () => void;
 }
 
-const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }>(
-  ({ id, onShowShrine, onShowUser, onClose }, ref) => {
+const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void }>(
+  ({ id, onShowShrine, onShowUser, onClose, onDetailViewChange }, ref) => {
   const { t } = useTranslation();
   const { id: paramId } = useParams<{ id: string }>();
   const [detailView, setDetailView] = useState<DetailViewType>('overview');
+
+  // detailViewが変更されたときに親コンポーネントに通知
+  useEffect(() => {
+    onDetailViewChange?.(detailView);
+  }, [detailView, onDetailViewChange]);
   // id優先、なければparamIdを数値変換して使用
   let idFromParams: number | undefined = undefined;
   if (typeof id === 'number' && !isNaN(id)) {
@@ -160,7 +165,6 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         <img 
           src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} 
           alt="サムネイル" 
-          style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
         />
       );
     } else if (detailView === 'shrines') {
@@ -205,7 +209,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           return;
         }
         setDetailView('overview');
-      }} style={{ cursor: 'pointer' }}>
+      }} style={{ cursor: 'pointer', padding: 0, margin: 0 }}>
         {renderDetailContent()}
       </div>
     );

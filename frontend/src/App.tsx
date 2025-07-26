@@ -349,6 +349,16 @@ function App() {
                       id={modal.id}
                       onShowDiety={id => navigateToModal('diety', id)}
                       onShowUser={id => navigateToModal('user', id)}
+                      onDetailViewChange={(detailView) => {
+                        const contentElement = document.querySelector('.modal__content');
+                        if (contentElement) {
+                          if (detailView === 'thumbnail') {
+                            contentElement.classList.add('modal__content--thumbnail-expanded');
+                          } else {
+                            contentElement.classList.remove('modal__content--thumbnail-expanded');
+                          }
+                        }
+                      }}
                     />
                   </div>
                 </>
@@ -374,6 +384,16 @@ function App() {
                       id={modal.id}
                       onShowShrine={id => navigateToModal('shrine', id)}
                       onShowUser={id => navigateToModal('user', id)}
+                      onDetailViewChange={(detailView) => {
+                        const contentElement = document.querySelector('.modal__content');
+                        if (contentElement) {
+                          if (detailView === 'thumbnail') {
+                            contentElement.classList.add('modal__content--thumbnail-expanded');
+                          } else {
+                            contentElement.classList.remove('modal__content--thumbnail-expanded');
+                          }
+                        }
+                      }}
                     />
                   </div>
                 </>
@@ -408,6 +428,9 @@ function App() {
                         onShowShrine={id => navigateToModal('shrine', id)}
                         onShowDiety={id => navigateToModal('diety', id)}
                         onShowUser={id => navigateToModal('user', id)}
+                        onDetailViewChange={(detailView) => {
+                          // UserPaneにはthumbnail表示がないため、何もしない
+                        }}
                       />
                     )}
                   </div>

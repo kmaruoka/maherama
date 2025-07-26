@@ -55,8 +55,8 @@ export interface ShrinePaneRef {
   backToOverview: () => void;
 }
 
-const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }>(
-  ({ id, onShowDiety, onShowUser, onClose }, ref) => {
+const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void }>(
+  ({ id, onShowDiety, onShowUser, onClose, onDetailViewChange }, ref) => {
   const { t } = useTranslation();
   const { data } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
@@ -70,6 +70,11 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
   const [prayDistance, setPrayDistance] = useState<number | null>(null);
   const [detailView, setDetailView] = useState<DetailViewType>('overview');
+
+  // detailViewが変更されたときに親コンポーネントに通知
+  useEffect(() => {
+    onDetailViewChange?.(detailView);
+  }, [detailView, onDetailViewChange]);
   const { data: worshipLimit } = useWorshipLimit(userId);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [imageList, setImageList] = useState<any[]>([]);
@@ -379,7 +384,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         <img 
           src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} 
           alt="サムネイル" 
-          style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
         />
       );
     } else if (detailView === 'deities') {
@@ -428,7 +432,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           return;
         }
         setDetailView('overview');
-      }} style={{ cursor: 'pointer' }}>
+      }} style={{ cursor: 'pointer', padding: 0, margin: 0 }}>
         {renderDetailContent()}
       </div>
     );

@@ -30,6 +30,7 @@
   --color-tab-inactive: #f3eedc;
   --bs-modal-width: calc(100vw - 16px);
 }
+
 @media (min-width: 600px) {
   :root {
     --bs-modal-width: calc(100vw - 64px);
@@ -48,6 +49,7 @@ body, #root, .log-pane, .log-pane-expanded {
   font-family: inherit !important;
 }
 
+/* ===== LOG PANE ===== */
 .log-pane {
   position: absolute;
   left: 0;
@@ -83,6 +85,19 @@ body, #root, .log-pane, .log-pane-expanded {
   font-family: var(--font-family) !important;
 }
 
+.log-pane__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 799;
+}
+
+.log-pane__debug-logs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.95em;
+}
+
+/* ===== SHRINE THEME ===== */
 .shrine-theme {
   position: relative;
   filter: sepia(0.2) brightness(0.95) saturate(1.2);
@@ -100,6 +115,7 @@ body, #root, .log-pane, .log-pane-expanded {
   z-index: 800;
 }
 
+/* ===== CARD ===== */
 .card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
@@ -108,10 +124,12 @@ body, #root, .log-pane, .log-pane-expanded {
   color: var(--color-text);
 }
 
+/* ===== CUSTOM LINK ===== */
 .custom-link {
   color: var(--color-accent);
 }
 
+/* ===== LEAFLET CONTROLS ===== */
 .leaflet-control,
 .leaflet-bottom,
 .leaflet-right,
@@ -120,6 +138,7 @@ body, #root, .log-pane, .log-pane-expanded {
   z-index: 10 !important;
 }
 
+/* ===== SHRINE MARKER ===== */
 .shrine-marker-icon img {
   border-radius: 50%;
   object-fit: cover;
@@ -139,6 +158,7 @@ body, #root, .log-pane, .log-pane-expanded {
   box-sizing: border-box;
   z-index: 2;
 }
+
 .shrine-marker-frame-border {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -147,6 +167,7 @@ body, #root, .log-pane, .log-pane-expanded {
   z-index: 10;
   border-radius: 0;
 }
+
 .shrine-marker-thumbnail-wrap {
   position: relative;
   width: 100%;
@@ -157,6 +178,7 @@ body, #root, .log-pane, .log-pane-expanded {
   overflow: hidden;
   z-index: 1;
 }
+
 .shrine-marker-thumbnail-wrap img {
   width: 100%;
   height: 100%;
@@ -183,6 +205,7 @@ body, #root, .log-pane, .log-pane-expanded {
   transform: translateX(calc(-120% + 240% * var(--gloss-progress, 0))) skewX(-20deg);
   opacity: var(--gloss-opacity, 0);
 }
+
 .shrine-marker-pin {
   position: absolute;
   left: 50%;
@@ -193,6 +216,7 @@ body, #root, .log-pane, .log-pane-expanded {
   overflow: visible;
   z-index: 3;
 }
+
 .shrine-marker-pin::after {
   content: '';
   display: block;
@@ -204,12 +228,6 @@ body, #root, .log-pane, .log-pane-expanded {
   border-top: 20px solid var(--color-primary);
   filter: drop-shadow(0 4px 8px var(--color-shadow));
 }
-body.dark .shrine-marker-frame-anim {
-  /* 変数で自動切り替えされるため追加不要 */
-}
-body.dark .shrine-marker-pin::after {
-  /* 変数で自動切り替えされるため追加不要 */
-}
 
 @keyframes shrine-gloss-anim {
   0% {
@@ -220,226 +238,7 @@ body.dark .shrine-marker-pin::after {
   }
 }
 
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-  background: var(--color-surface) !important;
-  color: var(--color-text) !important;
-  border: 1.5px solid var(--color-border) !important;
-  box-shadow: 0 4px 24px 0 var(--color-shadow);
-}
-.leaflet-popup-content {
-  color: var(--color-text) !important;
-}
-.leaflet-popup-close-button {
-  color: var(--color-text) !important;
-  filter: none;
-}
-
-.leaflet-popup-content-wrapper {
-  max-width: 400px !important;
-  min-width: 180px;
-  width: auto !important;
-}
-.leaflet-popup-content {
-  width: auto !important;
-  min-width: 0;
-  word-break: break-word;
-}
-.modal-title {
-  white-space: normal !important;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-/* --- CustomMenuItem --- */
-.custom-menu-item {
-  border: none;
-  outline: none;
-  color: var(--color-text);
-  font-family: inherit;
-  font-size: 1.2rem;
-  font-weight: 700;
-  padding: 0.5rem 0;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, border 0.2s;
-  border-radius: 0;
-  box-shadow: none;
-  flex: 1 1 0%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-.custom-menu-item.active {
-  background: var(--color-background) !important;
-  color: var(--color-text);
-  border-top: none !important;
-  border-left: 2.5px solid var(--color-border);
-  border-right: 2.5px solid var(--color-border);
-  border-bottom: 2.5px solid var(--color-border);
-}
-.custom-menu-item:not(.active) {
-  background: var(--color-tab-inactive);
-  color: var(--color-text);
-  border-top: 2.5px solid var(--color-border);
-}
-.custom-menu-item:not(.active):hover,
-.custom-menu-item:not(.active):focus {
-  background: var(--color-primary);
-  color: var(--color-surface);
-}
-
-/* navの上ボーダーは図鑑時だけ消す。図鑑以外は必ず表示 */
-.menu-pane-catalog {
-  border-top: none !important;
-}
-nav.d-flex.position-fixed {
-  border-top: none !important;
-}
-
-/* Barrier styles */
-.barrier-normal path {
-  fill: rgba(0, 0, 255, 0.2);
-  stroke: none;
-}
-
-.barrier-wave path {
-  fill: rgba(128, 0, 255, 0.2);
-  stroke: rgba(255, 0, 0, 0.6);
-  stroke-width: 2;
-  stroke-dasharray: 8 6;
-  animation: barrier-wave 2s linear infinite;
-}
-
-@keyframes barrier-wave {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: 14; }
-}
-
-.barrier-search path {
-  fill: rgba(0, 255, 0, 0.1);
-  stroke: rgba(0, 128, 0, 0.7);
-  stroke-width: 2;
-  stroke-dasharray: 0 40 5 5;
-  animation: barrier-search 4s linear infinite;
-}
-
-@keyframes barrier-search {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -50; }
-}
-
-/* --- 神社マーカー状態別スタイル --- */
-
-/* 図鑑収録済み（参拝済み） */
-.shrine-marker-zukan {
-  border-color: var(--color-primary) !important;
-}
-
-.shrine-marker-zukan .shrine-marker-pin::after {
-  border-top-color: var(--color-primary) !important;
-}
-
-/* 距離による透過度制御 */
-.shrine-marker-in-range {
-  opacity: 1;
-}
-
-.shrine-marker-out-of-range {
-  opacity: 0.5;
-}
-
-/* 参拝可能（距離内） */
-.shrine-marker-prayable {
-  border-color: var(--color-prayable) !important;
-}
-
-.shrine-marker-prayable .shrine-marker-pin::after {
-  border-top-color: var(--color-prayable) !important;
-}
-.shrine-marker-prayable .shrine-marker-frame-border {
-  border-color: var(--color-prayable) !important;
-}
-
-/* 遥拝可能 */
-.shrine-marker-remote-prayable {
-  border-color: var(--color-remote-prayable) !important;
-}
-
-.shrine-marker-remote-prayable .shrine-marker-pin::after {
-  border-top-color: var(--color-remote-prayable) !important;
-}
-.shrine-marker-remote-prayable .shrine-marker-frame-border {
-  border-color: var(--color-remote-prayable) !important;
-}
-
-/* 参拝不可（距離外） */
-.shrine-marker-unprayable {
-  border-color: var(--color-unprayable) !important;
-}
-
-.shrine-marker-unprayable .shrine-marker-pin::after {
-  border-top-color: var(--color-unprayable) !important;
-}
-.shrine-marker-unprayable .shrine-marker-frame-border {
-  border-color: var(--color-unprayable) !important;
-}
-
-/* 遥拝不可（制限到達） */
-.shrine-marker-remote-unavailable {
-  border-color: var(--color-unprayable) !important;
-}
-
-.shrine-marker-remote-unavailable .shrine-marker-pin::after {
-  border-top-color: var(--color-unprayable) !important;
-}
-.shrine-marker-remote-unavailable .shrine-marker-frame-border {
-  border-color: var(--color-unprayable) !important;
-}
-
-/* 複合状態の優先順位 */
-/* 図鑑収録済み + 参拝可能 */
-.shrine-marker-zukan.shrine-marker-prayable {
-  border-color: var(--color-prayable) !important;
-}
-
-.shrine-marker-zukan.shrine-marker-prayable .shrine-marker-thumbnail-wrap {
-  animation: shrine-prayable-pulse 2s ease-in-out infinite;
-}
-
-/* 図鑑収録済み + 遥拝可能 */
-.shrine-marker-zukan.shrine-marker-remote-prayable {
-  border-color: var(--color-remote-prayable) !important;
-}
-
-.shrine-marker-zukan.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
-  animation: shrine-remote-prayable-glow 3s ease-in-out infinite;
-}
-
-/* 参拝可能 + 遥拝可能 */
-.shrine-marker-prayable.shrine-marker-remote-prayable {
-  border-color: var(--color-prayable) !important;
-}
-
-.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
-  animation: shrine-prayable-pulse 2s ease-in-out infinite;
-}
-
-/* 最高優先度：図鑑収録済み + 参拝可能 + 遥拝可能 */
-.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable {
-  border-color: var(--color-prayable) !important;
-}
-
-.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
-  animation: shrine-prayable-pulse 2s ease-in-out infinite;
-}
-.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-frame-border {
-  border-color: var(--color-prayable) !important;
-}
-
-/* マーカー状態の説明ツールチップ */
+/* ===== SHRINE MARKER STATUS ===== */
 .shrine-marker-status-tooltip {
   position: absolute;
   bottom: 100%;
@@ -462,7 +261,6 @@ nav.d-flex.position-fixed {
   opacity: 1;
 }
 
-/* 状態アイコン */
 .shrine-marker-status-icon {
   position: absolute;
   top: -8px;
@@ -499,7 +297,227 @@ nav.d-flex.position-fixed {
   background: var(--color-unprayable);
 }
 
-/* 統一ボタンデザイン */
+/* ===== SHRINE MARKER STATES ===== */
+.shrine-marker-zukan {
+  border-color: var(--color-primary) !important;
+}
+
+.shrine-marker-zukan .shrine-marker-pin::after {
+  border-top-color: var(--color-primary) !important;
+}
+
+.shrine-marker-in-range {
+  opacity: 1;
+}
+
+.shrine-marker-out-of-range {
+  opacity: 0.5;
+}
+
+.shrine-marker-prayable {
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-prayable .shrine-marker-pin::after {
+  border-top-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-prayable .shrine-marker-frame-border {
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-remote-prayable {
+  border-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-remote-prayable .shrine-marker-pin::after {
+  border-top-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-remote-prayable .shrine-marker-frame-border {
+  border-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-unprayable {
+  border-color: var(--color-unprayable) !important;
+}
+
+.shrine-marker-unprayable .shrine-marker-pin::after {
+  border-top-color: var(--color-unprayable) !important;
+}
+
+.shrine-marker-unprayable .shrine-marker-frame-border {
+  border-color: var(--color-unprayable) !important;
+}
+
+.shrine-marker-remote-unavailable {
+  border-color: var(--color-unprayable) !important;
+}
+
+.shrine-marker-remote-unavailable .shrine-marker-pin::after {
+  border-top-color: var(--color-unprayable) !important;
+}
+
+.shrine-marker-remote-unavailable .shrine-marker-frame-border {
+  border-color: var(--color-unprayable) !important;
+}
+
+/* ===== SHRINE MARKER COMPOSITE STATES ===== */
+.shrine-marker-zukan.shrine-marker-prayable {
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-zukan.shrine-marker-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-prayable-pulse 2s ease-in-out infinite;
+}
+
+.shrine-marker-zukan.shrine-marker-remote-prayable {
+  border-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-zukan.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-remote-prayable-glow 3s ease-in-out infinite;
+}
+
+.shrine-marker-prayable.shrine-marker-remote-prayable {
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-prayable-pulse 2s ease-in-out infinite;
+}
+
+.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable {
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-thumbnail-wrap {
+  animation: shrine-prayable-pulse 2s ease-in-out infinite;
+}
+
+.shrine-marker-zukan.shrine-marker-prayable.shrine-marker-remote-prayable .shrine-marker-frame-border {
+  border-color: var(--color-prayable) !important;
+}
+
+.shrine-marker-unprayable.shrine-marker-remote-prayable .shrine-marker-frame-border {
+  border-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-unprayable.shrine-marker-remote-prayable .shrine-marker-pin::after {
+  border-top-color: var(--color-remote-prayable) !important;
+}
+
+.shrine-marker-prayable .shrine-marker-frame-border,
+.shrine-marker-prayable.shrine-marker-unprayable .shrine-marker-frame-border {
+  border-color: var(--color-prayable) !important;
+}
+
+/* ===== LEAFLET POPUP ===== */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1.5px solid var(--color-border) !important;
+  box-shadow: 0 4px 24px 0 var(--color-shadow);
+}
+
+.leaflet-popup-content {
+  color: var(--color-text) !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--color-text) !important;
+  filter: none;
+}
+
+.leaflet-popup-content-wrapper {
+  max-width: 400px !important;
+  min-width: 180px;
+  width: auto !important;
+}
+
+.leaflet-popup-content {
+  width: auto !important;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* ===== CUSTOM MENU ITEM ===== */
+.custom-menu-item {
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  border-radius: 0;
+  box-shadow: none;
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.custom-menu-item.active {
+  background: var(--color-background) !important;
+  color: var(--color-text);
+  border-top: none !important;
+  border-left: 2.5px solid var(--color-border);
+  border-right: 2.5px solid var(--color-border);
+  border-bottom: 2.5px solid var(--color-border);
+}
+
+.custom-menu-item:not(.active) {
+  background: var(--color-tab-inactive);
+  color: var(--color-text);
+  border-top: 2.5px solid var(--color-border);
+}
+
+.custom-menu-item:not(.active):hover,
+.custom-menu-item:not(.active):focus {
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+/* ===== BARRIER ===== */
+.barrier-normal path {
+  fill: rgba(0, 0, 255, 0.2);
+  stroke: none;
+}
+
+.barrier-wave path {
+  fill: rgba(128, 0, 255, 0.2);
+  stroke: rgba(255, 0, 0, 0.6);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+  animation: barrier-wave 2s linear infinite;
+}
+
+@keyframes barrier-wave {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 14; }
+}
+
+.barrier-search path {
+  fill: rgba(0, 255, 0, 0.1);
+  stroke: rgba(0, 128, 0, 0.7);
+  stroke-width: 2;
+  stroke-dasharray: 0 40 5 5;
+  animation: barrier-search 4s linear infinite;
+}
+
+@keyframes barrier-search {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -50; }
+}
+
+/* ===== BUTTONS ===== */
 .btn-base {
   border: none;
   border-radius: 0.75rem;
@@ -537,7 +555,6 @@ nav.d-flex.position-fixed {
   cursor: not-allowed;
 }
 
-/* 参拝・遥拝ボタンの色統一 */
 .btn, .btn-pray, .btn-remote-pray {
   background: none !important;
   color: inherit !important;
@@ -569,22 +586,10 @@ nav.d-flex.position-fixed {
   color: #fff;
 }
 
-.shrine-marker-unprayable.shrine-marker-remote-prayable .shrine-marker-frame-border {
-  border-color: var(--color-remote-prayable) !important;
-}
-.shrine-marker-unprayable.shrine-marker-remote-prayable .shrine-marker-pin::after {
-  border-top-color: var(--color-remote-prayable) !important;
-}
-
-.shrine-marker-prayable .shrine-marker-frame-border,
-.shrine-marker-prayable.shrine-marker-unprayable .shrine-marker-frame-border {
-  border-color: var(--color-prayable) !important;
-}
-
-/* モーダルダイアログのベーススタイル - Bootstrapのデフォルトをオーバーライド */
+/* ===== MODAL ===== */
 .custom-modal-dialog {
-  margin: 0 !important; /* Bootstrapのデフォルトマージンを無効化 */
-  padding: 16px !important; /* 代わりにパディングで余白を確保 */
+  margin: 0 !important;
+  padding: 16px !important;
   width: 100vw !important;
   max-width: 100vw !important;
   height: 80vh !important;
@@ -617,7 +622,6 @@ nav.d-flex.position-fixed {
   }
 }
 
-/* 古いmodal-dialogスタイルは削除して、custom-modal-dialogに統一 */
 .modal-dialog.custom-modal-dialog {
   width: 100vw !important;
   max-width: 100vw !important;
@@ -626,6 +630,7 @@ nav.d-flex.position-fixed {
   overflow-x: hidden;
   box-sizing: border-box;
 }
+
 .modal-content {
   box-sizing: border-box;
   height: auto !important;
@@ -649,14 +654,14 @@ nav.d-flex.position-fixed {
   background: var(--modal-background) !important;
   padding: 0 !important;
   max-width: var(--modal-max-width) !important;
-  margin: 0 !important; /* マージンを無効化 */
+  margin: 0 !important;
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
   scrollbar-width: thin;
   display: flex;
   flex-direction: column;
-  height: calc(80vh - 32px) !important; /* 親のパディング分を差し引く */
+  height: calc(80vh - 32px) !important;
   max-height: calc(80vh - 32px) !important;
-  width: calc(100% - 32px) !important; /* 親のパディング分を差し引く */
+  width: calc(100% - 32px) !important;
   max-width: calc(var(--modal-max-width) - 32px) !important;
   overflow: hidden;
   overflow-x: hidden;
@@ -665,22 +670,54 @@ nav.d-flex.position-fixed {
   word-wrap: break-word;
   word-break: break-word;
   box-sizing: border-box;
-  min-width: 280px; /* 最小幅を確保 */
+  min-width: 280px;
+}
+
+.modal,
+.modal-dialog.custom-modal-dialog,
+.custom-modal-content-force,
+.modal-content {
+  height: 100vh !important;
+  min-height: 0 !important;
+  max-height: 100vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal__content--thumbnail-expanded {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+.modal__content--thumbnail-expanded img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  background: none;
 }
 
 @media (max-width: 600px) {
   .custom-modal-content-force {
-    height: calc(80vh - 16px) !important; /* モバイル用パディング分を差し引く */
+    height: calc(80vh - 16px) !important;
     max-height: calc(80vh - 16px) !important;
-    width: calc(100% - 16px) !important;
-    max-width: calc(var(--modal-max-width) - 16px) !important;
   }
 }
 
 @media (max-width: 320px) {
   .custom-modal-content-force {
-    min-width: 200px; /* 非常に小さい画面では最小幅を縮小 */
-    height: calc(80vh - 8px) !important; /* 極小画面用パディング分を差し引く */
+    min-width: 200px;
+    height: calc(80vh - 8px) !important;
     max-height: calc(80vh - 8px) !important;
     width: calc(100% - 8px) !important;
     max-width: calc(var(--modal-max-width) - 8px) !important;
@@ -689,7 +726,7 @@ nav.d-flex.position-fixed {
 
 @media (min-width: 600px) {
   .custom-modal-content-force {
-    height: calc(70vh - 64px) !important; /* デスクトップ用パディング分を差し引く */
+    height: calc(70vh - 64px) !important;
     max-height: calc(70vh - 64px) !important;
     width: calc(100% - 64px) !important;
     max-width: calc(var(--modal-max-width) - 64px) !important;
@@ -697,6 +734,7 @@ nav.d-flex.position-fixed {
   }
 }
 
+/* ===== MODAL HEADER ===== */
 .modal__header {
   flex-shrink: 0;
   background: var(--modal-background);
@@ -706,14 +744,14 @@ nav.d-flex.position-fixed {
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  height: 80px; /* 固定高さに変更 */
-  max-height: 80px; /* 最大高さも固定 */
+  height: 80px;
+  max-height: 80px;
   position: sticky;
   top: 0;
   z-index: 1;
   border-top-left-radius: var(--border-radius);
   border-top-right-radius: var(--border-radius);
-  overflow: hidden; /* はみ出し防止 */
+  overflow: hidden;
 }
 
 .modal__header-content {
@@ -746,17 +784,16 @@ nav.d-flex.position-fixed {
   justify-content: space-between;
   align-items: center;
   margin-top: 4px;
-  min-height: 20px; /* ナビゲーション部分の最小高さを確保 */
+  min-height: 20px;
 }
 
 .modal__navigation-left,
 .modal__navigation-right {
   min-width: 50px;
-  max-width: 120px; /* ナビゲーションリンクの最大幅制限 */
-  overflow: hidden; /* はみ出し防止 */
+  max-width: 120px;
+  overflow: hidden;
 }
 
-/* ナビゲーション内の全ての要素に省略スタイル適用 */
 .modal__navigation-left > *,
 .modal__navigation-right > * {
   white-space: nowrap !important;
@@ -769,7 +806,6 @@ nav.d-flex.position-fixed {
   text-align: right;
 }
 
-/* ナビゲーションリンク内のテキストも切り詰め */
 .modal__navigation-left .custom-link,
 .modal__navigation-right .custom-link {
   white-space: nowrap !important;
@@ -779,7 +815,6 @@ nav.d-flex.position-fixed {
   display: inline-block !important;
 }
 
-/* タグリンクスタイルの場合も強制的に適用 */
 .modal__navigation-left .tag-link,
 .modal__navigation-right .tag-link {
   white-space: nowrap !important;
@@ -789,12 +824,13 @@ nav.d-flex.position-fixed {
   display: inline-block !important;
 }
 
+/* ===== MODAL CONTENT ===== */
 .modal__content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1rem;
-  height: calc(80vh - 32px - 80px - 2rem) !important; /* 全体高さ - パディング - ヘッダー高さ - コンテンツパディング */
+  height: calc(80vh - 32px - 80px - 2rem) !important;
   max-height: calc(80vh - 32px - 80px - 2rem) !important;
   z-index: 1;
   position: relative;
@@ -806,63 +842,91 @@ nav.d-flex.position-fixed {
   width: 100%;
 }
 
+/* サムネイル拡大表示時の余白除去・モーダル枠内フィット */
+.modal__content--thumbnail-expanded {
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden !important;
+  height: calc(100vh - 80px - 2rem) !important;
+  width: 100% !important;
+  box-sizing: border-box;
+  border-radius: 0 !important;
+}
+.modal__content--thumbnail-expanded img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  background: none;
+}
+
 @media (max-width: 600px) {
   .modal__content {
-    height: calc(80vh - 16px - 80px - 2rem) !important; /* モバイル用パディング */
+    height: calc(80vh - 16px - 80px - 2rem) !important;
     max-height: calc(80vh - 16px - 80px - 2rem) !important;
   }
 }
 
 @media (max-width: 320px) {
   .modal__content {
-    height: calc(80vh - 8px - 80px - 2rem) !important; /* 極小画面用パディング */
+    height: calc(80vh - 8px - 80px - 2rem) !important;
     max-height: calc(80vh - 8px - 80px - 2rem) !important;
   }
 }
 
 @media (min-width: 600px) {
   .modal__content {
-    height: calc(70vh - 64px - 80px - 2rem) !important; /* デスクトップ用パディング */
+    height: calc(70vh - 64px - 80px - 2rem) !important;
     max-height: calc(70vh - 64px - 80px - 2rem) !important;
     overflow-x: hidden;
   }
 }
 
-/* --- カスタムスクロールバー --- */
+/* ===== SCROLLBAR ===== */
 .custom-modal-content-force::-webkit-scrollbar {
   width: 10px;
 }
+
 .custom-modal-content-force::-webkit-scrollbar-thumb {
   background: var(--color-scrollbar-thumb);
   border-radius: 6px;
   transition: background 0.2s;
 }
+
 .custom-modal-content-force::-webkit-scrollbar-thumb:hover {
   background: var(--color-scrollbar-thumb-hover);
 }
+
 .custom-modal-content-force::-webkit-scrollbar-track {
   background: var(--color-scrollbar-track);
   border-radius: 6px;
 }
 
-/* --- タブのアクティブ色 --- */
+/* ===== NAV TABS ===== */
 .nav-tabs .nav-link.active, .nav-tabs .nav-item.show .nav-link {
   background: var(--color-surface) !important;
   color: var(--color-text) !important;
   border-color: var(--color-border) var(--color-border) transparent !important;
 }
 
-/* --- セレクトボックス --- */
+/* ===== SKIN SELECT ===== */
 .skin-select {
   background: var(--color-surface) !important;
   color: var(--color-text) !important;
   border: 1px solid var(--color-border) !important;
 }
+
 .skin-select:focus {
   border-color: var(--color-primary) !important;
   box-shadow: 0 0 0 2px var(--color-primary)33 !important;
 }
 
+/* ===== ROOT ===== */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -876,6 +940,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   background: var(--color-background) !important;
 }
 
+/* ===== CATALOG COUNT ===== */
 .catalog-count {
   font-size: 0.85em;
   color: var(--color-text);
@@ -883,6 +948,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   letter-spacing: 0.01em;
 }
 
+/* ===== MENU PANE ===== */
 .menu-pane {
   height: 56px;
   flex-shrink: 0;
@@ -894,7 +960,15 @@ body.no-skin-padding, body.no-skin-padding #root {
   opacity: 0.5;
 }
 
-/* App Component */
+.menu-pane-catalog {
+  border-top: none !important;
+}
+
+nav.d-flex.position-fixed {
+  border-top: none !important;
+}
+
+/* ===== APP ===== */
 .app {
   display: flex;
   flex-direction: column;
@@ -903,39 +977,40 @@ body.no-skin-padding, body.no-skin-padding #root {
 
 .app__content {
   overflow-y: auto;
-  height: calc(100vh - 56px); /* メニューバーの高さを除いた正確な高さ */
+  height: calc(100vh - 56px);
   position: relative;
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
   scrollbar-width: thin;
 }
 
-/* モーダルが開いている時はスクロールを無効化 */
 .app__content.modal-open {
   overflow: hidden !important;
 }
 
-/* アプリコンテンツのスクロールバーデザイン */
 .app__content::-webkit-scrollbar {
   width: 10px;
 }
+
 .app__content::-webkit-scrollbar-thumb {
   background: var(--color-scrollbar-thumb);
   border-radius: 6px;
   transition: background 0.2s;
 }
+
 .app__content::-webkit-scrollbar-thumb:hover {
   background: var(--color-scrollbar-thumb-hover);
 }
+
 .app__content::-webkit-scrollbar-track {
   background: var(--color-scrollbar-track);
 }
 
-/* UserPage Component */
+/* ===== USER PAGE ===== */
 .user-page {
   padding: 16px;
 }
 
-/* SettingsPage Component */
+/* ===== SETTINGS PAGE ===== */
 .settings-page__user-list-item {
   cursor: pointer;
 }
@@ -948,7 +1023,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   margin-left: 8px;
 }
 
-/* MapPage Component */
+/* ===== MAP PAGE ===== */
 .map-page {
   position: relative;
   height: calc(100vh - 56px);
@@ -963,18 +1038,21 @@ body.no-skin-padding, body.no-skin-padding #root {
   z-index: 399;
 }
 
-/* CatalogPage Component */
+/* ===== CATALOG PAGE ===== */
 .catalog-page__card-container {
   width: 100%;
   height: calc(100vh - 220px);
+  overflow: hidden;
+  box-sizing: border-box;
+  overflow-x: auto;
 }
-
 
 .catalog-page__card-cell {
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px;
 }
 
 .catalog-page__list-header {
@@ -1017,11 +1095,13 @@ body.no-skin-padding, body.no-skin-padding #root {
   width: 100%;
 }
 
+/* ===== PANE HEADER RESPONSIVE ===== */
 .dietypane-header-responsive, .shrinepane-header-responsive {
   display: flex;
   flex-direction: row;
   gap: 12px;
 }
+
 @media (max-width: 480px) {
   .dietypane-header-responsive, .shrinepane-header-responsive {
     flex-direction: column;
@@ -1030,36 +1110,11 @@ body.no-skin-padding, body.no-skin-padding #root {
   }
 }
 
-/* DietyPane Modal BEM */
-.diety-modal,
-.shrine-modal {
-  display: contents;
-  /* カード風装飾を完全に削除 */
-  background: none;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-}
-.pane__close-btn-outer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 10;
-}
+/* ===== PANE ===== */
 
-.pane__close-btn {
-  background: var(--color-surface) !important;
-  color: var(--color-accent) !important;
-  width: 2.2rem;
-  height: 2.2rem;
-  font-size: 1.5rem;
-  padding: 0;
-  min-height: auto;
-}
-.pane__close-btn:hover {
-  background: var(--color-accent) !important;
-  color: var(--color-surface) !important;
-}
+
+
+
 .pane__header {
   display: flex;
   flex-direction: row;
@@ -1071,19 +1126,17 @@ body.no-skin-padding, body.no-skin-padding #root {
   padding: 0;
 }
 
-/* 全体表示時のヘッダー固定用コンテナ */
-.pane__overview-container {
+.pane__header {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  flex-direction: row;
+  gap: 8px;
+  margin-bottom: 8px;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
 }
 
-.pane__overview-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 1.5rem 1.5rem 1.5rem;
-}
 @media (max-width: 480px) {
   .pane__header {
     flex-direction: column;
@@ -1091,6 +1144,7 @@ body.no-skin-padding, body.no-skin-padding #root {
     gap: 6px;
   }
 }
+
 .pane__thumbnail {
   position: relative;
   width: 100%;
@@ -1101,12 +1155,14 @@ body.no-skin-padding, body.no-skin-padding #root {
   border-radius: 0;
   padding: 0;
 }
+
 .pane__thumbnail img {
   width: 100%;
   height: auto;
   object-fit: cover;
   border-radius: 8px;
 }
+
 .pane__thumbnail-actions {
   position: absolute;
   top: 4px;
@@ -1114,6 +1170,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   display: flex;
   gap: 4px;
 }
+
 .pane__icon-btn {
   background: rgba(255,255,255,0.8);
   border: none;
@@ -1126,6 +1183,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   align-items: center;
   justify-content: center;
 }
+
 .pane__thumbnail-by {
   position: absolute;
   left: 4px;
@@ -1136,6 +1194,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   padding: 1px 6px;
   font-size: 11px;
 }
+
 .pane__info {
   flex: 1;
   min-width: 0;
@@ -1143,25 +1202,43 @@ body.no-skin-padding, body.no-skin-padding #root {
   flex-direction: column;
   gap: 4px;
 }
+
 .pane__title {
   font-weight: bold;
   font-size: 1.1em;
   color: var(--color-text);
   margin-bottom: 2px;
 }
+
 .pane__kana {
   color: var(--color-text);
   font-size: 0.95em;
 }
-.pane__count {
-  color: var(--color-text);
-  font-size: 0.85em;
-  margin-top: 2px;
+
+.pane__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
+.pane__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
 
+.pane__follow {
+  cursor: pointer;
+  color: var(--color-accent);
+  font-size: 0.9em;
+}
 
-/* CustomImage Component */
+.pane__follow:hover {
+  text-decoration: underline;
+}
+
+/* ===== CUSTOM IMAGE ===== */
 .custom-image {
   width: 100%;
   background: var(--color-text);
@@ -1179,7 +1256,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   display: block;
 }
 
-/* BarrierAnimationOverlay Component */
+/* ===== BARRIER ANIMATION OVERLAY ===== */
 .barrier-animation-overlay {
   position: absolute;
   pointer-events: none;
@@ -1191,20 +1268,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   overflow: visible;
 }
 
-/* LogPane Component Backdrop */
-.log-pane__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.2);
-  z-index: 799;
-}
-
-.log-pane__debug-logs {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.95em;
-}
-
-/* 汎用的なラベル・値表示用スタイル（旧catalog-card__label/itemから移植） */
+/* ===== FIELD ROW ===== */
 .field-row {
   display: flex;
   align-items: baseline;
@@ -1232,4 +1296,94 @@ body.no-skin-padding, body.no-skin-padding #root {
 .field-row__value--multiline {
   white-space: normal;
   word-break: break-word;
+}
+
+/* ===== CATALOG CARD ===== */
+.catalog-card {
+  width: 160px;
+  height: 240px;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(80,60,10,0.08);
+  background: var(--color-card, #fffde7);
+  border: 1px solid var(--color-border, #bfa14a);
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.catalog-card:hover {
+  box-shadow: 0 4px 16px rgba(80,60,10,0.16);
+}
+
+.catalog-card__thumbnail {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.catalog-card__thumbnail img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.catalog-card__body {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 6px 6px 20px 6px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  background: transparent;
+}
+
+.catalog-card__title {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 0.10rem;
+  min-height: 1.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+/* ===== MODAL SECTION ===== */
+.modal-section {
+  margin-bottom: 1rem;
+}
+
+.modal-subtitle {
+  font-weight: bold;
+  font-size: 1em;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.modal-item-text {
+  color: var(--color-text);
+  font-size: 0.9em;
+}
+
+/* ===== UTILITY CLASSES ===== */
+.modal-title {
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
