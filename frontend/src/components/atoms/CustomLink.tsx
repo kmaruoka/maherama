@@ -7,10 +7,18 @@ export default function CustomLink({ onClick, children, className = '', type = '
     type === 'diety' ? 'tag-link tag-diety' :
     type === 'user' ? 'tag-link tag-user' :
     'custom-link';
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // イベント伝播を停止
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <span
       className={`${typeClass}${className ? ' ' + className : ''}`.trim()}
-      onClick={onClick}
+      onClick={handleClick}
       style={{ cursor: onClick ? 'pointer' : undefined }}
     >
       {children}

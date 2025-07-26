@@ -19,6 +19,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   textColor,
   disabled,
   style,
+  onClick,
   children,
   ...props
 }) => {
@@ -28,6 +29,14 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
     : isHovered
     ? hoverColor
     : color;
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // イベント伝播を停止
+    if (onClick && !disabled) {
+      onClick(e);
+    }
+  };
+
   return (
     <button
       {...props}
@@ -38,6 +47,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
         color: textColor ?? '#fff',
         ...style,
       }}
+      onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

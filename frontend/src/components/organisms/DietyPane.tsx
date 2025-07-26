@@ -208,12 +208,24 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   return (
     <div>
       <div className="pane__header">
-        <div className="pane__thumbnail" onClick={() => setDetailView('thumbnail')} style={{ cursor: 'pointer' }}>
+        <div className="pane__thumbnail" onClick={(e) => {
+          // ボタンがクリックされた場合は画像表示切り替えを行わない
+          if ((e.target as HTMLElement).closest('button')) {
+            return;
+          }
+          setDetailView('thumbnail');
+        }} style={{ cursor: 'pointer' }}>
           <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" />
           <div className="pane__thumbnail-actions">
-            <button className="pane__icon-btn" onClick={() => setIsUploadModalOpen(true)} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
+            <button className="pane__icon-btn" onClick={(e) => {
+              e.stopPropagation();
+              setIsUploadModalOpen(true);
+            }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
             {diety.thumbnailUrl && diety.thumbnailUrl !== NOIMAGE_DIETY_URL && (
-              <button className="pane__icon-btn" onClick={handleVote} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
+              <button className="pane__icon-btn" onClick={(e) => {
+                e.stopPropagation();
+                handleVote();
+              }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
             )}
           </div>
           {diety.thumbnailBy && (
