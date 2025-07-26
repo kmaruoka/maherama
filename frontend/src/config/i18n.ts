@@ -10,6 +10,7 @@ const resources = {
       name: '名前',
       count: '参拝数',
       registeredAt: '図鑑収録',
+      backToOverview: '全体表示に戻る',
       lastPrayedAt: '最終参拝',
       // ShrineMarker
       shrineMarkerZukanPrayableRemote: '図鑑収録済み・参拝可能・遥拝可能',
@@ -107,6 +108,7 @@ const resources = {
       name: 'Name',
       count: 'Pray Count',
       registeredAt: 'Registered At',
+      backToOverview: 'Back to Overview',
       lastPrayedAt: 'Last Prayed At',
       // ShrineMarker
       shrineMarkerZukanPrayableRemote: 'In Catalog・Prayable・Remote Prayable',

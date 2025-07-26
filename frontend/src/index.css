@@ -499,6 +499,44 @@ nav.d-flex.position-fixed {
   background: var(--color-unprayable);
 }
 
+/* 統一ボタンデザイン */
+.btn-base {
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.08);
+  outline: none;
+  text-decoration: none;
+  min-height: 2.5rem;
+}
+
+.btn-base:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.12);
+}
+
+.btn-base:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.08);
+}
+
+.btn-base:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.08);
+}
+
+.custom-button--disabled {
+  cursor: not-allowed;
+}
+
 /* 参拝・遥拝ボタンの色統一 */
 .btn, .btn-pray, .btn-remote-pray {
   background: none !important;
@@ -506,21 +544,25 @@ nav.d-flex.position-fixed {
   border: none !important;
   box-shadow: none !important;
 }
+
 .btn-pray {
   background: var(--color-prayable);
   border-color: var(--color-prayable);
   color: #fff;
 }
+
 .btn-pray:disabled, .btn-pray.disabled {
   background: var(--color-unprayable);
   border-color: var(--color-unprayable);
   color: #fff;
 }
+
 .btn-remote-pray {
   background: var(--color-remote-prayable);
   border-color: var(--color-remote-prayable);
   color: #fff;
 }
+
 .btn-remote-pray:disabled, .btn-remote-pray.disabled {
   background: var(--color-unprayable);
   border-color: var(--color-unprayable);
@@ -539,31 +581,65 @@ nav.d-flex.position-fixed {
   border-color: var(--color-prayable) !important;
 }
 
-.custom-modal-dialog, .custom-modal-content-force {
-  margin-left: 32px;
-  margin-right: 32px;
+/* モーダルダイアログのベーススタイル - Bootstrapのデフォルトをオーバーライド */
+.custom-modal-dialog {
+  margin: 0 !important; /* Bootstrapのデフォルトマージンを無効化 */
+  padding: 16px !important; /* 代わりにパディングで余白を確保 */
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 80vh !important;
+  max-height: 80vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
 }
+
 @media (max-width: 600px) {
-  .custom-modal-dialog, .custom-modal-content-force {
-    margin-left: 8px;
-    margin-right: 8px;
+  .custom-modal-dialog {
+    padding: 8px !important;
+    height: 80vh !important;
+    max-height: 80vh !important;
   }
 }
 
-.modal-dialog {
-  width: calc(100vw - 32px) !important;
-  max-width: calc(100vw - 32px) !important;
-  min-width: 0 !important;
-  margin: 0 auto !important;
-}
-@media (min-width: 600px) {
-  .modal-dialog {
-    width: calc(100vw - 64px) !important;
-    max-width: calc(100vw - 64px) !important;
+@media (max-width: 320px) {
+  .custom-modal-dialog {
+    padding: 4px !important;
   }
+}
+
+@media (min-width: 600px) {
+  .custom-modal-dialog {
+    padding: 32px !important;
+    height: 70vh !important;
+    max-height: 70vh !important;
+  }
+}
+
+/* 古いmodal-dialogスタイルは削除して、custom-modal-dialogに統一 */
+.modal-dialog.custom-modal-dialog {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 .modal-content {
   box-sizing: border-box;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+.modal-body {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
 }
 
 .custom-modal-content-force {
@@ -571,11 +647,185 @@ nav.d-flex.position-fixed {
   box-shadow: var(--box-shadow) !important;
   border-radius: var(--border-radius) !important;
   background: var(--modal-background) !important;
-  padding: var(--modal-padding) !important;
+  padding: 0 !important;
   max-width: var(--modal-max-width) !important;
-  margin: 0 auto !important;
+  margin: 0 !important; /* マージンを無効化 */
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
   scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
+  height: calc(80vh - 32px) !important; /* 親のパディング分を差し引く */
+  max-height: calc(80vh - 32px) !important;
+  width: calc(100% - 32px) !important; /* 親のパディング分を差し引く */
+  max-width: calc(var(--modal-max-width) - 32px) !important;
+  overflow: hidden;
+  overflow-x: hidden;
+  z-index: 10;
+  position: relative;
+  word-wrap: break-word;
+  word-break: break-word;
+  box-sizing: border-box;
+  min-width: 280px; /* 最小幅を確保 */
+}
+
+@media (max-width: 600px) {
+  .custom-modal-content-force {
+    height: calc(80vh - 16px) !important; /* モバイル用パディング分を差し引く */
+    max-height: calc(80vh - 16px) !important;
+    width: calc(100% - 16px) !important;
+    max-width: calc(var(--modal-max-width) - 16px) !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .custom-modal-content-force {
+    min-width: 200px; /* 非常に小さい画面では最小幅を縮小 */
+    height: calc(80vh - 8px) !important; /* 極小画面用パディング分を差し引く */
+    max-height: calc(80vh - 8px) !important;
+    width: calc(100% - 8px) !important;
+    max-width: calc(var(--modal-max-width) - 8px) !important;
+  }
+}
+
+@media (min-width: 600px) {
+  .custom-modal-content-force {
+    height: calc(70vh - 64px) !important; /* デスクトップ用パディング分を差し引く */
+    max-height: calc(70vh - 64px) !important;
+    width: calc(100% - 64px) !important;
+    max-width: calc(var(--modal-max-width) - 64px) !important;
+    overflow-x: hidden;
+  }
+}
+
+.modal__header {
+  flex-shrink: 0;
+  background: var(--modal-background);
+  padding: 12px 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 80px; /* 固定高さに変更 */
+  max-height: 80px; /* 最大高さも固定 */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+  overflow: hidden; /* はみ出し防止 */
+}
+
+.modal__header-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal__header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.modal__header-title--clickable {
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.modal__header-title--clickable:hover {
+  color: var(--color-primary);
+}
+
+.modal__navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  min-height: 20px; /* ナビゲーション部分の最小高さを確保 */
+}
+
+.modal__navigation-left,
+.modal__navigation-right {
+  min-width: 50px;
+  max-width: 120px; /* ナビゲーションリンクの最大幅制限 */
+  overflow: hidden; /* はみ出し防止 */
+}
+
+/* ナビゲーション内の全ての要素に省略スタイル適用 */
+.modal__navigation-left > *,
+.modal__navigation-right > * {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+.modal__navigation-right {
+  text-align: right;
+}
+
+/* ナビゲーションリンク内のテキストも切り詰め */
+.modal__navigation-left .custom-link,
+.modal__navigation-right .custom-link {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: inline-block !important;
+}
+
+/* タグリンクスタイルの場合も強制的に適用 */
+.modal__navigation-left .tag-link,
+.modal__navigation-right .tag-link {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: inline-block !important;
+}
+
+.modal__content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  height: calc(80vh - 32px - 80px - 2rem) !important; /* 全体高さ - パディング - ヘッダー高さ - コンテンツパディング */
+  max-height: calc(80vh - 32px - 80px - 2rem) !important;
+  z-index: 1;
+  position: relative;
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+  word-wrap: break-word;
+  word-break: break-word;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .modal__content {
+    height: calc(80vh - 16px - 80px - 2rem) !important; /* モバイル用パディング */
+    max-height: calc(80vh - 16px - 80px - 2rem) !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .modal__content {
+    height: calc(80vh - 8px - 80px - 2rem) !important; /* 極小画面用パディング */
+    max-height: calc(80vh - 8px - 80px - 2rem) !important;
+  }
+}
+
+@media (min-width: 600px) {
+  .modal__content {
+    height: calc(70vh - 64px - 80px - 2rem) !important; /* デスクトップ用パディング */
+    max-height: calc(70vh - 64px - 80px - 2rem) !important;
+    overflow-x: hidden;
+  }
 }
 
 /* --- カスタムスクロールバー --- */
@@ -653,9 +903,31 @@ body.no-skin-padding, body.no-skin-padding #root {
 
 .app__content {
   overflow-y: auto;
-  padding-bottom: calc(56px + 12rem);
+  height: calc(100vh - 56px); /* メニューバーの高さを除いた正確な高さ */
   position: relative;
-  flex-grow: 1;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+/* モーダルが開いている時はスクロールを無効化 */
+.app__content.modal-open {
+  overflow: hidden !important;
+}
+
+/* アプリコンテンツのスクロールバーデザイン */
+.app__content::-webkit-scrollbar {
+  width: 10px;
+}
+.app__content::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.app__content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-thumb-hover);
+}
+.app__content::-webkit-scrollbar-track {
+  background: var(--color-scrollbar-track);
 }
 
 /* UserPage Component */
@@ -694,8 +966,9 @@ body.no-skin-padding, body.no-skin-padding #root {
 /* CatalogPage Component */
 .catalog-page__card-container {
   width: 100%;
-  height: calc(100vh - 200px);
+  height: calc(100vh - 220px);
 }
+
 
 .catalog-page__card-cell {
   box-sizing: border-box;
@@ -777,15 +1050,11 @@ body.no-skin-padding, body.no-skin-padding #root {
 .pane__close-btn {
   background: var(--color-surface) !important;
   color: var(--color-accent) !important;
-  border-radius: 0.75rem !important;
-  font-size: 1.5rem;
   width: 2.2rem;
   height: 2.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.08);
-  transition: background 0.2s, color 0.2s;
+  font-size: 1.5rem;
+  padding: 0;
+  min-height: auto;
 }
 .pane__close-btn:hover {
   background: var(--color-accent) !important;
@@ -800,6 +1069,20 @@ body.no-skin-padding, body.no-skin-padding #root {
   box-shadow: none;
   border-radius: 0;
   padding: 0;
+}
+
+/* 全体表示時のヘッダー固定用コンテナ */
+.pane__overview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pane__overview-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem 1.5rem 1.5rem;
 }
 @media (max-width: 480px) {
   .pane__header {
@@ -876,20 +1159,7 @@ body.no-skin-padding, body.no-skin-padding #root {
   margin-top: 2px;
 }
 
-/* CustomButton Component */
-.custom-button {
-  border: none;
-  border-radius: 4px;
-  padding: 6px 16px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-  color: #fff;
-}
 
-.custom-button--disabled {
-  cursor: not-allowed;
-}
 
 /* CustomImage Component */
 .custom-image {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useParams } from 'react-router-dom';
 import useDietyDetail from '../../hooks/useDietyDetail';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
@@ -26,9 +26,17 @@ function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key
   };
 }
 
-export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }) {
+type DetailViewType = 'overview' | 'thumbnail' | 'shrines' | 'ranking';
+
+export interface DietyPaneRef {
+  backToOverview: () => void;
+}
+
+const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }>(
+  ({ id, onShowShrine, onShowUser, onClose }, ref) => {
   const { t } = useTranslation();
   const { id: paramId } = useParams<{ id: string }>();
+  const [detailView, setDetailView] = useState<DetailViewType>('overview');
   // id優先、なければparamIdを数値変換して使用
   let idFromParams: number | undefined = undefined;
   if (typeof id === 'number' && !isNaN(id)) {
@@ -51,6 +59,11 @@ export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { i
   }, [diety?.thumbnailUrl]);
 
   const queryClient = useQueryClient();
+
+  // refで外部から呼び出せるメソッドを定義
+  useImperativeHandle(ref, () => ({
+    backToOverview: () => setDetailView('overview')
+  }));
 
   if (!idFromParams) {
     return <div className="p-3">{t('dietyIdNotSpecified')}</div>;
@@ -140,10 +153,62 @@ export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { i
     }
   };
 
+  // 詳細表示のレンダリング関数
+  const renderDetailContent = () => {
+    if (detailView === 'thumbnail') {
+      return (
+        <img 
+          src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} 
+          alt="サムネイル" 
+          style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+        />
+      );
+    } else if (detailView === 'shrines') {
+      return (
+        <>
+          <div className="modal-subtitle">{t('enshrinedShrines')}</div>
+          <div className="d-flex flex-wrap gap-2">
+            {diety.shrines.map((shrine) => (
+              <CustomLink
+                key={shrine.id}
+                onClick={() => onShowShrine?.(shrine.id)}
+                type="shrine"
+              >
+                {shrine.name}
+              </CustomLink>
+            ))}
+          </div>
+        </>
+      );
+    } else if (detailView === 'ranking') {
+      return (
+        <>
+          <div className="modal-subtitle">{t('prayRanking')}</div>
+          <RankingPane
+            itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
+            type="user"
+            isLoading={isRankingLoading}
+            onItemClick={onShowUser}
+            maxItems={100}
+          />
+        </>
+      );
+    }
+    return null;
+  };
+
+  if (detailView !== 'overview') {
+    return (
+      <div>
+        {renderDetailContent()}
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="pane__header">
-        <div className="pane__thumbnail">
+        <div className="pane__thumbnail" onClick={() => setDetailView('thumbnail')} style={{ cursor: 'pointer' }}>
           <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={() => setIsUploadModalOpen(true)} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
@@ -176,9 +241,9 @@ export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { i
 
       {diety.shrines.length > 0 && (
         <div className="modal-section">
-          <div className="modal-subtitle">{t('enshrinedShrines')}</div>
+          <div className="modal-subtitle" onClick={() => setDetailView('shrines')} style={{ cursor: 'pointer' }}>{t('enshrinedShrines')}</div>
           <div className="d-flex flex-wrap gap-2">
-            {diety.shrines.map((shrine) => (
+            {diety.shrines.slice(0, 3).map((shrine) => (
               <CustomLink
                 key={shrine.id}
                 onClick={() => onShowShrine?.(shrine.id)}
@@ -187,18 +252,22 @@ export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { i
                 {shrine.name}
               </CustomLink>
             ))}
+            {diety.shrines.length > 3 && (
+              <span className="text-muted">...{diety.shrines.length - 3}件</span>
+            )}
           </div>
         </div>
       )}
 
       {/* ランキング表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle">{t('prayRanking')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('ranking')} style={{ cursor: 'pointer' }}>{t('prayRanking')}</div>
         <RankingPane
           itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
           type="user"
           isLoading={isRankingLoading}
           onItemClick={onShowUser}
+          maxItems={3}
         />
       </div>
 
@@ -218,4 +287,6 @@ export default function DietyPane({ id, onShowShrine, onShowUser, onClose }: { i
       />
     </div>
   );
-}
+});
+
+export default DietyPane;

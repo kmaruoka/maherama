@@ -911,7 +911,7 @@ app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'monthly':
@@ -919,7 +919,7 @@ app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'weekly':
@@ -927,7 +927,7 @@ app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       default:
@@ -935,7 +935,7 @@ app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
     }
     const result = stats.map((s, i) => ({
@@ -1133,7 +1133,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'monthly':
@@ -1141,7 +1141,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'weekly':
@@ -1149,7 +1149,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       default:
@@ -1157,7 +1157,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { shrine: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
     }
     const shrineRankings = shrineStats.map((s, i) => ({
@@ -1175,7 +1175,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { diety: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'monthly':
@@ -1183,7 +1183,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { diety: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'weekly':
@@ -1191,7 +1191,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { diety: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       default:
@@ -1199,7 +1199,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
           where: { user_id: userId },
           orderBy: { count: 'desc' },
           include: { diety: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
     }
     const dietyRankings = dietyStats.map((d, i) => ({
@@ -1259,28 +1259,28 @@ async function getShrineRankings(period) {
       stats = await prisma.shrinePrayStatsYearly.findMany({
         orderBy: { count: 'desc' },
         include: { shrine: { select: { id: true, name: true } } },
-        take: 10,
+        take: 100,
       });
       break;
     case 'monthly':
       stats = await prisma.shrinePrayStatsMonthly.findMany({
         orderBy: { count: 'desc' },
         include: { shrine: { select: { id: true, name: true } } },
-        take: 10,
+        take: 100,
       });
       break;
     case 'weekly':
       stats = await prisma.shrinePrayStatsWeekly.findMany({
         orderBy: { count: 'desc' },
         include: { shrine: { select: { id: true, name: true } } },
-        take: 10,
+        take: 100,
       });
       break;
     default:
       stats = await prisma.shrinePrayStats.findMany({
         orderBy: { count: 'desc' },
         include: { shrine: { select: { id: true, name: true } } },
-        take: 10,
+        take: 100,
       });
   }
   return stats.map((s, i) => ({
@@ -1366,7 +1366,7 @@ app.get('/shrines/:id/rankings-bundle', async (req, res) => {
           where: { shrine_id: shrineId },
           orderBy: { count: 'desc' },
           include: { user: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'monthly':
@@ -1374,7 +1374,7 @@ app.get('/shrines/:id/rankings-bundle', async (req, res) => {
           where: { shrine_id: shrineId },
           orderBy: { count: 'desc' },
           include: { user: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       case 'weekly':
@@ -1382,7 +1382,7 @@ app.get('/shrines/:id/rankings-bundle', async (req, res) => {
           where: { shrine_id: shrineId },
           orderBy: { count: 'desc' },
           include: { user: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
         break;
       default:
@@ -1390,7 +1390,7 @@ app.get('/shrines/:id/rankings-bundle', async (req, res) => {
           where: { shrine_id: shrineId },
           orderBy: { count: 'desc' },
           include: { user: { select: { id: true, name: true } } },
-          take: 10,
+          take: 100,
         });
     }
     result[period] = stats.map((s, i) => ({

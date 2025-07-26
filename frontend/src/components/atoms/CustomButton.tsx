@@ -32,7 +32,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
     <button
       {...props}
       disabled={disabled}
-      className={`custom-button${disabled ? ' custom-button--disabled' : ''}`}
+      className={`btn-base${disabled ? ' custom-button--disabled' : ''}`}
       style={{
         background,
         color: textColor ?? '#fff',

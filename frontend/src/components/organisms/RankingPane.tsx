@@ -18,6 +18,7 @@ interface RankingPaneProps {
   type: 'user' | 'shrine' | 'diety';
   isLoading?: boolean;
   onItemClick?: (id: number) => void;
+  maxItems?: number;
 }
 
 const periodLabels: Record<Period, string> = {
@@ -27,7 +28,7 @@ const periodLabels: Record<Period, string> = {
   weekly: '週間',
 };
 
-export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClick }: RankingPaneProps) {
+export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClick, maxItems = 3 }: RankingPaneProps) {
   const { skin } = useSkin();
   const [period, setPeriod] = useState<Period>('all');
   const safeItemsByPeriod = itemsByPeriod ?? { all: [], yearly: [], monthly: [], weekly: [] };
@@ -53,7 +54,7 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
         ) : items.length === 0 ? (
           <div className="text-secondary text-center py-4 small">データがありません</div>
         ) : (
-          items.slice(0, 3).map((item, idx) => {
+          items.slice(0, maxItems).map((item, idx) => {
             let badgeBg = skin.colors.rankingBadgeOther;
             if (idx === 0) badgeBg = skin.colors.rankingBadge1;
             else if (idx === 1) badgeBg = skin.colors.rankingBadge2;

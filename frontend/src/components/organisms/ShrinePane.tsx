@@ -1,3 +1,4 @@
+import React, { forwardRef, useImperativeHandle } from 'react';
 import useShrineDetail from '../../hooks/useShrineDetail';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
@@ -48,7 +49,14 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
   return result;
 }
 
-export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }) {
+type DetailViewType = 'overview' | 'thumbnail' | 'deities' | 'ranking';
+
+export interface ShrinePaneRef {
+  backToOverview: () => void;
+}
+
+const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void }>(
+  ({ id, onShowDiety, onShowUser, onClose }, ref) => {
   const { t } = useTranslation();
   const { data } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
@@ -61,6 +69,7 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
   const [debugMode] = useLocalStorageState('debugMode', false);
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
   const [prayDistance, setPrayDistance] = useState<number | null>(null);
+  const [detailView, setDetailView] = useState<DetailViewType>('overview');
   const { data: worshipLimit } = useWorshipLimit(userId);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [imageList, setImageList] = useState<any[]>([]);
@@ -68,6 +77,11 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
   const [imageListError, setImageListError] = useState<string | null>(null);
   const [thumbCache, setThumbCache] = useState(Date.now());
   const [thumbnailUrl, setThumbnailUrl] = useState(data?.thumbnailUrl);
+
+  // refで外部から呼び出せるメソッドを定義
+  useImperativeHandle(ref, () => ({
+    backToOverview: () => setDetailView('overview')
+  }));
 
   useEffect(() => {
     setThumbnailUrl(data?.thumbnailUrl);
@@ -252,12 +266,12 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
     distance <= radius;
 
   // デバッグ情報を出力
-  useEffect(() => {
-    if (currentPosition && data) {
-      const d = getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng);
-      debugLog(`神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${formatDistance(d)} (typeof: ${typeof d}) | 半径: ${formatDistance(radius)} (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
-    }
-  }, [currentPosition, data, radius, canPray, debugMode, debugLog]);
+  // useEffect(() => {
+  //   if (currentPosition && data) {
+  //     const d = getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng);
+  //     debugLog(`神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${formatDistance(d)} (typeof: ${typeof d}) | 半径: ${formatDistance(radius)} (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
+  //   }
+  // }, [currentPosition, data, radius, canPray, debugMode, debugLog]);
 
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -358,10 +372,66 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
     }
   };
 
+  // 詳細表示のレンダリング関数
+  const renderDetailContent = () => {
+    if (detailView === 'thumbnail') {
+      return (
+        <img 
+          src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} 
+          alt="サムネイル" 
+          style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+        />
+      );
+    } else if (detailView === 'deities') {
+      return (
+        <>
+          <div className="modal-subtitle">{t('enshrinedDeities')}</div>
+          <div className="d-flex flex-wrap gap-2">
+            {data.dieties && data.dieties.length > 0 ? (
+              data.dieties.map(d => (
+                <CustomLink
+                  key={d.id}
+                  onClick={() => onShowDiety && onShowDiety(d.id)}
+                  type="diety"
+                >
+                  {d.name}
+                </CustomLink>
+              ))
+            ) : (
+              <span className="text-muted">{t('noDeityInfo')}</span>
+            )}
+          </div>
+        </>
+      );
+    } else if (detailView === 'ranking') {
+      return (
+        <>
+          <div className="modal-subtitle">{t('prayRanking')}</div>
+          <RankingPane
+            itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
+            type="user"
+            isLoading={false}
+            onItemClick={onShowUser}
+            maxItems={100}
+          />
+        </>
+      );
+    }
+    return null;
+  };
+
+  if (detailView !== 'overview') {
+    return (
+      <div>
+        {renderDetailContent()}
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="pane__header">
-        <div className="pane__thumbnail">
+        <div className="pane__thumbnail" onClick={() => setDetailView('thumbnail')} style={{ cursor: 'pointer' }}>
           <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} alt="サムネイル" />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={() => setIsUploadModalOpen(true)} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
@@ -395,9 +465,37 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
           <div className="small text-body-secondary">{data.description}</div>
         </div>
       )}
+
+      {/* 参拝・遥拝ボタン */}
+      <div className="modal-section">
+        <div className="d-flex gap-2">
+          <CustomButton
+            className="btn-pray"
+            onClick={() => prayMutation.mutate(id)}
+            disabled={!canPray}
+            style={{ flex: 1 }}
+          >
+            {t('pray')}
+          </CustomButton>
+          <CustomButton
+            className="btn-remote-pray"
+            onClick={() => remotePrayMutation.mutate()}
+            disabled={!subscription?.subscriptions?.[0]?.is_active}
+            style={{ flex: 1 }}
+          >
+            {t('remotePray')}
+          </CustomButton>
+        </div>
+        {distance !== null && (
+          <div className="text-muted small mt-2">
+            {t('distance')}: {formatDistance(distance)}
+            {canPray ? ` (${t('prayable')})` : ` (${t('outOfRange')})`}
+          </div>
+        )}
+      </div>
       
       <div className="modal-section">
-        <div className="modal-subtitle">{t('enshrinedDeities')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('deities')} style={{ cursor: 'pointer' }}>{t('enshrinedDeities')}</div>
         <div className="d-flex flex-wrap gap-2">
           {data.dieties && data.dieties.length > 0 ? (
             data.dieties.map(d => (
@@ -431,12 +529,13 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
 
       {/* ランキング表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle">{t('prayRanking')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('ranking')} style={{ cursor: 'pointer' }}>{t('prayRanking')}</div>
         <RankingPane
           itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
           type="user"
-          isLoading={isRankingLoading}
+          isLoading={false}
           onItemClick={onShowUser}
+          maxItems={3}
         />
       </div>
       
@@ -487,4 +586,6 @@ export default function ShrinePane({ id, onShowDiety, onShowUser, onClose }: { i
       </div>
     </div>
   );
-}
+});
+
+export default ShrinePane;

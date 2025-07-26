@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { API_BASE, apiCall } from '../../config/api';
 import RankingPane from './RankingPane';
@@ -23,11 +23,19 @@ interface UserPageProps {
   onShowShrine?: (id: number) => void;
   onShowDiety?: (id: number) => void;
   onShowUser?: (id: number) => void;
+  onClose?: () => void;
 }
 
-export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: UserPageProps) {
+type DetailViewType = 'overview' | 'shrine-ranking' | 'diety-ranking';
+
+export interface UserPaneRef {
+  backToOverview: () => void;
+}
+
+const UserPage = forwardRef<UserPaneRef, UserPageProps>(({ id, onShowShrine, onShowDiety, onShowUser, onClose }, ref) => {
   const { t } = useTranslation();
   const [currentUserId] = useLocalStorageState<number | null>('userId', null);
+  const [detailView, setDetailView] = useState<DetailViewType>('overview');
   const displayId = id ?? currentUserId;
 
   const {
@@ -52,6 +60,11 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
 
   const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [showFollowerModal, setShowFollowerModal] = useState(false);
+
+  // refで外部から呼び出せるメソッドを定義
+  useImperativeHandle(ref, () => ({
+    backToOverview: () => setDetailView('overview')
+  }));
 
   const handleFollow = async () => {
     if (!currentUserId || !userInfo) return;
@@ -136,6 +149,46 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
     // console.log('abilities:', abilities); // ← デバッグ用ログ削除
   }
 
+  // 詳細表示のレンダリング関数
+  const renderDetailContent = () => {
+    if (detailView === 'shrine-ranking') {
+      return (
+        <>
+          <div className="modal-subtitle">{t('oftenPrayedShrines')}</div>
+          <RankingPane
+            itemsByPeriod={userShrineRankingsByPeriod}
+            type="shrine"
+            isLoading={isUserShrineRankingLoading}
+            onItemClick={onShowShrine}
+            maxItems={100}
+          />
+        </>
+      );
+    } else if (detailView === 'diety-ranking') {
+      return (
+        <>
+          <div className="modal-subtitle">{t('oftenPrayedDeities')}</div>
+          <RankingPane
+            itemsByPeriod={userDietyRankingsByPeriod}
+            type="diety"
+            isLoading={isUserDietyRankingLoading}
+            onItemClick={onShowDiety}
+            maxItems={100}
+          />
+        </>
+      );
+    }
+    return null;
+  };
+
+  if (detailView !== 'overview') {
+    return (
+      <div>
+        {renderDetailContent()}
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="pane__header">
@@ -169,12 +222,13 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
       </div>
 
       <div className="modal-section">
-        <div className="modal-subtitle">{t('oftenPrayedShrines')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('shrine-ranking')} style={{ cursor: 'pointer' }}>{t('oftenPrayedShrines')}</div>
         <RankingPane
           itemsByPeriod={userShrineRankingsByPeriod}
           type="shrine"
           isLoading={isUserShrineRankingLoading}
           onItemClick={onShowShrine}
+          maxItems={3}
         />
       </div>
       <FollowModal
@@ -196,12 +250,13 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
         onUserClick={onShowUser}
       />
       <div className="modal-section">
-        <div className="modal-subtitle">{t('oftenPrayedDeities')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('diety-ranking')} style={{ cursor: 'pointer' }}>{t('oftenPrayedDeities')}</div>
         <RankingPane
           itemsByPeriod={userDietyRankingsByPeriod}
           type="diety"
           isLoading={isUserDietyRankingLoading}
           onItemClick={onShowDiety}
+          maxItems={3}
         />
       </div>
 
@@ -313,4 +368,6 @@ export default function UserPage({ id, onShowShrine, onShowDiety, onShowUser }: 
       )}
     </div>
   );
-}
+});
+
+export default UserPage;
