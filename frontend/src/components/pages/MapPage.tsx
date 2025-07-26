@@ -47,6 +47,9 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const { data: subscription } = useSubscription(userId);
 
   const [prayDistance, setPrayDistance] = useState<number>(100);
+  
+  // 神社表示上限数の設定（デフォルト100、設定可能範囲: 10-500）
+  const [maxShrineDisplay] = useLocalStorageState<number>('maxShrineDisplay', 100);
   useEffect(() => {
     if (userId) {
       fetch(`${API_BASE}/users/${userId}/pray-distance`, {
@@ -162,13 +165,33 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   // center: 現在地 or デバッグ中心
   const centerArray = debugMode ? center : (position || defaultCenter);
 
-  // 参拝半径3倍以内の神社だけ表示
-  const filteredShrines = useMemo(() => {
-    if (!centerArray || !prayDistance) return shrines;
-    return shrines.filter(s =>
-      calculateDistance({ lat: centerArray[0], lng: centerArray[1] }, { lat: s.lat, lng: s.lng }) <= prayDistance * 3
-    );
-  }, [shrines, centerArray, prayDistance]);
+  // 参拝半径3倍以内の神社を距離順でソートして表示（上位100件に制限）
+  const displayShrines = useMemo(() => {
+    if (!centerArray || !prayDistance) {
+      console.log('[DEBUG] displayShrines: centerArray or prayDistance not available', { centerArray, prayDistance });
+      return shrines;
+    }
+    
+    // フィルタリングしつつ距離を計算
+    const shrinesWithDistance = shrines
+      .map(s => ({
+        ...s,
+        distance: calculateDistance({ lat: centerArray[0], lng: centerArray[1] }, { lat: s.lat, lng: s.lng })
+      }))
+      .filter(s => s.distance <= prayDistance * 3)
+      .sort((a, b) => a.distance - b.distance) // 距離順にソート（近い順）
+      .slice(0, maxShrineDisplay); // ユーザー設定に基づく上限でz-index範囲を制御
+
+    console.log('[DEBUG] displayShrines sorted:', {
+      centerArray,
+      prayDistance,
+      totalShrines: shrines.length,
+      filteredCount: shrinesWithDistance.length,
+      first3Distances: shrinesWithDistance.slice(0, 3).map(s => ({ name: s.name, distance: s.distance?.toFixed(2) }))
+    });
+
+    return shrinesWithDistance;
+  }, [shrines, centerArray, prayDistance, maxShrineDisplay]);
 
   const maxZoom = 18;
   const baseDistance = 100; // 100mを基準
@@ -251,15 +274,26 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           <Marker position={position} icon={debugCurrentIcon}>
           </Marker>
         )}
-        {/* 通常の神社マーカー（フィルタ済みのみ） */}
-        {filteredShrines.map((s) => {
+        {/* 通常の神社マーカー（距離順表示） */}
+        {displayShrines.map((s, index) => {
           const currentPosition = debugMode ? center : position;
+          // 距離が近いほど高いz-index（手前に表示）
+          // index=0（最も近い）が最も高いz-indexになるように設定
+          // 神社マーカー専用のz-index範囲（5000-2000）を確保
+          // 最大60個程度の神社表示を想定（60 * 50 = 3000）
+          const zIndex = 5000 - (index * 50);
+          
+          if (index < 5) {
+            console.log(`[DEBUG] Marker ${index}: ${s.name}, distance: ${s.distance?.toFixed(2)}m, zIndex: ${zIndex}`);
+          }
+          
           return (
             <ShrineMarker
               key={s.id}
               shrine={s}
               currentPosition={currentPosition}
               onShowShrine={handleShrineClick}
+              zIndex={zIndex}
             />
           );
         })}

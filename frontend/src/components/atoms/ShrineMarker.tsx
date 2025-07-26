@@ -20,6 +20,7 @@ interface ShrineMarkerProps {
   shrine: Shrine;
   currentPosition: [number, number] | null;
   onShowShrine: (id: number) => void;
+  zIndex?: number;
 }
 
 function createShrineIcon(
@@ -88,7 +89,7 @@ function createShrineIcon(
   });
 }
 
-export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: ShrineMarkerProps) {
+export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zIndex }: ShrineMarkerProps) {
   const { t } = useTranslation();
   const debugLog = useDebugLog();
   const [userId] = useLocalStorageState<number | null>('userId', null);
@@ -157,6 +158,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine }: 
     <Marker
       position={[shrine.lat, shrine.lng]}
       icon={icon}
+      zIndexOffset={zIndex || 0}
       eventHandlers={{
         click: () => {
           if (currentPosition) {

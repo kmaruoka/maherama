@@ -11,6 +11,7 @@ export default function SettingsPage() {
   const [userId, setUserId] = useLocalStorageState<number | null>('userId', null);
   const [idInput, setIdInput] = useState('');
   const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
+  const [maxShrineDisplay, setMaxShrineDisplay] = useLocalStorageState<number>('maxShrineDisplay', 100);
   const { skinName, setSkinName } = useSkin();
   const { barrierName, setBarrierName } = useBarrier();
   const { data: users = [], isLoading } = useAllUsers();
@@ -132,6 +133,28 @@ export default function SettingsPage() {
             <option key={key} value={key}>{b.name}</option>
           ))}
         </select>
+      </div>
+      <div className="d-flex align-items-center justify-content-between mt-3">
+        <div>
+          <span>神社表示上限数</span>
+          <div className="text-muted small">端末性能に応じて調整してください</div>
+        </div>
+        <div className="d-flex align-items-center">
+          <input
+            type="range"
+            className="form-range me-2"
+            min="10"
+            max="500"
+            step="10"
+            value={maxShrineDisplay}
+            onChange={e => setMaxShrineDisplay(Number(e.target.value))}
+            style={{ width: '120px' }}
+          />
+          <span className="text-nowrap">{maxShrineDisplay}件</span>
+        </div>
+      </div>
+      <div className="mt-2 small text-muted">
+        推奨値: 低スペック端末 10-50件 / 標準端末 100件 / 高スペック端末 200-500件
       </div>
     </div>
   );
