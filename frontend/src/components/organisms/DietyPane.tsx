@@ -223,21 +223,27 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         <div className="pane__info">
           <div className="pane__title">{diety.name}</div>
           {diety.kana && <div className="pane__kana">{diety.kana}</div>}
-          <div className="pane__count">{t('count')}: {diety.count}</div>
+          <div className="field-row">
+            <span className="field-row__label">{t('count')}:</span>
+            <span className="field-row__value">{diety.count}</span>
+          </div>
         </div>
       </div>
 
-      {(diety.registeredAt || diety.lastPrayedAt) && (
-        <div className="text-muted small">
-          {diety.registeredAt && (
-            <>{t('registeredAt')}: {formatDisplayDate(diety.registeredAt)}</>
-          )}
-          {diety.registeredAt && diety.lastPrayedAt && <> / </>}
-          {diety.lastPrayedAt && (
-            <>{t('lastPrayedAt')}: {formatDisplayDate(diety.lastPrayedAt)}</>
-          )}
-        </div>
-      )}
+      <div className="modal-section">
+        {diety.registeredAt && (
+          <div className="field-row">
+            <span className="field-row__label">{t('registeredAt')}:</span>
+            <span className="field-row__value">{formatDisplayDate(diety.registeredAt)}</span>
+          </div>
+        )}
+        {diety.lastPrayedAt && (
+          <div className="field-row">
+            <span className="field-row__label">{t('lastPrayedAt')}:</span>
+            <span className="field-row__value">{formatDisplayDate(diety.lastPrayedAt)}</span>
+          </div>
+        )}
+      </div>
 
       {diety.shrines.length > 0 && (
         <div className="modal-section">

@@ -55,27 +55,4 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.catalog-card__row {
-  display: flex;
-  align-items: baseline;
-  margin-bottom: 0.06rem;
-}
-.catalog-card__label {
-  font-size: 0.75em;
-  color: #888;
-  margin-right: 0.15em;
-  flex-shrink: 0;
-}
-.catalog-card__item {
-  font-size: 0.83em;
-  color: #222;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 120px;
-}
-.catalog-card__row:last-child .catalog-card__item {
-  white-space: normal;
-  word-break: break-all;
-  max-width: 100%;
-} 
+/* 削除: 汎用的なfield-rowスタイルをindex.cssに移植済み */ 

@@ -125,10 +125,22 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
         <div className="pane__info">
           <div className="pane__title">{userInfo.name}</div>
           <div className="pane__meta">
-            <span>{t('level')}: {userInfo.level}</span>
-            <span>{t('prayDistanceMeters')}: {levelInfo?.stats.pray_distance ?? '...'}m</span>
-            <span>{t('remotePrayCount')}: {userInfo.worship_count}回/日</span>
-            <span>{t('exp')}: {userInfo.exp}</span>
+            <div className="field-row">
+              <span className="field-row__label">{t('level')}:</span>
+              <span className="field-row__value">{userInfo.level}</span>
+            </div>
+            <div className="field-row">
+              <span className="field-row__label">{t('prayDistanceMeters')}:</span>
+              <span className="field-row__value">{levelInfo?.stats.pray_distance ?? '...'}m</span>
+            </div>
+            <div className="field-row">
+              <span className="field-row__label">{t('remotePrayCount')}:</span>
+              <span className="field-row__value">{userInfo.worship_count}回/日</span>
+            </div>
+            <div className="field-row">
+              <span className="field-row__label">{t('exp')}:</span>
+              <span className="field-row__value">{userInfo.exp}</span>
+            </div>
           </div>
           <div className="pane__actions">
             <span className="pane__follow" onClick={() => setShowFollowingModal(true)}>{t('following')}: {userInfo.following_count}</span>

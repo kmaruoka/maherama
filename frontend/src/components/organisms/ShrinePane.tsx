@@ -446,7 +446,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         <div className="pane__info">
           <div className="pane__title">{data.name}</div>
           {data.kana && <div className="pane__kana">{data.kana}</div>}
-          <div className="pane__count">{t('count')}: {data.count}</div>
+          <div className="field-row">
+            <span className="field-row__label">{t('count')}:</span>
+            <span className="field-row__value">{data.count}</span>
+          </div>
         </div>
       </div>
       
@@ -454,15 +457,19 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       
       {data.founded && (
         <div className="modal-section">
-          <div className="modal-subtitle">{t('founded')}</div>
-          <div>{data.founded}</div>
+          <div className="field-row">
+            <span className="field-row__label">{t('founded')}:</span>
+            <span className="field-row__value">{data.founded}</span>
+          </div>
         </div>
       )}
       
       {data.description && (
         <div className="modal-section">
-          <div className="modal-subtitle">{t('description')}</div>
-          <div className="small text-body-secondary">{data.description}</div>
+          <div className="field-row">
+            <span className="field-row__label">{t('description')}:</span>
+            <span className="field-row__value field-row__value--multiline">{data.description}</span>
+          </div>
         </div>
       )}
 

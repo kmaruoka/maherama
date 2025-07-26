@@ -27,18 +27,18 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
       </div>
       <div className="catalog-card__body">
         <div className="catalog-card__title">{name}</div>
-        <div className="catalog-card__row">
-          <span className="catalog-card__label">{t('count')}:</span>
-          <span className="catalog-card__item">{count}</span>
+        <div className="field-row">
+          <span className="field-row__label">{t('count')}:</span>
+          <span className="field-row__value">{count}</span>
         </div>
-        <div className="catalog-card__row">
-          <span className="catalog-card__label">{t('registeredAt')}:</span>
-          <span className="catalog-card__item">{formatDisplayDate(registeredAt)}</span>
+        <div className="field-row">
+          <span className="field-row__label">{t('registeredAt')}:</span>
+          <span className="field-row__value">{formatDisplayDate(registeredAt)}</span>
         </div>
         {lastPrayedAt && (
-          <div className="catalog-card__row">
-            <span className="catalog-card__label">{t('lastPrayedAt')}:</span>
-            <span className="catalog-card__item">{formatDisplayDate(lastPrayedAt)}</span>
+          <div className="field-row">
+            <span className="field-row__label">{t('lastPrayedAt')}:</span>
+            <span className="field-row__value">{formatDisplayDate(lastPrayedAt)}</span>
           </div>
         )}
       </div>
