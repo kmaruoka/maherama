@@ -62,7 +62,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         }}
       >
         {debugLogs && debugLogs.length > 0 && (
-          <div className="px-2 py-1 text-warning" style={{ fontSize: '0.95em' }}>
+          <div className="log-pane__debug-logs text-warning">
             {debugLogs.slice(-5).map((msg, i) => (
               <div key={i}>[DEBUG] {msg}</div>
             ))}
@@ -84,12 +84,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
   return (
     <>
       <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(0,0,0,0.2)',
-          zIndex: 799,
-        }}
+        className="log-pane__backdrop"
         onClick={() => setIsExpanded(false)}
       />
       <div
@@ -104,7 +99,7 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
         onClick={handlePaneClick}
       >
         {debugLogs && debugLogs.length > 0 && (
-          <div className="px-2 py-1 text-warning" style={{ fontSize: '0.95em' }}>
+          <div className="log-pane__debug-logs text-warning">
             {debugLogs.slice(-20).map((msg, i) => (
               <div key={i}>[DEBUG] {msg}</div>
             ))}

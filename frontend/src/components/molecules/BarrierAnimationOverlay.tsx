@@ -18,16 +18,13 @@ export default function BarrierAnimationOverlay({
 
   return createPortal(
     <div
+      className="barrier-animation-overlay"
       style={{
-        position: 'absolute',
         left: x,
         top: y,
-        pointerEvents: 'none',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 410,
       }}
     >
-      <svg width={pixelRadius * 2} height={pixelRadius * 2} style={{ overflow: 'visible' }}>
+      <svg width={pixelRadius * 2} height={pixelRadius * 2} className="barrier-animation-overlay__svg">
         <g transform={`translate(${pixelRadius},${pixelRadius})`}>
           {barrierType === 'wave' && <AnimatedPulseCircle pixelRadius={pixelRadius} />}
           {barrierType === 'search' && <AnimatedRadarCircle pixelRadius={pixelRadius} />}

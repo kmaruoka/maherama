@@ -113,7 +113,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         </select>
       </div>
       {style === 'card' ? (
-        <div style={{ width: '100%', height: 'calc(100vh - 200px)' }}>
+        <div className="catalog-page__card-container">
           <AutoSizer>
             {({ height, width }) => {
               const SCROLLBAR_WIDTH = 25; // 一般的なスクロールバー幅
@@ -137,6 +137,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                     if (index >= sorted.length) return null;
                     return (
                       <div
+                        className="catalog-page__card-cell"
                         style={{
                           ...cellStyle,
                           left: cellStyle.left,
@@ -144,10 +145,6 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                           width: CARD_WIDTH,
                           height: CARD_HEIGHT,
                           margin: GAP / 2,
-                          boxSizing: 'border-box',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
                         }}
                       >
                         {renderItem(sorted[index])}
@@ -164,25 +161,15 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           {/* ヘッダ行 */}
           <AutoSizer disableHeight>
             {({ width }) => (
-              <div className="catalog-list-header" style={{
-                display: 'flex',
-                alignItems: 'center',
-                height: 56,
-                lineHeight: '56px',
-                fontWeight: 'bold',
-                borderBottom: '1px solid #ddd',
-                background: 'rgba(255,255,255,0.9)',
-                zIndex: 1,
-                width: width
-              }}>
-                <div className="catalog-list-col name" style={{ flex: 5, textAlign: 'left' }}>名前</div>
-                <div className="catalog-list-col count" style={{ flex: 2, textAlign: 'right' }}>参拝数</div>
-                <div className="catalog-list-col date" style={{ flex: 5, textAlign: 'right' }}>図鑑収録日 / 最終参拝日</div>
+              <div className="catalog-page__list-header" style={{ width: width }}>
+                <div className="catalog-page__list-col--name">名前</div>
+                <div className="catalog-page__list-col--count">参拝数</div>
+                <div className="catalog-page__list-col--date">図鑑収録日 / 最終参拝日</div>
               </div>
             )}
           </AutoSizer>
           {/* リスト本体 */}
-          <div style={{ width: '100%', height: 'calc(100vh - 200px - 56px)' }}>
+          <div className="catalog-page__list-container">
             <AutoSizer>
               {({ height, width }) => {
                 const LIST_ROW_HEIGHT = 56;
@@ -198,7 +185,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                       const { sorted, tab, onShowShrine, onShowDiety, onShowUser } = data;
                       const item = sorted[index];
                       return (
-                        <div style={{ ...style, width: '100%' }}>
+                        <div className="catalog-page__list-row" style={style}>
                           <CustomCatalogListItem
                             key={item.id}
                             name={item.name}

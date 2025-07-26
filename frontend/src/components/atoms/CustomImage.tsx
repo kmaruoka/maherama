@@ -11,28 +11,16 @@ interface CustomImageProps {
 export default function CustomImage({ src, alt = '', className = '', style = {}, aspectRatio = '1/1' }: CustomImageProps) {
   return (
     <div
-      className={className}
+      className={`custom-image ${className}`}
       style={{
-        width: '100%',
         aspectRatio,
-        background: 'var(--color-text)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
         ...style,
       }}
     >
       <img
         src={src}
         alt={alt}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          background: 'var(--color-text)',
-          display: 'block',
-        }}
+        className="custom-image__img"
       />
     </div>
   );

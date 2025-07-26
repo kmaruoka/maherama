@@ -52,8 +52,7 @@ export default function SettingsPage() {
                 users.map(user => (
                   <div 
                     key={user.id} 
-                    className={`py-1 ${Number(idInput) === user.id ? 'fw-bold text-primary' : ''}`}
-                    style={{cursor: 'pointer'}}
+                    className={`py-1 settings-page__user-list-item ${Number(idInput) === user.id ? 'fw-bold text-primary' : ''}`}
                     onClick={() => setIdInput(String(user.id))}
                   >
                     ID: {user.id} - {user.name} (Lv.{user.level} / EXP: {user.exp} / AP: {user.ability_points})
@@ -67,7 +66,7 @@ export default function SettingsPage() {
           color="#007bff"
           hoverColor="#0056b3"
           disabledColor="#b8daff"
-          style={{ marginTop: 8 }}
+          className="settings-page__login-button"
           onClick={handleLogin}
         >
           ログイン
@@ -92,7 +91,7 @@ export default function SettingsPage() {
           color="#6c757d"
           hoverColor="#495057"
           disabledColor="#ced4da"
-          style={{ marginLeft: 8 }}
+          className="settings-page__logout-button"
           onClick={handleLogout}
         >
           ログアウト

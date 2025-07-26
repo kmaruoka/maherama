@@ -32,15 +32,10 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
     <button
       {...props}
       disabled={disabled}
+      className={`custom-button${disabled ? ' custom-button--disabled' : ''}`}
       style={{
         background,
         color: textColor ?? '#fff',
-        border: 'none',
-        borderRadius: 4,
-        padding: '6px 16px',
-        fontSize: 16,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'background 0.2s',
         ...style,
       }}
       onMouseEnter={() => setIsHovered(true)}

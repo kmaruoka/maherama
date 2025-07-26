@@ -8,7 +8,9 @@ import UserPane from './components/organisms/UserPane';
 import SettingsPage from './components/pages/SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
 import UserPage from './components/pages/UserPage';
+import LogPane from './components/organisms/LogPane';
 import { useSkin } from './skins/SkinContext';
+import useLogs, { useClientLogs } from './hooks/useLogs';
 
 type ModalType = { type: 'shrine' | 'diety' | 'user', id: number } | null;
 
@@ -16,6 +18,15 @@ function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
   const [modal, setModal] = useState<ModalType>(null);
   useSkin();
+
+  // LogPane用のlogsデータ
+  const { clientLogs, addClientLog } = useClientLogs();
+  const {
+    data: logs = [],
+    refetch: refetchLogs,
+    isLoading: logsLoading,
+    error: logsError,
+  } = useLogs(clientLogs);
 
   // ページ切り替え用
   const renderPage = () => {
@@ -34,8 +45,8 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div className="overflow-y-auto pb-56 position-relative flex-grow-1">
+    <div className="app">
+      <div className="app__content">
         {renderPage()}
         {modal && (
           <Modal
@@ -77,6 +88,14 @@ function App() {
           </Modal>
         )}
       </div>
+      <LogPane 
+        logs={logs} 
+        loading={logsLoading} 
+        error={!!logsError} 
+        onShowShrine={(id: number) => setModal({ type: 'shrine', id })} 
+        onShowUser={(id: number) => setModal({ type: 'user', id })} 
+        onShowDiety={(id: number) => setModal({ type: 'diety', id })} 
+      />
       <MenuPane setPage={setPage} page={page} isDialogOpen={modal !== null} />
     </div>
   );

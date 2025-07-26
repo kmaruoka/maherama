@@ -22,14 +22,10 @@ export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (pa
 
   return (
     <nav
-      className={`menu-pane d-flex border-top${page === 'catalog' ? ' menu-pane-catalog' : ''}`}
+      className={`menu-pane d-flex border-top${page === 'catalog' ? ' menu-pane-catalog' : ''}${isDialogOpen ? ' menu-pane--dialog-open' : ''}`}
       style={{ 
         background: 'var(--color-surface)', 
         borderColor: 'var(--color-border)', 
-        height: '56px', 
-        zIndex: 10000,
-        pointerEvents: isDialogOpen ? 'none' : undefined,
-        opacity: isDialogOpen ? 0.5 : 1,
       }}
       onClick={handleNavClick}
     >

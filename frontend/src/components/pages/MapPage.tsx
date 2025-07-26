@@ -4,9 +4,7 @@ import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { MapContainer, TileLayer, Marker, Pane } from 'react-leaflet';
 import '../../setupLeaflet';
 import { MAPBOX_API_KEY, API_BASE } from '../../config/api';
-import useLogs, { useClientLogs } from '../../hooks/useLogs';
 import useAllShrines from '../../hooks/useAllShrines';
-import LogPane from '../organisms/LogPane';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CustomCircle from '../atoms/CustomCircle';
@@ -37,13 +35,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const [mapReady, setMapReady] = useState(false);
   const queryClient = useQueryClient();
 
-  const { clientLogs, addClientLog } = useClientLogs();
-  const {
-    data: logs = [],
-    refetch: refetchLogs,
-    isLoading: logsLoading,
-    error: logsError,
-  } = useLogs(clientLogs);
 
   const { data: shrines = [] } = useAllShrines();
 
@@ -229,13 +220,13 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   }, [minZoom, maxZoom, mapReady]);
 
   return (
-    <div style={{ position: 'relative', height: 'calc(100vh - 56px)' }}>
+    <div className="map-page">
       <MapContainer
         center={debugMode ? center : (position || defaultCenter)}
         zoom={minZoom}
         minZoom={minZoom}
         maxZoom={maxZoom}
-        style={{ height: '100%', position: 'relative' }}
+        className="map-page__container"
         whenReady={((event: { target: L.Map }) => { mapRef.current = event.target; setMapReady(true); }) as unknown as () => void}
       >
         <TileLayer
@@ -249,7 +240,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           updateWhenZooming={false}
           updateWhenIdle={true}
         />
-        <Pane name="barrierPane" style={{ zIndex: 399 }}>
+        <Pane name="barrierPane" className="map-page__barrier-pane">
           {/* 半透明円は従来通り */}
           <CustomCircle center={centerArray} radius={prayDistance} />
         </Pane>
@@ -272,8 +263,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
             />
           );
         })}
-        {/* ログペインを地図下部に素直に配置。レイアウトはLogPane自身や親のCSSに委ねる */}
-        <LogPane logs={logs} loading={logsLoading} error={!!logsError} onShowShrine={onShowShrine} onShowUser={onShowUser} onShowDiety={onShowDiety} />
       </MapContainer>
     </div>
   );

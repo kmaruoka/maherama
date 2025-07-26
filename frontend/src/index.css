@@ -52,7 +52,7 @@ body, #root, .log-pane, .log-pane-expanded {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 56px;
   width: 100%;
   font-family: inherit;
   max-height: 12rem;
@@ -636,6 +636,111 @@ body.no-skin-padding, body.no-skin-padding #root {
 .menu-pane {
   height: 56px;
   flex-shrink: 0;
+  z-index: 10000;
+}
+
+.menu-pane--dialog-open {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* App Component */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app__content {
+  overflow-y: auto;
+  padding-bottom: calc(56px + 12rem);
+  position: relative;
+  flex-grow: 1;
+}
+
+/* UserPage Component */
+.user-page {
+  padding: 16px;
+}
+
+/* SettingsPage Component */
+.settings-page__user-list-item {
+  cursor: pointer;
+}
+
+.settings-page__login-button {
+  margin-top: 8px;
+}
+
+.settings-page__logout-button {
+  margin-left: 8px;
+}
+
+/* MapPage Component */
+.map-page {
+  position: relative;
+  height: calc(100vh - 56px);
+}
+
+.map-page__container {
+  height: 100%;
+  position: relative;
+}
+
+.map-page__barrier-pane {
+  z-index: 399;
+}
+
+/* CatalogPage Component */
+.catalog-page__card-container {
+  width: 100%;
+  height: calc(100vh - 200px);
+}
+
+.catalog-page__card-cell {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.catalog-page__list-header {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  line-height: 56px;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+  background: rgba(255,255,255,0.9);
+  z-index: 1;
+}
+
+.catalog-page__list-col {
+  text-align: left;
+}
+
+.catalog-page__list-col--name {
+  flex: 5;
+  text-align: left;
+}
+
+.catalog-page__list-col--count {
+  flex: 2;
+  text-align: right;
+}
+
+.catalog-page__list-col--date {
+  flex: 5;
+  text-align: right;
+}
+
+.catalog-page__list-container {
+  width: 100%;
+  height: calc(100vh - 200px - 56px);
+}
+
+.catalog-page__list-row {
+  width: 100%;
 }
 
 .dietypane-header-responsive, .shrinepane-header-responsive {
@@ -768,4 +873,62 @@ body.no-skin-padding, body.no-skin-padding #root {
   color: var(--color-text);
   font-size: 0.85em;
   margin-top: 2px;
+}
+
+/* CustomButton Component */
+.custom-button {
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: #fff;
+}
+
+.custom-button--disabled {
+  cursor: not-allowed;
+}
+
+/* CustomImage Component */
+.custom-image {
+  width: 100%;
+  background: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.custom-image__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--color-text);
+  display: block;
+}
+
+/* BarrierAnimationOverlay Component */
+.barrier-animation-overlay {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 410;
+}
+
+.barrier-animation-overlay__svg {
+  overflow: visible;
+}
+
+/* LogPane Component Backdrop */
+.log-pane__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 799;
+}
+
+.log-pane__debug-logs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.95em;
 }
