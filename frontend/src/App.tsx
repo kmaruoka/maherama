@@ -5,9 +5,11 @@ import CatalogPage from './components/pages/CatalogPage';
 import ShrinePane from './components/organisms/ShrinePane';
 import DietyPage from './components/organisms/DietyPane';
 import UserPane from './components/organisms/UserPane';
+import MyPage from './components/organisms/MyPage';
 import type { ShrinePaneRef } from './components/organisms/ShrinePane';
 import type { DietyPaneRef } from './components/organisms/DietyPane';
 import type { UserPaneRef } from './components/organisms/UserPane';
+import type { MyPageRef } from './components/organisms/MyPage';
 import SettingsPage from './components/pages/SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
 import UserPage from './components/pages/UserPage';
@@ -17,6 +19,7 @@ import useLogs, { useClientLogs } from './hooks/useLogs';
 import useShrineDetail from './hooks/useShrineDetail';
 import useDietyDetail from './hooks/useDietyDetail';
 import useUserInfo from './hooks/useUserInfo';
+import useLocalStorageState from './hooks/useLocalStorageState';
 import CustomLink from './components/atoms/CustomLink';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
@@ -104,6 +107,7 @@ function ModalHeader({
 function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
   const [modal, setModal] = useState<ModalType>(null);
+  const [currentUserId] = useLocalStorageState<number | null>('userId', null);
   useSkin();
 
   // ナビゲーション履歴の管理
@@ -114,6 +118,7 @@ function App() {
   const shrinePaneRef = useRef<{ backToOverview: () => void }>(null);
   const dietyPaneRef = useRef<{ backToOverview: () => void }>(null);
   const userPaneRef = useRef<{ backToOverview: () => void }>(null);
+  const myPageRef = useRef<{ backToOverview: () => void }>(null);
 
   // モーダルヘッダー用のデータ取得
   const { data: shrineData } = useShrineDetail(modal?.type === 'shrine' ? modal.id : undefined);
@@ -275,7 +280,12 @@ function App() {
         dietyPaneRef.current?.backToOverview();
         break;
       case 'user':
-        userPaneRef.current?.backToOverview();
+        // 自分かどうかで分岐
+        if (modal.id === currentUserId) {
+          myPageRef.current?.backToOverview();
+        } else {
+          userPaneRef.current?.backToOverview();
+        }
         break;
     }
   };
@@ -384,13 +394,22 @@ function App() {
                     getNextItemType={getNextItemType}
                   />
                   <div className="modal__content">
-                    <UserPane
-                      ref={userPaneRef}
-                      id={modal.id}
-                      onShowShrine={id => navigateToModal('shrine', id)}
-                      onShowDiety={id => navigateToModal('diety', id)}
-                      onShowUser={id => navigateToModal('user', id)}
-                    />
+                    {modal.id === currentUserId ? (
+                      <MyPage
+                        ref={myPageRef}
+                        onShowShrine={id => navigateToModal('shrine', id)}
+                        onShowDiety={id => navigateToModal('diety', id)}
+                        onShowUser={id => navigateToModal('user', id)}
+                      />
+                    ) : (
+                      <UserPane
+                        ref={userPaneRef}
+                        id={modal.id}
+                        onShowShrine={id => navigateToModal('shrine', id)}
+                        onShowDiety={id => navigateToModal('diety', id)}
+                        onShowUser={id => navigateToModal('user', id)}
+                      />
+                    )}
                   </div>
                 </>
               )}
