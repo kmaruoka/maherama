@@ -1429,3 +1429,85 @@ nav.d-flex.position-fixed {
   background: var(--color-accent) !important;
   color: var(--color-surface) !important;
 }
+
+/* ===== DESCRIPTION STYLES ===== */
+.description-preview {
+  max-height: 4.5rem; /* 3行程度の高さ */
+  overflow: hidden;
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  cursor: default;
+  transition: all 0.3s ease;
+}
+
+.description-preview:hover {
+  background: var(--color-card);
+  border-color: var(--color-accent);
+}
+
+.description-preview::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.5rem;
+  background: linear-gradient(transparent, var(--color-surface));
+  pointer-events: none;
+}
+
+.description-preview:hover::after {
+  background: linear-gradient(transparent, var(--color-card));
+}
+
+.description-preview p {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.description-full {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.description-full p {
+  margin: 0;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.description-full::-webkit-scrollbar {
+  width: 6px;
+}
+
+.description-full::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.description-full::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+.description-full::-webkit-scrollbar-track {
+  background: var(--color-background);
+  border-radius: 3px;
+}

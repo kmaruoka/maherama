@@ -7,7 +7,7 @@ import RankingPane from './RankingPane';
 import type { Period, RankingItem } from './RankingPane';
 import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
 import { NOIMAGE_DIETY_URL } from '../../constants';
-import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaVoteYea, FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import { API_BASE } from '../../config/api';
@@ -26,7 +26,7 @@ function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key
   };
 }
 
-type DetailViewType = 'overview' | 'thumbnail' | 'shrines' | 'ranking';
+type DetailViewType = 'overview' | 'thumbnail' | 'shrines' | 'ranking' | 'description';
 
 export interface DietyPaneRef {
   backToOverview: () => void;
@@ -170,7 +170,10 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     } else if (detailView === 'shrines') {
       return (
         <>
-          <div className="modal-subtitle">{t('enshrinedShrines')}</div>
+          <div className="modal-subtitle">
+            {t('enshrinedShrines')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
           <div className="d-flex flex-wrap gap-2">
             {diety.shrines.map((shrine) => (
               <CustomLink
@@ -187,7 +190,10 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     } else if (detailView === 'ranking') {
       return (
         <>
-          <div className="modal-subtitle">{t('prayRanking')}</div>
+          <div className="modal-subtitle">
+            {t('prayRanking')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
           <RankingPane
             itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
             type="user"
@@ -197,6 +203,18 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           />
         </>
       );
+    } else if (detailView === 'description') {
+      return (
+        <>
+          <div className="modal-subtitle">
+            {t('historyAndLegend')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
+          <div className="description-full">
+            <p className="text-body-secondary">{diety.description}</p>
+          </div>
+        </>
+      );
     }
     return null;
   };
@@ -204,12 +222,12 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   if (detailView !== 'overview') {
     return (
       <div onClick={(e) => {
-        // リンクやボタンがクリックされた場合は通常表示に戻らない
+        // リンクやボタン、カスタムリンクがクリックされた場合は通常表示に戻らない
         if ((e.target as HTMLElement).closest('a, button, .custom-link')) {
           return;
         }
         setDetailView('overview');
-      }} style={{ cursor: 'pointer', padding: 0, margin: 0 }}>
+      }} style={{ cursor: 'pointer', padding: 0, margin: 0, minHeight: '100%' }}>
         {renderDetailContent()}
       </div>
     );
@@ -252,6 +270,19 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         </div>
       </div>
 
+      {/* 歴史・伝承セクション */}
+      {diety.description && (
+        <div className="modal-section">
+          <div className="modal-subtitle" onClick={() => setDetailView('description')} style={{ cursor: 'pointer' }}>
+            {t('historyAndLegend')}
+            <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
+          <div className="description-preview">
+            <p className="text-body-secondary small">{diety.description}</p>
+          </div>
+        </div>
+      )}
+
       <div className="modal-section">
         {diety.registeredAt && (
           <div className="field-row">
@@ -269,7 +300,10 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
 
       {diety.shrines.length > 0 && (
         <div className="modal-section">
-          <div className="modal-subtitle" onClick={() => setDetailView('shrines')} style={{ cursor: 'pointer' }}>{t('enshrinedShrines')}</div>
+          <div className="modal-subtitle" onClick={() => setDetailView('shrines')} style={{ cursor: 'pointer' }}>
+            {t('enshrinedShrines')}
+            <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
           <div className="d-flex flex-wrap gap-2">
             {diety.shrines.slice(0, 3).map((shrine) => (
               <CustomLink
@@ -289,7 +323,10 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
 
       {/* ランキング表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('ranking')} style={{ cursor: 'pointer' }}>{t('prayRanking')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('ranking')} style={{ cursor: 'pointer' }}>
+          {t('prayRanking')}
+          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+        </div>
         <RankingPane
           itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
           type="user"
@@ -298,13 +335,6 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           maxItems={3}
         />
       </div>
-
-      {diety.description && (
-        <div className="modal-section">
-          <div className="modal-subtitle">{t('description')}</div>
-          <p className="text-body-secondary small">{diety.description}</p>
-        </div>
-      )}
 
       {/* アップロードモーダル */}
       <ImageUploadModal

@@ -15,6 +15,7 @@ import { CustomButton } from '../atoms/CustomButton';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
 import { useTranslation } from 'react-i18next';
+import { FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
 
 interface UserPageProps {
   id: number; // 必須に変更（他人用なので必ずIDが必要）
@@ -108,7 +109,10 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
     if (detailView === 'shrine-ranking') {
       return (
         <>
-          <div className="modal-subtitle">{t('oftenPrayedShrines')}</div>
+          <div className="modal-subtitle">
+            {t('oftenPrayedShrines')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
           <RankingPane
             itemsByPeriod={userShrineRankingsByPeriod}
             type="shrine"
@@ -121,7 +125,10 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
     } else if (detailView === 'diety-ranking') {
       return (
         <>
-          <div className="modal-subtitle">{t('oftenPrayedDeities')}</div>
+          <div className="modal-subtitle">
+            {t('oftenPrayedDeities')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
           <RankingPane
             itemsByPeriod={userDietyRankingsByPeriod}
             type="diety"
@@ -138,12 +145,12 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
   if (detailView !== 'overview') {
     return (
       <div onClick={(e) => {
-        // リンクやボタンがクリックされた場合は通常表示に戻らない
+        // リンクやボタン、カスタムリンクがクリックされた場合は通常表示に戻らない
         if ((e.target as HTMLElement).closest('a, button, .custom-link')) {
           return;
         }
         setDetailView('overview');
-      }} style={{ cursor: 'pointer', padding: 0, margin: 0 }}>
+      }} style={{ cursor: 'pointer', padding: 0, margin: 0, minHeight: '100%' }}>
         {renderDetailContent()}
       </div>
     );
@@ -194,7 +201,10 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
       </div>
 
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('shrine-ranking')} style={{ cursor: 'pointer' }}>{t('oftenPrayedShrines')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('shrine-ranking')} style={{ cursor: 'pointer' }}>
+          {t('oftenPrayedShrines')}
+          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+        </div>
         <RankingPane
           itemsByPeriod={userShrineRankingsByPeriod}
           type="shrine"
@@ -222,7 +232,10 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
         onUserClick={onShowUser}
       />
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('diety-ranking')} style={{ cursor: 'pointer' }}>{t('oftenPrayedDeities')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('diety-ranking')} style={{ cursor: 'pointer' }}>
+          {t('oftenPrayedDeities')}
+          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+        </div>
         <RankingPane
           itemsByPeriod={userDietyRankingsByPeriod}
           type="diety"

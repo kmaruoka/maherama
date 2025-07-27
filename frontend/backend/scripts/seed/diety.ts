@@ -16,16 +16,17 @@ export async function seedDiety(prisma: PrismaClient) {
   
   // 行ごとに分割し、ヘッダー行を除外
   const lines = fileContent.split('\n').filter(line => line.trim() !== '');
-  const dataLines = lines.slice(1); // ヘッダー行（name	reading）を除外
+  const dataLines = lines.slice(1); // ヘッダー行（id	name	reading	image	description）を除外
   
   // タブ区切りで分割してデータを変換
   const dieties = dataLines.map((line) => {
-    const [id, name, reading, image] = line.split('\t');
+    const [id, name, reading, image, description] = line.split('\t');
     return {
       id: Number(id.trim()),
       name: name.trim(),
       kana: reading.trim(),
-      image: image ? image.trim() : ''
+      image: image ? image.trim() : '',
+      description: description ? description.trim() : null
     };
   });
 

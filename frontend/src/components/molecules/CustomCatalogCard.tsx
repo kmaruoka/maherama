@@ -1,5 +1,5 @@
 import CustomImage from '../atoms/CustomImage';
-import { NOIMAGE_SHRINE_URL, NOIMAGE_DIETY_URL } from '../../constants';
+import { NOIMAGE_SHRINE_URL, NOIMAGE_SHRINE_DISPLAY_URL, NOIMAGE_DIETY_URL } from '../../constants';
 import Card from 'react-bootstrap/Card';
 import { useTranslation } from 'react-i18next';
 import './CustomCatalogCard.css';
@@ -18,7 +18,7 @@ interface CustomCatalogCardProps {
 }
 export default function CustomCatalogCard({ name, count, registeredAt, lastPrayedAt, onClick, countLabel = '参拝数', type, thumbnailUrl, dateLabel }: CustomCatalogCardProps) {
   const { t } = useTranslation();
-  const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_URL;
+  const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_DISPLAY_URL;
   const imageSrc = thumbnailUrl || noImage;
   return (
     <div className="catalog-card" onClick={onClick} role="button">

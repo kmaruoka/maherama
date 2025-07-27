@@ -12,12 +12,12 @@ import useLocalStorageState from '../../hooks/useLocalStorageState';
 import useDebugLog from '../../hooks/useDebugLog';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import { useSubscription } from '../../hooks/useSubscription';
-import { NOIMAGE_SHRINE_URL } from '../../constants';
+import { NOIMAGE_SHRINE_URL, NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
 import { getDistanceMeters } from '../../hooks/usePrayDistance';
 import { formatDistance } from '../../../backend/shared/utils/distance';
 import { useWorshipLimit } from '../../hooks/usePrayDistance';
 import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
-import { FaCloudUploadAlt, FaVoteYea } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaVoteYea, FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { CustomButton } from '../atoms/CustomButton';
 import { useTranslation } from 'react-i18next';
@@ -404,14 +404,17 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     if (detailView === 'thumbnail') {
       return (
         <img 
-          src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} 
+          src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} 
           alt="サムネイル" 
         />
       );
     } else if (detailView === 'deities') {
       return (
         <>
-          <div className="modal-subtitle">{t('enshrinedDeities')}</div>
+          <div className="modal-subtitle">
+            {t('enshrinedDeities')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
           <div className="d-flex flex-wrap gap-2">
             {data.dieties && data.dieties.length > 0 ? (
               data.dieties.map(d => (
@@ -432,7 +435,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     } else if (detailView === 'ranking') {
       return (
         <>
-          <div className="modal-subtitle">{t('prayRanking')}</div>
+          <div className="modal-subtitle">
+            {t('prayRanking')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
           <RankingPane
             itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
             type="user"
@@ -449,12 +455,12 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   if (detailView !== 'overview') {
     return (
       <div onClick={(e) => {
-        // リンクやボタンがクリックされた場合は通常表示に戻らない
+        // リンクやボタン、カスタムリンクがクリックされた場合は通常表示に戻らない
         if ((e.target as HTMLElement).closest('a, button, .custom-link')) {
           return;
         }
         setDetailView('overview');
-      }} style={{ cursor: 'pointer', padding: 0, margin: 0 }}>
+      }} style={{ cursor: 'pointer', padding: 0, margin: 0, minHeight: '100%' }}>
         {renderDetailContent()}
       </div>
     );
@@ -470,13 +476,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           }
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
-          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} alt="サムネイル" />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();
               setIsUploadModalOpen(true);
             }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
-            {data.thumbnailUrl && data.thumbnailUrl !== NOIMAGE_SHRINE_URL && (
+            {data.thumbnailUrl && data.thumbnailUrl !== NOIMAGE_SHRINE_DISPLAY_URL && (
               <button className="pane__icon-btn" onClick={(e) => {
                 e.stopPropagation();
                 handleVote();
@@ -549,7 +555,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       </div>
       
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('deities')} style={{ cursor: 'pointer' }}>{t('enshrinedDeities')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('deities')} style={{ cursor: 'pointer' }}>
+          {t('enshrinedDeities')}
+          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+        </div>
         <div className="d-flex flex-wrap gap-2">
           {data.dieties && data.dieties.length > 0 ? (
             data.dieties.map(d => (
@@ -583,7 +592,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
       {/* ランキング表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('ranking')} style={{ cursor: 'pointer' }}>{t('prayRanking')}</div>
+        <div className="modal-subtitle" onClick={() => setDetailView('ranking')} style={{ cursor: 'pointer' }}>
+          {t('prayRanking')}
+          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+        </div>
         <RankingPane
           itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
           type="user"

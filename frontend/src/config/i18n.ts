@@ -40,6 +40,7 @@ const resources = {
       enshrinedShrines: '祀られている神社',
       prayRanking: '参拝ランキング',
       description: '説明',
+      historyAndLegend: '歴史・伝承',
       // ShrinePane
       remotePray: '遥拝',
       remotePraying: '遥拝中...',
@@ -142,6 +143,7 @@ const resources = {
       enshrinedShrines: 'Enshrined Shrines',
       prayRanking: 'Pray Ranking',
       description: 'Description',
+      historyAndLegend: 'History & Legends',
       // ShrinePane
       remotePray: 'Remote Pray',
       remotePraying: 'Remote Praying...',
