@@ -21,14 +21,23 @@ export async function seedDiety(prisma: PrismaClient) {
   // タブ区切りで分割してデータを変換
   const dieties = dataLines.map((line) => {
     const [id, name, reading, image, description] = line.split('\t');
+    
+    // nameが空の場合はスキップ
+    if (!name || !name.trim()) {
+      console.warn(`Skipping line with empty name: ${line}`);
+      return null;
+    }
+    
+    // IDの欠番は正常（13, 77, 327, 356, 368, 376など）
+    // データベースのauto_incrementで適切に処理される
     return {
-      id: Number(id.trim()),
+      id: Number(id?.trim() || 0),
       name: name.trim(),
-      kana: reading.trim(),
-      image: image ? image.trim() : '',
-      description: description ? description.trim() : null
+      kana: reading?.trim() || '',
+      image: image?.trim() || '',
+      description: description?.trim() || null
     };
-  });
+  }).filter(diety => diety !== null && diety.id > 0); // nullと無効なIDをフィルタリング
 
   console.log(`Found ${dieties.length} dieties from TXT data`);
 
