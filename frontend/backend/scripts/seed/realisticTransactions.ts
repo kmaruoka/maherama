@@ -16,7 +16,7 @@ if (!API_PORT || isNaN(Number(API_PORT))) {
 const START_DATE = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000); // 1年前から開始
 const END_DATE = new Date(); // 現在まで
 const PRAY_PROBABILITY = 0.5; // 1日あたりの参拝確率（0.0〜1.0）
-const MAX_PRAYS_PER_DAY = 5; // 1日あたりの最大参拝回数（増加）
+const MAX_PRAYS_PER_DAY = 3; // 1日あたりの最大参拝回数
 
   // ユーザーのやりこみ度合い設定（ユーザーID: {最大レベル, 開始日}）
   const USER_ACTIVITY_LEVELS = {

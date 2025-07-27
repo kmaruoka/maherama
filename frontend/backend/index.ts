@@ -498,7 +498,7 @@ async function prayAtShrine({
   }
 
   // ShrineBook更新
-  await prisma.shrineBook.upsert({
+  const shrineBookResult = await prisma.shrineBook.upsert({
     where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } },
     update: { last_prayed_at: new Date() },
     create: { user_id: userId, shrine_id: shrineId, last_prayed_at: new Date() }
@@ -1430,18 +1430,19 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
       include: { shrine: true },
       orderBy: { count: 'desc' },
     });
-    // ShrineBook から last_prayed_at を取得
+    // ShrineBook から last_prayed_at と registered_at を取得
     const books = await prisma.shrineBook.findMany({
       where: { user_id: userId },
-      select: { shrine_id: true, last_prayed_at: true }
+      select: { shrine_id: true, last_prayed_at: true, registered_at: true }
     });
     const lastPrayedMap = Object.fromEntries(books.map(b => [b.shrine_id, b.last_prayed_at]));
+    const registeredAtMap = Object.fromEntries(books.map(b => [b.shrine_id, b.registered_at]));
     const result = stats.map(s => ({
       id: s.shrine.id,
       name: s.shrine.name,
       kana: s.shrine.kana,
       count: s.count,
-      registeredAt: s.shrine.registered_at,
+      registeredAt: registeredAtMap[s.shrine.id] || s.shrine.registered_at, // 図鑑収録日を優先、なければ神社登録日 TODO: 図鑑収録日のみでよいはずだが？
       last_prayed_at: lastPrayedMap[s.shrine.id] || null
     }));
     res.json(result);
@@ -1508,14 +1509,15 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
       where: { diety_id: { in: dietyIds }, is_current_thumbnail: true },
       select: { diety_id: true, thumbnail_url: true }
     });
-    // DietyBook から last_prayed_at を取得
+    // DietyBook から last_prayed_at と registered_at を取得
     const books = await prisma.dietyBook.findMany({
       where: { user_id: userId },
-      select: { diety_id: true, last_prayed_at: true }
+      select: { diety_id: true, last_prayed_at: true, registered_at: true }
     });
     const thumbMap = Object.fromEntries(thumbnails.map(t => [t.diety_id, t.thumbnail_url]));
     const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
     const lastPrayedMap = Object.fromEntries(books.map(b => [b.diety_id, b.last_prayed_at]));
+    const registeredAtMap = Object.fromEntries(books.map(b => [b.diety_id, b.registered_at]));
     const result = stats.map(s => {
       const diety = dietyMap[s.diety_id];
       if (!diety) return null;
@@ -1524,7 +1526,7 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
         name: diety.name,
         kana: diety.kana,
         count: s.count,
-        registeredAt: diety.registered_at,
+        registeredAt: registeredAtMap[diety.id] || diety.registered_at, // 図鑑収録日を優先、なければ神様登録日 TODO: 図鑑収録日のみでよいはずだが？
         thumbnailUrl: thumbMap[diety.id] || null,
         last_prayed_at: lastPrayedMap[diety.id] || null
       };
@@ -2311,12 +2313,17 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
   }
   
   try {
-    // 1. 合計参拝回数（図鑑収録済みかどうか）
+    // 1. 図鑑収録済みかどうか（ShrineBookテーブルで判定）
+    const shrineBook = await prisma.shrineBook.findUnique({
+      where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } }
+    });
+    const isInZukan = !!shrineBook;
+    
+    // 2. 合計参拝回数
     const shrineStats = await prisma.shrinePrayStats.findFirst({
       where: { shrine_id: shrineId, user_id: userId }
     });
     const totalPrayCount = shrineStats ? shrineStats.count : 0;
-    const isInZukan = totalPrayCount > 0;
     
     // 2. 今日の参拝済み判定（ShrinePrayStatsDailyで判定）
     const todayPrayStats = await prisma.shrinePrayStatsDaily.findUnique({
@@ -2337,7 +2344,7 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
     // 4. 参拝可能距離
     const prayDistance = await getUserPrayDistance(userId);
     
-    res.json({
+    const response = {
       shrine_id: shrineId,
       total_pray_count: totalPrayCount,
       is_in_zukan: isInZukan,
@@ -2346,7 +2353,11 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
       pray_distance: prayDistance,
       max_worship_count: maxWorshipCount,
       today_worship_count: todayWorshipCount
-    });
+    };
+    
+    //console.log(`Shrine marker status for shrine ${shrineId}, user ${userId}:`, response);
+    
+    res.json(response);
   } catch (err) {
     console.error('Error fetching shrine marker status:', err);
     res.status(500).json({ error: 'DB error' });
@@ -2374,7 +2385,7 @@ function ensureDirSync(dir) {
 // 画像リサイズ設定
 const sizes = {
   marker: 64,
-  thumbnail: 256,
+  thumbnail: 128,
   original: 1024
 };
 

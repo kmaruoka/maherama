@@ -4,8 +4,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap');
 
 :root {
-  --color-prayable: #4caf50;
-  --color-remote-prayable: #2196f3;
+  --color-prayable: var(--color-primary);
+  --color-remote-prayable: var(--color-accent);
   --color-unprayable: #9e9e9e;
   --color-background: #f8f5e4;
   --color-surface: #fffbe6;
@@ -146,8 +146,8 @@ body, #root, .log-pane, .log-pane-expanded {
 
 .shrine-marker-frame-anim {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 68px;
+  height: 68px;
   border-radius: 0;
   background: var(--color-surface);
   overflow: visible;
@@ -411,6 +411,21 @@ body, #root, .log-pane, .log-pane-expanded {
 .shrine-marker-prayable.shrine-marker-unprayable .shrine-marker-frame-border {
   border-color: var(--color-prayable) !important;
 }
+
+/* ===== 参拝後の状態 ===== */
+.shrine-marker-prayed-today {
+  border-color: var(--color-unprayable) !important;
+}
+
+.shrine-marker-prayed-today .shrine-marker-pin::after {
+  border-top-color: var(--color-unprayable) !important;
+}
+
+.shrine-marker-prayed-today .shrine-marker-frame-border {
+  border-color: var(--color-unprayable) !important;
+}
+
+
 
 /* ===== LEAFLET POPUP ===== */
 .leaflet-popup-content-wrapper,
@@ -803,7 +818,7 @@ body, #root, .log-pane, .log-pane-expanded {
 .modal__navigation-left,
 .modal__navigation-right {
   min-width: 50px;
-  max-width: 120px;
+  max-width: 128px;
   overflow: hidden;
 }
 

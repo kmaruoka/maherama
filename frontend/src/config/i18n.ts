@@ -9,9 +9,9 @@ const resources = {
       user: 'ユーザー',
       name: '名前',
       count: '参拝数',
-      registeredAt: '図鑑収録',
+      registeredAt: '図鑑収録日',
       backToOverview: '全体表示に戻る',
-      lastPrayedAt: '最終参拝',
+      lastPrayedAt: '最終参拝日',
       // ShrineMarker
       shrineMarkerZukanPrayableRemote: '図鑑収録済み・参拝可能・遥拝可能',
       shrineMarkerZukanPrayable: '図鑑収録済み・参拝可能',
@@ -62,8 +62,10 @@ const resources = {
       vote: '投票',
       voteCount: '投票数',
       // CatalogPage
-      sortByRegisteredDateDesc: '収録日(新しい順)',
-      sortByRegisteredDateAsc: '収録日(古い順)',
+      sortByRegisteredDateDesc: '図鑑収録日(新しい順)',
+      sortByRegisteredDateAsc: '図鑑収録日(古い順)',
+      sortByLastPrayedDateDesc: '最終参拝日(新しい順)',
+      sortByLastPrayedDateAsc: '最終参拝日(古い順)',
       sortByNameAsc: '名前(昇順)',
       sortByNameDesc: '名前(降順)',
       sortByCountDesc: '参拝数(多い順)',
@@ -164,6 +166,8 @@ const resources = {
       // CatalogPage
       sortByRegisteredDateDesc: 'Registered Date (Newest)',
       sortByRegisteredDateAsc: 'Registered Date (Oldest)',
+      sortByLastPrayedDateDesc: 'Last Prayed Date (Newest)',
+      sortByLastPrayedDateAsc: 'Last Prayed Date (Oldest)',
       sortByNameAsc: 'Name (Ascending)',
       sortByNameDesc: 'Name (Descending)',
       sortByCountDesc: 'Pray Count (Most)',

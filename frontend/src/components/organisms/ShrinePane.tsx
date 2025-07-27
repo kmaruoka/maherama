@@ -310,6 +310,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     onSettled: async () => {
       // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
       try {
+        // 即座にキャッシュをクリアして再取得
+        queryClient.removeQueries({ queryKey: ['shrine-marker-status', id, userId] });
         await queryClient.refetchQueries({ queryKey: ['shrine-marker-status', id, userId] });
       } catch (error) {
         console.error('Failed to refetch marker status:', error);
@@ -350,6 +352,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     onSettled: async () => {
       // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
       try {
+        // 即座にキャッシュをクリアして再取得
+        queryClient.removeQueries({ queryKey: ['shrine-marker-status', id, userId] });
         await queryClient.refetchQueries({ queryKey: ['shrine-marker-status', id, userId] });
       } catch (error) {
         console.error('Failed to refetch marker status:', error);

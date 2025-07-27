@@ -148,7 +148,7 @@ export default function SettingsPage() {
             step="10"
             value={maxShrineDisplay}
             onChange={e => setMaxShrineDisplay(Number(e.target.value))}
-            style={{ width: '120px' }}
+            style={{ width: '128px' }}
           />
           <span className="text-nowrap">{maxShrineDisplay}件</span>
         </div>

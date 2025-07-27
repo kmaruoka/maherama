@@ -68,6 +68,8 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const handleShrineClick = (shrineId: number) => {
     // 参拝後にマーカー状態のクエリを無効化
     queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', shrineId, userId] });
+    // 即座にキャッシュをクリア
+    queryClient.removeQueries({ queryKey: ['shrine-marker-status', shrineId, userId] });
     onShowShrine(shrineId);
   };
 
@@ -182,13 +184,13 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
       .sort((a, b) => a.distance - b.distance) // 距離順にソート（近い順）
       .slice(0, maxShrineDisplay); // ユーザー設定に基づく上限でz-index範囲を制御
 
-    console.log('[DEBUG] displayShrines sorted:', {
-      centerArray,
-      prayDistance,
-      totalShrines: shrines.length,
-      filteredCount: shrinesWithDistance.length,
-      first3Distances: shrinesWithDistance.slice(0, 3).map(s => ({ name: s.name, distance: s.distance?.toFixed(2) }))
-    });
+    // console.log('[DEBUG] displayShrines sorted:', {
+    //   centerArray,
+    //   prayDistance,
+    //   totalShrines: shrines.length,
+    //   filteredCount: shrinesWithDistance.length,
+    //   first3Distances: shrinesWithDistance.slice(0, 3).map(s => ({ name: s.name, distance: s.distance?.toFixed(2) }))
+    // });
 
     return shrinesWithDistance;
   }, [shrines, centerArray, prayDistance, maxShrineDisplay]);
@@ -283,9 +285,9 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           // 最大60個程度の神社表示を想定（60 * 50 = 3000）
           const zIndex = 5000 - (index * 50);
           
-          if (index < 5) {
-            console.log(`[DEBUG] Marker ${index}: ${s.name}, distance: ${s.distance?.toFixed(2)}m, zIndex: ${zIndex}`);
-          }
+          // if (index < 5) {
+          //   console.log(`[DEBUG] Marker ${index}: ${s.name}, distance: ${s.distance?.toFixed(2)}m, zIndex: ${zIndex}`);
+          // }
           
           return (
             <ShrineMarker

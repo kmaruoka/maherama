@@ -31,15 +31,27 @@ function createShrineIcon(
   isUnprayable: boolean = false,
   isRemoteUnavailable: boolean = false, // 未使用（互換性のため残す）
   isInRange: boolean = false,
+  hasPrayedToday: boolean = false,
   tooltipText: string = ''
 ) {
-  // 状態に応じたCSSクラスを決定（遥拝関連を除外）
+  // 状態に応じたCSSクラスを決定
   const statusClasses = [];
-  if (isInZukan) statusClasses.push('shrine-marker-zukan');
-  if (isPrayable) {
-    statusClasses.push('shrine-marker-prayable');
+  
+  // 図鑑収録状態
+  if (isInZukan) {
+    statusClasses.push('shrine-marker-zukan');
+  } else {
+    statusClasses.push('shrine-marker-not-in-zukan');
   }
-  if (isUnprayable) statusClasses.push('shrine-marker-unprayable');
+  
+  // 参拝状態（参拝後は最優先）
+  if (hasPrayedToday) {
+    statusClasses.push('shrine-marker-prayed-today');
+  } else if (isPrayable) {
+    statusClasses.push('shrine-marker-prayable');
+  } else if (isUnprayable) {
+    statusClasses.push('shrine-marker-unprayable');
+  }
   
   // 距離による透過度クラスを追加
   if (isInRange) {
@@ -49,18 +61,6 @@ function createShrineIcon(
   }
   
   const statusClassString = statusClasses.join(' ');
-  
-  // 状態アイコンを決定（遥拝関連を除外）
-  let statusIcon = '';
-  if (isInZukan && isPrayable) {
-    statusIcon = '<div class="shrine-marker-status-icon zukan">★</div>';
-  } else if (isInZukan) {
-    statusIcon = '<div class="shrine-marker-status-icon zukan">✓</div>';
-  } else if (isPrayable) {
-    statusIcon = '<div class="shrine-marker-status-icon prayable">参</div>';
-  } else if (isUnprayable) {
-    statusIcon = '<div class="shrine-marker-status-icon unprayable">遠</div>';
-  }
 
   return L.divIcon({
     className: '',
@@ -69,16 +69,15 @@ function createShrineIcon(
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
           <img src="${(thumbnailUrl || NOIMAGE_SHRINE_URL) + '?t=' + Date.now()}" alt="shrine" />
-          <div class="shrine-marker-thumbnail-gloss ${isPrayable ? 'active' : ''}"></div>
+          <div class="shrine-marker-thumbnail-gloss ${(isPrayable || !isInZukan) && !hasPrayedToday ? 'active' : ''}"></div>
         </div>
         <div class="shrine-marker-pin"></div>
-        ${statusIcon}
         <div class="shrine-marker-status-tooltip">${tooltipText}</div>
       </div>
     `,
-    iconSize: [120, 140], // サムネイル+ピン
-    iconAnchor: [60, 140], // 下端中央
-    popupAnchor: [0, -140],
+    iconSize: [68, 88], // サムネイル(66px) + ピン(20px) + 余白(2px)
+    iconAnchor: [34, 88], // 下端中央
+    popupAnchor: [0, -88],
   });
 }
 
@@ -122,6 +121,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
       isUnprayable,
       false, // isRemoteUnavailable: 常にfalse
       canPray,
+      markerStatus?.has_prayed_today ?? false,
       tooltipText
     );
   }, [
@@ -129,6 +129,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
     isInZukan,
     canPray,
     isUnprayable,
+    markerStatus?.has_prayed_today,
     tooltipText
   ]);
 

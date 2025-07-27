@@ -51,6 +51,13 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       return aKana.localeCompare(bKana) * mul;
     }
     if (key === 'count') return (a.count - b.count) * mul;
+    if (key === 'lastPrayedAt') {
+      // 最終参拝日でソート（nullの場合は最古として扱う）
+      const aDate = a.lastPrayedAt ? new Date(a.lastPrayedAt).getTime() : 0;
+      const bDate = b.lastPrayedAt ? new Date(b.lastPrayedAt).getTime() : 0;
+      return (aDate - bDate) * mul;
+    }
+    // registeredAt（図鑑収録日）でソート
     return (
       new Date(a.registeredAt).getTime() - new Date(b.registeredAt).getTime()
     ) * mul;
@@ -98,6 +105,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         >
           <option value="registeredAt-desc">{t('sortByRegisteredDateDesc')}</option>
           <option value="registeredAt-asc">{t('sortByRegisteredDateAsc')}</option>
+          <option value="lastPrayedAt-desc">{t('sortByLastPrayedDateDesc')}</option>
+          <option value="lastPrayedAt-asc">{t('sortByLastPrayedDateAsc')}</option>
           <option value="name-asc">{t('sortByNameAsc')}</option>
           <option value="name-desc">{t('sortByNameDesc')}</option>
           <option value="count-desc">{t('sortByCountDesc')}</option>
