@@ -22,45 +22,45 @@ export async function seedTitle(prisma: PrismaClient) {
       // 週間ランキング系称号テンプレート
       {
         code: 'weekly_rank_shrine',
-        name_template: '週間参拝数1位<{shrine}><{period}>',
-        description: '週間で最も多く参拝した神社1位',
+        name_template: '週間参拝数<{rank}><{shrine}><{period}>',
+        description: '週間で最も多く参拝した神社',
         type: 'weekly_rank_shrine',
         exp_reward: 100
       },
       {
         code: 'weekly_rank_diety',
-        name_template: '週間参拝数1位<{diety}><{period}>',
-        description: '週間で最も多く参拝した神様1位',
+        name_template: '週間参拝数<{rank}><{diety}><{period}>',
+        description: '週間で最も多く参拝した神様',
         type: 'weekly_rank_diety',
         exp_reward: 100
       },
       // 月間ランキング系称号テンプレート
       {
         code: 'monthly_rank_shrine',
-        name_template: '月間参拝数1位<{shrine}><{period}>',
-        description: '月間で最も多く参拝した神社1位',
+        name_template: '月間参拝数<{rank}><{shrine}><{period}>',
+        description: '月間で最も多く参拝した神社',
         type: 'monthly_rank_shrine',
         exp_reward: 200
       },
       {
         code: 'monthly_rank_diety',
-        name_template: '月間参拝数1位<{diety}><{period}>',
-        description: '月間で最も多く参拝した神様1位',
+        name_template: '月間参拝数<{rank}><{diety}><{period}>',
+        description: '月間で最も多く参拝した神様',
         type: 'monthly_rank_diety',
         exp_reward: 200
       },
       // 年間ランキング系称号テンプレート
       {
         code: 'yearly_rank_shrine',
-        name_template: '年間参拝数1位<{shrine}><{period}>',
-        description: '年間で最も多く参拝した神社1位',
+        name_template: '年間参拝数<{rank}><{shrine}><{period}>',
+        description: '年間で最も多く参拝した神社',
         type: 'yearly_rank_shrine',
         exp_reward: 1000
       },
       {
         code: 'yearly_rank_diety',
-        name_template: '年間参拝数1位<{diety}><{period}>',
-        description: '年間で最も多く参拝した神様1位',
+        name_template: '年間参拝数<{rank}><{diety}><{period}>',
+        description: '年間で最も多く参拝した神様',
         type: 'yearly_rank_diety',
         exp_reward: 1000
       },
@@ -110,8 +110,20 @@ export async function seedTitle(prisma: PrismaClient) {
     ],
     skipDuplicates: true,
   });
-  await prisma.userTitle.createMany({
-    data: [{ user_id: 1, title_id: 1 }],
-    skipDuplicates: true,
+  // テスト用の称号データを作成
+  const titleMaster = await prisma.titleMaster.findFirst({
+    where: { code: 'first_pray' }
   });
+  
+  if (titleMaster) {
+    await prisma.userTitle.createMany({
+      data: [{ 
+        user_id: 1, 
+        title_id: titleMaster.id,
+        grade: 1,
+        display_name: '初参拝'
+      }],
+      skipDuplicates: true,
+    });
+  }
 }

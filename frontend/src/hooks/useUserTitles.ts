@@ -6,6 +6,8 @@ export interface UserTitle {
   name: string;
   template?: string;
   embed_data?: Record<string, any>;
+  grade?: number; // 1=最低, 2, 3, 4, 5=最高
+  display_name?: string; // 表示名
 }
 
 export default function useUserTitles(userId: number | undefined | null) {

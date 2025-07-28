@@ -374,6 +374,8 @@ model UserTitle {
   awarded_at DateTime    @default(now())
   embed_data Json?       // 埋め込みデータ（例: {"shrine":"明治神宮","period":"2025-04"}）
   is_equipped Boolean    @default(false) // 装備中か
+  grade      Int         @default(1) // 称号のグレード（1-5）
+  display_name String?   // 表示名（例: "月間参拝数1位<明治神宮><2025-04>"）
 
   @@unique([user_id, title_id, embed_data])
 }

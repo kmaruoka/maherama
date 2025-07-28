@@ -14,6 +14,7 @@ import { NOIMAGE_USER_URL } from '../../constants';
 import { CustomButton } from '../atoms/CustomButton';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
+import { TrophyIcon } from '../atoms/CustomText';
 import { useTranslation } from 'react-i18next';
 import { FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
 
@@ -251,7 +252,7 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
           <ul className="list-unstyled">
             {titles.map(t => (
               <li key={t.id} style={{ whiteSpace: 'nowrap' }}>
-                🏆 {t.template && t.embed_data ? (
+                <TrophyIcon grade={t.grade} /> {t.template && t.embed_data ? (
                   <span style={{ display: 'inline', whiteSpace: 'nowrap' }}>
                     {t.template.split(/(<\{[^}]+\}>)/g).map((part, idx) => {
                       if (part.startsWith('<{') && part.endsWith('}>')) {
@@ -272,16 +273,15 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
                         }
                         if (key === 'period' && t.embed_data?.period) {
                           return (
-                            <CustomLink key={idx} type="default" onClick={() => alert(`称号獲得者一覧: ${(t.embed_data?.shrine || t.embed_data?.diety || '')} ${t.embed_data?.period}`)}>
+                            <span key={idx} style={{ color: 'var(--color-accent)', fontWeight: 'bold' }}>
                               {t.embed_data?.period}
-                            </CustomLink>
+                            </span>
                           );
                         }
                         // 他の埋め込みデータもそのまま表示
                         return t.embed_data?.[key] || '';
                       }
-                      // part内の改行を除去して返す
-                      return part.replace(/\r?\n/g, '');
+                      return part;
                     })}
                   </span>
                 ) : t.name}

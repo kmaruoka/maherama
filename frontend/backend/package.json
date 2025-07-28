@@ -7,7 +7,8 @@
     "test": "jest",
     "db-seed": "node scripts/seedTestData.js",
     "start": "ts-node index.ts",
-    "db-reset": "npx ts-node scripts/reset-db.ts"
+    "db-reset": "npx ts-node scripts/reset-db.ts",
+    "seed": "npx tsx scripts/seed/main.ts"
   },
   "keywords": [],
   "author": "",
