@@ -850,10 +850,10 @@ app.get('/logs', async (req, res) => {
       select: {
         message: true,
         type: true,
-        time: true
+        logged_at: true
       },
       orderBy: {
-        time: 'desc'
+        logged_at: 'desc'
       },
       take: 50
     });

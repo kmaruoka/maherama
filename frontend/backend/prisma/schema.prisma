@@ -90,7 +90,7 @@ model Log {
   id      Int      @id @default(autoincrement())
   message String
   type    String   @default("normal")
-  time    DateTime @default(now())
+  logged_at DateTime @default(now())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -145,7 +145,7 @@ model ShrinePray {
   shrine    Shrine   @relation(fields: [shrine_id], references: [id])
   shrine_id Int
   user_id   Int
-  time      DateTime @default(now())
+  prayed_at DateTime @default(now())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -155,7 +155,7 @@ model DietyPray {
   diety    Diety    @relation(fields: [diety_id], references: [id])
   diety_id Int
   user_id  Int
-  time     DateTime @default(now())
+  prayed_at DateTime @default(now())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }

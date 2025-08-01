@@ -4,7 +4,7 @@ import { useSkin } from '../../skins/SkinContext';
 
 export interface LogItem {
   message: string;
-  time: string;
+  logged_at: string;
   type?: string;
 }
 
@@ -84,7 +84,7 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
 
   return (
     <div className="px-2 py-1"> 
-      <span style={{ color: skin.colors.logText }}>{formatTime(log.time)}</span>{' '}
+      <span style={{ color: skin.colors.logText }}>{formatTime(log.logged_at)}</span>{' '}
       <span style={{ color: skin.colors.logText }}>{renderMessage(log.message)}</span>
     </div>
   );
