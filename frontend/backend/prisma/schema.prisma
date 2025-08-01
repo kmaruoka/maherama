@@ -50,6 +50,8 @@ model Shrine {
   history                   String? // 歴史・伝承
   festivals                 String? // 祭礼
   description               String? // 説明文
+  created_at                DateTime                 @default(now())
+  updated_at                DateTime                 @updatedAt
 
   @@unique([name, location])
 }
@@ -69,6 +71,8 @@ model Diety {
   diety_pray_stats_yearly DietyPrayStatsYearly[]
   diety_books DietyBook[]
   diety_images DietyImage[]
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 }
 
 model ShrineDiety {
@@ -76,6 +80,8 @@ model ShrineDiety {
   shrine_id Int
   diety     Diety  @relation(fields: [diety_id], references: [id])
   diety_id  Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@id([shrine_id, diety_id])
 }
@@ -85,6 +91,8 @@ model Log {
   message String
   type    String   @default("normal")
   time    DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model User {
@@ -117,6 +125,8 @@ model User {
   user_subscriptions UserSubscription[]
   diety_images DietyImage[]
   diety_image_votes DietyImageVote[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model Follow {
@@ -124,6 +134,8 @@ model Follow {
   follower_id  Int
   following    User @relation("followedBy", fields: [following_id], references: [id])
   following_id Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
   @@id([follower_id, following_id])
 }
@@ -134,6 +146,8 @@ model ShrinePray {
   shrine_id Int
   user_id   Int
   time      DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model DietyPray {
@@ -142,6 +156,8 @@ model DietyPray {
   diety_id Int
   user_id  Int
   time     DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model ShrinePrayStats {
@@ -152,6 +168,8 @@ model ShrinePrayStats {
   user_id   Int
   user      User   @relation(fields: [user_id], references: [id])
   count     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([shrine_id, user_id])
 }
@@ -164,6 +182,8 @@ model ShrinePrayStatsMonthly {
   user_id   Int
   user      User   @relation(fields: [user_id], references: [id])
   count     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([shrine_id, user_id])
 }
@@ -176,6 +196,8 @@ model ShrinePrayStatsWeekly {
   user_id   Int
   user      User   @relation(fields: [user_id], references: [id])
   count     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([shrine_id, user_id])
 }
@@ -188,6 +210,8 @@ model ShrinePrayStatsDaily {
   user_id   Int
   user      User   @relation(fields: [user_id], references: [id])
   count     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([shrine_id, user_id])
 }
@@ -200,6 +224,8 @@ model ShrinePrayStatsYearly {
   user_id   Int
   user      User   @relation(fields: [user_id], references: [id])
   count     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([shrine_id, user_id])
 }
@@ -212,6 +238,8 @@ model DietyPrayStats {
   user_id  Int
   user     User  @relation(fields: [user_id], references: [id])
   count    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([diety_id, user_id])
 }
@@ -224,6 +252,8 @@ model DietyPrayStatsMonthly {
   user_id  Int
   user     User  @relation(fields: [user_id], references: [id])
   count    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([diety_id, user_id])
 }
@@ -236,6 +266,8 @@ model DietyPrayStatsWeekly {
   user_id  Int
   user     User  @relation(fields: [user_id], references: [id])
   count    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([diety_id, user_id])
 }
@@ -248,6 +280,8 @@ model DietyPrayStatsDaily {
   user_id  Int
   user     User  @relation(fields: [user_id], references: [id])
   count    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([diety_id, user_id])
 }
@@ -260,6 +294,8 @@ model DietyPrayStatsYearly {
   user_id  Int
   user     User  @relation(fields: [user_id], references: [id])
   count    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@unique([diety_id, user_id])
 }
@@ -271,6 +307,8 @@ model ShrineBook {
   shrine_id     Int
   registered_at DateTime @default(now())
   last_prayed_at DateTime? // 追加
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   @@id([user_id, shrine_id])
 }
@@ -282,6 +320,8 @@ model DietyBook {
   diety_id      Int
   registered_at DateTime @default(now())
   last_prayed_at DateTime? // 追加
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   @@id([user_id, diety_id])
 }
@@ -291,6 +331,8 @@ model RemotePray {
   user_id   Int
   shrine_id Int
   prayed_at DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   // @@unique([user_id, shrine_id]) を削除
 }
@@ -306,6 +348,7 @@ model UserSubscription {
   billing_cycle_start    DateTime? // 課金サイクル開始日
   billing_cycle_end      DateTime? // 課金サイクル終了日
   is_active              Boolean   @default(true) // アクティブなサブスクリプションかどうか
+  updated_at             DateTime  @updatedAt
 }
 
 model LevelMaster {
@@ -315,6 +358,8 @@ model LevelMaster {
   pray_distance Int // 参拝距離（メートル）
   worship_count Int // 1日の遥拝回数
   ability_points Int // レベルアップ時の能力ポイント獲得量
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 }
 
 model AbilityMaster {
@@ -329,6 +374,8 @@ model AbilityMaster {
   dependent_abilities     AbilityMaster[] @relation("Prerequisite")
   userAbilities           UserAbility[]
   abilityLogs             AbilityLog[]
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
 }
 
 model UserAbility {
@@ -338,6 +385,8 @@ model UserAbility {
   ability     AbilityMaster @relation(fields: [ability_id], references: [id])
   ability_id  Int
   acquired_at DateTime      @default(now())
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
 
   @@unique([user_id, ability_id])
 }
@@ -350,6 +399,8 @@ model AbilityLog {
   ability_id   Int
   points_spent Int
   acquired_at  DateTime      @default(now())
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
 }
 
 model TitleMaster {
@@ -376,6 +427,8 @@ model UserTitle {
   is_equipped Boolean    @default(false) // 装備中か
   grade      Int         @default(1) // 称号のグレード（1-5）
   display_name String?   // 表示名（例: "月間参拝数1位<明治神宮><2025-04>"）
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
 
   @@unique([user_id, title_id, embed_data])
 }
@@ -395,6 +448,8 @@ model ShrineImage {
   is_winner  Boolean @default(false)
   is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
   votes      ImageVote[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model DietyImage {
@@ -412,6 +467,8 @@ model DietyImage {
   is_winner  Boolean @default(false)
   is_current_thumbnail Boolean @default(false) // 現在のサムネイルかどうか
   votes      DietyImageVote[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model ImageVote {
@@ -421,6 +478,8 @@ model ImageVote {
   user            User        @relation(fields: [user_id], references: [id])
   user_id         Int
   voted_at        DateTime    @default(now())
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
 
   @@unique([shrine_image_id, user_id])
 }
@@ -432,6 +491,8 @@ model DietyImageVote {
   user          User       @relation(fields: [user_id], references: [id])
   user_id       Int
   voted_at      DateTime   @default(now())
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
 
   @@unique([diety_image_id, user_id])
 }
@@ -441,6 +502,7 @@ model VotingSettings {
   voting_period_days Int     @default(20) // 投票期間（日数）
   review_period_days Int     @default(10) // 審査期間（日数）
   updated_at        DateTime @default(now())
+  created_at        DateTime @default(now())
 }
 
 model ShrineApplication {
@@ -460,4 +522,6 @@ model ShrineApplication {
   applied_at  DateTime @default(now())
   reviewed_at DateTime?
   reviewed_by String?  // レビュー担当者
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 }
