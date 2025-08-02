@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
+import SubmenuPage from './components/pages/SubmenuPage';
 import ShrinePane from './components/organisms/ShrinePane';
 import DietyPage from './components/organisms/DietyPane';
 import UserPane from './components/organisms/UserPane';
@@ -105,7 +106,7 @@ function ModalHeader({
 }
 
 function App() {
-  const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings'>('map');
+  const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu'>('map');
   const [modal, setModal] = useState<ModalType>(null);
   const [currentUserId] = useLocalStorageState<number | null>('userId', null);
   useSkin();
@@ -310,6 +311,8 @@ function App() {
         return <UserPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowDiety={(id: number) => navigateToModal('diety', id)} onShowUser={(id: number) => navigateToModal('user', id)} />;
       case 'settings':
         return <SettingsPage />;
+      case 'submenu':
+        return <SubmenuPage />;
       default:
         return null;
     }
