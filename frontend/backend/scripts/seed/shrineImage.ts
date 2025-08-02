@@ -17,22 +17,24 @@ export async function seedShrineImage(prisma: PrismaClient) {
 
   for (const img of images) {
     const baseName = `shrine${img.shrineId}-u${img.userId}_s`;
-    const originalUrl = `/uploads/${yyyymm}/${baseName}original.jpg`;
-    const url64 = `/uploads/${yyyymm}/${baseName}marker.jpg`;
-    const url128 = `/uploads/${yyyymm}/${baseName}thumbnail.jpg`;
-    const url256 = `/uploads/${yyyymm}/${baseName}original.jpg`;
-    const url512 = `/uploads/${yyyymm}/${baseName}original.jpg`;
+    const originalUrl = `/images/${yyyymm}/${baseName}original.jpg`;
+    const url64 = `/images/${yyyymm}/${baseName}marker.jpg`;
+    const url160 = `/images/${yyyymm}/${baseName}160.jpg`;
+    const url256 = `/images/${yyyymm}/${baseName}256.jpg`;
+    const url512 = `/images/${yyyymm}/${baseName}512.jpg`;
 
-    // まずImageテーブルに登録
-    const image = await prisma.image.create({
-      data: {
-        url: originalUrl,
-        url64: url64,
-        url128: url128,
-        url256: url256,
-        url512: url512
-      }
-    });
+      // まずImageテーブルに登録
+  const image = await prisma.image.create({
+    data: {
+      original_url: originalUrl,
+      url_xs: url64,
+      url_s: url160,
+      url_m: url256,
+      url_l: url512,
+      url_xl: originalUrl,
+      uploaded_by: 'シードデータ'
+    }
+  });
 
     // 次にShrineImageテーブルに登録
     await prisma.shrineImage.create({
