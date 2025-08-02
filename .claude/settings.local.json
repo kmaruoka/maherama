@@ -3,7 +3,16 @@
     "allow": [
       "Bash(npm run seed:*)",
       "Bash(npx prisma generate:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm start)",
+      "Bash(grep:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(cmd /c:*)",
+      "Bash(PORT=3001 npm start)",
+      "Bash(API_PORT=3001 npm run seed)"
     ],
     "deny": []
   }

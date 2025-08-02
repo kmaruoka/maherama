@@ -463,7 +463,7 @@ body, #root, .log-pane, .log-pane-expanded {
   outline: none;
   color: var(--color-text);
   font-family: inherit;
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   font-weight: 700;
   padding: 0.5rem 0;
   cursor: pointer;

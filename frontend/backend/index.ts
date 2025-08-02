@@ -43,6 +43,35 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
 
+// シミュレート日付管理
+let simulateDate = null;
+
+// 現在日時を取得する関数（シミュレート日付がある場合はそれを使用）
+function getCurrentDate() {
+  return simulateDate || new Date();
+}
+
+// シミュレート日付を設定
+function setSimulateDate(dateString) {
+  if (dateString === null) {
+    simulateDate = null;
+    return { success: true, message: 'シミュレート日付をクリアしました' };
+  }
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return { success: false, message: '無効な日付形式です' };
+  }
+  
+  simulateDate = date;
+  return { success: true, message: `シミュレート日付を設定しました: ${date.toISOString()}` };
+}
+
+// シミュレート日付を取得
+function getSimulateDate() {
+  return simulateDate ? simulateDate.toISOString() : null;
+}
+
 
 
 
@@ -91,7 +120,7 @@ async function getUserPrayDistance(userId: number) {
       subscription_type: 'range_multiplier',
       is_active: true,
       expires_at: {
-        gt: new Date()
+        gt: getCurrentDate()
       }
     }
   });
@@ -160,7 +189,7 @@ async function getUserWorshipCount(userId: number) {
       subscription_type: 'worship_boost',
       is_active: true,
       expires_at: {
-        gt: new Date()
+        gt: getCurrentDate()
       }
     }
   });
@@ -176,7 +205,7 @@ async function getUserWorshipCount(userId: number) {
 
 // 今日の遥拝回数を取得
 async function getTodayWorshipCount(userId: number) {
-  const today = new Date();
+  const today = getCurrentDate();
   today.setHours(0, 0, 0, 0);
   
   const tomorrow = new Date(today);
@@ -295,7 +324,7 @@ async function getUserSubscription(userId) {
     where: { 
       user_id: userId,
       is_active: true,
-      expires_at: { gt: new Date() }
+      expires_at: { gt: getCurrentDate() }
     },
     orderBy: { created_at: 'desc' }
   });
@@ -502,14 +531,14 @@ async function prayAtShrine({
   if (logType === '参拝') {
     await prisma.shrinePray.create({ data: { shrine_id: shrineId, user_id: userId } });
   } else {
-    await prisma.remotePray.create({ data: { shrine_id: shrineId, user_id: userId, prayed_at: new Date() } });
+    await prisma.remotePray.create({ data: { shrine_id: shrineId, user_id: userId, prayed_at: getCurrentDate() } });
   }
 
   // ShrineCatalog更新
   const shrineCatalogResult = await prisma.shrineCatalog.upsert({
     where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } },
-    update: { last_prayed_at: new Date() },
-    create: { user_id: userId, shrine_id: shrineId, last_prayed_at: new Date() }
+    update: { last_prayed_at: getCurrentDate() },
+    create: { user_id: userId, shrine_id: shrineId, last_prayed_at: getCurrentDate() }
   });
 
   // ShrinePrayStats系
@@ -550,8 +579,8 @@ async function prayAtShrine({
     }
     await prisma.dietyCatalog.upsert({
       where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } },
-      update: { last_prayed_at: new Date() },
-      create: { user_id: userId, diety_id: dietyId, last_prayed_at: new Date() }
+      update: { last_prayed_at: getCurrentDate() },
+      create: { user_id: userId, diety_id: dietyId, last_prayed_at: getCurrentDate() }
     });
   }
 
@@ -781,7 +810,7 @@ app.post('/dieties/:id/images', authenticateJWT, async (req, res) => {
     if (!imageData) return res.status(400).json({ error: 'No image data' });
     const Jimp = require('jimp');
     const fs = require('fs');
-    const folder = `uploads/${new Date().toISOString().slice(0,7).replace('-', '')}`;
+    const folder = `uploads/${getCurrentDate().toISOString().slice(0,7).replace('-', '')}`;
     fs.mkdirSync(folder, { recursive: true });
     const buffer = Buffer.from(imageData.split(',')[1], 'base64');
     const img = await Jimp.read(buffer);
@@ -795,7 +824,7 @@ app.post('/dieties/:id/images', authenticateJWT, async (req, res) => {
         diety_id: dietyId,
         user_id: userId,
         image_url: `${folder}/diety${dietyId}-u${userId}_sthumb.jpg`,
-        voting_month: new Date().toISOString().slice(0,7).replace('-', ''),
+        voting_month: getCurrentDate().toISOString().slice(0,7).replace('-', ''),
       }
     });
     res.json({ success: true });
@@ -811,8 +840,8 @@ app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
     return res.status(400).json({ error: 'Invalid diety ID' });
   }
   try {
-    const month = new Date().toISOString().slice(0,7).replace('-', '');
-    const prev = new Date();
+    const month = getCurrentDate().toISOString().slice(0,7).replace('-', '');
+    const prev = getCurrentDate();
     prev.setMonth(prev.getMonth() - 1);
     const prevMonth = prev.toISOString().slice(0,7).replace('-', '');
     const images = await prisma.dietyImage.findMany({
@@ -1042,12 +1071,12 @@ app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res)
       where: { 
         user_id: userId,
         is_active: true,
-        expires_at: { gt: new Date() }
+        expires_at: { gt: getCurrentDate() }
       },
       orderBy: { created_at: 'desc' }
     });
     
-    const now = new Date();
+    const now = getCurrentDate();
     
     if (currentSubscription) {
       // 現在のサブスクリプションを非アクティブ化
@@ -1760,7 +1789,7 @@ app.post('/user/reset-abilities', authenticateJWT, async (req, res) => {
         user_id: userId,
         subscription_type: 'reset_abilities',
         is_active: true,
-        expires_at: { gt: new Date() }
+        expires_at: { gt: getCurrentDate() }
       }
     });
 
@@ -2285,21 +2314,6 @@ app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
   }
 });
 
-if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
-}
-
-module.exports = app;
-
-const shutdown = async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-};
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-
 // Stripeで能力初期化用Checkoutセッション作成API
 app.post('/subscription/reset-abilities/checkout', authenticateJWT, async (req, res) => {
   if (!stripe) {
@@ -2347,7 +2361,7 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
       const userId = parseInt(session.metadata.userId, 10);
       if (userId) {
         // サブスクリプション付与
-        const now = new Date();
+        const now = getCurrentDate();
         const oneMonthLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
         await prisma.userSubscription.create({
           data: {
@@ -2459,7 +2473,7 @@ function getImageFileName(type, id, userId, size, ext = 'jpg') {
 
 // yyyyMM取得
 function getYYYYMM() {
-  const now = new Date();
+  const now = getCurrentDate();
   return `${now.getFullYear()}${('0' + (now.getMonth() + 1)).slice(-2)}`;
 }
 
@@ -2751,14 +2765,14 @@ if (!fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true });
 }
 function getLogFilePath() {
-  const now = new Date();
+  const now = getCurrentDate();
   const y = now.getFullYear();
   const m = ('0' + (now.getMonth() + 1)).slice(-2);
   const d = ('0' + now.getDate()).slice(-2);
   return path.join(LOG_DIR, `backend-${y}${m}${d}.log`);
 }
 function appendLogToFile(level, ...args) {
-  const msg = `[${new Date().toISOString()}][${level}] ` + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n';
+  const msg = `[${getCurrentDate().toISOString()}][${level}] ` + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n';
   fs.appendFile(getLogFilePath(), msg, () => {});
 }
 const origLog = console.log;
@@ -2939,7 +2953,7 @@ async function awardRankingTitles(period, currentDate) {
           await prisma.userTitle.update({
             where: { id: existingTitle.id },
             data: {
-              awarded_at: new Date(),
+              awarded_at: getCurrentDate(),
               grade: rank <= 3 ? 5 - rank : 1,
               display_name: displayName
             }
@@ -2950,7 +2964,7 @@ async function awardRankingTitles(period, currentDate) {
             data: {
               user_id: stat.user.id,
               title_id: titleMaster.id,
-              awarded_at: new Date(),
+              awarded_at: getCurrentDate(),
               embed_data: embedData,
               grade: rank <= 3 ? 5 - rank : 1,
               display_name: displayName
@@ -3023,7 +3037,7 @@ async function awardRankingTitles(period, currentDate) {
           await prisma.userTitle.update({
             where: { id: existingDietyTitle.id },
             data: {
-              awarded_at: new Date(),
+              awarded_at: getCurrentDate(),
               grade: 5,
               display_name: displayName
             }
@@ -3034,7 +3048,7 @@ async function awardRankingTitles(period, currentDate) {
             data: {
               user_id: stat.user.id,
               title_id: titleMaster.id,
-              awarded_at: new Date(),
+              awarded_at: getCurrentDate(),
               embed_data: embedData,
               grade: 5,
               display_name: displayName
@@ -3070,7 +3084,7 @@ async function awardRankingTitles(period, currentDate) {
 
 // 定期的なランキング集計処理を実行する関数
 async function runPeriodicRankingAwards() {
-  const now = new Date();
+  const now = getCurrentDate();
   
   // 週間ランキング（月曜日の午前0時に実行）
   if (now.getDay() === 1 && now.getHours() === 0) {
@@ -3109,7 +3123,7 @@ setInterval(runPeriodicRankingAwards, 60 * 1000); // 1分ごと
 // 管理用API: ランキング集計と報酬付与を実行（type=weekly|monthly|yearly 指定で分岐）
 app.post('/admin/ranking-awards', async (req, res) => {
   try {
-    const currentDate = new Date();
+    const currentDate = getCurrentDate();
     const type = req.query.type || 'weekly'; // デフォルトはweekly
     console.log(`🚀 管理API呼び出し: ランキング集計開始 (type=${type})`);
     let didSomething = false;
@@ -3142,12 +3156,6 @@ app.post('/admin/ranking-awards', async (req, res) => {
   }
 });
 
-// すべての未定義APIはJSONで404を返す
-
-// すべての未定義APIはJSONで404を返す
-app.use((req, res) => {
-  res.status(404).json({ error: 'API not found' });
-});
 
 // 神社の投票結果に基づいてサムネイルを更新する関数
 async function updateShrineThumbnailFromVotes(shrineId: number) {
@@ -3286,3 +3294,185 @@ async function updateDietyThumbnailFromVotes(dietyId: number) {
     console.error('神様サムネイル更新エラー:', err);
   }
 }
+
+// ===== シミュレート日付管理API =====
+
+// テスト用ルート
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Test route working!' });
+});
+
+// シミュレート日付を設定
+app.post('/api/simulate-date', (req, res) => {
+  try {
+    const { date } = req.body;
+    const result = setSimulateDate(date);
+    
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        message: result.message,
+        simulateDate: getSimulateDate()
+      });
+    } else {
+      res.status(400).json({ 
+        success: false, 
+        message: result.message 
+      });
+    }
+  } catch (error) {
+    console.error('シミュレート日付設定エラー:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'サーバーエラーが発生しました' 
+    });
+  }
+});
+
+// シミュレート日付をクリア
+app.delete('/api/simulate-date', (req, res) => {
+  try {
+    const result = setSimulateDate(null);
+    res.json({ 
+      success: true, 
+      message: result.message,
+      simulateDate: getSimulateDate()
+    });
+  } catch (error) {
+    console.error('シミュレート日付クリアエラー:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'サーバーエラーが発生しました' 
+    });
+  }
+});
+
+// シミュレート日付を取得
+app.get('/api/simulate-date', (req, res) => {
+  try {
+    res.json({ 
+      success: true, 
+      simulateDate: getSimulateDate(),
+      currentDate: getCurrentDate().toISOString()
+    });
+  } catch (error) {
+    console.error('シミュレート日付取得エラー:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'サーバーエラーが発生しました' 
+    });
+  }
+});
+
+// ===== シミュレーション管理API =====
+
+// シミュレーション開始（N日前から開始）
+app.post('/api/simulation/start', (req, res) => {
+  try {
+    const { daysAgo } = req.body;
+    
+    if (typeof daysAgo !== 'number' || daysAgo < 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'daysAgoは0以上の数値である必要があります' 
+      });
+    }
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysAgo);
+    startDate.setHours(0, 0, 0, 0); // 日付の開始時刻に設定
+    
+    const result = setSimulateDate(startDate.toISOString());
+    
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        message: `シミュレーションを${daysAgo}日前から開始しました`,
+        simulateDate: getSimulateDate(),
+        currentDate: getCurrentDate().toISOString(),
+        daysAgo: daysAgo
+      });
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    console.error('シミュレーション開始エラー:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'サーバーエラーが発生しました' 
+    });
+  }
+});
+
+// シミュレーション終了（日付をクリア）
+app.post('/api/simulation/end', (req, res) => {
+  try {
+    const result = setSimulateDate(null);
+    res.json({ 
+      success: true, 
+      message: 'シミュレーションを終了しました',
+      simulateDate: getSimulateDate(),
+      currentDate: getCurrentDate().toISOString()
+    });
+  } catch (error) {
+    console.error('シミュレーション終了エラー:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'サーバーエラーが発生しました' 
+    });
+  }
+});
+
+// シミュレーション状態取得
+app.get('/api/simulation/status', (req, res) => {
+  try {
+    const simulateDate = getSimulateDate();
+    const currentDate = getCurrentDate();
+    
+    let daysElapsed = null;
+    if (simulateDate) {
+      const startDate = new Date(simulateDate);
+      const diffTime = currentDate.getTime() - startDate.getTime();
+      daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
+    res.json({
+      success: true,
+      isActive: !!simulateDate,
+      simulateDate: simulateDate,
+      currentDate: currentDate.toISOString(),
+      daysElapsed: daysElapsed
+    });
+  } catch (error) {
+    console.error('シミュレーション状態取得エラー:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'サーバーエラーが発生しました' 
+    });
+  }
+});
+
+// すべての未定義APIはJSONで404を返す
+app.use((req, res) => {
+  res.status(404).json({ error: 'API not found' });
+});
+
+module.exports = app;
+
+// listenは必ず全API定義の後に配置
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+    console.log(`Current date: ${getCurrentDate().toISOString()}`);
+    if (simulateDate) {
+      console.log(`Simulate date: ${simulateDate.toISOString()}`);
+    }
+  });
+}
+
+const shutdown = async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

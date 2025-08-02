@@ -3,6 +3,46 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { EARTH_RADIUS_METERS } from '../../shared/utils/distance';
 
+// シミュレート日付管理
+let simulateDate: Date | null = null;
+
+// 現在日時を取得する関数（シミュレート日付がある場合はそれを使用）
+function getCurrentDate(): Date {
+  return simulateDate || new Date();
+}
+
+// シミュレート日付を設定（サーバーAPIも呼び出し）
+async function setSimulateDate(dateString: string | null): Promise<{ success: boolean; message: string }> {
+  if (dateString === null) {
+    simulateDate = null;
+    // サーバーのシミュレート日付もクリア
+    try {
+      await axios.delete(`http://localhost:${API_PORT}/api/simulate-date`);
+    } catch (error) {
+      console.error('サーバーのシミュレート日付クリアに失敗:', error);
+    }
+    return { success: true, message: 'シミュレート日付をクリアしました' };
+  }
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return { success: false, message: '無効な日付形式です' };
+  }
+  
+  simulateDate = date;
+  
+  // サーバーのシミュレート日付も設定
+  try {
+    await axios.post(`http://localhost:${API_PORT}/api/simulate-date`, {
+      date: dateString
+    });
+  } catch (error) {
+    console.error('サーバーのシミュレート日付設定に失敗:', error);
+  }
+  
+  return { success: true, message: `シミュレート日付を設定しました: ${date.toISOString()}` };
+}
+
 dotenv.config();
 
 const API_PORT = process.env.API_PORT || 3000;
@@ -16,8 +56,8 @@ if (!API_PORT || isNaN(Number(API_PORT))) {
 // 日数を引数で取得（デフォルト10日）
 // 使用方法: npm run seed または npm run seed 30 (30日間のシミュレーション)
 const DAYS_TO_SIMULATE = parseInt(process.argv[2]) || 10;
-const START_DATE = new Date(Date.now() - DAYS_TO_SIMULATE * 24 * 60 * 60 * 1000); // 指定日数前から開始
-const END_DATE = new Date(); // 現在まで
+const START_DATE = new Date(getCurrentDate().getTime() - DAYS_TO_SIMULATE * 24 * 60 * 60 * 1000); // 指定日数前から開始
+const END_DATE = getCurrentDate(); // 現在まで
 const PRAY_PROBABILITY = 0.5; // 1日あたりの参拝確率（0.0〜1.0）
 const MAX_PRAYS_PER_DAY = 3; // 1日あたりの最大参拝回数
 
@@ -253,205 +293,40 @@ async function awardRankingTitles(
   }
 }
 
-// シード処理完了後に称号を付与する関数（サーバー不要）
+// シード処理完了後に称号を付与する関数（サーバーAPI呼び出し）
 async function awardTitlesAfterSeed(prisma: PrismaClient) {
   console.log('🏆 シード後の称号付与処理を開始...');
   
   try {
     // 月間ランキング称号付与
     console.log('月間ランキング称号付与中...');
+    const monthlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=monthly`);
+    console.log(`📡 月間称号付与API応答: ${monthlyResponse.status} ${monthlyResponse.statusText}`);
     
-    // 神社ごとに1位～3位ユーザーに付与
-    const shrineTitleMaster = await prisma.titleMaster.findUnique({ 
-      where: { code: 'monthly_rank_shrine' } 
-    });
+    // 年間ランキング称号付与
+    console.log('年間ランキング称号付与中...');
+    const yearlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=yearly`);
+    console.log(`📡 年間称号付与API応答: ${yearlyResponse.status} ${yearlyResponse.statusText}`);
     
-    if (!shrineTitleMaster) {
-      console.error('称号マスターが見つかりません: monthly_rank_shrine');
-      return;
+    console.log('✅ 称号付与処理が完了しました');
+    
+  } catch (error: any) {
+    console.error('❌ 称号付与エラー:', error.message);
+    if (error.response) {
+      console.error(`📡 エラー詳細: ${error.response.status} ${error.response.statusText}`);
+      console.error(`📡 レスポンス:`, error.response.data);
     }
-    
-    // 神社統計を一括取得
-    const shrineStats = await prisma.shrinePrayStatsMonthly.findMany({
-      include: { 
-        user: { select: { id: true, name: true } },
-        shrine: { select: { id: true, name: true } }
-      },
-      orderBy: { count: 'desc' }
-    });
-    
-    // 神社ごとにグループ化して上位3位まで取得
-    const shrineGroups: { [key: number]: any[] } = {};
-    shrineStats.forEach(stat => {
-      if (!shrineGroups[stat.shrine_id]) {
-        shrineGroups[stat.shrine_id] = [];
-      }
-      shrineGroups[stat.shrine_id].push(stat);
-    });
-    
-    let shrineTitleCount = 0;
-    for (const [shrineId, stats] of Object.entries(shrineGroups)) {
-      if (stats.length === 0) continue;
-      
-      const shrine = stats[0].shrine;
-      const topStats = stats.slice(0, 3); // 上位3位まで
-      
-      for (let i = 0; i < topStats.length; i++) {
-        const stat = topStats[i];
-        const rank = i + 1;
-        
-                         // 表示名を生成
-                 let displayName = shrineTitleMaster.name_template;
-                 const embedData = {
-                   shrine: shrine.name,
-                   shrine_id: shrine.id,
-                   rank: rank + '位',
-                   period: '2025-07', // シード処理の期間（固定）
-                 };
-                 for (const key of Object.keys(embedData)) {
-                   displayName = displayName.replace(new RegExp(`<\{${key}\}>`, 'g'), embedData[key]);
-                 }
-        
-                         // 既存の称号を確認してから作成または更新
-                 const existingTitle = await prisma.userTitle.findFirst({
-                   where: {
-                     user_id: stat.user.id,
-                     title_id: shrineTitleMaster.id,
-                     embed_data: {
-                       equals: embedData
-                     }
-                   }
-                 });
-        
-        if (existingTitle) {
-          // 既存の称号を更新
-          await prisma.userTitle.update({
-            where: { id: existingTitle.id },
-            data: {
-              awarded_at: new Date(),
-              grade: rank <= 3 ? 5 - rank : 1,
-              display_name: displayName
-            }
-          });
-        } else {
-          // 新しい称号を作成
-          await prisma.userTitle.create({
-            data: {
-              user_id: stat.user.id,
-              title_id: shrineTitleMaster.id,
-              awarded_at: new Date(),
-              embed_data: embedData,
-              grade: rank <= 3 ? 5 - rank : 1,
-              display_name: displayName
-            }
-          });
-        }
-        
-        shrineTitleCount++;
-      }
-    }
-    
-    // 神様ごとに1位ユーザーに付与
-    console.log('神様月間ランキング称号付与中...');
-    
-    const dietyTitleMaster = await prisma.titleMaster.findUnique({ 
-      where: { code: 'monthly_rank_diety' } 
-    });
-    
-    if (!dietyTitleMaster) {
-      console.error('称号マスターが見つかりません: monthly_rank_diety');
-      return;
-    }
-    
-    // 神様統計を一括取得
-    const dietyStats = await prisma.dietyPrayStatsMonthly.findMany({
-      include: { 
-        user: { select: { id: true, name: true } },
-        diety: { select: { id: true, name: true } }
-      },
-      orderBy: { count: 'desc' }
-    });
-    
-    // 神様ごとにグループ化して1位を取得
-    const dietyGroups: { [key: number]: any[] } = {};
-    dietyStats.forEach(stat => {
-      if (!dietyGroups[stat.diety_id]) {
-        dietyGroups[stat.diety_id] = [];
-      }
-      dietyGroups[stat.diety_id].push(stat);
-    });
-    
-    let dietyTitleCount = 0;
-    for (const [dietyId, stats] of Object.entries(dietyGroups)) {
-      if (stats.length === 0) continue;
-      
-      const diety = stats[0].diety;
-      const maxCount = stats[0].count;
-      
-      // 同点の1位を取得
-      const topStats = stats.filter(s => s.count === maxCount);
-      
-      for (const stat of topStats) {
-                         // 表示名を生成
-                 let displayName = dietyTitleMaster.name_template;
-                 const embedData = {
-                   diety: diety.name,
-                   diety_id: diety.id,
-                   rank: '1位',
-                   period: '2025-07', // シード処理の期間（固定）
-                 };
-                 for (const key of Object.keys(embedData)) {
-                   displayName = displayName.replace(new RegExp(`<\{${key}\}>`, 'g'), embedData[key]);
-                 }
-        
-                         // 既存の称号を確認してから作成または更新
-                 const existingDietyTitle = await prisma.userTitle.findFirst({
-                   where: {
-                     user_id: stat.user.id,
-                     title_id: dietyTitleMaster.id,
-                     embed_data: {
-                       equals: embedData
-                     }
-                   }
-                 });
-        
-        if (existingDietyTitle) {
-          // 既存の称号を更新
-          await prisma.userTitle.update({
-            where: { id: existingDietyTitle.id },
-            data: {
-              awarded_at: new Date(),
-              grade: 5,
-              display_name: displayName
-            }
-          });
-        } else {
-          // 新しい称号を作成
-          await prisma.userTitle.create({
-            data: {
-              user_id: stat.user.id,
-              title_id: dietyTitleMaster.id,
-              awarded_at: new Date(),
-              embed_data: embedData,
-              grade: 5,
-              display_name: displayName
-            }
-          });
-        }
-        
-        dietyTitleCount++;
-      }
-    }
-    
-    console.log(`称号付与完了: 神社${shrineTitleCount}件, 神様${dietyTitleCount}件`);
-    
-  } catch (error) {
-    console.error('称号付与エラー:', error);
   }
 }
 
 export async function seedRealisticTransactions(prisma: PrismaClient) {
   console.log(`🚀 リアルなトランザクションデータの生成を開始... (${DAYS_TO_SIMULATE}日間)`);
+  
+  // シミュレーション開始（DAYS_TO_SIMULATE日前から開始）
+  const simulationStartDate = new Date(getCurrentDate().getTime() - DAYS_TO_SIMULATE * 24 * 60 * 60 * 1000);
+  simulationStartDate.setHours(0, 0, 0, 0);
+  await setSimulateDate(simulationStartDate.toISOString());
+  console.log(`📅 シミュレーション開始日: ${simulationStartDate.toISOString()}`);
   
   // 既存のトランザクションデータをクリア
   await prisma.shrinePray.deleteMany();
@@ -491,6 +366,9 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   let prevDay = currentDate.getDate();
   
   while (currentDate <= END_DATE) {
+    // シミュレート日付を現在の日付に更新
+    await setSimulateDate(currentDate.toISOString());
+    
     // 日切り替え判定
     const currentDay = currentDate.getDate();
     if (currentDay !== prevDay) {
@@ -607,4 +485,8 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   console.log('🏆 称号付与処理を開始...');
   await awardTitlesAfterSeed(prisma);
   console.log('🏆 称号付与処理が完了しました！');
+  
+  // シミュレーション終了（日付をクリア）
+  await setSimulateDate(null);
+  console.log('📅 シミュレーション終了: 日付をクリアしました');
 }
