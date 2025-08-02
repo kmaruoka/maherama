@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, type ReactNode } from 'react';
 import skins from './index';
 import type { SkinName } from './index';
+import useLocalStorageState from '../hooks/useLocalStorageState';
 
 const SkinContext = createContext(undefined as unknown as {
   skin: typeof skins.wa;
@@ -9,7 +10,7 @@ const SkinContext = createContext(undefined as unknown as {
 } | undefined);
 
 export const SkinProvider = ({ children }: { children: ReactNode }) => {
-  const [skinName, setSkinName] = useState<SkinName>('wa');
+  const [skinName, setSkinName] = useLocalStorageState<SkinName>('skin', 'wa');
   const skin = skins[skinName];
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import Container from 'react-bootstrap/Container';
 import { useTranslation } from 'react-i18next';
 import type { GridChildComponentProps } from 'react-window';
 import { CARD_WIDTH, CARD_HEIGHT } from '../../constants';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
 
 interface Item {
   id: number;
@@ -40,9 +41,9 @@ interface GridItemData {
 
 export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<'shrine' | 'diety'>('shrine');
-  const [sort, setSort] = useState('catalogedAt-desc');
-  const [style, setStyle] = useState<'card' | 'list'>('card');
+  const [tab, setTab] = useLocalStorageState<'shrine' | 'diety'>('catalogTab', 'shrine');
+  const [sort, setSort] = useLocalStorageState('catalogSort', 'catalogedAt-desc');
+  const [style, setStyle] = useLocalStorageState<'card' | 'list'>('catalogStyle', 'card');
 
   const { data: shrines = [] } = useShrineList();
 
