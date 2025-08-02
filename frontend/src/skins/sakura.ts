@@ -31,6 +31,8 @@ const sakuraSkin = {
     scrollbarTrack: '#fdeff2',
     scrollbarThumbHover: '#e91e63',
     tabInactive: 'linear-gradient(to bottom, #eac1d5 0%, #fdeff2 100%)',
+    disabled: '#e0e0e0',
+    textMuted: '#aaa',
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

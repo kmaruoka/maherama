@@ -35,25 +35,29 @@ export default function SettingsPage() {
   if (!userId) {
     return (
       <div className="p-3">
-        <h2 className="h5 fw-bold mb-3">ログイン</h2>
-        <div>IDを入力するかテストユーザー一覧から選択してログインしてください</div>
+        <h2 className="h5 fw-bold mb-3" style={{ color: 'var(--color-text)' }}>ログイン</h2>
+        <div style={{ color: 'var(--color-text)' }}>IDを入力するかテストユーザー一覧から選択してログインしてください</div>
         <input
           type="number"
           className="form-control"
           value={idInput}
           onChange={(e) => setIdInput(e.target.value)}
         />
-        <div className="text-muted small mt-2">
+        <div className="small mt-2" style={{ color: 'var(--color-text-muted)' }}>
           <div className="border rounded p-3 bg-light">
-            <div className="fw-bold mb-2">テストユーザー一覧:</div>
+            <div className="fw-bold mb-2" style={{ color: 'var(--color-text)' }}>テストユーザー一覧:</div>
             <div className="mt-1">
               {isLoading ? (
-                <div>読み込み中...</div>
+                <div style={{ color: 'var(--color-text-muted)' }}>読み込み中...</div>
               ) : (
                 users.map(user => (
                   <div 
                     key={user.id} 
-                    className={`py-1 settings-page__user-list-item ${Number(idInput) === user.id ? 'fw-bold text-primary' : ''}`}
+                    className={`py-1 settings-page__user-list-item ${Number(idInput) === user.id ? 'fw-bold' : ''}`}
+                    style={{ 
+                      color: Number(idInput) === user.id ? 'var(--color-primary)' : 'var(--color-text)',
+                      cursor: 'pointer'
+                    }}
                     onClick={() => setIdInput(String(user.id))}
                   >
                     ID: {user.id} - {user.name} (Lv.{user.level} / EXP: {user.exp} / AP: {user.ability_points})
@@ -78,12 +82,12 @@ export default function SettingsPage() {
 
   return (
     <div className="p-3 space-y-4">
-      <h2 className="h5 fw-bold">設定</h2>
+      <h2 className="h5 fw-bold" style={{ color: 'var(--color-text)' }}>設定</h2>
       <div className="d-flex justify-content-between align-items-center">
         {(() => {
           const user = users.find(u => u.id === Number(userId));
           return (
-            <div>
+            <div style={{ color: 'var(--color-text)' }}>
               ログイン中 (ID: {userId} / {user?.name} / Lv.{user?.level} / EXP: {user?.exp})
             </div>
           );
@@ -99,7 +103,7 @@ export default function SettingsPage() {
         </CustomButton>
       </div>
       <div className="d-flex align-items-center justify-content-between">
-        <span>デバッグモード</span>
+        <span style={{ color: 'var(--color-text)' }}>デバッグモード</span>
         <label className="d-flex align-items-center">
           <input
             type="checkbox"
@@ -107,11 +111,11 @@ export default function SettingsPage() {
             checked={debugMode}
             onChange={toggleDebugMode}
           />
-          {debugMode ? 'ON' : 'OFF'}
+          <span style={{ color: 'var(--color-text)' }}>{debugMode ? 'ON' : 'OFF'}</span>
         </label>
       </div>
       <div className="d-flex align-items-center justify-content-between mt-3">
-        <span>スキン</span>
+        <span style={{ color: 'var(--color-text)' }}>スキン</span>
         <select
           className="form-select skin-select w-auto ms-2"
           value={skinName}
@@ -123,7 +127,7 @@ export default function SettingsPage() {
         </select>
       </div>
       <div className="d-flex align-items-center justify-content-between mt-3">
-        <span>結界</span>
+        <span style={{ color: 'var(--color-text)' }}>結界</span>
         <select
           className="form-select skin-select w-auto ms-2"
           value={barrierName}
@@ -136,8 +140,8 @@ export default function SettingsPage() {
       </div>
       <div className="d-flex align-items-center justify-content-between mt-3">
         <div>
-          <span>神社表示上限数</span>
-          <div className="text-muted small">端末性能に応じて調整してください</div>
+          <span style={{ color: 'var(--color-text)' }}>神社表示上限数</span>
+          <div className="small" style={{ color: 'var(--color-text-muted)' }}>端末性能に応じて調整してください</div>
         </div>
         <div className="d-flex align-items-center">
           <input
@@ -150,10 +154,10 @@ export default function SettingsPage() {
             onChange={e => setMaxShrineDisplay(Number(e.target.value))}
             style={{ width: '128px' }}
           />
-          <span className="text-nowrap">{maxShrineDisplay}件</span>
+          <span className="text-nowrap" style={{ color: 'var(--color-text)' }}>{maxShrineDisplay}件</span>
         </div>
       </div>
-      <div className="mt-2 small text-muted">
+      <div className="mt-2 small" style={{ color: 'var(--color-text-muted)' }}>
         推奨値: 低スペック端末 10-50件 / 標準端末 100件 / 高スペック端末 200-500件
       </div>
     </div>

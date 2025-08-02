@@ -4,36 +4,52 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
+import { useSkin } from '../../skins/SkinContext';
 
 interface CustomCatalogListItemProps {
   name: string;
   count: number;
-  recordedDate: string;
+  catalogedAt: string;
   lastPrayedAt?: string;
   onClick?: () => void;
   countLabel?: string;
-  showLabels?: boolean; // 追加
+  showLabels?: boolean;
 }
 
-export default function CustomCatalogListItem({ name, count, recordedDate, lastPrayedAt, onClick, countLabel = '参拝数', showLabels = true }: CustomCatalogListItemProps) {
+export default function CustomCatalogListItem({ name, count, catalogedAt, lastPrayedAt, onClick, countLabel = '参拝数', showLabels = true }: CustomCatalogListItemProps) {
   const { t } = useTranslation();
+  const { skin } = useSkin();
+  
+  const containerClass = `catalog-list-item${onClick ? ' catalog-list-item--clickable' : ''}`;
+
   return (
     <div
-      className="catalog-list-row"
+      className={containerClass}
       onClick={onClick}
       role="button"
-      style={{ cursor: onClick ? 'pointer' : undefined, width: '100%', display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', minHeight: 56, height: 56, lineHeight: '56px', padding: '0 4px' }}
     >
-      <div className="catalog-list-col name" style={{ flex: 5, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-      <div className="catalog-list-col count" style={{ flex: 2, textAlign: 'right' }}>{showLabels ? `${t('count')}: ` : ''}{count}</div>
-      <div className="catalog-list-col date" style={{ flex: 5, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {(recordedDate || lastPrayedAt) && (
-          <span className="small text-muted">
-            {recordedDate && (showLabels ? `${t('registeredAt')}: ` : '')}{recordedDate ? formatDisplayDate(recordedDate) : ''}
-            {recordedDate && lastPrayedAt && ' / '}
-            {lastPrayedAt && (showLabels ? `${t('lastPrayedAt')}: ` : '')}{lastPrayedAt ? formatDisplayDate(lastPrayedAt) : ''}
+      <div className="catalog-list-item__row">
+        <div className="catalog-list-item__col catalog-list-item__col--name">{name}</div>
+        <div className="catalog-list-item__col catalog-list-item__col--count">
+          {showLabels ? `${t('count')}: ` : ''}{count}
+        </div>
+        <div className="catalog-list-item__col catalog-list-item__col--date">
+          <span className="small">
+            {catalogedAt && (
+              <>
+                {showLabels && <span className="catalog-list-item__text--muted">{t('catalogedAt')}: </span>}
+                <span className="catalog-list-item__text">{formatDisplayDate(catalogedAt)}</span>
+              </>
+            )}
+            {catalogedAt && lastPrayedAt && <span className="catalog-list-item__separator"> / </span>}
+            {lastPrayedAt && (
+              <>
+                {showLabels && <span className="catalog-list-item__text--muted">{t('lastPrayedAt')}: </span>}
+                <span className="catalog-list-item__text">{formatDisplayDate(lastPrayedAt)}</span>
+              </>
+            )}
           </span>
-        )}
+        </div>
       </div>
     </div>
   );

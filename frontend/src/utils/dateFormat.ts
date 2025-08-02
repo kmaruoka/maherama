@@ -13,11 +13,11 @@ export function formatDisplayDate(dateStr: string): string {
   const pad = (num: number) => num.toString().padStart(2, '0');
   
   if (dateYear === currentYear) {
-    // 本年中: MM-dd HH:mm形式
-    return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    // 本年中: MM/dd HH:mm形式（より読みやすい）
+    return `${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   } else {
-    // 本年以外: yyyy-MM-dd形式
-    return `${dateYear}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    // 本年以外: yyyy/MM/dd形式（より読みやすい）
+    return `${dateYear}/${pad(date.getMonth() + 1)}/${pad(date.getDate())}`;
   }
 }
 

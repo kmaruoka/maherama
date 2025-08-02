@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 export interface DietyListItem {
   id: number;
   name: string;
   kana?: string;
   count: number;
-  registeredAt: string;
+  catalogedAt: string;
   lastPrayedAt?: string;
   image_id?: number;
   image_url?: string;
@@ -20,12 +20,9 @@ export interface DietyListItem {
 
 export function useDietyList() {
   return useQuery<DietyListItem[]>({
-    queryKey: ['dieties'],
+    queryKey: ['dieties-visited'],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE}/dieties`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch diety list');
-      }
+      const response = await apiCall(`${API_BASE}/users/me/dieties-visited`);
       return response.json();
     },
   });

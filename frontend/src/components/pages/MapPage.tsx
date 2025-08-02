@@ -170,7 +170,6 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   // 参拝半径3倍以内の神社を距離順でソートして表示（上位100件に制限）
   const displayShrines = useMemo(() => {
     if (!centerArray || !prayDistance) {
-      console.log('[DEBUG] displayShrines: centerArray or prayDistance not available', { centerArray, prayDistance });
       return shrines;
     }
     

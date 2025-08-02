@@ -26,11 +26,13 @@ const aiSkin = {
       rankingBadge2: '#c0c0c0',       // 銀
       rankingBadge3: '#cd7f32',       // 銅
       rankingBadgeOther: '#2f4f4f',   // ダークスレートグレー
-      rankingBadgeText: '#f5f5f5',
+      rankingBadgeText: '#2c3e50',    // 暗い色（明るい背景に対して）
       scrollbarThumb: '#415a77',
       scrollbarTrack: '#1b263b',
       scrollbarThumbHover: '#778da9',
       tabInactive: 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)',
+      disabled: '#4a5568',
+      textMuted: '#a0aec0',
     },
     borderRadius: '1.5rem',
     fontFamily: '"Noto Serif JP", serif',

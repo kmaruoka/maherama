@@ -9,7 +9,7 @@ const resources = {
       user: 'ユーザー',
       name: '名前',
       count: '参拝数',
-      registeredAt: '図鑑収録日',
+      catalogedAt: '図鑑収録日',
       backToOverview: '全体表示に戻る',
       lastPrayedAt: '最終参拝日',
       // ShrineMarker
@@ -112,7 +112,7 @@ const resources = {
       user: 'User',
       name: 'Name',
       count: 'Pray Count',
-      registeredAt: 'Registered At',
+      catalogedAt: 'Catalog Recorded Date',
       backToOverview: 'Back to Overview',
       lastPrayedAt: 'Last Prayed At',
       // ShrineMarker

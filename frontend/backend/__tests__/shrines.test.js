@@ -19,7 +19,6 @@ describe('GET /shrines', () => {
       expect(shrine).toHaveProperty('lat');
       expect(shrine).toHaveProperty('lng');
       expect(shrine).toHaveProperty('count');
-      expect(shrine).toHaveProperty('registeredAt');
     }
   });
 }); 

@@ -31,6 +31,8 @@ const snowSkin = {
     scrollbarTrack: '#e0e0e0',
     scrollbarThumbHover: '#90a4ae',
     tabInactive: 'linear-gradient(to bottom, #cfd8dc 0%, #e0e0e0 100%)',
+    disabled: '#bdbdbd',
+    textMuted: '#757575',
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

@@ -28,9 +28,7 @@ export default function useRankingsBundleAll(dietyId?: number) {
         dietyRes.ok ? dietyRes.json() : {},
         userRes.ok ? userRes.json() : {}
       ]);
-      console.log('shrineData', shrineData);
-      console.log('dietyData', dietyData);
-      console.log('userData', userData);
+
       const periods: Period[] = ['all', 'yearly', 'monthly', 'weekly'];
       const result: RankingsBundleAllPeriods = {
         all: { shrineRankings: [], dietyRankings: [], userRankings: [] },
@@ -45,7 +43,7 @@ export default function useRankingsBundleAll(dietyId?: number) {
           userRankings: Array.isArray(userData[period]) ? userData[period] : [],
         };
       }
-      console.log('result', result);
+
       return result;
     },
     staleTime: 5 * 60 * 1000,

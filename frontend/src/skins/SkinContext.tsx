@@ -41,6 +41,18 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--color-scrollbar-track', colors.scrollbarTrack);
     root.style.setProperty('--color-scrollbar-thumb-hover', colors.scrollbarThumbHover);
     root.style.setProperty('--color-tab-inactive', colors.tabInactive);
+    root.style.setProperty('--color-ranking-tab-bg', colors.rankingTabBg);
+    root.style.setProperty('--color-ranking-tab-active-bg', colors.rankingTabActiveBg);
+    root.style.setProperty('--color-ranking-row-bg', colors.rankingRowBg);
+    root.style.setProperty('--color-ranking-row-border', colors.rankingRowBorder);
+    root.style.setProperty('--color-ranking-section', colors.rankingSection);
+    root.style.setProperty('--color-ranking-badge-1', colors.rankingBadge1);
+    root.style.setProperty('--color-ranking-badge-2', colors.rankingBadge2);
+    root.style.setProperty('--color-ranking-badge-3', colors.rankingBadge3);
+    root.style.setProperty('--color-ranking-badge-other', colors.rankingBadgeOther);
+    root.style.setProperty('--color-ranking-badge-text', colors.rankingBadgeText);
+    root.style.setProperty('--color-disabled', colors.disabled);
+    root.style.setProperty('--color-text-muted', colors.textMuted);
   }, [skin]);
   return (
     <SkinContext.Provider value={{ skin, skinName, setSkinName }}>

@@ -4,11 +4,12 @@ import Card from 'react-bootstrap/Card';
 import { useTranslation } from 'react-i18next';
 import './CustomCatalogCard.css';
 import { formatDisplayDate } from '../../utils/dateFormat';
+import { useSkin } from '../../skins/SkinContext';
 
 export interface CustomCatalogCardProps {
   name: string;
   count: number;
-  registeredAt: string;
+  catalogedAt: string;
   lastPrayedAt?: string;
   onClick: () => void;
   countLabel?: string;
@@ -19,8 +20,9 @@ export interface CustomCatalogCardProps {
   image_url_l?: string;
   dateLabel?: string;
 }
-export default function CustomCatalogCard({ name, count, registeredAt, lastPrayedAt, onClick, countLabel = '参拝数', type, image_url, image_url_s, image_url_m, image_url_l, dateLabel }: CustomCatalogCardProps) {
+export default function CustomCatalogCard({ name, count, catalogedAt, lastPrayedAt, onClick, countLabel = '参拝数', type, image_url, image_url_s, image_url_m, image_url_l, dateLabel }: CustomCatalogCardProps) {
   const { t } = useTranslation();
+  const { skin } = useSkin();
   const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_DISPLAY_URL;
   // 適切なサイズの画像を選択（160pxを優先、なければ元のimage_url）
   const imageSrc = image_url_s || image_url || noImage;
@@ -36,8 +38,8 @@ export default function CustomCatalogCard({ name, count, registeredAt, lastPraye
           <span className="field-row__value">{count}</span>
         </div>
         <div className="field-row">
-          <span className="field-row__label">{t('registeredAt')}:</span>
-          <span className="field-row__value">{formatDisplayDate(registeredAt)}</span>
+          <span className="field-row__label">{t('catalogedAt')}:</span>
+          <span className="field-row__value">{formatDisplayDate(catalogedAt)}</span>
         </div>
         {lastPrayedAt && (
           <div className="field-row">

@@ -17,7 +17,6 @@ describe('GET /dieties', () => {
       expect(diety).toHaveProperty('id');
       expect(diety).toHaveProperty('name');
       expect(diety).toHaveProperty('count');
-      expect(diety).toHaveProperty('registeredAt');
     }
   });
 }); 

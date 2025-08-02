@@ -194,7 +194,7 @@ body, #root, .log-pane, .log-pane-expanded {
   pointer-events: none;
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(120deg, rgba(255,255,255,0.0) 40%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.0) 60%);
+          background: linear-gradient(120deg, rgba(255,255,255,0.0) 40%, var(--color-surface) 50%, rgba(255,255,255,0.0) 60%);
   transform: translateX(-100%) skewX(-20deg);
   z-index: 2;
   opacity: 0;
@@ -580,25 +580,25 @@ body, #root, .log-pane, .log-pane-expanded {
 .btn-pray {
   background: var(--color-prayable);
   border-color: var(--color-prayable);
-  color: #fff;
+  color: var(--color-surface);
 }
 
 .btn-pray:disabled, .btn-pray.disabled {
   background: var(--color-unprayable);
   border-color: var(--color-unprayable);
-  color: #fff;
+  color: var(--color-surface);
 }
 
 .btn-remote-pray {
   background: var(--color-remote-prayable);
   border-color: var(--color-remote-prayable);
-  color: #fff;
+  color: var(--color-surface);
 }
 
 .btn-remote-pray:disabled, .btn-remote-pray.disabled {
   background: var(--color-unprayable);
   border-color: var(--color-unprayable);
-  color: #fff;
+  color: var(--color-surface);
 }
 
 /* ===== PRAY BUTTONS RESPONSIVE ===== */
@@ -796,6 +796,7 @@ body, #root, .log-pane, .log-pane-expanded {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  color: var(--color-text);
 }
 
 .modal__header-title--clickable {
@@ -1041,7 +1042,7 @@ nav.d-flex.position-fixed {
 /* ===== SUBMENU PAGE ===== */
 .submenu-page {
   padding: 16px;
-  background: var(--color-surface);
+  background: var(--color-background);
   min-height: 100vh;
 }
 
@@ -1130,14 +1131,15 @@ nav.d-flex.position-fixed {
 }
 
 .catalog-page__list-header {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
-  height: 56px;
-  line-height: 56px;
+  height: 40px;
+  line-height: 40px;
   font-weight: bold;
-  border-bottom: 1px solid #ddd;
-  background: rgba(255,255,255,0.9);
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
   z-index: 1;
 }
 
@@ -1162,11 +1164,16 @@ nav.d-flex.position-fixed {
 
 .catalog-page__list-container {
   width: 100%;
-  height: calc(100vh - 200px - 56px);
+  height: calc(100vh - 200px - 40px);
 }
 
 .catalog-page__list-row {
   width: 100%;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.catalog-page__list-row:last-child {
+  border-bottom: none;
 }
 
 /* ===== PANE HEADER RESPONSIVE ===== */
@@ -1246,7 +1253,7 @@ nav.d-flex.position-fixed {
 }
 
 .pane__icon-btn {
-  background: rgba(255,255,255,0.8);
+  background: var(--color-surface);
   border: none;
   border-radius: 50%;
   padding: 4px;
@@ -1262,8 +1269,8 @@ nav.d-flex.position-fixed {
   position: absolute;
   left: 4px;
   bottom: 4px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-surface);
   border-radius: 4px;
   padding: 1px 6px;
   font-size: 11px;
@@ -1315,7 +1322,7 @@ nav.d-flex.position-fixed {
 /* ===== CUSTOM IMAGE ===== */
 .custom-image {
   width: 100%;
-  background: var(--color-text);
+  background: var(--color-background);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1326,7 +1333,7 @@ nav.d-flex.position-fixed {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: var(--color-text);
+  background: var(--color-background);
   display: block;
 }
 
@@ -1352,8 +1359,7 @@ nav.d-flex.position-fixed {
 
 .field-row__label {
   font-size: 0.85em;
-  color: var(--color-text);
-  opacity: 0.7;
+  color: var(--color-text-muted, rgba(0, 0, 0, 0.6));
   flex-shrink: 0;
   font-weight: 500;
 }

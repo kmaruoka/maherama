@@ -50,9 +50,9 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
       </Tabs>
       <div className="d-grid gap-2 mt-2">
         {isLoading ? (
-          <div className="text-center py-4 small text-secondary">読み込み中...</div>
+          <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>読み込み中...</div>
         ) : items.length === 0 ? (
-          <div className="text-secondary text-center py-4 small">データがありません</div>
+          <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>データがありません</div>
         ) : (
           items.slice(0, maxItems).map((item, idx) => {
             let badgeBg = skin.colors.rankingBadgeOther;
@@ -79,7 +79,7 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
                     {item.name}
                   </CustomLink>
                 </span>
-                <span className="small text-secondary ms-2">{item.count}回</span>
+                <span className="small ms-2" style={{ color: skin.colors.text }}>{item.count}回</span>
               </div>
             );
           })

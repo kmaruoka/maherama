@@ -37,8 +37,6 @@ export async function apiCall(url: string, options: RequestInit = {}): Promise<R
   // 認証ヘッダーを追加（デフォルト値があるため常に追加）
   headers['x-user-id'] = String(userId);
 
-  // debugLog(`API Call: ${url} User ID: ${userId} Headers: ${JSON.stringify(headers)}`); // ← linterエラー回避のためコメントアウト
-
   const response = await fetch(url, {
     ...options,
     headers,

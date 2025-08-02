@@ -48,7 +48,7 @@ export function useStripeCheckout() {
       const { sessionId } = await res.json();
       
       // Stripe Checkoutにリダイレクト（実装は後で追加）
-      console.log('Stripe Checkout開始:', sessionId);
+      // console.log('Stripe Checkout開始:', sessionId);
       // window.location.href = `/checkout?session_id=${sessionId}`;
     },
     onSuccess: () => {
@@ -66,7 +66,7 @@ export function useAppStorePurchase() {
       // iOS In-App Purchase実装
       if (typeof window !== 'undefined' && 'webkit' in window) {
         // WebKit In-App Purchase API
-        console.log('App Store課金開始:', planId);
+        // console.log('App Store課金開始:', planId);
         // 実際の実装はiOSネイティブAPIに依存
       }
     },

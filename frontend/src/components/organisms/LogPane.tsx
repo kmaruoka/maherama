@@ -68,10 +68,10 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
             ))}
           </div>
         )}
-        {loading && <div className="px-2 py-1 text-secondary">ログを読み込み中...</div>}
+        {loading && <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログを読み込み中...</div>}
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
-          <div className="px-2 py-1 text-secondary">ログがありません</div>
+          <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログがありません</div>
         )}
         {logs.length > 0 && (
           <CustomLogLine log={logs[0]} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
@@ -105,10 +105,10 @@ export default function LogPane({ logs, loading, error, onShowShrine, onShowDiet
             ))}
           </div>
         )}
-        {loading && <div className="px-2 py-1 text-secondary">ログを読み込み中...</div>}
+        {loading && <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログを読み込み中...</div>}
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
-          <div className="px-2 py-1 text-secondary">ログがありません</div>)}
+          <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログがありません</div>)}
         {logs.slice().reverse().map((l, i) => (
           <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
         ))}

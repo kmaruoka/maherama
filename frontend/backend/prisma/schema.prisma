@@ -24,7 +24,6 @@ model Shrine {
   name                      String
   lat                       Float
   lng                       Float
-  registered_at             DateTime                 @default(now())
   kana                      String?
   location                  String
   description               String?
@@ -37,11 +36,11 @@ model Shrine {
   image_by                  String?
   image_id                  Int?
   image_url                 String?
-  image_url_xs              String?
-  image_url_s               String?
-  image_url_m               String?
   image_url_l               String?
+  image_url_m               String?
+  image_url_s               String?
   image_url_xl              String?
+  image_url_xs              String?
   area                      Area?                    @relation(fields: [area_id], references: [id])
   image                     Image?                   @relation(fields: [image_id], references: [id])
   shrine_catalogs           ShrineCatalog[]
@@ -62,17 +61,16 @@ model Diety {
   name                     String
   kana                     String?
   description              String?
-  registered_at            DateTime                @default(now())
   created_at               DateTime                @default(now())
   updated_at               DateTime                @updatedAt
   image_by                 String?
   image_id                 Int?
   image_url                String?
-  image_url_xs             String?
-  image_url_s              String?
-  image_url_m              String?
   image_url_l              String?
+  image_url_m              String?
+  image_url_s              String?
   image_url_xl             String?
+  image_url_xs             String?
   image                    Image?                  @relation(fields: [image_id], references: [id])
   diety_catalogs           DietyCatalog[]
   diety_images             DietyImage[]
@@ -116,11 +114,11 @@ model User {
   image_by                  String?
   image_id                  Int?
   image_url                 String?
-  image_url_xs              String?
-  image_url_s               String?
-  image_url_m               String?
   image_url_l               String?
+  image_url_m               String?
+  image_url_s               String?
   image_url_xl              String?
+  image_url_xs              String?
   abilityLogs               AbilityLog[]
   diety_catalogs            DietyCatalog[]
   diety_images              DietyImage[]

@@ -26,11 +26,13 @@ const tsukiSkin = {
       rankingBadge2: '#b0bec5',        // 月光銀
       rankingBadge3: '#bfa27a',        // 淡い銅
       rankingBadgeOther: '#37474f',    // 冷たい夜の影
-      rankingBadgeText: '#000000',
+      rankingBadgeText: '#2c3e50',     // 暗い色（明るい背景に対して）
       scrollbarThumb: '#3a3f5d',
       scrollbarTrack: '#11162a',
       scrollbarThumbHover: '#b0c4de',
       tabInactive: 'linear-gradient(to bottom, #546e7a 0%, #90a4ae 100%)',
+      disabled: '#37474f',
+      textMuted: '#90a4ae',
     },
     borderRadius: '1.5rem',
     fontFamily: '"Noto Serif JP", serif',

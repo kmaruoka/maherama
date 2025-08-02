@@ -81,6 +81,8 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     return <div className="p-3">{t('loading')}</div>;
   }
 
+
+
   // if (diety) {
   //   console.log('DietyPane: /dieties/:id API response', diety);
   // }
@@ -274,16 +276,6 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         </div>
       )}
 
-      <div className="modal-section">
-        {diety.registeredAt && (
-          <div className="field-row">
-            <span className="field-row__label">{t('registeredAt')}:</span>
-            <span className="field-row__value">{formatDisplayDate(diety.registeredAt)}</span>
-          </div>
-        )}
-
-      </div>
-
       {diety.shrines.length > 0 && (
         <div className="modal-section">
           <div className="modal-subtitle" onClick={() => setDetailView('shrines')} style={{ cursor: 'pointer' }}>
@@ -320,6 +312,18 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           onItemClick={onShowUser}
           maxItems={3}
         />
+      </div>
+
+      {/* 図鑑収録日と最終参拝日（一番下に表示） */}
+      <div className="modal-section">
+        <div className="field-row">
+          <span className="field-row__label">{t('catalogedAt')}:</span>
+          <span className="field-row__value">{diety.catalogedAt ? formatDisplayDate(diety.catalogedAt) : t('notRegistered')}</span>
+        </div>
+        <div className="field-row">
+          <span className="field-row__label">{t('lastPrayedAt')}:</span>
+          <span className="field-row__value">{diety.lastPrayedAt ? formatDisplayDate(diety.lastPrayedAt) : t('notRegistered')}</span>
+        </div>
       </div>
 
       {/* アップロードモーダル */}

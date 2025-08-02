@@ -353,7 +353,6 @@ app.get('/shrines/all', async (req, res) => {
         location: true,
         lat: true,
         lng: true,
-        registered_at: true,
         image_id: true,
         image_url: true,
         image_url_xs: true,
@@ -390,7 +389,6 @@ app.get('/shrines/all', async (req, res) => {
     const formattedShrines = shrines.map((shrine) => ({
       ...shrine,
       count: countMap[shrine.id] || 0,
-      registeredAt: shrine.registered_at,
       dieties: (shrine.shrine_dieties || []).map(sd => sd.diety)
     }));
     //console.log(`/shrines/all: ${formattedShrines.length}件返却`);
@@ -410,7 +408,6 @@ app.get('/shrines', async (req, res) => {
             name: true,
             lat: true,
             lng: true,
-            registered_at: true,
             image_id: true,
             image_url: true,
             image_url_xs: true,
@@ -442,7 +439,6 @@ app.get('/shrines', async (req, res) => {
       lat: shrine.lat,
       lng: shrine.lng,
       count: countMap[shrine.id] || 0,
-      registeredAt: shrine.registered_at,
       image_id: shrine.image_id,
       image_url: shrine.image_url,
       image_url_xs: shrine.image_url_xs,
@@ -460,7 +456,7 @@ app.get('/shrines', async (req, res) => {
   }
 });
 
-app.get('/shrines/:id', async (req, res) => {
+app.get('/shrines/:id', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid ID parameter' });
@@ -475,7 +471,6 @@ app.get('/shrines/:id', async (req, res) => {
         location: true,
         lat: true,
         lng: true,
-        registered_at: true,
         image_id: true,
         image_url: true,
         image_url_xs: true,
@@ -503,6 +498,26 @@ app.get('/shrines/:id', async (req, res) => {
       _sum: { count: true }
     });
     const totalCount = countData._sum.count || 0;
+
+    // 現在のユーザーの図鑑収録日と最終参拝日を取得
+    let catalogedAt = null;
+    let lastPrayedAt = null;
+    const userId = req.user.id; // authenticateJWTミドルウェアで設定されたユーザーIDを使用
+    
+    if (userId) {
+      const catalog = await prisma.shrineCatalog.findFirst({
+        where: { 
+          user_id: userId,
+          shrine_id: id 
+        },
+        select: { cataloged_at: true, last_prayed_at: true }
+      });
+      
+      if (catalog) {
+        catalogedAt = catalog.cataloged_at;
+        lastPrayedAt = catalog.last_prayed_at;
+      }
+    }
     
     if (!shrine) {
       return res.status(404).json({ error: 'Shrine not found' });
@@ -511,7 +526,8 @@ app.get('/shrines/:id', async (req, res) => {
     const result = {
       ...shrine,
       count: totalCount,
-      registeredAt: shrine.registered_at,
+      catalogedAt: catalogedAt,
+      lastPrayedAt: lastPrayedAt,
       dieties: (shrine.shrine_dieties || []).map(sd => sd.diety)
     };
     
@@ -723,7 +739,6 @@ app.get('/dieties', async (req, res) => {
         id: true,
         name: true,
         kana: true,
-        registered_at: true,
         image_id: true,
         image_url: true,
         image_url_xs: true,
@@ -754,7 +769,6 @@ app.get('/dieties', async (req, res) => {
       name: d.name,
       kana: d.kana,
       count: countMap[d.id] || 0,
-      registeredAt: d.registered_at,
       image_id: d.image_id,
       image_url: d.image_url,
       image_url_xs: d.image_url_xs,
@@ -772,7 +786,7 @@ app.get('/dieties', async (req, res) => {
   }
 });
 
-app.get('/dieties/:id', async (req, res) => {
+app.get('/dieties/:id', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   
   // デバッグ用ログ
@@ -792,7 +806,6 @@ app.get('/dieties/:id', async (req, res) => {
         name: true,
         kana: true,
         description: true,
-        registered_at: true,
         image_id: true,
         image_url: true,
         image_url_xs: true,
@@ -817,6 +830,26 @@ app.get('/dieties/:id', async (req, res) => {
     });
     const totalCount = countData._sum.count || 0;
 
+    // 現在のユーザーの図鑑収録日と最終参拝日を取得
+    let catalogedAt = null;
+    let lastPrayedAt = null;
+    const userId = req.user.id; // authenticateJWTミドルウェアで設定されたユーザーIDを使用
+    
+    if (userId) {
+      const catalog = await prisma.dietyCatalog.findFirst({
+        where: { 
+          user_id: userId,
+          diety_id: id 
+        },
+        select: { cataloged_at: true, last_prayed_at: true }
+      });
+      
+      if (catalog) {
+        catalogedAt = catalog.cataloged_at;
+        lastPrayedAt = catalog.last_prayed_at;
+      }
+    }
+
     if (!diety) {
       return res.status(404).json({ error: 'Not found' });
     }
@@ -824,9 +857,12 @@ app.get('/dieties/:id', async (req, res) => {
     const result = {
       ...diety,
       count: totalCount,
-      registeredAt: diety.registered_at,
+      catalogedAt: catalogedAt,
+      lastPrayedAt: lastPrayedAt,
       shrines: (diety.shrine_dieties || []).map(sd => sd.shrine)
     };
+
+
 
     res.json(result);
   } catch (err) {
@@ -944,10 +980,13 @@ function authenticateJWT(req, res, next) {
   // 開発環境では認証をスキップ（NODE_ENVが未設定の場合も開発環境として扱う）
   if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
     // フロントエンドから送信されたユーザーIDを使用、またはデフォルト値
+    console.log('=== AUTHENTICATE JWT DEBUG ===');
+    console.log('All headers:', req.headers);
+    console.log('x-user-id header:', req.headers['x-user-id']);
     const userIdFromHeader = req.headers['x-user-id'];
     const userId = userIdFromHeader ? parseInt(userIdFromHeader, 10) : 3;
     req.user = { id: userId };
-    //console.log('開発環境: 認証バイパス、ユーザーID:', req.user.id);
+    console.log('開発環境: 認証バイパス、ユーザーID:', req.user.id);
     return next();
   }
   
@@ -969,7 +1008,7 @@ function authenticateJWT(req, res, next) {
 }
 
 // 全ユーザー取得API
-app.get('/users', async (req, res) => {
+app.get('/users', authenticateJWT, async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -1309,7 +1348,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
 });
 
 // ランキング一括取得API
-app.get('/shrine-rankings-bundle', async (req, res) => {
+app.get('/shrine-rankings-bundle', authenticateJWT, async (req, res) => {
   const periods = ['all', 'yearly', 'monthly', 'weekly'];
   const result = {};
   for (const period of periods) {
@@ -1319,7 +1358,7 @@ app.get('/shrine-rankings-bundle', async (req, res) => {
   res.json(result);
 });
 
-app.get('/diety-rankings-bundle', async (req, res) => {
+app.get('/diety-rankings-bundle', authenticateJWT, async (req, res) => {
   const periods = ['all', 'yearly', 'monthly', 'weekly'];
   const dietyId = parseInt(req.query.dietyId, 10);
   if (isNaN(dietyId) || dietyId <= 0) {
@@ -1333,7 +1372,7 @@ app.get('/diety-rankings-bundle', async (req, res) => {
   res.json(result);
 });
 
-app.get('/user-rankings-bundle', async (req, res) => {
+app.get('/user-rankings-bundle', authenticateJWT, async (req, res) => {
   const periods = ['all', 'yearly', 'monthly', 'weekly'];
   const result = {};
   for (const period of periods) {
@@ -1443,7 +1482,7 @@ async function getUserRankings(period) {
 }
 
 // 神社ごとのユーザー参拝ランキング一括取得API
-app.get('/shrines/:id/rankings-bundle', async (req, res) => {
+app.get('/shrines/:id/rankings-bundle', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   if (isNaN(shrineId) || shrineId <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
@@ -1497,13 +1536,30 @@ app.get('/shrines/:id/rankings-bundle', async (req, res) => {
 
 // 現在のユーザーの参拝した神社一覧
 app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
+  console.log('=== /users/me/shrines-visited ENDPOINT CALLED ===');
   const userId = req.user.id;
+  console.log('User ID:', userId);
   try {
     const stats = await prisma.shrinePrayStats.findMany({
       where: { user_id: userId },
-      include: { shrine: true },
+      include: { 
+        shrine: {
+          select: {
+            id: true,
+            name: true,
+            kana: true,
+            image_url: true,
+            image_url_xs: true,
+            image_url_s: true,
+            image_url_m: true,
+            image_url_l: true,
+            image_url_xl: true
+          }
+        }
+      },
       orderBy: { count: 'desc' },
     });
+    
     // ShrineCatalog から last_prayed_at と cataloged_at を取得
     const catalogs = await prisma.shrineCatalog.findMany({
       where: { user_id: userId },
@@ -1511,14 +1567,33 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
     });
     const lastPrayedMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.last_prayed_at]));
     const catalogedAtMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.cataloged_at]));
-    const result = stats.map(s => ({
-      id: s.shrine.id,
-      name: s.shrine.name,
-      kana: s.shrine.kana,
-      count: s.count,
-      registeredAt: catalogedAtMap[s.shrine.id] || s.shrine.registered_at, // 図鑑収録日を優先、なければ神社登録日 TODO: 図鑑収録日のみでよいはずだが？
-      last_prayed_at: lastPrayedMap[s.shrine.id] || null
-    }));
+    
+    const result = stats.map(s => {
+      return {
+        id: s.shrine.id,
+        name: s.shrine.name,
+        kana: s.shrine.kana,
+        count: s.count,
+        catalogedAt: catalogedAtMap[s.shrine.id] || null, // 図鑑収録日
+        lastPrayedAt: lastPrayedMap[s.shrine.id] || null,
+        image_url: s.shrine.image_url_m || null,
+        image_url_s: s.shrine.image_url_s || null,
+        image_url_m: s.shrine.image_url_m || null,
+        image_url_l: s.shrine.image_url_l || null,
+        image_url_xl: s.shrine.image_url_xl || null,
+        image_url_xs: s.shrine.image_url_xs || null
+      };
+    });
+    
+    // デバッグ用: 最初のアイテムのデータをログに出力
+    console.log('=== SHRINE API CALLED ===');
+    console.log('Result length:', result.length);
+    if (result.length > 0) {
+      console.log('Shrine API response first item:', JSON.stringify(result[0], null, 2));
+    } else {
+      console.log('No shrine data found');
+    }
+    
     res.json(result);
   } catch (err) {
     console.error('Error fetching user shrines:', err);
@@ -1540,8 +1615,7 @@ app.get('/users/:id/shrines-visited', authenticateJWT, async (req, res) => {
     const result = stats.map(s => ({
       id: s.shrine.id,
       name: s.shrine.name,
-      count: s.count,
-      registeredAt: s.shrine.registered_at
+      count: s.count
     }));
     res.json(result);
   } catch (err) {
@@ -1552,7 +1626,9 @@ app.get('/users/:id/shrines-visited', authenticateJWT, async (req, res) => {
 
 // 現在のユーザーの参拝した神様一覧
 app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
+  console.log('=== /users/me/dieties-visited ENDPOINT CALLED ===');
   const userId = req.user.id;
+  console.log('User ID:', userId);
   try {
     // まずDietyPrayStatsからdiety_idとcountを取得
     const stats = await prisma.dietyPrayStats.findMany({
@@ -1568,27 +1644,26 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
     }
     // diety_idのリストを作成
     const dietyIds = stats.map(s => s.diety_id);
-    // Dietyテーブルから神様情報を取得
+    // Dietyテーブルから神様情報を取得（画像URLも含む）
     const dieties = await prisma.diety.findMany({
       where: { id: { in: dietyIds } },
       select: { 
         id: true, 
         name: true, 
         kana: true, 
-        registered_at: true 
+        image_url: true,
+        image_url_xs: true,
+        image_url_s: true,
+        image_url_m: true,
+        image_url_l: true,
+        image_url_xl: true
       }
-    });
-    // 各神様のサムネイルを取得
-    const thumbnails = await prisma.dietyImage.findMany({
-      where: { diety_id: { in: dietyIds }, is_current_thumbnail: true },
-      select: { diety_id: true, thumbnail_url: true }
     });
     // DietyCatalog から last_prayed_at と cataloged_at を取得
     const catalogs = await prisma.dietyCatalog.findMany({
       where: { user_id: userId },
       select: { diety_id: true, last_prayed_at: true, cataloged_at: true }
     });
-    const thumbMap = Object.fromEntries(thumbnails.map(t => [t.diety_id, t.thumbnail_url]));
     const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
     const lastPrayedMap = Object.fromEntries(catalogs.map(b => [b.diety_id, b.last_prayed_at]));
     const catalogedAtMap = Object.fromEntries(catalogs.map(b => [b.diety_id, b.cataloged_at]));
@@ -1600,11 +1675,26 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
         name: diety.name,
         kana: diety.kana,
         count: s.count,
-        registeredAt: catalogedAtMap[diety.id] || diety.registered_at, // 図鑑収録日を優先、なければ神様登録日 TODO: 図鑑収録日のみでよいはずだが？
-        image_url: thumbMap[diety.id] || null,
-        last_prayed_at: lastPrayedMap[diety.id] || null
+        catalogedAt: catalogedAtMap[diety.id] || null, // 図鑑収録日
+        lastPrayedAt: lastPrayedMap[diety.id] || null,
+        image_url: diety.image_url_m || null,
+        image_url_s: diety.image_url_s || null,
+        image_url_m: diety.image_url_m || null,
+        image_url_l: diety.image_url_l || null,
+        image_url_xl: diety.image_url_xl || null,
+        image_url_xs: diety.image_url_xs || null
       };
     }).filter(Boolean);
+    
+    // デバッグ用: 最初のアイテムのデータをログに出力
+    console.log('=== DIETY API CALLED ===');
+    console.log('Result length:', result.length);
+    if (result.length > 0) {
+      console.log('Diety API response first item:', JSON.stringify(result[0], null, 2));
+    } else {
+      console.log('No diety data found');
+    }
+    
     res.json(result);
   } catch (err) {
     console.error('Error fetching user dieties:', err);
@@ -1642,7 +1732,7 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
         id: true, 
         name: true, 
         kana: true, 
-        registered_at: true 
+ 
       }
     });
     
@@ -1657,7 +1747,7 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
         name: diety.name,
         kana: diety.kana,
         count: s.count,
-        registeredAt: diety.registered_at
+
       };
     }).filter(Boolean);
     
@@ -1704,7 +1794,7 @@ app.get('/users/:id/titles', authenticateJWT, async (req, res) => {
 });
 
 // 能力一覧取得
-app.get('/abilities', async (req, res) => {
+app.get('/abilities', authenticateJWT, async (req, res) => {
   try {
     const abilities = await prisma.abilityMaster.findMany({
       select: { 
@@ -1930,7 +2020,7 @@ app.get('/users/:id/level-info', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーの能力一覧取得
-app.get('/users/:id/abilities', async (req, res) => {
+app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -2708,7 +2798,7 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
 });
 
 // 画像リスト取得API（神社）
-app.get('/shrines/:id/images', async (req, res) => {
+app.get('/shrines/:id/images', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   if (isNaN(shrineId)) return res.status(400).json({ error: 'Invalid shrine ID' });
   try {
@@ -2734,7 +2824,7 @@ app.get('/shrines/:id/images', async (req, res) => {
 });
 
 // 画像リスト取得API（神様）
-app.get('/dieties/:id/images', async (req, res) => {
+app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   if (isNaN(dietyId)) return res.status(400).json({ error: 'Invalid diety ID' });
   try {
@@ -3177,7 +3267,7 @@ async function runPeriodicRankingAwards() {
 setInterval(runPeriodicRankingAwards, 60 * 1000); // 1分ごと
 
 // 管理用API: ランキング集計と報酬付与を実行（type=weekly|monthly|yearly 指定で分岐）
-app.post('/admin/ranking-awards', async (req, res) => {
+app.post('/admin/ranking-awards', authenticateJWT, async (req, res) => {
   try {
     const currentDate = getCurrentDate();
     const type = req.query.type || 'weekly'; // デフォルトはweekly

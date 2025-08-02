@@ -17,7 +17,7 @@ interface Item {
   name: string;
   kana?: string;
   count: number;
-  registeredAt: string;
+  catalogedAt: string;
   lastPrayedAt?: string;
   image_id?: number;
   image_url?: string;
@@ -41,7 +41,7 @@ interface GridItemData {
 export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<'shrine' | 'diety'>('shrine');
-  const [sort, setSort] = useState('registeredAt-desc');
+  const [sort, setSort] = useState('catalogedAt-desc');
   const [style, setStyle] = useState<'card' | 'list'>('card');
 
   const { data: shrines = [] } = useShrineList();
@@ -72,13 +72,13 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
     if (key === 'count') return (a.count - b.count) * mul;
     if (key === 'lastPrayedAt') {
       // 最終参拝日でソート（nullの場合は最古として扱う）
-      const aDate = (a as any).lastPrayedAt ? new Date((a as any).lastPrayedAt).getTime() : 0;
-      const bDate = (b as any).lastPrayedAt ? new Date((b as any).lastPrayedAt).getTime() : 0;
+      const aDate = a.lastPrayedAt ? new Date(a.lastPrayedAt).getTime() : 0;
+      const bDate = b.lastPrayedAt ? new Date(b.lastPrayedAt).getTime() : 0;
       return (aDate - bDate) * mul;
     }
-    // registeredAt（図鑑収録日）でソート
+    // catalogedAt（図鑑収録日）でソート
     return (
-      new Date(a.registeredAt).getTime() - new Date(b.registeredAt).getTime()
+      new Date(a.catalogedAt).getTime() - new Date(b.catalogedAt).getTime()
     ) * mul;
   });
 
@@ -87,14 +87,15 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       key={item.id}
       name={item.name}
       count={item.count}
-      registeredAt={item.registeredAt}
+      catalogedAt={item.catalogedAt}
+      lastPrayedAt={item.lastPrayedAt}
       onClick={() => handleItemClick(item)}
       countLabel={t('prayCount')}
       type={tab === 'diety' ? 'diety' : 'shrine'}
-              image_url={item.image_url}
-        image_url_s={item.image_url_s}
-        image_url_m={item.image_url_m}
-        image_url_l={item.image_url_l}
+      image_url={item.image_url}
+      image_url_s={item.image_url_s}
+      image_url_m={item.image_url_m}
+      image_url_l={item.image_url_l}
     />
   ), [tab, t, handleItemClick]);
 
@@ -115,8 +116,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
-          <option value="registeredAt-desc">{t('sortByRegisteredDateDesc')}</option>
-          <option value="registeredAt-asc">{t('sortByRegisteredDateAsc')}</option>
+                <option value="catalogedAt-desc">{t('sortByRegisteredDateDesc')}</option>
+      <option value="catalogedAt-asc">{t('sortByRegisteredDateAsc')}</option>
           <option value="lastPrayedAt-desc">{t('sortByLastPrayedDateDesc')}</option>
           <option value="lastPrayedAt-asc">{t('sortByLastPrayedDateAsc')}</option>
           <option value="name-asc">{t('sortByNameAsc')}</option>
@@ -139,7 +140,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
             {({ height, width }: { height: number; width: number }) => {
               const SCROLLBAR_WIDTH = 25; // 一般的なスクロールバー幅
               const adjustedWidth = width - SCROLLBAR_WIDTH;
-              const GAP = 8;
+              const GAP = 6;
               const columnCount = Math.max(1, Math.floor((adjustedWidth + GAP / 2) / (CARD_WIDTH + GAP)));
               const rowCount = Math.ceil(sorted.length / columnCount);
               return (
@@ -185,7 +186,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
               <div className="catalog-page__list-header" style={{ width: width }}>
                 <div className="catalog-page__list-col--name">{t('name')}</div>
                 <div className="catalog-page__list-col--count">{t('count')}</div>
-                <div className="catalog-page__list-col--date">{t('registeredAt')} / {t('lastPrayedAt')}</div>
+                <div className="catalog-page__list-col--date">{t('catalogedAt')} / {t('lastPrayedAt')}</div>
               </div>
             )}
           </AutoSizer>
@@ -193,7 +194,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           <div className="catalog-page__list-container">
             <AutoSizer>
               {({ height, width }: { height: number; width: number }) => {
-                const LIST_ROW_HEIGHT = 56;
+                const LIST_ROW_HEIGHT = 40;
                 return (
                   <List
                     height={height}
@@ -205,14 +206,16 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                     {({ index, style, data }: { index: number; style: React.CSSProperties; data: any }) => {
                       const { sorted, tab, onShowShrine, onShowDiety, onShowUser } = data;
                       const item = sorted[index];
+                      
+
                       return (
                         <div className="catalog-page__list-row" style={style}>
                           <CustomCatalogListItem
                             key={item.id}
                             name={item.name}
                             count={item.count}
-                            recordedDate={item.registeredAt}
-                            lastPrayedAt={(item as any).lastPrayedAt}
+                            catalogedAt={item.catalogedAt}
+                            lastPrayedAt={item.lastPrayedAt}
                             showLabels={false}
                             onClick={() => {
                               if (tab === 'shrine' && onShowShrine) {

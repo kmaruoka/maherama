@@ -604,13 +604,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           maxItems={3}
         />
       </div>
-      
-      <div className="text-muted small">
-        {t('registeredAt')}: {formatDisplayDate(data.registeredAt)}
-        {data.lastPrayedAt && (
-          <> / {t('lastPrayedAt')}: {formatDisplayDate(data.lastPrayedAt)}</>
-        )}
-      </div>
 
       {/* アップロードモーダル */}
       <ImageUploadModal
@@ -649,6 +642,18 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
             ))}
           </div>
         )}
+      </div>
+
+      {/* 図鑑収録日と最終参拝日（一番下に表示） */}
+      <div className="modal-section">
+        <div className="field-row">
+          <span className="field-row__label">{t('catalogedAt')}:</span>
+          <span className="field-row__value">{data.catalogedAt ? formatDisplayDate(data.catalogedAt) : t('notRegistered')}</span>
+        </div>
+        <div className="field-row">
+          <span className="field-row__label">{t('lastPrayedAt')}:</span>
+          <span className="field-row__value">{data.lastPrayedAt ? formatDisplayDate(data.lastPrayedAt) : t('notRegistered')}</span>
+        </div>
       </div>
     </div>
   );
