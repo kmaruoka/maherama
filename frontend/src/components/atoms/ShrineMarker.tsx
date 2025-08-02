@@ -75,7 +75,7 @@ function createShrineIcon(
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
           <img src="${(image_url || NOIMAGE_SHRINE_URL) + '?t=' + Date.now()}" alt="shrine" />
-          <div class="shrine-marker-thumbnail-gloss ${(isPrayable || !isInZukan) && !hasPrayedToday ? 'active' : ''}"></div>
+          <div class="shrine-marker-thumbnail-gloss ${isPrayable && !hasPrayedToday ? 'active' : ''}"></div>
         </div>
         <div class="shrine-marker-pin"></div>
         <div class="shrine-marker-status-tooltip">${tooltipText}</div>
