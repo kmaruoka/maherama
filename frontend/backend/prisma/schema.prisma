@@ -42,7 +42,7 @@ model Shrine {
   shrine_pray_stats_weekly  ShrinePrayStatsWeekly[]
   shrine_pray_stats_daily   ShrinePrayStatsDaily[]
   shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
-  shrine_books              ShrineBook[]
+  shrine_catalogs              ShrineCatalog[]
   shrine_images             ShrineImage[]
   thumbnailUrl              String? // サムネイル画像URL
   thumbnailBy               String? // サムネイル投稿ユーザー名
@@ -69,7 +69,7 @@ model Diety {
   diety_pray_stats_weekly DietyPrayStatsWeekly[]
   diety_pray_stats_daily DietyPrayStatsDaily[]
   diety_pray_stats_yearly DietyPrayStatsYearly[]
-  diety_books DietyBook[]
+  diety_catalogs DietyCatalog[]
   diety_images DietyImage[]
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
@@ -104,8 +104,8 @@ model User {
   thumbnailUrl              String? // ユーザーサムネイル画像URL
   following                 Follow[]                 @relation("follows")
   followers                 Follow[]                 @relation("followedBy")
-  shrine_books              ShrineBook[]
-  diety_books               DietyBook[]
+  shrine_catalogs              ShrineCatalog[]
+  diety_catalogs               DietyCatalog[]
   shrine_pray_stats         ShrinePrayStats[]
   shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
   shrine_pray_stats_weekly ShrinePrayStatsWeekly[]
@@ -300,7 +300,7 @@ model DietyPrayStatsYearly {
   @@unique([diety_id, user_id])
 }
 
-model ShrineBook {
+model ShrineCatalog {
   user          User     @relation(fields: [user_id], references: [id])
   user_id       Int
   shrine        Shrine   @relation(fields: [shrine_id], references: [id])
@@ -313,7 +313,7 @@ model ShrineBook {
   @@id([user_id, shrine_id])
 }
 
-model DietyBook {
+model DietyCatalog {
   user          User     @relation(fields: [user_id], references: [id])
   user_id       Int
   diety         Diety    @relation(fields: [diety_id], references: [id])

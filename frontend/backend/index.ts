@@ -497,8 +497,8 @@ async function prayAtShrine({
     await prisma.remotePray.create({ data: { shrine_id: shrineId, user_id: userId, prayed_at: new Date() } });
   }
 
-  // ShrineBook更新
-  const shrineBookResult = await prisma.shrineBook.upsert({
+  // ShrineCatalog更新
+  const shrineCatalogResult = await prisma.shrineCatalog.upsert({
     where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } },
     update: { last_prayed_at: new Date() },
     create: { user_id: userId, shrine_id: shrineId, last_prayed_at: new Date() }
@@ -521,7 +521,7 @@ async function prayAtShrine({
     }
   }
 
-  // 神様カウント・DietyBook
+  // 神様カウント・DietyCatalog
   for (const sd of shrine.shrine_dieties) {
     await prisma.dietyPray.create({ data: { diety_id: sd.diety.id, user_id: userId } });
     const dietyId = sd.diety.id;
@@ -540,7 +540,7 @@ async function prayAtShrine({
         await tbl.model.create({ data: { diety_id: dietyId, user_id: userId, count: 1, rank: 1 } });
       }
     }
-    await prisma.dietyBook.upsert({
+    await prisma.dietyCatalog.upsert({
       where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } },
       update: { last_prayed_at: new Date() },
       create: { user_id: userId, diety_id: dietyId, last_prayed_at: new Date() }
@@ -1430,13 +1430,13 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
       include: { shrine: true },
       orderBy: { count: 'desc' },
     });
-    // ShrineBook から last_prayed_at と registered_at を取得
-    const books = await prisma.shrineBook.findMany({
+    // ShrineCatalog から last_prayed_at と registered_at を取得
+    const catalogs = await prisma.shrineCatalog.findMany({
       where: { user_id: userId },
       select: { shrine_id: true, last_prayed_at: true, registered_at: true }
     });
-    const lastPrayedMap = Object.fromEntries(books.map(b => [b.shrine_id, b.last_prayed_at]));
-    const registeredAtMap = Object.fromEntries(books.map(b => [b.shrine_id, b.registered_at]));
+    const lastPrayedMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.last_prayed_at]));
+    const registeredAtMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.registered_at]));
     const result = stats.map(s => ({
       id: s.shrine.id,
       name: s.shrine.name,
@@ -1509,15 +1509,15 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
       where: { diety_id: { in: dietyIds }, is_current_thumbnail: true },
       select: { diety_id: true, thumbnail_url: true }
     });
-    // DietyBook から last_prayed_at と registered_at を取得
-    const books = await prisma.dietyBook.findMany({
+    // DietyCatalog から last_prayed_at と registered_at を取得
+    const catalogs = await prisma.dietyCatalog.findMany({
       where: { user_id: userId },
       select: { diety_id: true, last_prayed_at: true, registered_at: true }
     });
     const thumbMap = Object.fromEntries(thumbnails.map(t => [t.diety_id, t.thumbnail_url]));
     const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
-    const lastPrayedMap = Object.fromEntries(books.map(b => [b.diety_id, b.last_prayed_at]));
-    const registeredAtMap = Object.fromEntries(books.map(b => [b.diety_id, b.registered_at]));
+    const lastPrayedMap = Object.fromEntries(catalogs.map(b => [b.diety_id, b.last_prayed_at]));
+    const registeredAtMap = Object.fromEntries(catalogs.map(b => [b.diety_id, b.registered_at]));
     const result = stats.map(s => {
       const diety = dietyMap[s.diety_id];
       if (!diety) return null;
@@ -2315,11 +2315,11 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
   }
   
   try {
-    // 1. 図鑑収録済みかどうか（ShrineBookテーブルで判定）
-    const shrineBook = await prisma.shrineBook.findUnique({
+    // 1. 図鑑収録済みかどうか（ShrineCatalogテーブルで判定）
+    const shrineCatalog = await prisma.shrineCatalog.findUnique({
       where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } }
     });
-    const isInZukan = !!shrineBook;
+    const isInZukan = !!shrineCatalog;
     
     // 2. 合計参拝回数
     const shrineStats = await prisma.shrinePrayStats.findFirst({
@@ -2571,8 +2571,8 @@ app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req,
   if (isNaN(shrineId) || isNaN(imageId)) return res.status(400).json({ error: 'Invalid ID' });
   try {
     // 投票権チェック（図鑑登録済みユーザーのみ）
-    const hasBook = await prisma.shrineBook.findUnique({ where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } } });
-    if (!hasBook) return res.status(403).json({ error: '投票権がありません（参拝履歴なし）' });
+    const hasCatalog = await prisma.shrineCatalog.findUnique({ where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } } });
+    if (!hasCatalog) return res.status(403).json({ error: '投票権がありません（参拝履歴なし）' });
     // 既存投票削除（1ユーザー1票）
     await prisma.imageVote.deleteMany({ where: { user_id: userId, shrine_image_id: imageId } });
     // 投票
@@ -2592,8 +2592,8 @@ app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, 
   if (isNaN(dietyId) || isNaN(imageId)) return res.status(400).json({ error: 'Invalid ID' });
   try {
     // 投票権チェック（図鑑登録済みユーザーのみ）
-    const hasBook = await prisma.dietyBook.findUnique({ where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } } });
-    if (!hasBook) return res.status(403).json({ error: '投票権がありません（参拝履歴なし）' });
+    const hasCatalog = await prisma.dietyCatalog.findUnique({ where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } } });
+    if (!hasCatalog) return res.status(403).json({ error: '投票権がありません（参拝履歴なし）' });
     // 既存投票削除（1ユーザー1票）
     await prisma.dietyImageVote.deleteMany({ where: { user_id: userId, diety_image_id: imageId } });
     // 投票

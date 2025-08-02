@@ -95,8 +95,8 @@ const USER_ACTIVITY_LEVELS = {
 
 3. **ソーシャルデータ**
    - `Follow`: フォロー関係
-   - `ShrineBook`: 神社図鑑
-   - `DietyBook`: 神様図鑑
+   - `ShrineCatalog`: 神社図鑑
+   - `DietyCatalog`: 神様図鑑
 
 4. **ログデータ**
    - `Log`: 参拝・遥拝のログメッセージ

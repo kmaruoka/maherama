@@ -466,8 +466,8 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   await prisma.dietyPrayStatsMonthly.deleteMany();
   await prisma.dietyPrayStatsWeekly.deleteMany();
   await prisma.follow.deleteMany();
-  await prisma.shrineBook.deleteMany();
-  await prisma.dietyBook.deleteMany();
+  await prisma.shrineCatalog.deleteMany();
+  await prisma.dietyCatalog.deleteMany();
   await prisma.log.deleteMany();
   await prisma.abilityLog.deleteMany();
 
