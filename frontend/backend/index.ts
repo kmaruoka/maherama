@@ -1430,19 +1430,19 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
       include: { shrine: true },
       orderBy: { count: 'desc' },
     });
-    // ShrineCatalog から last_prayed_at と registered_at を取得
+    // ShrineCatalog から last_prayed_at と cataloged_at を取得
     const catalogs = await prisma.shrineCatalog.findMany({
       where: { user_id: userId },
-      select: { shrine_id: true, last_prayed_at: true, registered_at: true }
+      select: { shrine_id: true, last_prayed_at: true, cataloged_at: true }
     });
     const lastPrayedMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.last_prayed_at]));
-    const registeredAtMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.registered_at]));
+    const catalogedAtMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.cataloged_at]));
     const result = stats.map(s => ({
       id: s.shrine.id,
       name: s.shrine.name,
       kana: s.shrine.kana,
       count: s.count,
-      registeredAt: registeredAtMap[s.shrine.id] || s.shrine.registered_at, // 図鑑収録日を優先、なければ神社登録日 TODO: 図鑑収録日のみでよいはずだが？
+      registeredAt: catalogedAtMap[s.shrine.id] || s.shrine.registered_at, // 図鑑収録日を優先、なければ神社登録日 TODO: 図鑑収録日のみでよいはずだが？
       last_prayed_at: lastPrayedMap[s.shrine.id] || null
     }));
     res.json(result);
@@ -1509,15 +1509,15 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
       where: { diety_id: { in: dietyIds }, is_current_thumbnail: true },
       select: { diety_id: true, thumbnail_url: true }
     });
-    // DietyCatalog から last_prayed_at と registered_at を取得
+    // DietyCatalog から last_prayed_at と cataloged_at を取得
     const catalogs = await prisma.dietyCatalog.findMany({
       where: { user_id: userId },
-      select: { diety_id: true, last_prayed_at: true, registered_at: true }
+      select: { diety_id: true, last_prayed_at: true, cataloged_at: true }
     });
     const thumbMap = Object.fromEntries(thumbnails.map(t => [t.diety_id, t.thumbnail_url]));
     const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
     const lastPrayedMap = Object.fromEntries(catalogs.map(b => [b.diety_id, b.last_prayed_at]));
-    const registeredAtMap = Object.fromEntries(catalogs.map(b => [b.diety_id, b.registered_at]));
+    const catalogedAtMap = Object.fromEntries(catalogs.map(b => [b.diety_id, b.cataloged_at]));
     const result = stats.map(s => {
       const diety = dietyMap[s.diety_id];
       if (!diety) return null;
@@ -1526,7 +1526,7 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
         name: diety.name,
         kana: diety.kana,
         count: s.count,
-        registeredAt: registeredAtMap[diety.id] || diety.registered_at, // 図鑑収録日を優先、なければ神様登録日 TODO: 図鑑収録日のみでよいはずだが？
+        registeredAt: catalogedAtMap[diety.id] || diety.registered_at, // 図鑑収録日を優先、なければ神様登録日 TODO: 図鑑収録日のみでよいはずだが？
         thumbnailUrl: thumbMap[diety.id] || null,
         last_prayed_at: lastPrayedMap[diety.id] || null
       };

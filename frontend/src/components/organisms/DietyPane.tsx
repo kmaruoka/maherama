@@ -80,9 +80,9 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     return <div className="p-3">{t('loading')}</div>;
   }
 
-  if (diety) {
-    console.log('DietyPane: /dieties/:id API response', diety);
-  }
+  // if (diety) {
+  //   console.log('DietyPane: /dieties/:id API response', diety);
+  // }
 
   const handleUpload = async (file: File) => {
     try {
