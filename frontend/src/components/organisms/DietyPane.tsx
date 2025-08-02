@@ -56,12 +56,10 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams || 0);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(idFromParams);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [thumbnailUrl, setThumbnailUrl] = useState(diety?.image_url);
   const [thumbCache, setThumbnailCache] = useState(Date.now());
 
   useEffect(() => {
     if (diety?.image_url) {
-      setThumbnailUrl(diety.image_url);
       setThumbnailCache(Date.now());
     }
   }, [diety?.image_url]);
@@ -105,7 +103,6 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
       if (response.ok) {
         const result = await response.json();
         if (result.isCurrentThumbnail) {
-          setThumbnailUrl(result.image.original_url);
           setThumbnailCache(Date.now());
         }
         setIsUploadModalOpen(false);
@@ -157,7 +154,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     if (detailView === 'thumbnail') {
       return (
         <img 
-          src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} 
+          src={(diety.image_url_l || diety.image_url_m || diety.image_url) + '?t=' + thumbCache} 
           alt="サムネイル" 
         />
       );
@@ -237,7 +234,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           }
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
-          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <img src={(diety.image_url_m || diety.image_url_s || diety.image_url || NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();

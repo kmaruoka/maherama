@@ -83,7 +83,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const [imageListLoading, setImageListLoading] = useState(false);
   const [imageListError, setImageListError] = useState<string | null>(null);
   const [thumbCache, setThumbCache] = useState(Date.now());
-  const [thumbnailUrl, setThumbnailUrl] = useState(data?.image_url);
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
@@ -92,7 +91,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   useEffect(() => {
     if (data?.image_url) {
-      setThumbnailUrl(data.image_url);
       setThumbCache(Date.now());
     }
   }, [data?.image_url]);
@@ -135,10 +133,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       setRankRefreshKey(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-      if (result.image?.thumbnail_url) {
-        setThumbnailUrl(result.image.original_url);
-        setThumbCache(Date.now());
-      }
+              if (result.image?.thumbnail_url) {
+          setThumbCache(Date.now());
+        }
       if (result.isCurrentThumbnail) {
         alert(t('uploadSuccess'));
       } else {
@@ -407,7 +404,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     if (detailView === 'thumbnail') {
       return (
         <img 
-          src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} 
+          src={(data.image_url_l || data.image_url_m || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} 
           alt="サムネイル" 
         />
       );
@@ -479,7 +476,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           }
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
-          <img src={(thumbnailUrl ? thumbnailUrl : NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <img src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} alt="サムネイル" />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();

@@ -1222,7 +1222,7 @@ nav.d-flex.position-fixed {
 .pane__thumbnail {
   position: relative;
   width: 100%;
-  max-width: 220px;
+  max-width: 256px;
   min-width: 0;
   background: none;
   box-shadow: none;

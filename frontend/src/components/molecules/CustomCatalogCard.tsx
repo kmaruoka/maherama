@@ -14,12 +14,16 @@ export interface CustomCatalogCardProps {
   countLabel?: string;
   type: 'shrine' | 'diety';
   image_url?: string;
+  image_url_s?: string;
+  image_url_m?: string;
+  image_url_l?: string;
   dateLabel?: string;
 }
-export default function CustomCatalogCard({ name, count, registeredAt, lastPrayedAt, onClick, countLabel = '参拝数', type, image_url, dateLabel }: CustomCatalogCardProps) {
+export default function CustomCatalogCard({ name, count, registeredAt, lastPrayedAt, onClick, countLabel = '参拝数', type, image_url, image_url_s, image_url_m, image_url_l, dateLabel }: CustomCatalogCardProps) {
   const { t } = useTranslation();
   const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_DISPLAY_URL;
-  const imageSrc = image_url || noImage;
+  // 適切なサイズの画像を選択（160pxを優先、なければ元のimage_url）
+  const imageSrc = image_url_s || image_url || noImage;
   return (
     <div className="catalog-card" onClick={onClick} role="button">
       <div className="catalog-card__thumbnail">

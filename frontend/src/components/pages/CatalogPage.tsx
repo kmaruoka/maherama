@@ -15,15 +15,17 @@ import { CARD_WIDTH, CARD_HEIGHT } from '../../constants';
 interface Item {
   id: number;
   name: string;
+  kana?: string;
   count: number;
   registeredAt: string;
   lastPrayedAt?: string;
   image_id?: number;
   image_url?: string;
-  image_url64?: string;
-  image_url128?: string;
-  image_url256?: string;
-  image_url512?: string;
+  image_url_xs?: string;
+  image_url_s?: string;
+  image_url_m?: string;
+  image_url_l?: string;
+  image_url_xl?: string;
   image_by?: string;
 }
 
@@ -70,8 +72,8 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
     if (key === 'count') return (a.count - b.count) * mul;
     if (key === 'lastPrayedAt') {
       // 最終参拝日でソート（nullの場合は最古として扱う）
-      const aDate = a.lastPrayedAt ? new Date(a.lastPrayedAt).getTime() : 0;
-      const bDate = b.lastPrayedAt ? new Date(b.lastPrayedAt).getTime() : 0;
+      const aDate = (a as any).lastPrayedAt ? new Date((a as any).lastPrayedAt).getTime() : 0;
+      const bDate = (b as any).lastPrayedAt ? new Date((b as any).lastPrayedAt).getTime() : 0;
       return (aDate - bDate) * mul;
     }
     // registeredAt（図鑑収録日）でソート
@@ -89,7 +91,10 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       onClick={() => handleItemClick(item)}
       countLabel={t('prayCount')}
       type={tab === 'diety' ? 'diety' : 'shrine'}
-      image_url={tab === 'diety' ? item.image_url : undefined}
+              image_url={item.image_url}
+        image_url_s={item.image_url_s}
+        image_url_m={item.image_url_m}
+        image_url_l={item.image_url_l}
     />
   ), [tab, t, handleItemClick]);
 
@@ -131,7 +136,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       {style === 'card' ? (
         <div className="catalog-page__card-container">
           <AutoSizer>
-            {({ height, width }) => {
+            {({ height, width }: { height: number; width: number }) => {
               const SCROLLBAR_WIDTH = 25; // 一般的なスクロールバー幅
               const adjustedWidth = width - SCROLLBAR_WIDTH;
               const GAP = 8;
@@ -176,7 +181,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         <>
           {/* ヘッダ行 */}
           <AutoSizer disableHeight>
-            {({ width }) => (
+            {({ width }: { width: number }) => (
               <div className="catalog-page__list-header" style={{ width: width }}>
                 <div className="catalog-page__list-col--name">{t('name')}</div>
                 <div className="catalog-page__list-col--count">{t('count')}</div>
@@ -187,7 +192,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           {/* リスト本体 */}
           <div className="catalog-page__list-container">
             <AutoSizer>
-              {({ height, width }) => {
+              {({ height, width }: { height: number; width: number }) => {
                 const LIST_ROW_HEIGHT = 56;
                 return (
                   <List
@@ -197,7 +202,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                     itemSize={LIST_ROW_HEIGHT}
                     itemData={{ sorted, tab, onShowShrine, onShowDiety, onShowUser }}
                   >
-                    {({ index, style, data }) => {
+                    {({ index, style, data }: { index: number; style: React.CSSProperties; data: any }) => {
                       const { sorted, tab, onShowShrine, onShowDiety, onShowUser } = data;
                       const item = sorted[index];
                       return (
@@ -207,7 +212,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                             name={item.name}
                             count={item.count}
                             recordedDate={item.registeredAt}
-                            lastPrayedAt={item.lastPrayedAt}
+                            lastPrayedAt={(item as any).lastPrayedAt}
                             showLabels={false}
                             onClick={() => {
                               if (tab === 'shrine' && onShowShrine) {

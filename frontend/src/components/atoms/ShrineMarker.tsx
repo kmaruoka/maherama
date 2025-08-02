@@ -15,10 +15,11 @@ export interface Shrine {
   lng: number;
   image_id?: number;
   image_url?: string;
-  image_url64?: string;
-  image_url128?: string;
-  image_url256?: string;
-  image_url512?: string;
+  image_url_xs?: string;
+  image_url_s?: string;
+  image_url_m?: string;
+  image_url_l?: string;
+  image_url_xl?: string;
   image_by?: string;
 }
 
@@ -120,7 +121,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
   // createShrineIconをuseMemoでキャッシュ（DOM再生成を最小化）
   const icon = useMemo(() => {
     return createShrineIcon(
-      shrine.image_url,
+      shrine.image_url_xs || shrine.image_url,
       isInZukan,
       canPray,
       false, // isRemotePrayable: 常にfalse
@@ -131,6 +132,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
       tooltipText
     );
   }, [
+    shrine.image_url_xs,
     shrine.image_url,
     isInZukan,
     canPray,

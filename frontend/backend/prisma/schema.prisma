@@ -31,16 +31,17 @@ model Shrine {
   festivals                 String?
   founded                   String?
   history                   String?
-  image_id                  Int?
-  image_url                 String?
-  image_url64               String?
-  image_url128              String?
-  image_url256              String?
-  image_url512              String?
-  image_by                  String?
   area_id                   Int?
   created_at                DateTime                 @default(now())
   updated_at                DateTime                 @updatedAt
+  image_by                  String?
+  image_id                  Int?
+  image_url                 String?
+  image_url_xs              String?
+  image_url_s               String?
+  image_url_m               String?
+  image_url_l               String?
+  image_url_xl              String?
   area                      Area?                    @relation(fields: [area_id], references: [id])
   image                     Image?                   @relation(fields: [image_id], references: [id])
   shrine_catalogs           ShrineCatalog[]
@@ -62,15 +63,16 @@ model Diety {
   kana                     String?
   description              String?
   registered_at            DateTime                @default(now())
-  image_id                 Int?
-  image_url                String?
-  image_url64              String?
-  image_url128             String?
-  image_url256             String?
-  image_url512             String?
-  image_by                 String?
   created_at               DateTime                @default(now())
   updated_at               DateTime                @updatedAt
+  image_by                 String?
+  image_id                 Int?
+  image_url                String?
+  image_url_xs             String?
+  image_url_s              String?
+  image_url_m              String?
+  image_url_l              String?
+  image_url_xl             String?
   image                    Image?                  @relation(fields: [image_id], references: [id])
   diety_catalogs           DietyCatalog[]
   diety_images             DietyImage[]
@@ -109,16 +111,16 @@ model User {
   ability_points            Int                      @default(0)
   exp                       Int                      @default(0)
   level                     Int                      @default(0)
-  image_id                  Int?
-  image_url                 String?
-  image_url64               String?
-  image_url128              String?
-  image_url256              String?
-  image_url512              String?
-  image_by                  String?
   created_at                DateTime                 @default(now())
   updated_at                DateTime                 @updatedAt
-  image                     Image?                   @relation(fields: [image_id], references: [id])
+  image_by                  String?
+  image_id                  Int?
+  image_url                 String?
+  image_url_xs              String?
+  image_url_s               String?
+  image_url_m               String?
+  image_url_l               String?
+  image_url_xl              String?
   abilityLogs               AbilityLog[]
   diety_catalogs            DietyCatalog[]
   diety_images              DietyImage[]
@@ -139,6 +141,7 @@ model User {
   shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
   shrine_pray_stats_weekly  ShrinePrayStatsWeekly[]
   shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
+  image                     Image?                   @relation(fields: [image_id], references: [id])
   userAbilities             UserAbility[]
   user_subscriptions        UserSubscription[]
   userTitles                UserTitle[]
@@ -447,52 +450,54 @@ model UserTitle {
 }
 
 model Image {
-  id          Int      @id @default(autoincrement())
-  url         String   // オリジナルURL
-  url64       String?  // 64x64サイズのURL
-  url128      String?  // 128x128サイズのURL
-  url256      String?  // 256x256サイズのURL
-  url512      String?  // 512x512サイズのURL
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  shrine_images   ShrineImage[]
-  diety_images    DietyImage[]
-  shrines         Shrine[]
-  dieties         Diety[]
-  users           User[]
+  id            Int           @id @default(autoincrement())
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  original_url  String
+  uploaded_by   String
+  url_l         String?
+  url_m         String?
+  url_s         String?
+  url_xl        String?
+  url_xs        String?
+  dieties       Diety[]
+  diety_images  DietyImage[]
+  shrines       Shrine[]
+  shrine_images ShrineImage[]
+  users         User[]
 }
 
 model ShrineImage {
   id                   Int         @id @default(autoincrement())
   shrine_id            Int
   user_id              Int
-  image_id             Int
   uploaded_at          DateTime    @default(now())
   voting_month         String
   is_winner            Boolean     @default(false)
   is_current_thumbnail Boolean     @default(false)
   created_at           DateTime    @default(now())
   updated_at           DateTime    @updatedAt
+  image_id             Int
   votes                ImageVote[]
+  image                Image       @relation(fields: [image_id], references: [id])
   shrine               Shrine      @relation(fields: [shrine_id], references: [id])
   user                 User        @relation(fields: [user_id], references: [id])
-  image                Image       @relation(fields: [image_id], references: [id])
 }
 
 model DietyImage {
   id                   Int              @id @default(autoincrement())
   diety_id             Int
   user_id              Int
-  image_id             Int
   uploaded_at          DateTime         @default(now())
   voting_month         String
   is_winner            Boolean          @default(false)
   is_current_thumbnail Boolean          @default(false)
   created_at           DateTime         @default(now())
   updated_at           DateTime         @updatedAt
+  image_id             Int
   diety                Diety            @relation(fields: [diety_id], references: [id])
-  user                 User             @relation(fields: [user_id], references: [id])
   image                Image            @relation(fields: [image_id], references: [id])
+  user                 User             @relation(fields: [user_id], references: [id])
   votes                DietyImageVote[]
 }
 

@@ -38,7 +38,7 @@ const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
 
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
@@ -356,10 +356,11 @@ app.get('/shrines/all', async (req, res) => {
         registered_at: true,
         image_id: true,
         image_url: true,
-        image_url64: true,
-        image_url128: true,
-        image_url256: true,
-        image_url512: true,
+        image_url_xs: true,
+        image_url_s: true,
+        image_url_m: true,
+        image_url_l: true,
+        image_url_xl: true,
         image_by: true,
         founded: true,
         history: true,
@@ -404,13 +405,21 @@ app.get('/shrines/all', async (req, res) => {
 app.get('/shrines', async (req, res) => {
   try {
     const shrines = await prisma.shrine.findMany({
-      select: {
-        id: true,
-        name: true,
-        lat: true,
-        lng: true,
-        registered_at: true
-      },
+                select: {
+            id: true,
+            name: true,
+            lat: true,
+            lng: true,
+            registered_at: true,
+            image_id: true,
+            image_url: true,
+            image_url_xs: true,
+            image_url_s: true,
+            image_url_m: true,
+            image_url_l: true,
+            image_url_xl: true,
+            image_by: true
+          },
       orderBy: {
         id: 'asc'
       }
@@ -433,7 +442,15 @@ app.get('/shrines', async (req, res) => {
       lat: shrine.lat,
       lng: shrine.lng,
       count: countMap[shrine.id] || 0,
-      registeredAt: shrine.registered_at
+      registeredAt: shrine.registered_at,
+      image_id: shrine.image_id,
+      image_url: shrine.image_url,
+      image_url_xs: shrine.image_url_xs,
+      image_url_s: shrine.image_url_s,
+      image_url_m: shrine.image_url_m,
+      image_url_l: shrine.image_url_l,
+      image_url_xl: shrine.image_url_xl,
+      image_by: shrine.image_by
     }));
     
     res.json(formattedShrines);
@@ -461,10 +478,11 @@ app.get('/shrines/:id', async (req, res) => {
         registered_at: true,
         image_id: true,
         image_url: true,
-        image_url64: true,
-        image_url128: true,
-        image_url256: true,
-        image_url512: true,
+        image_url_xs: true,
+        image_url_s: true,
+        image_url_m: true,
+        image_url_l: true,
+        image_url_xl: true,
         image_by: true,
         founded: true,
         history: true,
@@ -704,7 +722,16 @@ app.get('/dieties', async (req, res) => {
       select: {
         id: true,
         name: true,
-        registered_at: true
+        kana: true,
+        registered_at: true,
+        image_id: true,
+        image_url: true,
+        image_url_xs: true,
+        image_url_s: true,
+        image_url_m: true,
+        image_url_l: true,
+        image_url_xl: true,
+        image_by: true
       },
       orderBy: {
         id: 'asc'
@@ -725,8 +752,17 @@ app.get('/dieties', async (req, res) => {
     const formatted = filteredDieties.map((d) => ({
       id: d.id,
       name: d.name,
+      kana: d.kana,
       count: countMap[d.id] || 0,
-      registeredAt: d.registered_at
+      registeredAt: d.registered_at,
+      image_id: d.image_id,
+      image_url: d.image_url,
+      image_url_xs: d.image_url_xs,
+      image_url_s: d.image_url_s,
+      image_url_m: d.image_url_m,
+      image_url_l: d.image_url_l,
+      image_url_xl: d.image_url_xl,
+      image_by: d.image_by
     }));
 
     res.json(formatted);
@@ -759,10 +795,11 @@ app.get('/dieties/:id', async (req, res) => {
         registered_at: true,
         image_id: true,
         image_url: true,
-        image_url64: true,
-        image_url128: true,
-        image_url256: true,
-        image_url512: true,
+        image_url_xs: true,
+        image_url_s: true,
+        image_url_m: true,
+        image_url_l: true,
+        image_url_xl: true,
         image_by: true,
         shrine_dieties: {
           select: {
@@ -798,7 +835,7 @@ app.get('/dieties/:id', async (req, res) => {
   }
 });
 
-// 神様画像アップロード
+// 神様画像アップロード（古いAPI - 非推奨）
 app.post('/dieties/:id/images', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
@@ -810,21 +847,22 @@ app.post('/dieties/:id/images', authenticateJWT, async (req, res) => {
     if (!imageData) return res.status(400).json({ error: 'No image data' });
     const Jimp = require('jimp');
     const fs = require('fs');
-    const folder = `uploads/${getCurrentDate().toISOString().slice(0,7).replace('-', '')}`;
+    const yyyymm = getCurrentDate().toISOString().slice(0,7).replace('-', '');
+    const folder = path.join(__dirname, '..', '..', 'public', 'images', yyyymm);
     fs.mkdirSync(folder, { recursive: true });
     const buffer = Buffer.from(imageData.split(',')[1], 'base64');
     const img = await Jimp.read(buffer);
     const sizes = { marker: 64, thumb: 200, large: 800 };
     for (const [key, size] of Object.entries(sizes)) {
       const clone = img.clone().cover(size, size);
-      await clone.quality(80).writeAsync(`${folder}/diety${dietyId}-u${userId}_s${key}.jpg`);
+      await clone.quality(80).writeAsync(path.join(folder, `diety${dietyId}-u${userId}_s${key}.jpg`));
     }
     await prisma.dietyImage.create({
       data: {
         diety_id: dietyId,
         user_id: userId,
-        image_url: `${folder}/diety${dietyId}-u${userId}_sthumb.jpg`,
-        voting_month: getCurrentDate().toISOString().slice(0,7).replace('-', ''),
+        image_url: `/images/${yyyymm}/diety${dietyId}-u${userId}_sthumb.jpg`,
+        voting_month: yyyymm,
       }
     });
     res.json({ success: true });
@@ -2055,10 +2093,11 @@ app.get('/users/:id', authenticateJWT, async (req, res) => {
         ability_points: true,
         image_id: true,
         image_url: true,
-        image_url64: true,
-        image_url128: true,
-        image_url256: true,
-        image_url512: true,
+        image_url_xs: true,
+        image_url_s: true,
+        image_url_m: true,
+        image_url_l: true,
+        image_url_xl: true,
         image_by: true
       },
     });
@@ -2103,10 +2142,11 @@ app.get('/users/:id', authenticateJWT, async (req, res) => {
       ability_points: user.ability_points,
       image_id: user.image_id,
       image_url: user.image_url,
-      image_url64: user.image_url64,
-      image_url128: user.image_url128,
-      image_url256: user.image_url256,
-      image_url512: user.image_url512,
+      image_url_xs: user.image_url_xs,
+      image_url_s: user.image_url_s,
+      image_url_m: user.image_url_m,
+      image_url_l: user.image_url_l,
+      image_url_xl: user.image_url_xl,
       image_by: user.image_by,
       worship_count: worshipCount,
       today_worship_count: todayWorshipCount,
@@ -2136,10 +2176,11 @@ app.get('/users/:id/following', authenticateJWT, async (req, res) => {
             name: true,
             image_id: true,
             image_url: true,
-            image_url64: true,
-            image_url128: true,
-            image_url256: true,
-            image_url512: true,
+            image_url_xs: true,
+            image_url_s: true,
+            image_url_m: true,
+            image_url_l: true,
+            image_url_xl: true,
             image_by: true
           }
         }
@@ -2151,10 +2192,11 @@ app.get('/users/:id/following', authenticateJWT, async (req, res) => {
       name: f.following.name,
       image_id: f.following.image_id,
       image_url: f.following.image_url,
-      image_url64: f.following.image_url64,
-      image_url128: f.following.image_url128,
-      image_url256: f.following.image_url256,
-      image_url512: f.following.image_url512,
+      image_url_xs: f.following.image_url_xs,
+      image_url_s: f.following.image_url_s,
+      image_url_m: f.following.image_url_m,
+      image_url_l: f.following.image_url_l,
+      image_url_xl: f.following.image_url_xl,
       image_by: f.following.image_by
     }));
     
@@ -2181,10 +2223,11 @@ app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
             name: true,
             image_id: true,
             image_url: true,
-            image_url64: true,
-            image_url128: true,
-            image_url256: true,
-            image_url512: true,
+            image_url_xs: true,
+            image_url_s: true,
+            image_url_m: true,
+            image_url_l: true,
+            image_url_xl: true,
             image_by: true
           }
         }
@@ -2196,10 +2239,11 @@ app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
       name: f.follower.name,
       image_id: f.follower.image_id,
       image_url: f.follower.image_url,
-      image_url64: f.follower.image_url64,
-      image_url128: f.follower.image_url128,
-      image_url256: f.follower.image_url256,
-      image_url512: f.follower.image_url512,
+      image_url_xs: f.follower.image_url_xs,
+      image_url_s: f.follower.image_url_s,
+      image_url_m: f.follower.image_url_m,
+      image_url_l: f.follower.image_url_l,
+      image_url_xl: f.follower.image_url_xl,
       image_by: f.follower.image_by
     }));
     
@@ -2462,7 +2506,7 @@ function ensureDirSync(dir) {
 // 画像リサイズ設定
 const sizes = {
   marker: 64,
-  thumbnail: 128,
+  thumbnail: 160,
   original: 1024
 };
 
@@ -2486,29 +2530,32 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
   }
   try {
     const yyyymm = getYYYYMM();
-    const dir = path.join(__dirname, '..', 'uploads', yyyymm);
+    const dir = path.join(__dirname, '..', '..', 'public', 'images', yyyymm);
     ensureDirSync(dir);
     
-    // 5サイズ保存
+    // 6サイズ保存
     const markerPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'marker'));
     const thumbPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'thumbnail'));
     const origPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'original'));
-    const size128Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '128'));
+    const size160Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '160'));
     const size256Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '256'));
     const size512Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '512'));
+    const size1024Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '1024'));
     
     await sharp(req.file.buffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
-    await sharp(req.file.buffer).resize(128, 128).jpeg({ quality: 90 }).toFile(size128Path);
+    await sharp(req.file.buffer).resize(160, 160).jpeg({ quality: 90 }).toFile(size160Path);
     await sharp(req.file.buffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
     await sharp(req.file.buffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
+    await sharp(req.file.buffer).resize(1024, 1024).jpeg({ quality: 90 }).toFile(size1024Path);
     await sharp(req.file.buffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
     
     // URL生成
-    const originalUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'original')}`;
-    const url64 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'marker')}`;
-    const url128 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '128')}`;
-    const url256 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '256')}`;
-    const url512 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '512')}`;
+    const originalUrl = `/images/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'original')}`;
+    const urlXs = `/images/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'marker')}`;
+    const urlS = `/images/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '160')}`;
+    const urlM = `/images/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '256')}`;
+    const urlL = `/images/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '512')}`;
+    const urlXl = `/images/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '1024')}`;
     const votingMonth = yyyymm;
     
     // ユーザー情報取得
@@ -2517,11 +2564,13 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
     // Imageテーブルに登録
     const image = await prisma.image.create({
       data: {
-        url: originalUrl,
-        url64: url64,
-        url128: url128,
-        url256: url256,
-        url512: url512
+        original_url: originalUrl,
+        url_xs: urlXs,
+        url_s: urlS,
+        url_m: urlM,
+        url_l: urlL,
+        url_xl: urlXl,
+        uploaded_by: user?.name || '不明'
       }
     });
     
@@ -2547,11 +2596,12 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
         where: { id: shrineId },
         data: {
           image_id: image.id,
-          image_url: originalUrl,
-          image_url64: url64,
-          image_url128: url128,
-          image_url256: url256,
-          image_url512: url512,
+          image_url: urlM,
+          image_url_xs: urlXs,
+          image_url_s: urlS,
+          image_url_m: urlM,
+          image_url_l: urlL,
+          image_url_xl: urlXl,
           image_by: user?.name || '不明'
         }
       });
@@ -2573,29 +2623,32 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
   }
   try {
     const yyyymm = getYYYYMM();
-    const dir = path.join(__dirname, '..', 'uploads', yyyymm);
+    const dir = path.join(__dirname, '..', '..', 'public', 'images', yyyymm);
     ensureDirSync(dir);
     
-    // 5サイズ保存
+    // 6サイズ保存
     const markerPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'marker'));
     const thumbPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'thumbnail'));
     const origPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'original'));
-    const size128Path = path.join(dir, getImageFileName('diety', dietyId, userId, '128'));
+    const size160Path = path.join(dir, getImageFileName('diety', dietyId, userId, '160'));
     const size256Path = path.join(dir, getImageFileName('diety', dietyId, userId, '256'));
     const size512Path = path.join(dir, getImageFileName('diety', dietyId, userId, '512'));
+    const size1024Path = path.join(dir, getImageFileName('diety', dietyId, userId, '1024'));
     
     await sharp(req.file.buffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
-    await sharp(req.file.buffer).resize(128, 128).jpeg({ quality: 90 }).toFile(size128Path);
+    await sharp(req.file.buffer).resize(160, 160).jpeg({ quality: 90 }).toFile(size160Path);
     await sharp(req.file.buffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
     await sharp(req.file.buffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
+    await sharp(req.file.buffer).resize(1024, 1024).jpeg({ quality: 90 }).toFile(size1024Path);
     await sharp(req.file.buffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
     
     // URL生成
-    const originalUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'original')}`;
-    const url64 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'marker')}`;
-    const url128 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, '128')}`;
-    const url256 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, '256')}`;
-    const url512 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, '512')}`;
+    const originalUrl = `/images/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'original')}`;
+    const urlXs = `/images/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'marker')}`;
+    const urlS = `/images/${yyyymm}/${getImageFileName('diety', dietyId, userId, '160')}`;
+    const urlM = `/images/${yyyymm}/${getImageFileName('diety', dietyId, userId, '256')}`;
+    const urlL = `/images/${yyyymm}/${getImageFileName('diety', dietyId, userId, '512')}`;
+    const urlXl = `/images/${yyyymm}/${getImageFileName('diety', dietyId, userId, '1024')}`;
     const votingMonth = yyyymm;
     
     // ユーザー情報取得
@@ -2604,11 +2657,13 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
     // Imageテーブルに登録
     const image = await prisma.image.create({
       data: {
-        url: originalUrl,
-        url64: url64,
-        url128: url128,
-        url256: url256,
-        url512: url512
+        original_url: originalUrl,
+        url_xs: urlXs,
+        url_s: urlS,
+        url_m: urlM,
+        url_l: urlL,
+        url_xl: urlXl,
+        uploaded_by: user?.name || '不明'
       }
     });
     
@@ -2634,11 +2689,12 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
         where: { id: dietyId },
         data: {
           image_id: image.id,
-          image_url: originalUrl,
-          image_url64: url64,
-          image_url128: url128,
-          image_url256: url256,
-          image_url512: url512,
+          image_url: urlM,
+          image_url_xs: urlXs,
+          image_url_s: urlS,
+          image_url_m: urlM,
+          image_url_l: urlL,
+          image_url_xl: urlXl,
           image_by: user?.name || '不明'
         }
       });
@@ -3210,11 +3266,12 @@ async function updateShrineThumbnailFromVotes(shrineId: number) {
         where: { id: shrineId },
         data: {
           image_id: topImage.image.id,
-          image_url: topImage.image.url,
-          image_url64: topImage.image.url64,
-          image_url128: topImage.image.url128,
-          image_url256: topImage.image.url256,
-          image_url512: topImage.image.url512,
+          image_url: topImage.image.url_m,
+          image_url_xs: topImage.image.url_xs,
+          image_url_s: topImage.image.url_s,
+          image_url_m: topImage.image.url_m,
+          image_url_l: topImage.image.url_l,
+          image_url_xl: topImage.image.url_xl,
           image_by: topImage.user.name
         }
       });
@@ -3279,11 +3336,12 @@ async function updateDietyThumbnailFromVotes(dietyId: number) {
         where: { id: dietyId },
         data: {
           image_id: topImage.image.id,
-          image_url: topImage.image.url,
-          image_url64: topImage.image.url64,
-          image_url128: topImage.image.url128,
-          image_url256: topImage.image.url256,
-          image_url512: topImage.image.url512,
+          image_url: topImage.image.url_m,
+          image_url_xs: topImage.image.url_xs,
+          image_url_s: topImage.image.url_s,
+          image_url_m: topImage.image.url_m,
+          image_url_l: topImage.image.url_l,
+          image_url_xl: topImage.image.url_xl,
           image_by: topImage.user.name
         }
       });

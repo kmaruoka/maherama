@@ -6,10 +6,11 @@ export interface Follower {
   name: string;
   image_id?: number;
   image_url?: string;
-  image_url64?: string;
-  image_url128?: string;
-  image_url256?: string;
-  image_url512?: string;
+  image_url_xs?: string;
+  image_url_s?: string;
+  image_url_m?: string;
+  image_url_l?: string;
+  image_url_xl?: string;
   image_by?: string;
 }
 

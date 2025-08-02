@@ -111,14 +111,14 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
   }
 
   // 型安全なサムネイル取得
-  const thumbnailUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
+  const userImageUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
 
   return (
     <div>
       <div className="pane__header">
         <div className="pane__thumbnail">
           <img
-            src={thumbnailUrl}
+            src={userImageUrl}
             alt="ユーザーサムネイル"
             className="pane__thumbnail-img"
           />
