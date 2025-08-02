@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from '../config/api';
-import type { Shrine } from '../components/organisms/ShrineMarkerPane';
+import type { Shrine } from '../components/atoms/ShrineMarker';
 
 export default function useAllShrines() {
   return useQuery<Shrine[]>({

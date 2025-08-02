@@ -2,12 +2,12 @@ import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'rea
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { API_BASE, apiCall } from '../../config/api';
 import RankingPane from './RankingPane';
-import useUserInfo from '../../hooks/useUserInfo';
+import { useUserInfo } from '../../hooks/useUserInfo';
 import useUserShrineRankings from '../../hooks/useUserShrineRankings';
 import useUserDietyRankings from '../../hooks/useUserDietyRankings';
-import useUserTitles from '../../hooks/useUserTitles';
-import useFollowing from '../../hooks/useFollowing';
-import useFollowers from '../../hooks/useFollowers';
+import { useUserTitles } from '../../hooks/useUserTitles';
+import { useFollowing } from '../../hooks/useFollowing';
+import { useFollowers } from '../../hooks/useFollowers';
 import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
 import { NOIMAGE_USER_URL } from '../../constants';
@@ -102,7 +102,7 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
   }
 
   // 型安全なサムネイル取得
-  const thumbnailUrl = (userInfo as { thumbnailUrl?: string } | undefined)?.thumbnailUrl || NOIMAGE_USER_URL;
+  const thumbnailUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
 
 
   // 詳細表示のレンダリング関数

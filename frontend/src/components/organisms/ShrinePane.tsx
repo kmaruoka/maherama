@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import useShrineDetail from '../../hooks/useShrineDetail';
+import { useShrineDetail } from '../../hooks/useShrineDetail';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
 import type { Period, RankingItem } from './RankingPane';
@@ -83,7 +83,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const [imageListLoading, setImageListLoading] = useState(false);
   const [imageListError, setImageListError] = useState<string | null>(null);
   const [thumbCache, setThumbCache] = useState(Date.now());
-  const [thumbnailUrl, setThumbnailUrl] = useState(data?.thumbnailUrl);
+  const [thumbnailUrl, setThumbnailUrl] = useState(data?.image_url);
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
@@ -91,8 +91,11 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   }));
 
   useEffect(() => {
-    setThumbnailUrl(data?.thumbnailUrl);
-  }, [data?.thumbnailUrl]);
+    if (data?.image_url) {
+      setThumbnailUrl(data.image_url);
+      setThumbCache(Date.now());
+    }
+  }, [data?.image_url]);
 
   // 画像リスト取得
   useEffect(() => {
@@ -133,7 +136,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       if (result.image?.thumbnail_url) {
-        setThumbnailUrl(result.image.thumbnail_url);
+        setThumbnailUrl(result.image.original_url);
         setThumbCache(Date.now());
       }
       if (result.isCurrentThumbnail) {
@@ -482,16 +485,16 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
               e.stopPropagation();
               setIsUploadModalOpen(true);
             }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
-            {data.thumbnailUrl && data.thumbnailUrl !== NOIMAGE_SHRINE_DISPLAY_URL && (
-              <button className="pane__icon-btn" onClick={(e) => {
-                e.stopPropagation();
-                handleVote();
-              }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
-            )}
-          </div>
-          {data.thumbnailBy && (
-            <div className="pane__thumbnail-by">{t('by')} {data.thumbnailBy}</div>
+                      {data.image_url && data.image_url !== NOIMAGE_SHRINE_DISPLAY_URL && (
+            <button className="pane__icon-btn" onClick={(e) => {
+              e.stopPropagation();
+              handleVote();
+            }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
           )}
+        </div>
+        {data.image_by && (
+          <div className="pane__thumbnail-by">{t('by')} {data.image_by}</div>
+        )}
         </div>
         <div className="pane__info">
           <div className="pane__title">{data.name}</div>

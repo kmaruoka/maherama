@@ -10,7 +10,7 @@ export interface UserTitle {
   display_name?: string; // 表示名
 }
 
-export default function useUserTitles(userId: number | undefined | null) {
+export function useUserTitles(userId: number | undefined | null) {
   return useQuery<UserTitle[]>({
     queryKey: ['user', userId, 'titles'],
     queryFn: async () => {

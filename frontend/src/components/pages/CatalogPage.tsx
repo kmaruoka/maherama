@@ -3,8 +3,8 @@ import { FixedSizeGrid as Grid, FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
 import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
-import useShrineList from '../../hooks/useShrineList';
-import useDietyList from '../../hooks/useDietyList';
+import { useShrineList } from '../../hooks/useShrineList';
+import { useDietyList } from '../../hooks/useDietyList';
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import Container from 'react-bootstrap/Container';
@@ -18,15 +18,22 @@ interface Item {
   count: number;
   registeredAt: string;
   lastPrayedAt?: string;
+  image_id?: number;
+  image_url?: string;
+  image_url64?: string;
+  image_url128?: string;
+  image_url256?: string;
+  image_url512?: string;
+  image_by?: string;
 }
 
 interface GridItemData {
-  sorted: (Item & { thumbnailUrl?: string })[];
+  sorted: (Item & { image_url?: string })[];
   columnCount: number;
   CARD_WIDTH: number;
   CARD_HEIGHT: number;
   GAP: number;
-  renderItem: (item: Item & { thumbnailUrl?: string }) => React.ReactNode;
+  renderItem: (item: Item & { image_url?: string }) => React.ReactNode;
 }
 
 export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
@@ -40,6 +47,16 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   const { data: dieties = [] } = useDietyList();
 
   const items = tab === 'shrine' ? shrines : dieties;
+
+  const handleItemClick = useCallback((item: Item) => {
+    if (tab === 'shrine' && onShowShrine) {
+      setTimeout(() => onShowShrine(item.id), 0);
+    } else if (tab === 'diety' && onShowDiety) {
+      setTimeout(() => onShowDiety(item.id), 0);
+    } else if (onShowUser) {
+      setTimeout(() => onShowUser(item.id), 0);
+    }
+  }, [tab, onShowShrine, onShowDiety, onShowUser]);
 
   const sorted = [...items].sort((a, b) => {
     const [key, dir] = sort.split('-');
@@ -63,28 +80,18 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
     ) * mul;
   });
 
-  const renderItem = useCallback((item: Item & { thumbnailUrl?: string }) => (
+  const renderItem = useCallback((item: Item & { image_url?: string }) => (
     <CustomCatalogCard
       key={item.id}
       name={item.name}
       count={item.count}
       registeredAt={item.registeredAt}
-      lastPrayedAt={item.lastPrayedAt}
-      onClick={() => {
-        if (tab === 'shrine' && onShowShrine) {
-          setTimeout(() => onShowShrine(item.id), 0);
-        } else if (tab === 'diety' && onShowDiety) {
-          setTimeout(() => onShowDiety(item.id), 0);
-        } else if (onShowUser) {
-          setTimeout(() => onShowUser(item.id), 0);
-        }
-      }}
-      countLabel={t('count')}
-      type={tab}
-      dateLabel={t('registeredAt')}
-      thumbnailUrl={tab === 'diety' ? item.thumbnailUrl : undefined}
+      onClick={() => handleItemClick(item)}
+      countLabel={t('prayCount')}
+      type={tab === 'diety' ? 'diety' : 'shrine'}
+      image_url={tab === 'diety' ? item.image_url : undefined}
     />
-  ), [tab, onShowShrine, onShowDiety, onShowUser, t]);
+  ), [tab, t, handleItemClick]);
 
   return (
     <div className="p-3">

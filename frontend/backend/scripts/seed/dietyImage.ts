@@ -1,11 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 
-export async function seedShrineImage(prisma: PrismaClient) {
-  // 明示的にseedしたい神社ID・ユーザーIDの組み合わせを指定
+export async function seedDietyImage(prisma: PrismaClient) {
+  // 明示的にseedしたい神様ID・ユーザーIDの組み合わせを指定
   const images = [
-    { shrineId: 1, userId: 1 },
-    { shrineId: 2, userId: 1 },
-    { shrineId: 3, userId: 2 },
+    { dietyId: 1, userId: 1 },
+    { dietyId: 2, userId: 1 },
+    { dietyId: 3, userId: 2 },
     // 必要に応じて追加
   ];
 
@@ -16,7 +16,7 @@ export async function seedShrineImage(prisma: PrismaClient) {
   const uploadedAt = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 15, 12, 0, 0); // 前月15日
 
   for (const img of images) {
-    const baseName = `shrine${img.shrineId}-u${img.userId}_s`;
+    const baseName = `diety${img.dietyId}-u${img.userId}_d`;
     const originalUrl = `/uploads/${yyyymm}/${baseName}original.jpg`;
     const url64 = `/uploads/${yyyymm}/${baseName}marker.jpg`;
     const url128 = `/uploads/${yyyymm}/${baseName}thumbnail.jpg`;
@@ -34,10 +34,10 @@ export async function seedShrineImage(prisma: PrismaClient) {
       }
     });
 
-    // 次にShrineImageテーブルに登録
-    await prisma.shrineImage.create({
+    // 次にDietyImageテーブルに登録
+    await prisma.dietyImage.create({
       data: {
-        shrine_id: img.shrineId,
+        diety_id: img.dietyId,
         user_id: img.userId,
         image_id: image.id,
         uploaded_at: uploadedAt,
@@ -47,5 +47,5 @@ export async function seedShrineImage(prisma: PrismaClient) {
       }
     });
   }
-  console.log('✅ ShrineImage seed completed.');
+  console.log('✅ DietyImage seed completed.');
 } 

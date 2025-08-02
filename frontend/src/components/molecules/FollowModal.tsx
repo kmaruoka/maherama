@@ -5,7 +5,13 @@ import { NOIMAGE_USER_URL } from '../../constants';
 interface User {
   id: number;
   name: string;
-  thumbnailUrl: string;
+  image_id?: number;
+  image_url?: string;
+  image_url64?: string;
+  image_url128?: string;
+  image_url256?: string;
+  image_url512?: string;
+  image_by?: string;
 }
 
 interface FollowModalProps {
@@ -112,7 +118,7 @@ export default function FollowModal({
                     onClick={() => onUserClick?.(user.id)}
                   >
                     <img
-                      src={user.thumbnailUrl || NOIMAGE_USER_URL}
+                      src={user.image_url || NOIMAGE_USER_URL}
                       alt={`${user.name}のサムネイル`}
                       className="rounded-circle"
                       style={{

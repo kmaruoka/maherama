@@ -8,12 +8,18 @@ import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-interface Shrine {
+export interface Shrine {
   id: number;
   name: string;
   lat: number;
   lng: number;
-  thumbnailUrl?: string;
+  image_id?: number;
+  image_url?: string;
+  image_url64?: string;
+  image_url128?: string;
+  image_url256?: string;
+  image_url512?: string;
+  image_by?: string;
 }
 
 interface ShrineMarkerProps {
@@ -24,7 +30,7 @@ interface ShrineMarkerProps {
 }
 
 function createShrineIcon(
-  thumbnailUrl?: string, 
+  image_url?: string, 
   isInZukan: boolean = false,
   isPrayable: boolean = false,
   isRemotePrayable: boolean = false, // 未使用（互換性のため残す）
@@ -68,7 +74,7 @@ function createShrineIcon(
       <div class="shrine-marker-frame-anim ${statusClassString}">
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
-          <img src="${(thumbnailUrl || NOIMAGE_SHRINE_URL) + '?t=' + Date.now()}" alt="shrine" />
+          <img src="${(image_url || NOIMAGE_SHRINE_URL) + '?t=' + Date.now()}" alt="shrine" />
           <div class="shrine-marker-thumbnail-gloss ${(isPrayable || !isInZukan) && !hasPrayedToday ? 'active' : ''}"></div>
         </div>
         <div class="shrine-marker-pin"></div>
@@ -114,7 +120,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
   // createShrineIconをuseMemoでキャッシュ（DOM再生成を最小化）
   const icon = useMemo(() => {
     return createShrineIcon(
-      shrine.thumbnailUrl,
+      shrine.image_url,
       isInZukan,
       canPray,
       false, // isRemotePrayable: 常にfalse
@@ -125,7 +131,7 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
       tooltipText
     );
   }, [
-    shrine.thumbnailUrl,
+    shrine.image_url,
     isInZukan,
     canPray,
     isUnprayable,

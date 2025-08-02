@@ -1,11 +1,11 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { API_BASE, apiCall } from '../../config/api';
-import useUserInfo from '../../hooks/useUserInfo';
-import useUserTitles from '../../hooks/useUserTitles';
+import { useUserInfo } from '../../hooks/useUserInfo';
+import { useUserTitles } from '../../hooks/useUserTitles';
 import useAbilityList from '../../hooks/useAbilityList';
-import useFollowing from '../../hooks/useFollowing';
-import useFollowers from '../../hooks/useFollowers';
+import { useFollowing } from '../../hooks/useFollowing';
+import { useFollowers } from '../../hooks/useFollowers';
 import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
 import { NOIMAGE_USER_URL } from '../../constants';
@@ -111,7 +111,7 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
   }
 
   // 型安全なサムネイル取得
-  const thumbnailUrl = (userInfo as { thumbnailUrl?: string } | undefined)?.thumbnailUrl || NOIMAGE_USER_URL;
+  const thumbnailUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
 
   return (
     <div>

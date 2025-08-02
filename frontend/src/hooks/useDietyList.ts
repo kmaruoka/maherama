@@ -1,32 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { API_BASE } from '../config/api';
 
 export interface DietyListItem {
   id: number;
   name: string;
-  kana?: string;
   count: number;
   registeredAt: string;
-  lastPrayedAt?: string;
-  thumbnailUrl?: string;
+  image_id?: number;
+  image_url?: string;
+  image_url64?: string;
+  image_url128?: string;
+  image_url256?: string;
+  image_url512?: string;
+  image_by?: string;
 }
 
-
-
-export default function useDietyList() {
+export function useDietyList() {
   return useQuery<DietyListItem[]>({
-    queryKey: ['user-dieties-visited'],
+    queryKey: ['dieties'],
     queryFn: async () => {
-      const res = await apiCall(`${API_BASE}/users/me/dieties-visited`);
-      if (!res.ok) throw new Error('Failed to fetch user dieties');
-      const data = await res.json();
-      // last_prayed_atをlastPrayedAtに変換
-      return data.map((item: any) => ({
-        ...item,
-        lastPrayedAt: item.last_prayed_at || item.lastPrayedAt || undefined,
-        thumbnailUrl: item.thumbnailUrl || undefined,
-        kana: item.kana || undefined
-      }));
+      const response = await fetch(`${API_BASE}/dieties`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch diety list');
+      }
+      return response.json();
     },
   });
 }

@@ -14,10 +14,17 @@ export interface UserInfo {
   following_count: number;
   follower_count: number;
   is_following: boolean;
+  image_id?: number;
+  image_url?: string;
+  image_url64?: string;
+  image_url128?: string;
+  image_url256?: string;
+  image_url512?: string;
+  image_by?: string;
   // 必要に応じて他のプロパティも追加
 }
 
-export default function useUserInfo(displayId: number | undefined | null, viewerId: number | null) {
+export function useUserInfo(displayId: number | undefined | null, viewerId: number | null) {
   const debugLog = useDebugLog();
   return useQuery<UserInfo | null>({
     queryKey: ['user', displayId, viewerId],

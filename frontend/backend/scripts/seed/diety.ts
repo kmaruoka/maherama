@@ -3,13 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export async function seedDiety(prisma: PrismaClient) {
-  // 管理者ユーザー（user_id:0
-  await prisma.user.upsert({
-    where: { id: 0 },
-    update: {},
-    create: { id: 0, name: 'admin', level: 1, exp: 0, ability_points: 0 }
-  });
-
   // dieties.txtファイルを読み込み
   const txtPath = path.join(__dirname, '..', 'dieties.txt');
   const fileContent = fs.readFileSync(txtPath, 'utf-8');
@@ -48,27 +41,40 @@ export async function seedDiety(prisma: PrismaClient) {
   });
   console.log(`Inserted ${result.count} dieties (${dieties.length - result.count} duplicates skipped)`);
 
-  // DietyImageも登録（imageが空でなければ）
-  const dietyImages = dieties.filter(d => d.image).map(d => ({
-    diety_id: d.id,
-    user_id: 0, // システム管理者
-    image_url: `/images/${d.image}`,
-    thumbnail_url: `/images/${d.image}`,
-    uploaded_at: new Date(),
-    voting_month: '',
-    is_winner: false,
-    is_current_thumbnail: true
-  }));
-  
-  if (dietyImages.length > 0) {
-    try {
-      await prisma.dietyImage.createMany({ 
-        data: dietyImages, 
-        skipDuplicates: true 
-      });
-      console.log(`Inserted ${dietyImages.length} diety images`);
-    } catch (error) {
-      console.warn(`Some diety images already exist, skipped duplicates`);
+  // 画像データがある場合は新しいImageテーブルとDietyテーブルに設定
+  if (dieties.length > 0) {
+    const dietiesWithImages = dieties.filter(d => d.image);
+    for (const diety of dietiesWithImages) {
+      try {
+        // まずImageテーブルに登録
+        const image = await prisma.image.create({
+          data: {
+            url: `/images/${diety.image}`,
+            url64: `/images/${diety.image}`,
+            url128: `/images/${diety.image}`,
+            url256: `/images/${diety.image}`,
+            url512: `/images/${diety.image}`
+          }
+        });
+
+        // 次にDietyテーブルを更新
+        await prisma.diety.update({
+          where: { id: diety.id },
+          data: {
+            image_id: image.id,
+            image_url: `/images/${diety.image}`,
+            image_url64: `/images/${diety.image}`,
+            image_url128: `/images/${diety.image}`,
+            image_url256: `/images/${diety.image}`,
+            image_url512: `/images/${diety.image}`,
+            image_by: 'admin'
+          }
+        });
+      } catch (error) {
+        // 神格が存在しない場合はスキップ
+        console.warn(`Diety with id ${diety.id} not found, skipping image update`);
+      }
     }
+    console.log(`Updated ${dietiesWithImages.length} diety images`);
   }
 }

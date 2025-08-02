@@ -6,22 +6,32 @@ export interface DietyDetail {
   name: string;
   kana?: string;
   description?: string;
-  thumbnailUrl?: string;
-  thumbnailBy?: string;
+  registeredAt: string;
+  image_id?: number;
+  image_url?: string;
+  image_url64?: string;
+  image_url128?: string;
+  image_url256?: string;
+  image_url512?: string;
+  image_by?: string;
   count: number;
-  registeredAt?: string;
-  lastPrayedAt?: string;
-  shrines: Array<{ id: number; name: string; kana?: string }>;
+  shrines: Array<{
+    id: number;
+    name: string;
+    kana?: string;
+  }>;
 }
 
-export default function useDietyDetail(id?: number | string) {
-  return useQuery<DietyDetail | null>({
+export function useDietyDetail(id: number) {
+  return useQuery<DietyDetail>({
     queryKey: ['diety', id],
-    enabled: !!id && id !== 'undefined' && id !== '',
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/dieties/${id}`);
-      if (!res.ok) throw new Error('神様情報取得に失敗しました');
-      return res.json();
+      const response = await fetch(`${API_BASE}/dieties/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch diety detail');
+      }
+      return response.json();
     },
+    enabled: !!id,
   });
 }

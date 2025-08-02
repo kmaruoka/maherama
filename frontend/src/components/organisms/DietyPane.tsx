@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useParams } from 'react-router-dom';
-import useDietyDetail from '../../hooks/useDietyDetail';
+import { useDietyDetail } from '../../hooks/useDietyDetail';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
@@ -53,15 +53,18 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   // デバッグ用ログ
   // console.log('DietyPane: idFromParams', idFromParams, typeof idFromParams);
 
-  const { data: diety, error: dietyError } = useDietyDetail(idFromParams);
+  const { data: diety, error: dietyError } = useDietyDetail(idFromParams || 0);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(idFromParams);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [thumbCache, setThumbCache] = useState(Date.now());
-  const [thumbnailUrl, setThumbnailUrl] = useState(diety?.thumbnailUrl);
+  const [thumbnailUrl, setThumbnailUrl] = useState(diety?.image_url);
+  const [thumbCache, setThumbnailCache] = useState(Date.now());
 
   useEffect(() => {
-    setThumbnailUrl(diety?.thumbnailUrl);
-  }, [diety?.thumbnailUrl]);
+    if (diety?.image_url) {
+      setThumbnailUrl(diety.image_url);
+      setThumbnailCache(Date.now());
+    }
+  }, [diety?.image_url]);
 
   const queryClient = useQueryClient();
 
@@ -84,42 +87,33 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   //   console.log('DietyPane: /dieties/:id API response', diety);
   // }
 
-  const handleUpload = async (file: File) => {
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      
       const response = await fetch(`${API_BASE}/dieties/${idFromParams}/images/upload`, {
         method: 'POST',
+        body: formData,
         headers: {
-          'x-user-id': '1', // 開発用
-        },
-        body: formData
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
-      
-      if (!response.ok) {
-        throw new Error('アップロード失敗');
-      }
-      
-      const result = await response.json();
-      
-      // 成功時はデータ再取得
-      queryClient.invalidateQueries({ queryKey: ['diety-detail', idFromParams] });
-      if (result.image?.thumbnail_url) {
-        setThumbnailUrl(result.image.thumbnail_url);
-        setThumbCache(Date.now());
-      }
-      setThumbCache(Date.now()); // キャッシュバスターを更新
-      
-      // 即採用された場合のメッセージ
-      if (result.isCurrentThumbnail) {
-        alert(t('uploadSuccess'));
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.isCurrentThumbnail) {
+          setThumbnailUrl(result.image.original_url);
+          setThumbnailCache(Date.now());
+        }
+        setIsUploadModalOpen(false);
       } else {
-        alert(t('uploadPending'));
+        console.error('画像アップロード失敗');
       }
     } catch (error) {
-      console.error('アップロードエラー:', error);
-      alert(t('uploadError'));
+      console.error('画像アップロードエラー:', error);
     }
   };
 
@@ -249,15 +243,15 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
               e.stopPropagation();
               setIsUploadModalOpen(true);
             }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
-            {diety.thumbnailUrl && diety.thumbnailUrl !== NOIMAGE_DIETY_URL && (
+            {diety.image_url && diety.image_url !== NOIMAGE_DIETY_URL && (
               <button className="pane__icon-btn" onClick={(e) => {
                 e.stopPropagation();
                 handleVote();
               }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
             )}
           </div>
-          {diety.thumbnailBy && (
-            <div className="pane__thumbnail-by">{t('by')} {diety.thumbnailBy}</div>
+          {diety.image_by && (
+            <div className="pane__thumbnail-by">{t('by')} {diety.image_by}</div>
           )}
         </div>
         <div className="pane__info">
@@ -290,12 +284,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
             <span className="field-row__value">{formatDisplayDate(diety.registeredAt)}</span>
           </div>
         )}
-        {diety.lastPrayedAt && (
-          <div className="field-row">
-            <span className="field-row__label">{t('lastPrayedAt')}:</span>
-            <span className="field-row__value">{formatDisplayDate(diety.lastPrayedAt)}</span>
-          </div>
-        )}
+
       </div>
 
       {diety.shrines.length > 0 && (
@@ -340,7 +329,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
       <ImageUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onUpload={handleUpload}
+        onUpload={handleImageUpload}
         title={`${diety?.name || '神様'}の画像をアップロード`}
       />
     </div>

@@ -85,7 +85,12 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
     if (!name || isNaN(latNum) || isNaN(lngNum)) continue;
     // 神社を追加
     const shrine = await prisma.shrine.upsert({
-      where: { name_location: { name, location } },
+      where: { 
+        name_location: {
+          name: name,
+          location: location
+        }
+      },
       update: { lat: latNum, lng: lngNum },
       create: { name, location, lat: latNum, lng: lngNum },
     });

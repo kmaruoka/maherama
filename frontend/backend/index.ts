@@ -325,8 +325,13 @@ app.get('/shrines/all', async (req, res) => {
         lat: true,
         lng: true,
         registered_at: true,
-        thumbnailUrl: true,
-        thumbnailBy: true,
+        image_id: true,
+        image_url: true,
+        image_url64: true,
+        image_url128: true,
+        image_url256: true,
+        image_url512: true,
+        image_by: true,
         founded: true,
         history: true,
         festivals: true,
@@ -425,8 +430,13 @@ app.get('/shrines/:id', async (req, res) => {
         lat: true,
         lng: true,
         registered_at: true,
-        thumbnailUrl: true,
-        thumbnailBy: true,
+        image_id: true,
+        image_url: true,
+        image_url64: true,
+        image_url128: true,
+        image_url256: true,
+        image_url512: true,
+        image_by: true,
         founded: true,
         history: true,
         festivals: true,
@@ -448,19 +458,17 @@ app.get('/shrines/:id', async (req, res) => {
     const totalCount = countData._sum.count || 0;
     
     if (!shrine) {
-      return res.status(404).json({ error: 'Not found' });
+      return res.status(404).json({ error: 'Shrine not found' });
     }
-    
-    const formattedShrine = {
+
+    const result = {
       ...shrine,
       count: totalCount,
       registeredAt: shrine.registered_at,
-      dieties: shrine.shrine_dieties.map(sd => sd.diety)
+      dieties: (shrine.shrine_dieties || []).map(sd => sd.diety)
     };
-    // dieties配列をログ出力
-    //console.log('API /shrines/:id dieties:', formattedShrine.dieties);
     
-    res.json(formattedShrine);
+    res.json(result);
   } catch (err) {
     console.error('Error fetching shrine:', err);
     res.status(500).json({ error: 'DB error' });
@@ -720,6 +728,13 @@ app.get('/dieties/:id', async (req, res) => {
         kana: true,
         description: true,
         registered_at: true,
+        image_id: true,
+        image_url: true,
+        image_url64: true,
+        image_url128: true,
+        image_url256: true,
+        image_url512: true,
+        image_by: true,
         shrine_dieties: {
           select: {
             shrine: {
@@ -728,12 +743,6 @@ app.get('/dieties/:id', async (req, res) => {
           }
         }
       }
-    });
-
-    // サムネイル画像と投稿者名をDietyImageから取得
-    const dietyImage = await prisma.dietyImage.findFirst({
-      where: { diety_id: id, is_current_thumbnail: true },
-      include: { user: true }
     });
 
     const countData = await prisma.dietyPrayStats.aggregate({
@@ -746,16 +755,14 @@ app.get('/dieties/:id', async (req, res) => {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    const formatted = {
+    const result = {
       ...diety,
       count: totalCount,
       registeredAt: diety.registered_at,
-      shrines: diety.shrine_dieties.map(sd => sd.shrine),
-      thumbnailUrl: dietyImage?.thumbnail_url || null,
-      thumbnailBy: dietyImage?.user?.name || null
+      shrines: (diety.shrine_dieties || []).map(sd => sd.shrine)
     };
 
-    res.json(formatted);
+    res.json(result);
   } catch (err) {
     console.error('Error fetching diety:', err);
     res.status(500).json({ error: 'DB error' });
@@ -1527,7 +1534,7 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
         kana: diety.kana,
         count: s.count,
         registeredAt: catalogedAtMap[diety.id] || diety.registered_at, // 図鑑収録日を優先、なければ神様登録日 TODO: 図鑑収録日のみでよいはずだが？
-        thumbnailUrl: thumbMap[diety.id] || null,
+        image_url: thumbMap[diety.id] || null,
         last_prayed_at: lastPrayedMap[diety.id] || null
       };
     }).filter(Boolean);
@@ -2011,7 +2018,20 @@ app.get('/users/:id', authenticateJWT, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, level: true, exp: true, ability_points: true },
+      select: { 
+        id: true, 
+        name: true, 
+        level: true, 
+        exp: true, 
+        ability_points: true,
+        image_id: true,
+        image_url: true,
+        image_url64: true,
+        image_url128: true,
+        image_url256: true,
+        image_url512: true,
+        image_by: true
+      },
     });
     if (!user) return res.status(404).json({ error: 'Not found' });
 
@@ -2052,6 +2072,13 @@ app.get('/users/:id', authenticateJWT, async (req, res) => {
       level: user.level,
       exp: user.exp,
       ability_points: user.ability_points,
+      image_id: user.image_id,
+      image_url: user.image_url,
+      image_url64: user.image_url64,
+      image_url128: user.image_url128,
+      image_url256: user.image_url256,
+      image_url512: user.image_url512,
+      image_by: user.image_by,
       worship_count: worshipCount,
       today_worship_count: todayWorshipCount,
       following_count: followingCount,
@@ -2075,14 +2102,31 @@ app.get('/users/:id/following', authenticateJWT, async (req, res) => {
       where: { follower_id: userId },
       include: {
         following: {
-          select: { id: true, name: true }
+          select: { 
+            id: true, 
+            name: true,
+            image_id: true,
+            image_url: true,
+            image_url64: true,
+            image_url128: true,
+            image_url256: true,
+            image_url512: true,
+            image_by: true
+          }
         }
       }
     });
     
     const result = following.map(f => ({
       id: f.following.id,
-      name: f.following.name
+      name: f.following.name,
+      image_id: f.following.image_id,
+      image_url: f.following.image_url,
+      image_url64: f.following.image_url64,
+      image_url128: f.following.image_url128,
+      image_url256: f.following.image_url256,
+      image_url512: f.following.image_url512,
+      image_by: f.following.image_by
     }));
     
     res.json(result);
@@ -2103,14 +2147,31 @@ app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
       where: { following_id: userId },
       include: {
         follower: {
-          select: { id: true, name: true }
+          select: { 
+            id: true, 
+            name: true,
+            image_id: true,
+            image_url: true,
+            image_url64: true,
+            image_url128: true,
+            image_url256: true,
+            image_url512: true,
+            image_by: true
+          }
         }
       }
     });
     
     const result = followers.map(f => ({
       id: f.follower.id,
-      name: f.follower.name
+      name: f.follower.name,
+      image_id: f.follower.image_id,
+      image_url: f.follower.image_url,
+      image_url64: f.follower.image_url64,
+      image_url128: f.follower.image_url128,
+      image_url256: f.follower.image_url256,
+      image_url512: f.follower.image_url512,
+      image_by: f.follower.image_by
     }));
     
     res.json(result);
@@ -2413,32 +2474,54 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
     const yyyymm = getYYYYMM();
     const dir = path.join(__dirname, '..', 'uploads', yyyymm);
     ensureDirSync(dir);
-    // 3サイズ保存
+    
+    // 5サイズ保存
     const markerPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'marker'));
     const thumbPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'thumbnail'));
     const origPath = path.join(dir, getImageFileName('shrine', shrineId, userId, 'original'));
-    await sharp(req.file.buffer).resize(sizes.marker, sizes.marker).jpeg({ quality: 90 }).toFile(markerPath);
-    await sharp(req.file.buffer).resize(sizes.thumbnail, sizes.thumbnail).jpeg({ quality: 90 }).toFile(thumbPath);
+    const size128Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '128'));
+    const size256Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '256'));
+    const size512Path = path.join(dir, getImageFileName('shrine', shrineId, userId, '512'));
+    
+    await sharp(req.file.buffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
+    await sharp(req.file.buffer).resize(128, 128).jpeg({ quality: 90 }).toFile(size128Path);
+    await sharp(req.file.buffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
+    await sharp(req.file.buffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
     await sharp(req.file.buffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
-    // DB登録
-    const imageUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'original')}`;
-    const markerUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'marker')}`;
-    const thumbUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'thumbnail')}`;
+    
+    // URL生成
+    const originalUrl = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'original')}`;
+    const url64 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, 'marker')}`;
+    const url128 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '128')}`;
+    const url256 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '256')}`;
+    const url512 = `/uploads/${yyyymm}/${getImageFileName('shrine', shrineId, userId, '512')}`;
     const votingMonth = yyyymm;
+    
+    // ユーザー情報取得
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    // Imageテーブルに登録
+    const image = await prisma.image.create({
+      data: {
+        url: originalUrl,
+        url64: url64,
+        url128: url128,
+        url256: url256,
+        url512: url512
+      }
+    });
     
     // 現在のサムネイルがあるかチェック
     const currentThumbnail = await prisma.shrineImage.findFirst({
       where: { shrine_id: shrineId, is_current_thumbnail: true }
     });
     
+    // ShrineImageテーブルに登録
     const newImage = await prisma.shrineImage.create({
       data: {
         shrine_id: shrineId,
         user_id: userId,
-        image_url: imageUrl,
-        marker_url: markerUrl,
-        thumbnail_url: thumbUrl,
-        original_url: imageUrl,
+        image_id: image.id,
         voting_month: votingMonth,
         is_current_thumbnail: !currentThumbnail // サムネイルがない場合は即採用
       }
@@ -2446,17 +2529,21 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
     
     // サムネイルがない場合は神社テーブルも更新
     if (!currentThumbnail) {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
       await prisma.shrine.update({
         where: { id: shrineId },
         data: {
-          thumbnailUrl: thumbUrl,
-          thumbnailBy: user?.name || '不明'
+          image_id: image.id,
+          image_url: originalUrl,
+          image_url64: url64,
+          image_url128: url128,
+          image_url256: url256,
+          image_url512: url512,
+          image_by: user?.name || '不明'
         }
       });
     }
     
-    res.json({ success: true, image: newImage, isCurrentThumbnail: !currentThumbnail });
+    res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
   } catch (err) {
     console.error('Shrine画像アップロード失敗:', err);
     res.status(500).json({ error: '画像アップロード失敗' });
@@ -2474,32 +2561,54 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
     const yyyymm = getYYYYMM();
     const dir = path.join(__dirname, '..', 'uploads', yyyymm);
     ensureDirSync(dir);
-    // 3サイズ保存
+    
+    // 5サイズ保存
     const markerPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'marker'));
     const thumbPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'thumbnail'));
     const origPath = path.join(dir, getImageFileName('diety', dietyId, userId, 'original'));
-    await sharp(req.file.buffer).resize(sizes.marker, sizes.marker).jpeg({ quality: 90 }).toFile(markerPath);
-    await sharp(req.file.buffer).resize(sizes.thumbnail, sizes.thumbnail).jpeg({ quality: 90 }).toFile(thumbPath);
+    const size128Path = path.join(dir, getImageFileName('diety', dietyId, userId, '128'));
+    const size256Path = path.join(dir, getImageFileName('diety', dietyId, userId, '256'));
+    const size512Path = path.join(dir, getImageFileName('diety', dietyId, userId, '512'));
+    
+    await sharp(req.file.buffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
+    await sharp(req.file.buffer).resize(128, 128).jpeg({ quality: 90 }).toFile(size128Path);
+    await sharp(req.file.buffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
+    await sharp(req.file.buffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
     await sharp(req.file.buffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
-    // DB登録
-    const imageUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'original')}`;
-    const markerUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'marker')}`;
-    const thumbUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'thumbnail')}`;
+    
+    // URL生成
+    const originalUrl = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'original')}`;
+    const url64 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, 'marker')}`;
+    const url128 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, '128')}`;
+    const url256 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, '256')}`;
+    const url512 = `/uploads/${yyyymm}/${getImageFileName('diety', dietyId, userId, '512')}`;
     const votingMonth = yyyymm;
+    
+    // ユーザー情報取得
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    // Imageテーブルに登録
+    const image = await prisma.image.create({
+      data: {
+        url: originalUrl,
+        url64: url64,
+        url128: url128,
+        url256: url256,
+        url512: url512
+      }
+    });
     
     // 現在のサムネイルがあるかチェック
     const currentThumbnail = await prisma.dietyImage.findFirst({
       where: { diety_id: dietyId, is_current_thumbnail: true }
     });
     
+    // DietyImageテーブルに登録
     const newImage = await prisma.dietyImage.create({
       data: {
         diety_id: dietyId,
         user_id: userId,
-        image_url: imageUrl,
-        marker_url: markerUrl,
-        thumbnail_url: thumbUrl,
-        original_url: imageUrl,
+        image_id: image.id,
         voting_month: votingMonth,
         is_current_thumbnail: !currentThumbnail // サムネイルがない場合は即採用
       }
@@ -2507,17 +2616,21 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
     
     // サムネイルがない場合は神様テーブルも更新
     if (!currentThumbnail) {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
       await prisma.diety.update({
         where: { id: dietyId },
         data: {
-          thumbnailUrl: thumbUrl,
-          thumbnailBy: user?.name || '不明'
+          image_id: image.id,
+          image_url: originalUrl,
+          image_url64: url64,
+          image_url128: url128,
+          image_url256: url256,
+          image_url512: url512,
+          image_by: user?.name || '不明'
         }
       });
     }
     
-    res.json({ success: true, image: newImage, isCurrentThumbnail: !currentThumbnail });
+    res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
   } catch (err) {
     console.error('Diety画像アップロード失敗:', err);
     res.status(500).json({ error: '画像アップロード失敗' });
@@ -2536,7 +2649,11 @@ app.get('/shrines/:id/images', async (req, res) => {
     }
     const images = await prisma.shrineImage.findMany({
       where,
-      include: { user: { select: { id: true, name: true } }, votes: true },
+      include: { 
+        user: { select: { id: true, name: true } }, 
+        votes: true,
+        image: true
+      },
       orderBy: [{ is_winner: 'desc' }, { uploaded_at: 'desc' }]
     });
     res.json(images);
@@ -2553,7 +2670,11 @@ app.get('/dieties/:id/images', async (req, res) => {
   try {
     const images = await prisma.dietyImage.findMany({
       where: { diety_id: dietyId },
-      include: { user: { select: { id: true, name: true } }, votes: true },
+      include: { 
+        user: { select: { id: true, name: true } }, 
+        votes: true,
+        image: true
+      },
       orderBy: [{ is_winner: 'desc' }, { uploaded_at: 'desc' }]
     });
     res.json(images);
@@ -2577,6 +2698,10 @@ app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req,
     await prisma.imageVote.deleteMany({ where: { user_id: userId, shrine_image_id: imageId } });
     // 投票
     await prisma.imageVote.create({ data: { user_id: userId, shrine_image_id: imageId } });
+    
+    // 投票結果に基づいてサムネイル更新をチェック
+    await updateShrineThumbnailFromVotes(shrineId);
+    
     res.json({ success: true });
   } catch (err) {
     console.error('神社画像投票失敗:', err);
@@ -2589,7 +2714,7 @@ app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, 
   const dietyId = parseInt(req.params.dietyId, 10);
   const imageId = parseInt(req.params.imageId, 10);
   const userId = req.user.id;
-  if (isNaN(dietyId) || isNaN(imageId)) return res.status(400).json({ error: 'Invalid ID' });
+  if (isNaN(dietyId) || isNaN(imageId)) return res.status(403).json({ error: 'Invalid ID' });
   try {
     // 投票権チェック（図鑑登録済みユーザーのみ）
     const hasCatalog = await prisma.dietyCatalog.findUnique({ where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } } });
@@ -2598,6 +2723,10 @@ app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, 
     await prisma.dietyImageVote.deleteMany({ where: { user_id: userId, diety_image_id: imageId } });
     // 投票
     await prisma.dietyImageVote.create({ data: { user_id: userId, diety_image_id: imageId } });
+    
+    // 投票結果に基づいてサムネイル更新をチェック
+    await updateDietyThumbnailFromVotes(dietyId);
+    
     res.json({ success: true });
   } catch (err) {
     console.error('神様画像投票失敗:', err);
@@ -3019,3 +3148,141 @@ app.post('/admin/ranking-awards', async (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ error: 'API not found' });
 });
+
+// 神社の投票結果に基づいてサムネイルを更新する関数
+async function updateShrineThumbnailFromVotes(shrineId: number) {
+  try {
+    // 現在の投票期間の画像を取得
+    const currentMonth = getYYYYMM();
+    const images = await prisma.shrineImage.findMany({
+      where: { 
+        shrine_id: shrineId, 
+        voting_month: currentMonth 
+      },
+      include: { 
+        votes: true,
+        image: true,
+        user: true
+      },
+      orderBy: [
+        { votes: { _count: 'desc' } },
+        { uploaded_at: 'asc' } // 同票数の場合は早いものを優先
+      ]
+    });
+
+    if (images.length === 0) return;
+
+    // 最多票の画像を取得
+    const topImage = images.reduce((prev, current) => 
+      (current.votes.length > prev.votes.length) ? current : prev
+    );
+
+    // 現在のサムネイルと比較
+    const currentThumbnail = await prisma.shrineImage.findFirst({
+      where: { shrine_id: shrineId, is_current_thumbnail: true }
+    });
+
+    if (!currentThumbnail || currentThumbnail.id !== topImage.id) {
+      // 現在のサムネイルを解除
+      if (currentThumbnail) {
+        await prisma.shrineImage.update({
+          where: { id: currentThumbnail.id },
+          data: { is_current_thumbnail: false }
+        });
+      }
+
+      // 新しいサムネイルを設定
+      await prisma.shrineImage.update({
+        where: { id: topImage.id },
+        data: { is_current_thumbnail: true }
+      });
+
+      // 神社テーブルを更新
+      await prisma.shrine.update({
+        where: { id: shrineId },
+        data: {
+          image_id: topImage.image.id,
+          image_url: topImage.image.url,
+          image_url64: topImage.image.url64,
+          image_url128: topImage.image.url128,
+          image_url256: topImage.image.url256,
+          image_url512: topImage.image.url512,
+          image_by: topImage.user.name
+        }
+      });
+
+      console.log(`神社${shrineId}のサムネイルが投票結果により更新されました`);
+    }
+  } catch (err) {
+    console.error('神社サムネイル更新エラー:', err);
+  }
+}
+
+// 神様の投票結果に基づいてサムネイルを更新する関数
+async function updateDietyThumbnailFromVotes(dietyId: number) {
+  try {
+    // 現在の投票期間の画像を取得
+    const currentMonth = getYYYYMM();
+    const images = await prisma.dietyImage.findMany({
+      where: { 
+        diety_id: dietyId, 
+        voting_month: currentMonth 
+      },
+      include: { 
+        votes: true,
+        image: true,
+        user: true
+      },
+      orderBy: [
+        { votes: { _count: 'desc' } },
+        { uploaded_at: 'asc' } // 同票数の場合は早いものを優先
+      ]
+    });
+
+    if (images.length === 0) return;
+
+    // 最多票の画像を取得
+    const topImage = images.reduce((prev, current) => 
+      (current.votes.length > prev.votes.length) ? current : prev
+    );
+
+    // 現在のサムネイルと比較
+    const currentThumbnail = await prisma.dietyImage.findFirst({
+      where: { diety_id: dietyId, is_current_thumbnail: true }
+    });
+
+    if (!currentThumbnail || currentThumbnail.id !== topImage.id) {
+      // 現在のサムネイルを解除
+      if (currentThumbnail) {
+        await prisma.dietyImage.update({
+          where: { id: currentThumbnail.id },
+          data: { is_current_thumbnail: false }
+        });
+      }
+
+      // 新しいサムネイルを設定
+      await prisma.dietyImage.update({
+        where: { id: topImage.id },
+        data: { is_current_thumbnail: true }
+      });
+
+      // 神様テーブルを更新
+      await prisma.diety.update({
+        where: { id: dietyId },
+        data: {
+          image_id: topImage.image.id,
+          image_url: topImage.image.url,
+          image_url64: topImage.image.url64,
+          image_url128: topImage.image.url128,
+          image_url256: topImage.image.url256,
+          image_url512: topImage.image.url512,
+          image_by: topImage.user.name
+        }
+      });
+
+      console.log(`神様${dietyId}のサムネイルが投票結果により更新されました`);
+    }
+  } catch (err) {
+    console.error('神様サムネイル更新エラー:', err);
+  }
+}
