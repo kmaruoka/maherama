@@ -1,7 +1,7 @@
 import React from 'react';
-import './MissionCard.css';
-import RewardIcon from '../atoms/RewardIcon';
 import { useTranslation } from 'react-i18next';
+import { CompletionBadge, RewardIcon } from '../atoms';
+import './MissionCard.css';
 
 export interface MissionCardProps {
   mission: {
@@ -12,8 +12,8 @@ export interface MissionCardProps {
     total_required: number;
     is_completed: boolean;
     exp_reward: number;
-    ability_reward: any;
-    mission_type: 'permanent' | 'event';
+    ability_reward?: Record<string, number>;
+    titles?: Array<{ id: number; name: string }>;
   };
   onClick?: () => void;
   className?: string;
@@ -53,7 +53,7 @@ const MissionCard: React.FC<MissionCardProps> = ({
       <div className="mission-card__header">
         <div className="mission-card__title">{mission.name}</div>
         {mission.is_completed && (
-          <span className="mission-card__completed">{t('missionCompleted')}</span>
+          <CompletionBadge size={16} className="mission-card__completed" />
         )}
       </div>
       
@@ -63,7 +63,7 @@ const MissionCard: React.FC<MissionCardProps> = ({
         <div className="mission-card__progress">
           <div className="mission-card__progress-bar">
             <div 
-              className="mission-card__progress-fill"
+              className="mission-card__progress-fill" 
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -76,13 +76,19 @@ const MissionCard: React.FC<MissionCardProps> = ({
           {mission.exp_reward > 0 && (
             <div className="mission-card__reward">
               <RewardIcon type="exp" />
-              <span className="mission-card__reward-text">{t('experience')} +{mission.exp_reward}</span>
+              <span>+{mission.exp_reward}</span>
             </div>
           )}
           {totalAbilityPoints > 0 && (
             <div className="mission-card__reward">
               <RewardIcon type="ability" />
-              <span className="mission-card__reward-text">{t('abilityPoints')} +{totalAbilityPoints}</span>
+              <span>+{totalAbilityPoints}</span>
+            </div>
+          )}
+          {mission.titles && mission.titles.length > 0 && (
+            <div className="mission-card__reward">
+              <RewardIcon type="title" />
+              <span>{mission.titles.length}</span>
             </div>
           )}
         </div>

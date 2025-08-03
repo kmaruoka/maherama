@@ -9,7 +9,7 @@ import { useFollowers } from '../../hooks/useFollowers';
 import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
 import { NOIMAGE_USER_URL } from '../../constants';
-import { CustomButton } from '../atoms/CustomButton';
+import { CompletionBadge, CustomButton } from '../atoms';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
@@ -185,7 +185,10 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
                   {a.name}
                 </span>
                 {a.purchased ? (
-                  <span className="ms-2 text-success" style={{ fontWeight: 500 }}>{t('unlocked')}</span>
+                  <div className="ms-2 d-flex align-items-center">
+                    <CompletionBadge size={16} />
+                    <span className="ms-1" style={{ fontWeight: 500 }}>{t('unlocked')}</span>
+                  </div>
                 ) : (
                   <CustomButton
                     color={skin.colors.surface}

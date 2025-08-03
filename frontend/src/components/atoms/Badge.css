@@ -51,10 +51,11 @@
   box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
 }
 
-/* 緑色の下地背景（ミッション） */
+/* 緑色の下地背景（達成済み・完成済み・参拝済み・図鑑登録済みなど） */
 .badge-mission {
-  background: linear-gradient(135deg, #28a745, #20c997);
-  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+  background: linear-gradient(135deg, #27ae60, #20c997);
+  box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+  color: white;
 }
 
 /* 将来の拡張用 */

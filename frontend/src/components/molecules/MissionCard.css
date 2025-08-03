@@ -42,12 +42,6 @@
 }
 
 .mission-card__completed {
-  background: #27ae60;
-  color: white;
-  padding: 2px 4px;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: bold;
   flex-shrink: 0;
   margin-left: 4px;
 }
@@ -91,30 +85,40 @@
 
 .mission-card__progress-fill {
   height: 100%;
-  background: var(--color-primary);
+  background: var(--color-primary, #bfa14a);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
 
 .mission-card__progress-text {
+  font-size: 0.7rem;
   text-align: center;
-  font-size: 0.75rem;
+  color: var(--color-text-secondary);
   font-weight: bold;
-  color: var(--color-text);
 }
 
 .mission-card__rewards {
-  flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .mission-card__reward {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.mission-card__reward svg {
+  width: 12px;
+  height: 12px;
 }
 
 /* 古いアイコン用スタイルを削除 - RewardIconコンポーネントに統合済み */

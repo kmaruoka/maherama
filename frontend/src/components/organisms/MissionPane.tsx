@@ -1,8 +1,7 @@
-import React, { forwardRef } from 'react';
-import { useSkin } from '../../skins/SkinContext';
-import CustomLink from '../atoms/CustomLink';
-import RewardIcon from '../atoms/RewardIcon';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { CompletionBadge, RewardIcon } from '../atoms';
+import CustomLink from '../atoms/CustomLink';
 
 interface MissionPaneProps {
   mission: any;
@@ -10,86 +9,42 @@ interface MissionPaneProps {
   onShowDiety?: (id: number) => void;
 }
 
-const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>(({ 
-  mission, 
-  onShowShrine, 
-  onShowDiety 
-}, ref) => {
-  const { skin } = useSkin();
+const MissionPane: React.FC<MissionPaneProps> = ({
+  mission,
+  onShowShrine,
+  onShowDiety
+}) => {
   const { t } = useTranslation();
-  
+
   const progressPercentage = mission.total_required > 0 
     ? Math.min((mission.progress / mission.total_required) * 100, 100) 
     : 0;
 
-  // backToOverviewメソッドをrefに公開
-  React.useImperativeHandle(ref, () => ({
-    backToOverview: () => {
-      // MissionPaneには全体表示に戻る機能がないため、何もしない
-    }
-  }));
-
   return (
     <>
-      {/* 達成状況 */}
-      {mission.is_completed && (
-        <div style={{ 
-          background: '#27ae60', 
-          color: 'white', 
-          padding: '8px 12px', 
-          borderRadius: '4px', 
-          marginBottom: '20px',
-          textAlign: 'center',
-          fontWeight: 'bold'
-        }}>
-          {t('missionCompleted')}
-        </div>
-      )}
-
-      {/* ミッション内容 */}
-      <div className="modal-section">
-        <div className="modal-subtitle">{t('missionContent')}</div>
-        <p style={{ margin: 0, lineHeight: '1.5' }}>{mission.content}</p>
-      </div>
-
-      {/* 進捗 */}
+      {/* 進行状況 */}
       <div className="modal-section">
         <div className="modal-subtitle">{t('missionProgress')}</div>
-        <div style={{ 
-          width: '100%', 
-          height: '8px', 
-          background: 'rgba(0, 0, 0, 0.1)', 
-          borderRadius: '4px', 
-          overflow: 'hidden', 
-          marginBottom: '8px' 
-        }}>
-          <div 
-            style={{ 
-              height: '100%', 
-              borderRadius: '4px', 
-              background: skin.colors.primary,
-              width: `${progressPercentage}%`,
-              transition: 'width 0.3s ease'
-            }}
-          />
-        </div>
-        <div style={{ 
-          fontSize: '0.9rem', 
-          textAlign: 'center', 
-          fontWeight: 'bold',
-          color: skin.colors.text
-        }}>
-          {mission.progress} / {mission.total_required}
+        <div className="progress-container">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+          <div className="progress-text">
+            {mission.progress} / {mission.total_required}
+          </div>
         </div>
       </div>
 
-      {/* 対象神社・神様 */}
-      {(mission.shrines && mission.shrines.length > 0 || mission.dieties && mission.dieties.length > 0) && (
+      {/* 対象 */}
+      {((mission.shrines && mission.shrines.length > 0) || (mission.dieties && mission.dieties.length > 0)) && (
         <div className="modal-section">
           <div className="modal-subtitle">{t('missionTarget')}</div>
           <div>
             {mission.shrines && mission.shrines.length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
+              <div>
                 <div className="small" style={{ marginBottom: '5px', color: 'var(--color-text)', opacity: 0.7 }}>神社</div>
                 <div className="d-flex flex-wrap gap-2">
                   {mission.shrines.map((shrine: any) => (
@@ -107,23 +62,14 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
                         {shrine.name} ×{shrine.achieved}/{shrine.count}
                       </CustomLink>
                       {shrine.is_completed && (
-                        <span style={{
-                          position: 'absolute',
-                          top: '-8px',
-                          right: '-8px',
-                          background: '#27ae60',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '20px',
-                          height: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          ✓
-                        </span>
+                        <CompletionBadge 
+                          size={20}
+                          className="position-absolute"
+                          style={{
+                            top: '-8px',
+                            right: '-8px'
+                          }}
+                        />
                       )}
                     </div>
                   ))}
@@ -149,23 +95,14 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
                         {diety.name} ×{diety.achieved}/{diety.count}
                       </CustomLink>
                       {diety.is_completed && (
-                        <span style={{
-                          position: 'absolute',
-                          top: '-8px',
-                          right: '-8px',
-                          background: '#27ae60',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '20px',
-                          height: '20px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          ✓
-                        </span>
+                        <CompletionBadge 
+                          size={20}
+                          className="position-absolute"
+                          style={{
+                            top: '-8px',
+                            right: '-8px'
+                          }}
+                        />
                       )}
                     </div>
                   ))}
@@ -218,8 +155,6 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
       )}
     </>
   );
-});
-
-MissionPane.displayName = 'MissionPane';
+};
 
 export default MissionPane; 
