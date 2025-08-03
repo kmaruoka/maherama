@@ -90,10 +90,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   }));
 
   useEffect(() => {
-    if (data?.image_url) {
+    if (data?.image_url || data?.image_url_m || data?.image_url_s) {
       setThumbCache(Date.now());
     }
-  }, [data?.image_url]);
+  }, [data?.image_url, data?.image_url_m, data?.image_url_s]);
 
   // 画像リスト取得
   useEffect(() => {
@@ -131,11 +131,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       
       // 成功時はデータ再取得
       setRankRefreshKey(prev => prev + 1);
-      queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['shrine', id] });
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-              if (result.image?.thumbnail_url) {
-          setThumbCache(Date.now());
-        }
+      
+      // サムネイルキャッシュを更新
+      if (result.image?.thumbnail_url || result.isCurrentThumbnail) {
+        setThumbCache(Date.now());
+      }
+      
       if (result.isCurrentThumbnail) {
         alert(t('uploadSuccess'));
       } else {
@@ -175,6 +178,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       
       // 成功時はデータ再取得
       setRankRefreshKey(prev => prev + 1);
+      queryClient.invalidateQueries({ queryKey: ['shrine', id] });
+      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       alert(t('voteSuccess'));
     } catch (error) {
       console.error('投票エラー:', error);
@@ -396,6 +401,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         throw new Error(errorMsg);
       }
       setRankRefreshKey(prev => prev + 1);
+      queryClient.invalidateQueries({ queryKey: ['shrine', id] });
+      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       alert(t('voteSuccess'));
     } catch (error) {
       console.error('投票エラー:', error);
@@ -480,20 +487,20 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           }
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
-          <img src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <img src={(data.image_url || data.image_url_m || data.image_url_s || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} alt="サムネイル" />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();
               setIsUploadModalOpen(true);
             }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
-                      {data.image_url && data.image_url !== NOIMAGE_SHRINE_DISPLAY_URL && (
+                      {(data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();
               handleVote();
             }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
           )}
         </div>
-        {data.image_by && (
+        {data.image_by && (data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
           <div className="pane__thumbnail-by">{t('by')} {data.image_by}</div>
         )}
         </div>

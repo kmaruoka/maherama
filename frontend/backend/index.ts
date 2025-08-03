@@ -3046,7 +3046,7 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
   }
   try {
     const yyyymm = getYYYYMM();
-    const dir = path.join(__dirname, '..', '..', 'public', 'images', yyyymm);
+    const dir = path.join(__dirname, '..', 'public', 'images', yyyymm);
     ensureDirSync(dir);
     
     // 6サイズ保存
@@ -3139,7 +3139,7 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
   }
   try {
     const yyyymm = getYYYYMM();
-    const dir = path.join(__dirname, '..', '..', 'public', 'images', yyyymm);
+    const dir = path.join(__dirname, '..', 'public', 'images', yyyymm);
     ensureDirSync(dir);
     
     // 6サイズ保存
