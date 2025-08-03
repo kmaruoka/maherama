@@ -22,11 +22,7 @@ const kaneSkin = {
     rankingSection: '#b71c1c',       // 深紅
     logText: '#222',
     section: '#b71c1c',
-    rankingBadge1: 'linear-gradient(135deg, #ffd700 60%, #fffbe6 100%)', // 金
-    rankingBadge2: '#c0c0c0',        // 銀
-    rankingBadge3: '#cd7f32',        // 銅
-    rankingBadgeOther: '#ffe082',    // 明るい金
-    rankingBadgeText: '#222',
+
     scrollbarThumb: '#ffd700',
     scrollbarTrack: '#fffbe6',
     scrollbarThumbHover: '#bfa14a',

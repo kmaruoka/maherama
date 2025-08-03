@@ -22,11 +22,7 @@ const forestSkin = {
     rankingSection: '#374151',
     logText: '#2e3d2c',
     section: '#374151',
-    rankingBadge1: '#ffd700',
-    rankingBadge2: '#c0c0c0',
-    rankingBadge3: '#cd7f32',
-    rankingBadgeOther: '#dcedc8',
-    rankingBadgeText: '#2e3d2c',
+
     scrollbarThumb: '#a5d6a7',
     scrollbarTrack: '#e8f5e9',
     scrollbarThumbHover: '#2e7d32',

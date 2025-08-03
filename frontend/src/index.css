@@ -1563,3 +1563,64 @@ nav.d-flex.position-fixed {
   background: var(--color-background);
   border-radius: 3px;
 }
+
+.award-badge {
+  color: rgba(0, 0, 0, 0.2) !important;
+  display: inline-block;
+  margin-right: 0.25rem;
+  width: 1.8em;
+  height: 1.8em;
+  padding: 0;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 共通の光沢グラデーション（モノクロかつ透過） */
+.award-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0,0,0,0.4) 0%, 
+    rgba(0,0,0,0.9) 25%, 
+    rgba(0,0,0,0.1) 50%, 
+    rgba(0,0,0,0.9) 75%, 
+    rgba(0,0,0,0.4) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+.award-badge svg {
+  position: relative;
+  z-index: 2;
+  width: 1em;
+  height: 1em;
+}
+
+/* 各メダルの色定義 */
+.award-badge.gold {
+  background: #FFD700;
+  border: 1px solid rgba(218,165,32,0.8);
+  background-blend-mode: multiply;
+}
+
+.award-badge.silver {
+  background: #cccccc;
+  border: 1px solid rgba(224,224,224,0.3);
+  background-blend-mode: multiply;
+}
+
+.award-badge.bronze {
+  background: #cc9933;
+  border: 1px solid rgba(139,69,19,0.6);
+  background-blend-mode: multiply;
+}

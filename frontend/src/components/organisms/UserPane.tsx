@@ -14,7 +14,7 @@ import { NOIMAGE_USER_URL } from '../../constants';
 import { CustomButton } from '../atoms/CustomButton';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
-import { TrophyIcon } from '../atoms/CustomText';
+import { AwardIcon } from '../atoms/CustomText';
 import { useTranslation } from 'react-i18next';
 import { FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
 
@@ -250,43 +250,47 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
         <div className="mt-4">
           <div className="modal-subtitle">{t('titles')}</div>
           <ul className="list-unstyled">
-            {titles.map(t => (
-              <li key={t.id} style={{ whiteSpace: 'nowrap' }}>
-                <TrophyIcon grade={t.grade} /> {t.template && t.embed_data ? (
-                  <span style={{ display: 'inline', whiteSpace: 'nowrap' }}>
-                    {t.template.split(/(<\{[^}]+\}>)/g).map((part, idx) => {
-                      if (part.startsWith('<{') && part.endsWith('}>')) {
-                        const key = part.slice(2, -2);
-                        if (key === 'shrine' && t.embed_data?.shrine && t.embed_data?.shrine_id) {
-                          return (
-                            <CustomLink key={idx} type="shrine" onClick={() => onShowShrine && onShowShrine(t.embed_data?.shrine_id)}>
-                              {t.embed_data?.shrine}
-                            </CustomLink>
-                          );
+            {titles.map(t => {
+              // デバッグ用ログ
+              console.log('UserPane TrophyIcon debug', { grade: t.grade, embed_data: t.embed_data, name: t.embed_data?.name, shrine: t.embed_data?.shrine, diety: t.embed_data?.diety });
+              return (
+                <li key={t.id} style={{ whiteSpace: 'nowrap' }}>
+                  <AwardIcon grade={t.grade} embed_data={t.embed_data} /> {t.template && t.embed_data ? (
+                    <span style={{ display: 'inline', whiteSpace: 'nowrap' }}>
+                      {t.template.split(/(<\{[^}]+\}>)/g).map((part, idx) => {
+                        if (part.startsWith('<{') && part.endsWith('}>')) {
+                          const key = part.slice(2, -2);
+                          if (key === 'shrine' && t.embed_data?.shrine && t.embed_data?.shrine_id) {
+                            return (
+                              <CustomLink key={idx} type="shrine" onClick={() => onShowShrine && onShowShrine(t.embed_data?.shrine_id)}>
+                                {t.embed_data?.shrine}
+                              </CustomLink>
+                            );
+                          }
+                          if (key === 'diety' && t.embed_data?.diety && t.embed_data?.diety_id) {
+                            return (
+                              <CustomLink key={idx} type="diety" onClick={() => onShowDiety && onShowDiety(t.embed_data?.diety_id)}>
+                                {t.embed_data?.diety}
+                              </CustomLink>
+                            );
+                          }
+                          if (key === 'period' && t.embed_data?.period) {
+                            return (
+                              <span key={idx} style={{ color: 'var(--color-accent)', fontWeight: 'bold' }}>
+                                {t.embed_data?.period}
+                              </span>
+                            );
+                          }
+                          // 他の埋め込みデータもそのまま表示
+                          return t.embed_data?.[key] || '';
                         }
-                        if (key === 'diety' && t.embed_data?.diety && t.embed_data?.diety_id) {
-                          return (
-                            <CustomLink key={idx} type="diety" onClick={() => onShowDiety && onShowDiety(t.embed_data?.diety_id)}>
-                              {t.embed_data?.diety}
-                            </CustomLink>
-                          );
-                        }
-                        if (key === 'period' && t.embed_data?.period) {
-                          return (
-                            <span key={idx} style={{ color: 'var(--color-accent)', fontWeight: 'bold' }}>
-                              {t.embed_data?.period}
-                            </span>
-                          );
-                        }
-                        // 他の埋め込みデータもそのまま表示
-                        return t.embed_data?.[key] || '';
-                      }
-                      return part;
-                    })}
-                  </span>
-                ) : t.name}
-              </li>
-            ))}
+                        return part;
+                      })}
+                    </span>
+                  ) : t.name}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

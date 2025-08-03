@@ -22,11 +22,7 @@ const aiSkin = {
       rankingSection: '#aabac6',
       logText: '#e0e1dd',
       section: '#e0e1dd',
-      rankingBadge1: '#ffd700',       // 金
-      rankingBadge2: '#c0c0c0',       // 銀
-      rankingBadge3: '#cd7f32',       // 銅
-      rankingBadgeOther: '#2f4f4f',   // ダークスレートグレー
-      rankingBadgeText: '#2c3e50',    // 暗い色（明るい背景に対して）
+
       scrollbarThumb: '#415a77',
       scrollbarTrack: '#1b263b',
       scrollbarThumbHover: '#778da9',

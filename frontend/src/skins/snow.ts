@@ -22,11 +22,7 @@ const snowSkin = {
     rankingSection: '#607d8b',        // 雪の影・木の陰のような色
     logText: '#2e2e2e',
     section: '#607d8b',
-    rankingBadge1: '#f9f871',         // 反射する淡い月の光（金を低彩度に）
-    rankingBadge2: '#cfd8dc',         // 雪銀
-    rankingBadge3: '#a1887f',         // 淡いブロンズ
-    rankingBadgeOther: '#eceff1',     // 雪のようなやわらかい白
-    rankingBadgeText: '#333',
+
     scrollbarThumb: '#b0bec5',
     scrollbarTrack: '#e0e0e0',
     scrollbarThumbHover: '#90a4ae',

@@ -3,6 +3,7 @@ import CustomLink from '../atoms/CustomLink';
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import { useSkin } from '../../skins/SkinContext';
+import { GiLibertyWing, GiShintoShrine } from 'react-icons/gi';
 
 export type Period = 'all' | 'yearly' | 'monthly' | 'weekly';
 
@@ -15,7 +16,7 @@ export interface RankingItem {
 
 interface RankingPaneProps {
   itemsByPeriod?: { [key in Period]: RankingItem[] };
-  type: 'user' | 'shrine' | 'diety';
+  type: 'shrine' | 'diety';
   isLoading?: boolean;
   onItemClick?: (id: number) => void;
   maxItems?: number;
@@ -55,10 +56,21 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
           <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>データがありません</div>
         ) : (
           items.slice(0, maxItems).map((item, idx) => {
-            let badgeBg = skin.colors.rankingBadgeOther;
-            if (idx === 0) badgeBg = skin.colors.rankingBadge1;
-            else if (idx === 1) badgeBg = skin.colors.rankingBadge2;
-            else if (idx === 2) badgeBg = skin.colors.rankingBadge3;
+            let badgeClass = '';
+            if (idx === 0) badgeClass = 'award-badge gold';
+            else if (idx === 1) badgeClass = 'award-badge silver';
+            else if (idx === 2) badgeClass = 'award-badge bronze';
+            else badgeClass = 'award-badge';
+            
+            // ランキングタイプに応じてアイコンを選択
+            const getRankingIcon = () => {
+              if (type === 'shrine') {
+                return <GiShintoShrine />;
+              } else if (type === 'diety') {
+                return <GiLibertyWing />;
+              }
+            };
+            
             return (
               <div key={item.id + '-' + item.rank} className="d-flex align-items-center gap-2 rounded px-3 py-2"
                 style={{
@@ -66,10 +78,8 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
                   border: `1px solid ${skin.colors.rankingRowBorder}`,
                 }}
               >
-                <span
-                  className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                  style={{ width: '28px', height: '28px', background: badgeBg, color: skin.colors.rankingBadgeText }}>
-                  {idx + 1}
+                <span className={badgeClass}>
+                  {getRankingIcon()}
                 </span>
                 <span style={{ fontSize: '1.1rem', fontWeight: 500, color: skin.colors.text }}>
                   <CustomLink

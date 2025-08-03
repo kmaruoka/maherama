@@ -22,11 +22,7 @@ const sakuraSkin = {
     rankingSection: '#374151',
     logText: '#3c2a2a',
     section: '#374151',
-    rankingBadge1: '#ffd700',
-    rankingBadge2: '#c0c0c0',
-    rankingBadge3: '#cd7f32',
-    rankingBadgeOther: '#f8bbd0',
-    rankingBadgeText: '#3c2a2a',
+
     scrollbarThumb: '#f8bbd0',
     scrollbarTrack: '#fdeff2',
     scrollbarThumbHover: '#e91e63',

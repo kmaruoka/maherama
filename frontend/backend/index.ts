@@ -3059,12 +3059,24 @@ async function awardRankingTitles(period, currentDate) {
       
       if (topStats.length === 0) continue;
 
-      const titleCode = period === 'yearly' ? 'yearly_rank_shrine' : 'monthly_rank_shrine';
-      const titleMaster = await prisma.titleMaster.findUnique({ where: { code: titleCode } });
-      
       for (let i = 0; i < topStats.length; i++) {
         const stat = topStats[i];
         const rank = i + 1;
+        
+        // ランクに応じた称号コードを生成
+        let titleCode;
+        if (period === 'yearly') {
+          if (rank === 1) titleCode = 'yearly_rank_shrine_1st';
+          else if (rank === 2) titleCode = 'yearly_rank_shrine_2nd';
+          else if (rank === 3) titleCode = 'yearly_rank_shrine_3rd';
+          else titleCode = 'yearly_rank_shrine_1st'; // フォールバック
+        } else {
+          if (rank === 1) titleCode = 'monthly_rank_shrine_1st';
+          else if (rank === 2) titleCode = 'monthly_rank_shrine_2nd';
+          else if (rank === 3) titleCode = 'monthly_rank_shrine_3rd';
+          else titleCode = 'monthly_rank_shrine_1st'; // フォールバック
+        }
+        const titleMaster = await prisma.titleMaster.findUnique({ where: { code: titleCode } });
         
         if (!titleMaster) {
           console.log(`❌ 称号マスターが見つかりません: ${titleCode}`);
@@ -3083,6 +3095,13 @@ async function awardRankingTitles(period, currentDate) {
           displayName = displayName.replace(new RegExp(`<\{${key}\}>`, 'g'), embedData[key]);
         }
         
+        // ランクに応じたグレードを設定
+        let grade;
+        if (rank === 1) grade = 5; // 1位は金
+        else if (rank === 2) grade = 4; // 2位は銀
+        else if (rank === 3) grade = 2; // 3位は銅
+        else grade = 1; // その他
+        
         // 既存の称号を確認してから作成または更新
         const existingTitle = await prisma.userTitle.findFirst({
           where: {
@@ -3100,7 +3119,7 @@ async function awardRankingTitles(period, currentDate) {
             where: { id: existingTitle.id },
             data: {
               awarded_at: getCurrentDate(),
-              grade: rank <= 3 ? 5 - rank : 1,
+              grade: grade,
               display_name: displayName
             }
           });
@@ -3112,11 +3131,12 @@ async function awardRankingTitles(period, currentDate) {
               title_id: titleMaster.id,
               awarded_at: getCurrentDate(),
               embed_data: embedData,
-              grade: rank <= 3 ? 5 - rank : 1,
+              grade: grade,
               display_name: displayName
             }
           });
         }
+        
         // 称号獲得時のポイント付与
         const titlePoint = await prisma.titleMaster.findUnique({
           where: { id: titleMaster.id },
@@ -3139,33 +3159,58 @@ async function awardRankingTitles(period, currentDate) {
     console.log(`📊 ${periodText}神様ランキング集計: ${allDieties.length}神様を処理中...`);
     
     for (const diety of allDieties) {
-      const maxStat = await dietyModel.findFirst({
-        where: { diety_id: diety.id },
-        orderBy: { count: 'desc' }
-      });
-      if (!maxStat || maxStat.count === 0) continue;
+      // その神様の上位3件を取得
       const topStats = await dietyModel.findMany({
-        where: { diety_id: diety.id, count: maxStat.count },
+        where: { diety_id: diety.id },
+        orderBy: { count: 'desc' },
+        take: 3,
         include: { user: { select: { id: true, name: true } } }
       });
-      const titleCode = period === 'yearly' ? 'yearly_rank_diety' : 'monthly_rank_diety';
-      const titleMaster = await prisma.titleMaster.findUnique({ where: { code: titleCode } });
-      for (const stat of topStats) {
+      
+      if (topStats.length === 0) continue;
+
+      for (let i = 0; i < topStats.length; i++) {
+        const stat = topStats[i];
+        const rank = i + 1;
+        
+        // ランクに応じた称号コードを生成
+        let titleCode;
+        if (period === 'yearly') {
+          if (rank === 1) titleCode = 'yearly_rank_diety_1st';
+          else if (rank === 2) titleCode = 'yearly_rank_diety_2nd';
+          else if (rank === 3) titleCode = 'yearly_rank_diety_3rd';
+          else titleCode = 'yearly_rank_diety_1st'; // フォールバック
+        } else {
+          if (rank === 1) titleCode = 'monthly_rank_diety_1st';
+          else if (rank === 2) titleCode = 'monthly_rank_diety_2nd';
+          else if (rank === 3) titleCode = 'monthly_rank_diety_3rd';
+          else titleCode = 'monthly_rank_diety_1st'; // フォールバック
+        }
+        const titleMaster = await prisma.titleMaster.findUnique({ where: { code: titleCode } });
+        
         if (!titleMaster) {
           console.log(`❌ 称号マスターが見つかりません: ${titleCode}`);
           continue;
         }
+        
         // 表示名を生成
         let displayName = titleMaster.name_template;
         const embedData = {
           diety: diety.name,
           diety_id: diety.id,
-          rank: '1位',
+          rank: rank + '位',
           period: periodText,
         };
         for (const key of Object.keys(embedData)) {
           displayName = displayName.replace(new RegExp(`<\{${key}\}>`, 'g'), embedData[key]);
         }
+        
+        // ランクに応じたグレードを設定
+        let grade;
+        if (rank === 1) grade = 5; // 1位は金
+        else if (rank === 2) grade = 4; // 2位は銀
+        else if (rank === 3) grade = 2; // 3位は銅
+        else grade = 1; // その他
         
         // 既存の称号を確認してから作成または更新
         const existingDietyTitle = await prisma.userTitle.findFirst({
@@ -3184,7 +3229,7 @@ async function awardRankingTitles(period, currentDate) {
             where: { id: existingDietyTitle.id },
             data: {
               awarded_at: getCurrentDate(),
-              grade: 5,
+              grade: grade,
               display_name: displayName
             }
           });
@@ -3196,16 +3241,23 @@ async function awardRankingTitles(period, currentDate) {
               title_id: titleMaster.id,
               awarded_at: getCurrentDate(),
               embed_data: embedData,
-              grade: 5,
+              grade: grade,
               display_name: displayName
             }
           });
         }
-        const expReward = period === 'yearly' ? 500 : 200;
-        const expResult = await addExperience(prisma, stat.user.id, expReward, 'YEARLY_RANKING_1');
-        console.log(`🏆 神様${periodText}ランキング1位: ${stat.user.name} (${diety.name}) が称号「${titleMaster.name_template}」を獲得 (${expReward}EXP)`);
+        
+        // 称号獲得時のポイント付与
+        const titlePoint = await prisma.titleMaster.findUnique({
+          where: { id: titleMaster.id },
+          select: { exp_reward: true }
+        });
+        // exp_rewardを参照して経験値付与
+        const expReward = titlePoint?.exp_reward || 0;
+        const expResult = await addExperience(prisma, stat.user.id, expReward, 'TITLE_ACQUISITION');
+        console.log(`🏆 神様${periodText}${rank}位: ${stat.user.name} (${diety.name}) が称号「${titleMaster.name_template}」を獲得 (${expReward}EXP)`);
         if (expResult.levelUp) {
-          console.log(`🏆 神様${periodText}ランキング1位: ${stat.user.name} レベルアップ →${expResult.newLevel}, 獲得AP: ${expResult.abilityPointsGained}`);
+          console.log(`🏆 神様${periodText}${rank}位: ${stat.user.name} レベルアップ →${expResult.newLevel}, 獲得AP: ${expResult.abilityPointsGained}`);
         }
       }
     }

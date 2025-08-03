@@ -22,11 +22,7 @@ const tsukiSkin = {
       rankingSection: '#cfd8dc',
       logText: '#e0e1dd',
       section: '#f0f4f8',
-      rankingBadge1: '#f9f871',        // 満月の黄（光沢ある金色）
-      rankingBadge2: '#b0bec5',        // 月光銀
-      rankingBadge3: '#bfa27a',        // 淡い銅
-      rankingBadgeOther: '#37474f',    // 冷たい夜の影
-      rankingBadgeText: '#2c3e50',     // 暗い色（明るい背景に対して）
+
       scrollbarThumb: '#3a3f5d',
       scrollbarTrack: '#11162a',
       scrollbarThumbHover: '#b0c4de',

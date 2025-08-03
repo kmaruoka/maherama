@@ -1,4 +1,6 @@
 import React from 'react';
+import { GiLibertyWing, GiShintoShrine } from "react-icons/gi";
+import { FaAward, FaTrophy } from "react-icons/fa6";
 
 interface CustomTextProps {
   children: React.ReactNode;
@@ -15,35 +17,87 @@ export default function CustomText({ children, className, style }: CustomTextPro
 }
 
 // グレードに応じたトロフィーアイコンコンポーネント
-interface TrophyIconProps {
+interface AwardIconProps {
   grade?: number;
   className?: string;
   style?: React.CSSProperties;
+  embed_data?: any; // 称号の埋め込みデータ
 }
 
-export function TrophyIcon({ grade = 1, className, style }: TrophyIconProps) {
-  const getTrophyIcon = (grade: number) => {
+function getAwardClassName(grade: number) {
+  // デバッグ用ログ
+  console.log('getAwardClassName debug:', { grade });
+  
+  // 1位～3位は同じアイコンで色違い（メタリックなグラデーション）
+  if (grade >= 2 && grade <= 5) {
     switch (grade) {
-      case 4: return '🏆'; // 最高グレード
-      case 3: return '🥇'; // 高級グレード
-      case 2: return '🥈'; // 中級グレード
-      case 1: default: return '🥉'; // 初級グレード
+      case 5: 
+        console.log('Returning award-badge gold for grade 5');
+        return 'award-badge gold'; // 1位（金）
+      case 4: 
+        console.log('Returning award-badge silver for grade 4');
+        return 'award-badge silver'; // 2位（銀）
+      case 2: 
+        console.log('Returning award-badge bronze for grade 2');
+        return 'award-badge bronze'; // 3位（銅）
+      default:
+        console.log('Returning empty string for grade:', grade);
+        return '';
     }
-  };
+  }
+  console.log('Returning empty string for grade:', grade);
+  return '';
+}
 
-  const getTrophyStyle = (grade: number) => {
-    const baseStyle = { fontSize: '1.2em', ...style };
-    switch (grade) {
-      case 4: return { ...baseStyle, filter: 'brightness(1.2) saturate(1.5)' };
-      case 3: return { ...baseStyle, filter: 'brightness(1.1) saturate(1.3)' };
-      case 2: return { ...baseStyle, filter: 'brightness(1.0) saturate(1.1)' };
-      case 1: default: return baseStyle;
+export function AwardIcon({ grade = 1, className, style, embed_data }: AwardIconProps) {
+  const getAwardIcon = (grade: number, embed_data?: any) => {
+    if (embed_data?.diety && grade >= 2 && grade <= 5) {
+      return <GiLibertyWing />;
     }
+    if (embed_data?.shrine && grade >= 2 && grade <= 5) {
+      return <GiShintoShrine />;
+    }
+    if (embed_data?.shrine || (embed_data?.name && embed_data.name.includes('神社'))) {
+      return <GiShintoShrine />;
+    }
+    if (embed_data?.diety || (embed_data?.name && (embed_data.name.includes('神') || embed_data.name.includes('大神')))) {
+      return <GiLibertyWing />;
+    }
+    if (grade >= 4) {
+      return <FaTrophy />;
+    }
+    return <FaAward />;
   };
 
   return (
-    <span className={className} style={getTrophyStyle(grade)}>
-      {getTrophyIcon(grade)}
-    </span>
+    <>
+      <style>
+        {`
+          .trophy-icon svg,
+          .trophy-icon svg *,
+          .trophy-icon svg path,
+          .trophy-icon svg rect,
+          .trophy-icon svg circle,
+          .trophy-icon svg polygon,
+          .trophy-icon svg g,
+          .trophy-icon svg use,
+          .trophy-icon svg line,
+          .trophy-icon svg polyline,
+          .trophy-icon svg ellipse {
+            fill: currentColor !important;
+            color: currentColor !important;
+            stroke: currentColor !important;
+          }
+          .trophy-icon *[fill],
+          .trophy-icon *[stroke] {
+            fill: currentColor !important;
+            stroke: currentColor !important;
+          }
+        `}
+      </style>
+      <span className={`award-badge ${getAwardClassName(grade)}${className ? ' ' + className : ''}`.trim()} style={{ ...style, fontSize: '0.8em' }}>
+        {getAwardIcon(grade, embed_data)}
+      </span>
+    </>
   );
 }

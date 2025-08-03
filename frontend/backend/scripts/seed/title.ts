@@ -19,50 +19,134 @@ export async function seedTitle(prisma: PrismaClient) {
         type: 'consecutive_pray',
         exp_reward: 200
       },
-      // 週間ランキング系称号テンプレート
+      // 週間ランキング系称号テンプレート（1位～3位）
       {
-        code: 'weekly_rank_shrine',
+        code: 'weekly_rank_shrine_1st',
         name_template: '週間参拝数<{rank}><{shrine}><{period}>',
-        description: '週間で最も多く参拝した神社',
+        description: '週間で最も多く参拝した神社（1位）',
+        type: 'weekly_rank_shrine',
+        exp_reward: 150
+      },
+      {
+        code: 'weekly_rank_shrine_2nd',
+        name_template: '週間参拝数<{rank}><{shrine}><{period}>',
+        description: '週間で最も多く参拝した神社（2位）',
         type: 'weekly_rank_shrine',
         exp_reward: 100
       },
       {
-        code: 'weekly_rank_diety',
+        code: 'weekly_rank_shrine_3rd',
+        name_template: '週間参拝数<{rank}><{shrine}><{period}>',
+        description: '週間で最も多く参拝した神社（3位）',
+        type: 'weekly_rank_shrine',
+        exp_reward: 50
+      },
+      {
+        code: 'weekly_rank_diety_1st',
         name_template: '週間参拝数<{rank}><{diety}><{period}>',
-        description: '週間で最も多く参拝した神様',
+        description: '週間で最も多く参拝した神様（1位）',
+        type: 'weekly_rank_diety',
+        exp_reward: 150
+      },
+      {
+        code: 'weekly_rank_diety_2nd',
+        name_template: '週間参拝数<{rank}><{diety}><{period}>',
+        description: '週間で最も多く参拝した神様（2位）',
         type: 'weekly_rank_diety',
         exp_reward: 100
       },
-      // 月間ランキング系称号テンプレート
       {
-        code: 'monthly_rank_shrine',
+        code: 'weekly_rank_diety_3rd',
+        name_template: '週間参拝数<{rank}><{diety}><{period}>',
+        description: '週間で最も多く参拝した神様（3位）',
+        type: 'weekly_rank_diety',
+        exp_reward: 50
+      },
+      // 月間ランキング系称号テンプレート（1位～3位）
+      {
+        code: 'monthly_rank_shrine_1st',
         name_template: '月間参拝数<{rank}><{shrine}><{period}>',
-        description: '月間で最も多く参拝した神社',
+        description: '月間で最も多く参拝した神社（1位）',
+        type: 'monthly_rank_shrine',
+        exp_reward: 300
+      },
+      {
+        code: 'monthly_rank_shrine_2nd',
+        name_template: '月間参拝数<{rank}><{shrine}><{period}>',
+        description: '月間で最も多く参拝した神社（2位）',
         type: 'monthly_rank_shrine',
         exp_reward: 200
       },
       {
-        code: 'monthly_rank_diety',
+        code: 'monthly_rank_shrine_3rd',
+        name_template: '月間参拝数<{rank}><{shrine}><{period}>',
+        description: '月間で最も多く参拝した神社（3位）',
+        type: 'monthly_rank_shrine',
+        exp_reward: 100
+      },
+      {
+        code: 'monthly_rank_diety_1st',
         name_template: '月間参拝数<{rank}><{diety}><{period}>',
-        description: '月間で最も多く参拝した神様',
+        description: '月間で最も多く参拝した神様（1位）',
+        type: 'monthly_rank_diety',
+        exp_reward: 300
+      },
+      {
+        code: 'monthly_rank_diety_2nd',
+        name_template: '月間参拝数<{rank}><{diety}><{period}>',
+        description: '月間で最も多く参拝した神様（2位）',
         type: 'monthly_rank_diety',
         exp_reward: 200
       },
-      // 年間ランキング系称号テンプレート
       {
-        code: 'yearly_rank_shrine',
+        code: 'monthly_rank_diety_3rd',
+        name_template: '月間参拝数<{rank}><{diety}><{period}>',
+        description: '月間で最も多く参拝した神様（3位）',
+        type: 'monthly_rank_diety',
+        exp_reward: 100
+      },
+      // 年間ランキング系称号テンプレート（1位～3位）
+      {
+        code: 'yearly_rank_shrine_1st',
         name_template: '年間参拝数<{rank}><{shrine}><{period}>',
-        description: '年間で最も多く参拝した神社',
+        description: '年間で最も多く参拝した神社（1位）',
+        type: 'yearly_rank_shrine',
+        exp_reward: 1500
+      },
+      {
+        code: 'yearly_rank_shrine_2nd',
+        name_template: '年間参拝数<{rank}><{shrine}><{period}>',
+        description: '年間で最も多く参拝した神社（2位）',
         type: 'yearly_rank_shrine',
         exp_reward: 1000
       },
       {
-        code: 'yearly_rank_diety',
+        code: 'yearly_rank_shrine_3rd',
+        name_template: '年間参拝数<{rank}><{shrine}><{period}>',
+        description: '年間で最も多く参拝した神社（3位）',
+        type: 'yearly_rank_shrine',
+        exp_reward: 500
+      },
+      {
+        code: 'yearly_rank_diety_1st',
         name_template: '年間参拝数<{rank}><{diety}><{period}>',
-        description: '年間で最も多く参拝した神様',
+        description: '年間で最も多く参拝した神様（1位）',
+        type: 'yearly_rank_diety',
+        exp_reward: 1500
+      },
+      {
+        code: 'yearly_rank_diety_2nd',
+        name_template: '年間参拝数<{rank}><{diety}><{period}>',
+        description: '年間で最も多く参拝した神様（2位）',
         type: 'yearly_rank_diety',
         exp_reward: 1000
+      },
+      {
+        code: 'yearly_rank_diety_3rd',
+        name_template: '年間参拝数<{rank}><{diety}><{period}>',
+        description: '年間で最も多く参拝した神様（3位）',
+        type: 'yearly_rank_diety',
+        exp_reward: 500
       },
       // その他の称号テンプレート
       {

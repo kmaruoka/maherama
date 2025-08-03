@@ -189,7 +189,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           </div>
           <RankingPane
             itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
-            type="user"
+            type="diety"
             isLoading={isRankingLoading}
             onItemClick={onShowUser}
             maxItems={100}
@@ -307,7 +307,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         </div>
         <RankingPane
           itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
-          type="user"
+          type="diety"
           isLoading={isRankingLoading}
           onItemClick={onShowUser}
           maxItems={3}

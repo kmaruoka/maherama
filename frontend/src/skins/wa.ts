@@ -22,11 +22,7 @@ const waSkin = {
     rankingSection: '#5d4037', // 濃い焦茶（引き締め）
     logText: '#222',
     section: '#5d4037',
-    rankingBadge1: '#d4af37',  // 鈍い金（明度・彩度抑制）
-    rankingBadge2: '#b0aeb0',  // 薄墨銀
-    rankingBadge3: '#c27c44',  // 焦げ茶寄りの銅
-    rankingBadgeOther: '#eae2cc', // 黄味ベージュ
-    rankingBadgeText: '#3e3e3e',
+
     scrollbarThumb: '#c7a76c',
     scrollbarTrack: '#eae2cc',
     scrollbarThumbHover: '#a77f3d',

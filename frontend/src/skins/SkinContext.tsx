@@ -47,11 +47,7 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--color-ranking-row-bg', colors.rankingRowBg);
     root.style.setProperty('--color-ranking-row-border', colors.rankingRowBorder);
     root.style.setProperty('--color-ranking-section', colors.rankingSection);
-    root.style.setProperty('--color-ranking-badge-1', colors.rankingBadge1);
-    root.style.setProperty('--color-ranking-badge-2', colors.rankingBadge2);
-    root.style.setProperty('--color-ranking-badge-3', colors.rankingBadge3);
-    root.style.setProperty('--color-ranking-badge-other', colors.rankingBadgeOther);
-    root.style.setProperty('--color-ranking-badge-text', colors.rankingBadgeText);
+
     root.style.setProperty('--color-disabled', colors.disabled);
     root.style.setProperty('--color-text-muted', colors.textMuted);
   }, [skin]);
