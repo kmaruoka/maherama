@@ -15,6 +15,7 @@ import { API_BASE } from '../../config/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
+import { useToast } from '../atoms';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings' | 'userRankings'): { [key in Period]: RankingItemData[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -36,6 +37,7 @@ export interface DietyPaneRef {
 const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void }>(
   ({ id, onShowShrine, onShowUser, onClose, onDetailViewChange }, ref) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const { id: paramId } = useParams<{ id: string }>();
   const [detailView, setDetailView] = useState<DetailViewType>('overview');
 

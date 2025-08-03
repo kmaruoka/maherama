@@ -6,6 +6,7 @@ import './index.css';
 import App from './App.tsx';
 import { SkinProvider } from './skins/SkinContext';
 import { BarrierProvider } from './barriers/BarrierContext';
+import { ToastContainer } from './components/atoms';
 import './config/i18n';
 
 const queryClient = new QueryClient();
@@ -15,7 +16,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <SkinProvider>
         <BarrierProvider>
-          <App />
+          <ToastContainer>
+            <App />
+          </ToastContainer>
         </BarrierProvider>
       </SkinProvider>
     </QueryClientProvider>

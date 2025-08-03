@@ -39,7 +39,8 @@ function createShrineIcon(
   isRemoteUnavailable: boolean = false, // 未使用（互換性のため残す）
   isInRange: boolean = false,
   hasPrayedToday: boolean = false,
-  tooltipText: string = ''
+  tooltipText: string = '',
+  imageCache: number = Date.now()
 ) {
   // 状態に応じたCSSクラスを決定
   const statusClasses = [];
@@ -75,7 +76,7 @@ function createShrineIcon(
       <div class="shrine-marker-frame-anim ${statusClassString}">
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
-          <img src="${(image_url || NOIMAGE_SHRINE_URL) + '?t=' + Date.now()}" alt="shrine" />
+          <img src="${(image_url || NOIMAGE_SHRINE_URL) + '?t=' + imageCache}" alt="shrine" onerror="this.onerror=null; this.src='${NOIMAGE_SHRINE_URL}?t=' + Date.now();" />
           <div class="shrine-marker-thumbnail-gloss ${isPrayable && !hasPrayedToday ? 'active' : ''}"></div>
         </div>
         <div class="shrine-marker-pin"></div>
@@ -92,8 +93,16 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
   const { t } = useTranslation();
   const debugLog = useDebugLog();
   const [userId] = useLocalStorageState<number | null>('userId', null);
+  const [imageCache, setImageCache] = useState(Date.now());
 
   const { data: markerStatus } = useShrineMarkerStatus(shrine.id, userId);
+
+  // 画像URLが変更された時にキャッシュを更新
+  useEffect(() => {
+    if (shrine.image_url_xs || shrine.image_url) {
+      setImageCache(Date.now());
+    }
+  }, [shrine.image_url_xs, shrine.image_url]);
 
   // 参拝距離・現在地から距離計算
   const { prayDistance, isLoading: isPrayDistanceLoading } = usePrayDistance(userId);
@@ -129,7 +138,8 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
       false, // isRemoteUnavailable: 常にfalse
       canPray,
       markerStatus?.has_prayed_today ?? false,
-      tooltipText
+      tooltipText,
+      imageCache
     );
   }, [
     shrine.image_url_xs,
@@ -138,7 +148,8 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
     canPray,
     isUnprayable,
     markerStatus?.has_prayed_today,
-    tooltipText
+    tooltipText,
+    imageCache
   ]);
 
   return (

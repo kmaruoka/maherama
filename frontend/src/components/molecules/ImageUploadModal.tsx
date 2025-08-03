@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { FaCamera, FaFolder, FaCheck, FaTimes } from 'react-icons/fa';
+import { useToast } from '../atoms';
 import ReactCrop from 'react-image-crop';
 import type { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -17,6 +18,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
   onUpload,
   title
 }) => {
+  const { showToast } = useToast();
   const [step, setStep] = useState<'select' | 'crop'>('select');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
@@ -55,9 +57,9 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       }
     } catch (error) {
       console.error('カメラアクセス失敗:', error);
-      alert('カメラが利用できません。ストレージから選択してください。');
+      showToast('カメラが利用できません。ストレージから選択してください。', 'warning');
     }
-  }, []);
+  }, [showToast]);
 
   const captureFromCamera = () => {
     if (videoRef.current && canvasRef.current) {
@@ -95,17 +97,13 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
     const heightPercent = (min / img.naturalHeight) * 100;
     const xPercent = ((img.naturalWidth - min) / 2 / img.naturalWidth) * 100;
     const yPercent = ((img.naturalHeight - min) / 2 / img.naturalHeight) * 100;
-    
-    const initialCrop = {
-      unit: '%' as const,
+    setCrop({
+      unit: '%',
       width: widthPercent,
       height: heightPercent,
       x: xPercent,
       y: yPercent
-    };
-    
-    setCrop(initialCrop);
-    setCompletedCrop(initialCrop);
+    });
     return false; // ReactCrop用
   };
 
@@ -119,15 +117,15 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       const ctx = canvas.getContext('2d');
       const img = imgElement;
 
-      // 完了cropを使う（nullの場合は現在のcropを使用）
+      // 完了cropを使う
       const c = completedCrop || crop;
-      
-      // パーセント値を実際のピクセル値に変換
-      const cropX = (c.x ?? 0) * img.naturalWidth / 100;
-      const cropY = (c.y ?? 0) * img.naturalHeight / 100;
-      const cropW = (c.width ?? 80) * img.naturalWidth / 100;
-      const cropH = (c.height ?? 80) * img.naturalHeight / 100;
-      
+      // crop値はimgの表示サイズ基準なので、naturalWidth基準に変換
+      const scaleX = img.naturalWidth / img.width;
+      const scaleY = img.naturalHeight / img.height;
+      let cropX = (c.x ?? 0) * scaleX;
+      let cropY = (c.y ?? 0) * scaleY;
+      let cropW = (c.width ?? 80) * scaleX;
+      let cropH = (c.height ?? 80) * scaleY;
       // 正方形保証
       const size = Math.min(cropW, cropH);
       canvas.width = size;
@@ -147,16 +145,16 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
         );
       }
 
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          const croppedFile = new File([blob], selectedFile.name, { type: 'image/jpeg' });
-          await onUpload(croppedFile);
-          onClose();
-        }
-      }, 'image/jpeg');
+      // 同期処理でBlobを作成
+      const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+      const response = await fetch(dataURL);
+      const blob = await response.blob();
+      const croppedFile = new File([blob], selectedFile.name, { type: 'image/jpeg' });
+      await onUpload(croppedFile);
+      onClose();
     } catch (error) {
       console.error('アップロード失敗:', error);
-      alert('アップロードに失敗しました。');
+      showToast('アップロードに失敗しました。', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -297,9 +295,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
                     const min = Math.min(fixedCrop.width, fixedCrop.height);
                     fixedCrop.width = fixedCrop.height = min;
                   }
-                  const finalCrop = fixedCrop as Crop;
-                  setCrop(finalCrop);
-                  setCompletedCrop(finalCrop);
+                  setCrop(fixedCrop as Crop);
                 }}
                 onComplete={(c) => setCompletedCrop(c)}
                 aspect={1}

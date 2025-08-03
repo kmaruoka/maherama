@@ -84,34 +84,31 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
     const lngNum = parseFloat(lng);
     if (!name || isNaN(latNum) || isNaN(lngNum)) continue;
     
-    // 既存の神社を確認（一時的に無効化）
-    // const existingShrine = await prisma.shrine.findFirst({
-    //   where: { 
-    //     AND: [
-    //       { name: name },
-    //       { location: location }
-    //     ]
-    //   }
-    // });
+    // 既存の神社を確認
+    const existingShrine = await prisma.shrine.findFirst({
+      where: { 
+        AND: [
+          { name: name },
+          { location: location }
+        ]
+      }
+    });
     
-    // let shrine;
-    // if (existingShrine) {
-    //   // 既存の神社を更新
-    //   shrine = await prisma.shrine.update({
-    //     where: { id: existingShrine.id },
-    //     data: { lat: latNum, lng: lngNum }
-    //   });
-    // } else {
-    //   // 新しい神社を作成
-    //   shrine = await prisma.shrine.create({
-    //     data: { name, location, lat: latNum, lng: lngNum }
-    //   });
-    //   inserted++;
-    // }
+    let shrine;
+    if (existingShrine) {
+      // 既存の神社を更新
+      shrine = await prisma.shrine.update({
+        where: { id: existingShrine.id },
+        data: { lat: latNum, lng: lngNum }
+      });
+    } else {
+      // 新しい神社を作成
+      shrine = await prisma.shrine.create({
+        data: { name, location, lat: latNum, lng: lngNum }
+      });
+      inserted++;
+    }
     
-    // 一時的にスキップ
-    console.log(`Skipped processing shrine: ${name} due to schema issues`);
-    continue;
     // 祭神リレーション（既存を消さずに新規のみ追加）
     if (dietiesIdx >= 0 && cols[dietiesIdx]) {
       // カンマ・読点・全角カンマ区切り対応

@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 import { CustomButton } from '../atoms/CustomButton';
 import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
+import { useToast } from '../atoms';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -59,6 +60,7 @@ export interface ShrinePaneRef {
 const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void }>(
   ({ id, onShowDiety, onShowUser, onClose, onDetailViewChange }, ref) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const { data } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
@@ -90,10 +92,11 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   }));
 
   useEffect(() => {
-    if (data?.image_url || data?.image_url_m || data?.image_url_s) {
+    if (data?.image_url || data?.image_url_m || data?.image_url_s || data?.image_url_l) {
+      // データが更新されたらキャッシュを更新
       setThumbCache(Date.now());
     }
-  }, [data?.image_url, data?.image_url_m, data?.image_url_s]);
+  }, [data?.image_url, data?.image_url_m, data?.image_url_s, data?.image_url_l]);
 
   // 画像リスト取得
   useEffect(() => {
@@ -131,22 +134,35 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       
       // 成功時はデータ再取得
       setRankRefreshKey(prev => prev + 1);
-      queryClient.invalidateQueries({ queryKey: ['shrine', id] });
-      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       
-      // サムネイルキャッシュを更新
-      if (result.image?.thumbnail_url || result.isCurrentThumbnail) {
+      // クエリを無効化して再取得を待つ
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['shrine', id] }),
+        queryClient.invalidateQueries({ queryKey: ['shrines-all'] })
+      ]);
+      
+      // データの再取得を確実に待つ
+      await queryClient.refetchQueries({ queryKey: ['shrine', id] });
+      
+      // データの更新を確実に待つため、少し待機
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // キャッシュを更新（強制的に再読み込み）
+      setThumbCache(Date.now());
+      
+      // さらに少し待ってから再度キャッシュを更新（確実性のため）
+      setTimeout(() => {
         setThumbCache(Date.now());
-      }
+      }, 100);
       
       if (result.isCurrentThumbnail) {
-        alert(t('uploadSuccess'));
+        showToast(t('uploadSuccess'), 'success');
       } else {
-        alert(t('uploadPending'));
+        showToast(t('uploadPending'), 'info');
       }
     } catch (error) {
       console.error('アップロードエラー:', error);
-      alert(t('uploadError'));
+      showToast(t('uploadError'), 'error');
     }
   };
 
@@ -180,10 +196,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       setRankRefreshKey(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['shrine', id] });
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-      alert(t('voteSuccess'));
+      showToast(t('voteSuccess'), 'success');
     } catch (error) {
       console.error('投票エラー:', error);
-      alert(error instanceof Error ? error.message : t('voteError'));
+      showToast(error instanceof Error ? error.message : t('voteError'), 'error');
     }
   };
 
@@ -403,10 +419,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       setRankRefreshKey(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['shrine', id] });
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-      alert(t('voteSuccess'));
+      showToast(t('voteSuccess'), 'success');
     } catch (error) {
       console.error('投票エラー:', error);
-      alert(error instanceof Error ? error.message : t('voteError'));
+      showToast(error instanceof Error ? error.message : t('voteError'), 'error');
     }
   };
 
@@ -415,8 +431,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     if (detailView === 'thumbnail') {
       return (
         <img 
+          key={thumbCache}
           src={(data.image_url_l || data.image_url_m || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} 
           alt="サムネイル" 
+          onError={(e) => {
+            console.log('Image load error, retrying...');
+            setThumbCache(Date.now());
+          }}
         />
       );
     } else if (detailView === 'deities') {
@@ -487,7 +508,15 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           }
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
-          <img src={(data.image_url || data.image_url_m || data.image_url_s || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <img 
+            key={thumbCache}
+            src={(data.image_url || data.image_url_m || data.image_url_s || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} 
+            alt="サムネイル" 
+            onError={(e) => {
+              console.log('Image load error, retrying...');
+              setThumbCache(Date.now());
+            }}
+          />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();
