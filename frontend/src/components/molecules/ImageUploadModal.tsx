@@ -95,13 +95,17 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
     const heightPercent = (min / img.naturalHeight) * 100;
     const xPercent = ((img.naturalWidth - min) / 2 / img.naturalWidth) * 100;
     const yPercent = ((img.naturalHeight - min) / 2 / img.naturalHeight) * 100;
-    setCrop({
-      unit: '%',
+    
+    const initialCrop = {
+      unit: '%' as const,
       width: widthPercent,
       height: heightPercent,
       x: xPercent,
       y: yPercent
-    });
+    };
+    
+    setCrop(initialCrop);
+    setCompletedCrop(initialCrop);
     return false; // ReactCrop用
   };
 
@@ -115,15 +119,15 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       const ctx = canvas.getContext('2d');
       const img = imgElement;
 
-      // 完了cropを使う
+      // 完了cropを使う（nullの場合は現在のcropを使用）
       const c = completedCrop || crop;
-      // crop値はimgの表示サイズ基準なので、naturalWidth基準に変換
-      const scaleX = img.naturalWidth / img.width;
-      const scaleY = img.naturalHeight / img.height;
-      let cropX = (c.x ?? 0) * scaleX;
-      let cropY = (c.y ?? 0) * scaleY;
-      let cropW = (c.width ?? 80) * scaleX;
-      let cropH = (c.height ?? 80) * scaleY;
+      
+      // パーセント値を実際のピクセル値に変換
+      const cropX = (c.x ?? 0) * img.naturalWidth / 100;
+      const cropY = (c.y ?? 0) * img.naturalHeight / 100;
+      const cropW = (c.width ?? 80) * img.naturalWidth / 100;
+      const cropH = (c.height ?? 80) * img.naturalHeight / 100;
+      
       // 正方形保証
       const size = Math.min(cropW, cropH);
       canvas.width = size;
@@ -163,6 +167,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
     setSelectedFile(null);
     setImageSrc('');
     setCrop({ unit: '%', width: 80, height: 80, x: 10, y: 10 });
+    setCompletedCrop(null);
     setIsUploading(false);
     onClose();
   };
@@ -292,7 +297,9 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
                     const min = Math.min(fixedCrop.width, fixedCrop.height);
                     fixedCrop.width = fixedCrop.height = min;
                   }
-                  setCrop(fixedCrop as Crop);
+                  const finalCrop = fixedCrop as Crop;
+                  setCrop(finalCrop);
+                  setCompletedCrop(finalCrop);
                 }}
                 onComplete={(c) => setCompletedCrop(c)}
                 aspect={1}
