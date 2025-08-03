@@ -16,6 +16,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
+import { useImageManagement } from '../../hooks/useImageManagement';
+import { ManagedImage } from '../atoms/ManagedImage';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings' | 'userRankings'): { [key in Period]: RankingItemData[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -59,12 +61,19 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams || 0);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(idFromParams);
   const { data: userRankings, isLoading: isUserRankingLoading } = useUserRankings('all');
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [thumbCache, setThumbnailCache] = useState(Date.now());
+
+  // 画像管理フックを使用
+  const [imageState, imageActions] = useImageManagement({
+    entityType: 'diety',
+    entityId: idFromParams || 0,
+    userId: undefined, // DietyPaneではuserIdを使用しない
+    noImageUrl: NOIMAGE_DIETY_URL,
+    queryKeys: ['diety', String(idFromParams || 0)]
+  });
 
   useEffect(() => {
     if (diety?.image_url) {
-      setThumbnailCache(Date.now());
+      imageActions.resetImageState();
     }
   }, [diety?.image_url]);
 
@@ -92,32 +101,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   // }
 
   const handleImageUpload = async (file: File) => {
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('image', file);
-
-    try {
-      const response = await fetch(`${API_BASE}/dieties/${idFromParams}/images/upload`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.isCurrentThumbnail) {
-          setThumbnailCache(Date.now());
-        }
-        setIsUploadModalOpen(false);
-      } else {
-        console.error('画像アップロード失敗');
-      }
-    } catch (error) {
-      console.error('画像アップロードエラー:', error);
-    }
+    await imageActions.handleUpload(file);
   };
 
   const handleVote = async () => {
@@ -159,9 +143,12 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   const renderDetailContent = () => {
     if (detailView === 'thumbnail') {
       return (
-        <img 
-          src={(diety.image_url_l || diety.image_url_m || diety.image_url) + '?t=' + thumbCache} 
-          alt="サムネイル" 
+        <ManagedImage
+          src={(diety.image_url_l || diety.image_url_m || diety.image_url) + '?t=' + imageState.thumbCache}
+          alt="サムネイル"
+          fallbackSrc={NOIMAGE_DIETY_URL}
+          style={{ maxWidth: '100%', height: 'auto' }}
+          loadingText="読み込み中..."
         />
       );
     } else if (detailView === 'shrines') {
@@ -240,11 +227,16 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           }
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
-          <img src={(diety.image_url_m || diety.image_url_s || diety.image_url || NOIMAGE_DIETY_URL) + '?t=' + thumbCache} alt="サムネイル" />
+          <ManagedImage
+            src={(diety.image_url_m || diety.image_url_s || diety.image_url || NOIMAGE_DIETY_URL) + '?t=' + imageState.thumbCache}
+            alt="サムネイル"
+            fallbackSrc={NOIMAGE_DIETY_URL}
+            loadingText="読み込み中..."
+          />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();
-              setIsUploadModalOpen(true);
+              imageActions.setIsUploadModalOpen(true);
             }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
             {diety.image_url && diety.image_url !== NOIMAGE_DIETY_URL && (
               <button className="pane__icon-btn" onClick={(e) => {
@@ -332,8 +324,8 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
 
       {/* アップロードモーダル */}
       <ImageUploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        isOpen={imageState.isUploadModalOpen}
+        onClose={() => imageActions.setIsUploadModalOpen(false)}
         onUpload={handleImageUpload}
         title={`${diety?.name || '神様'}の画像をアップロード`}
       />

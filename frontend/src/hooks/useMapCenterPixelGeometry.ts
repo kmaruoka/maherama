@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { EARTH_RADIUS_METERS, addMetersToLng } from "../../backend/shared/utils/distance";
@@ -13,7 +13,7 @@ export default function useMapCenterPixelGeometry(radius: number): MapCenterPixe
   const map = useMap();
   const [geom, setGeom] = useState<MapCenterPixelGeometry>({ x: 0, y: 0, pixelRadius: 0 });
 
-  const recalc = () => {
+  const recalc = useCallback(() => {
     if (!map) return;
     const center = map.getCenter();
     const point = map.latLngToContainerPoint(center);
@@ -22,10 +22,16 @@ export default function useMapCenterPixelGeometry(radius: number): MapCenterPixe
     const edgePoint = map.latLngToContainerPoint(edge);
     const pixelRadius = Math.abs(edgePoint.x - point.x);
     setGeom({ x: point.x, y: point.y, pixelRadius });
-  };
+  }, [map, radius]);
 
-  useEffect(recalc, [radius, map]);
-  useMapEvents({ move: recalc, zoom: recalc });
+  useEffect(() => {
+    recalc();
+  }, [recalc]);
+
+  useMapEvents({ 
+    move: recalc, 
+    zoom: recalc 
+  });
 
   return geom;
 }

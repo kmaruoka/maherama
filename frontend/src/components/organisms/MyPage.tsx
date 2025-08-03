@@ -15,6 +15,10 @@ import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTranslation } from 'react-i18next';
+import { useImageManagement } from '../../hooks/useImageManagement';
+import { ManagedImage } from '../atoms/ManagedImage';
+import { ImageUploadModal } from '../molecules/ImageUploadModal';
+import { FaCloudUploadAlt } from 'react-icons/fa';
 
 interface MyPageProps {
   onShowShrine?: (id: number) => void;
@@ -38,11 +42,11 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
   } = useUserInfo(currentUserId ?? undefined, currentUserId);
 
   const { data: titles = [] } = useUserTitles(currentUserId ?? undefined);
-  const { data: abilities = [], refetch: refetchAbilities } = useAbilityList(currentUserId);
-  const { data: levelInfo } = useLevelInfo(currentUserId);
+  const { data: abilities = [], refetch: refetchAbilities } = useAbilityList(currentUserId || 0);
+  const { data: levelInfo } = useLevelInfo(currentUserId || 0);
 
-  const { data: followingUsers, isLoading: isFollowingLoading, error: followingError, refetch: refetchFollowing } = useFollowing(currentUserId ?? undefined);
-  const { data: followerUsers, isLoading: isFollowersLoading, error: followersError, refetch: refetchFollowers } = useFollowers(currentUserId ?? undefined);
+  const { data: followingUsers, isLoading: isFollowingLoading, error: followingError, refetch: refetchFollowing } = useFollowing(currentUserId || 0);
+  const { data: followerUsers, isLoading: isFollowersLoading, error: followersError, refetch: refetchFollowers } = useFollowers(currentUserId || 0);
 
   const { data: subscription } = useSubscription(currentUserId ?? null);
 
@@ -50,6 +54,15 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
 
   const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [showFollowerModal, setShowFollowerModal] = useState(false);
+
+  // 画像管理フックを使用（currentUserIdが有効な場合のみ）
+  const [imageState, imageActions] = useImageManagement({
+    entityType: 'user',
+    entityId: currentUserId || 1, // デフォルト値を1に変更
+    userId: currentUserId || 1, // デフォルト値を1に変更
+    noImageUrl: NOIMAGE_USER_URL,
+    queryKeys: ['user', String(currentUserId || 1)]
+  });
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
@@ -98,6 +111,21 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    await imageActions.handleUpload(file);
+    refetch(); // ユーザー情報を再取得
+  };
+
+  // 型安全なサムネイル取得
+  const userImageUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
+
+  // 画像URLが更新されたときにキャッシュをリセット
+  React.useEffect(() => {
+    if (userInfo?.image_url) {
+      imageActions.resetImageState();
+    }
+  }, [userInfo?.image_url]);
+
   if (!currentUserId) {
     return <div className="p-3">{t('userIdNotSpecified')}</div>;
   }
@@ -110,18 +138,23 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
     return <div className="p-3">{t('userNotFound')}</div>;
   }
 
-  // 型安全なサムネイル取得
-  const userImageUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
-
   return (
     <div>
       <div className="pane__header">
-        <div className="pane__thumbnail">
-          <img
-            src={userImageUrl}
+        <div className="pane__thumbnail" style={{ position: 'relative' }}>
+          <ManagedImage
+            src={userImageUrl + '?t=' + imageState.thumbCache}
             alt="ユーザーサムネイル"
+            fallbackSrc={NOIMAGE_USER_URL}
             className="pane__thumbnail-img"
+            loadingText="読み込み中..."
           />
+          <div className="pane__thumbnail-actions">
+            <button className="pane__icon-btn" onClick={(e) => {
+              e.stopPropagation();
+              imageActions.setIsUploadModalOpen(true);
+            }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
+          </div>
         </div>
         <div className="pane__info">
           <div className="pane__title">{userInfo.name}</div>
@@ -154,18 +187,18 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
         isOpen={showFollowingModal}
         onClose={() => setShowFollowingModal(false)}
         title={t('followingUsers')}
-        users={followingUsers}
+        users={followingUsers || []}
         isLoading={isFollowingLoading}
-        error={followingError}
+        error={followingError?.message || null}
         onUserClick={onShowUser}
       />
       <FollowModal
         isOpen={showFollowerModal}
         onClose={() => setShowFollowerModal(false)}
         title={t('followers')}
-        users={followerUsers}
+        users={followerUsers || []}
         isLoading={isFollowersLoading}
-        error={followersError}
+        error={followersError?.message || null}
         onUserClick={onShowUser}
       />
 
@@ -237,8 +270,6 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
           <div className="modal-subtitle">{t('titles')}</div>
           <ul className="list-unstyled">
             {titles.map((t, i) => {
-              // デバッグ用ログ
-              console.log('MyPage TrophyIcon debug', { grade: t.grade, embed_data: t.embed_data, name: t.embed_data?.name, shrine: t.embed_data?.shrine, diety: t.embed_data?.diety });
               return (
                 <li key={i} style={{ whiteSpace: 'nowrap' }}>
                   <AwardIcon grade={t.grade} embed_data={t.embed_data} /> {t.template && t.embed_data ? (
@@ -280,6 +311,14 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
           </ul>
         </div>
       )}
+
+      {/* アップロードモーダル */}
+      <ImageUploadModal
+        isOpen={imageState.isUploadModalOpen}
+        onClose={() => imageActions.setIsUploadModalOpen(false)}
+        onUpload={handleImageUpload}
+        title={`${userInfo?.name || 'ユーザー'}の画像をアップロード`}
+      />
     </div>
   );
 });

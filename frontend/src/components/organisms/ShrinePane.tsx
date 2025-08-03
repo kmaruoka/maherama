@@ -23,6 +23,8 @@ import { CustomButton } from '../atoms/CustomButton';
 import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
+import { useImageManagement } from '../../hooks/useImageManagement';
+import { ManagedImage } from '../atoms/ManagedImage';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -80,11 +82,18 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   }, [detailView, onDetailViewChange]);
   const { data: worshipLimit } = useWorshipLimit(userId);
   const { data: markerStatus } = useShrineMarkerStatus(id, userId);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageListLoading, setImageListLoading] = useState(false);
   const [imageListError, setImageListError] = useState<string | null>(null);
-  const [thumbCache, setThumbCache] = useState(Date.now());
+
+  // 画像管理フックを使用
+  const [imageState, imageActions] = useImageManagement({
+    entityType: 'shrine',
+    entityId: id,
+    userId: userId || undefined,
+    noImageUrl: NOIMAGE_SHRINE_DISPLAY_URL,
+    queryKeys: ['shrine', String(id), 'shrines-all']
+  });
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
@@ -93,8 +102,15 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   useEffect(() => {
     if (data?.image_url || data?.image_url_m || data?.image_url_s || data?.image_url_l) {
-      // データが更新されたらキャッシュを更新
-      setThumbCache(Date.now());
+      // データが更新されたら画像状態をリセット
+      imageActions.resetImageState();
+      
+      // 画像をプリロードしてちらつきを防ぐ
+      const imageUrl = data.image_url_l || data.image_url_m || data.image_url || data.image_url_s;
+      if (imageUrl && imageUrl !== NOIMAGE_SHRINE_DISPLAY_URL) {
+        const img = new Image();
+        img.src = imageUrl + '?t=' + Date.now();
+      }
     }
   }, [data?.image_url, data?.image_url_m, data?.image_url_s, data?.image_url_l]);
 
@@ -114,93 +130,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   }, [id, rankRefreshKey, t]);
 
   const handleUpload = async (file: File) => {
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-      
-      const response = await fetch(`${API_BASE}/shrines/${id}/images/upload`, {
-        method: 'POST',
-        headers: {
-          'x-user-id': String(userId || 1),
-        },
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error('アップロード失敗');
-      }
-      
-      const result = await response.json();
-      
-      // 成功時はデータ再取得
-      setRankRefreshKey(prev => prev + 1);
-      
-      // クエリを無効化して再取得を待つ
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['shrine', id] }),
-        queryClient.invalidateQueries({ queryKey: ['shrines-all'] })
-      ]);
-      
-      // データの再取得を確実に待つ
-      await queryClient.refetchQueries({ queryKey: ['shrine', id] });
-      
-      // データの更新を確実に待つため、少し待機
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // キャッシュを更新（強制的に再読み込み）
-      setThumbCache(Date.now());
-      
-      // さらに少し待ってから再度キャッシュを更新（確実性のため）
-      setTimeout(() => {
-        setThumbCache(Date.now());
-      }, 100);
-      
-      if (result.isCurrentThumbnail) {
-        showToast(t('uploadSuccess'), 'success');
-      } else {
-        showToast(t('uploadPending'), 'info');
-      }
-    } catch (error) {
-      console.error('アップロードエラー:', error);
-      showToast(t('uploadError'), 'error');
-    }
+    await imageActions.handleUpload(file);
+    setRankRefreshKey(prev => prev + 1);
   };
 
   const handleVote = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/shrines/${id}/images/vote`, {
-        method: 'POST',
-        headers: {
-          'x-user-id': String(userId || 1),
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        let errorMsg = '投票失敗';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {
-          const text = await response.text();
-          if (text.startsWith('<!DOCTYPE')) {
-            errorMsg = 'サーバーエラーまたはAPIが見つかりません';
-          } else {
-            errorMsg = text;
-          }
-        }
-        throw new Error(errorMsg);
-      }
-      
-      // 成功時はデータ再取得
-      setRankRefreshKey(prev => prev + 1);
-      queryClient.invalidateQueries({ queryKey: ['shrine', id] });
-      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-      showToast(t('voteSuccess'), 'success');
-    } catch (error) {
-      console.error('投票エラー:', error);
-      showToast(error instanceof Error ? error.message : t('voteError'), 'error');
-    }
+    await imageActions.handleVote();
+    setRankRefreshKey(prev => prev + 1);
   };
 
   // 追加: 参拝距離をAPIから取得
@@ -430,14 +366,12 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const renderDetailContent = () => {
     if (detailView === 'thumbnail') {
       return (
-        <img 
-          key={thumbCache}
-          src={(data.image_url_l || data.image_url_m || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} 
-          alt="サムネイル" 
-          onError={(e) => {
-            console.log('Image load error, retrying...');
-            setThumbCache(Date.now());
-          }}
+        <ManagedImage
+          src={(data.image_url_l || data.image_url_m || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + imageState.thumbCache}
+          alt="サムネイル"
+          fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
+          style={{ maxWidth: '100%', height: 'auto' }}
+          loadingText="読み込み中..."
         />
       );
     } else if (detailView === 'deities') {
@@ -508,19 +442,16 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           }
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
-          <img 
-            key={thumbCache}
-            src={(data.image_url || data.image_url_m || data.image_url_s || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + thumbCache} 
-            alt="サムネイル" 
-            onError={(e) => {
-              console.log('Image load error, retrying...');
-              setThumbCache(Date.now());
-            }}
+          <ManagedImage
+            src={(data.image_url || data.image_url_m || data.image_url_s || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + imageState.thumbCache}
+            alt="サムネイル"
+            fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
+            loadingText="読み込み中..."
           />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
               e.stopPropagation();
-              setIsUploadModalOpen(true);
+              imageActions.setIsUploadModalOpen(true);
             }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
                       {(data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
             <button className="pane__icon-btn" onClick={(e) => {
@@ -647,8 +578,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
       {/* アップロードモーダル */}
       <ImageUploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        isOpen={imageState.isUploadModalOpen}
+        onClose={() => imageActions.setIsUploadModalOpen(false)}
         onUpload={handleUpload}
         title={`${data?.name || '神社'}の画像をアップロード`}
       />

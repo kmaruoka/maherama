@@ -20,5 +20,8 @@ export function useUserTitles(userId: number | undefined | null) {
       return res.json();
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5分間はキャッシュを有効にする
+    refetchOnWindowFocus: false, // ウィンドウフォーカス時の自動再取得を無効化
+    refetchOnMount: false, // マウント時の自動再取得を無効化
   });
 }
