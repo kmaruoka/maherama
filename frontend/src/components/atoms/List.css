@@ -1,0 +1,124 @@
+/* ベースリストスタイル */
+.list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* レイアウトバリアント */
+.list--grid {
+  display: grid;
+  justify-items: center;
+}
+
+.list--list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list--horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.list--horizontal::-webkit-scrollbar {
+  height: 6px;
+}
+
+.list--horizontal::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.list--horizontal::-webkit-scrollbar-thumb {
+  background: var(--color-border, #bfa14a);
+  border-radius: 3px;
+}
+
+/* リストアイテム */
+.list__item {
+  width: 100%;
+}
+
+.list--grid .list__item {
+  width: auto;
+}
+
+.list--horizontal .list__item {
+  flex-shrink: 0;
+}
+
+/* 状態表示 */
+.list--loading,
+.list--error,
+.list--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.list__loading,
+.list__error,
+.list__empty {
+  text-align: center;
+  padding: 2rem;
+}
+
+.list__error {
+  color: var(--color-error, #e74c3c);
+}
+
+/* 仮想化リスト */
+.list--virtualized {
+  overflow: hidden;
+  position: relative;
+}
+
+.list__virtualized-container {
+  position: relative;
+  width: 100%;
+}
+
+.list__virtualized-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .list--grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 4px !important;
+  }
+  
+  .list--horizontal {
+    gap: 4px;
+  }
+  
+  .list--loading,
+  .list--error,
+  .list--empty {
+    min-height: 150px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ダークテーマ対応 */
+@media (prefers-color-scheme: dark) {
+  .list--horizontal::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .list--horizontal::-webkit-scrollbar-thumb {
+    background: var(--color-border-dark, #555);
+  }
+} 

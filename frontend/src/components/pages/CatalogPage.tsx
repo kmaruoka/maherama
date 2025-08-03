@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'; 
-import { FixedSizeGrid as Grid, FixedSizeList as List } from 'react-window';
+import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
 import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
@@ -9,8 +9,8 @@ import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import Container from 'react-bootstrap/Container';
 import { useTranslation } from 'react-i18next';
-import type { GridChildComponentProps } from 'react-window';
-import { CARD_WIDTH, CARD_HEIGHT } from '../../constants';
+import CardGrid from '../atoms/CardGrid';
+import PageLayout from '../atoms/PageLayout';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 
 interface Item {
@@ -30,14 +30,7 @@ interface Item {
   image_by?: string;
 }
 
-interface GridItemData {
-  sorted: (Item & { image_url?: string })[];
-  columnCount: number;
-  CARD_WIDTH: number;
-  CARD_HEIGHT: number;
-  GAP: number;
-  renderItem: (item: Item & { image_url?: string }) => React.ReactNode;
-}
+
 
 export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: { onShowShrine?: (id: number) => void; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void }) {
   const { t } = useTranslation();
@@ -101,7 +94,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   ), [tab, t, handleItemClick]);
 
   return (
-    <div className="p-3">
+    <PageLayout style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Tabs
         id="catalog-tabs"
         activeKey={tab}
@@ -136,49 +129,12 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         </select>
       </div>
       {style === 'card' ? (
-        <div className="catalog-page__card-container">
-          <AutoSizer>
-            {({ height, width }: { height: number; width: number }) => {
-              const SCROLLBAR_WIDTH = 25; // 一般的なスクロールバー幅
-              const adjustedWidth = width - SCROLLBAR_WIDTH;
-              const GAP = 6;
-              const columnCount = Math.max(1, Math.floor((adjustedWidth + GAP / 2) / (CARD_WIDTH + GAP)));
-              const rowCount = Math.ceil(sorted.length / columnCount);
-              return (
-                <Grid
-                  columnCount={columnCount}
-                  rowCount={rowCount}
-                  columnWidth={CARD_WIDTH + GAP}
-                  rowHeight={CARD_HEIGHT + GAP}
-                  width={width}
-                  height={height}
-                  itemData={{ sorted, columnCount, CARD_WIDTH, CARD_HEIGHT, GAP, renderItem }}
-                >
-                  {({ columnIndex, rowIndex, style: cellStyle, data }: GridChildComponentProps<GridItemData>) => {
-                    const { sorted, columnCount, CARD_WIDTH, CARD_HEIGHT, GAP, renderItem } = data;
-                    const index = rowIndex * columnCount + columnIndex;
-                    if (index >= sorted.length) return null;
-                    return (
-                      <div
-                        className="catalog-page__card-cell"
-                        style={{
-                          ...cellStyle,
-                          left: cellStyle.left,
-                          top: cellStyle.top,
-                          width: CARD_WIDTH,
-                          height: CARD_HEIGHT,
-                          margin: GAP / 2,
-                        }}
-                      >
-                        {renderItem(sorted[index])}
-                      </div>
-                    );
-                  }}
-                </Grid>
-              );
-            }}
-          </AutoSizer>
-        </div>
+        <CardGrid
+          items={sorted}
+          renderItem={renderItem}
+          emptyMessage="アイテムがありません"
+          style={{ flex: 1, minHeight: 0 }}
+        />
       ) : (
         <>
           {/* ヘッダ行 */}
@@ -238,6 +194,6 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           </div>
         </>
       )}
-    </div>
+    </PageLayout>
   );
 }

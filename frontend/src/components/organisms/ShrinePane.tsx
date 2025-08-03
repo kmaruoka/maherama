@@ -305,6 +305,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
+      queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
+      queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
     onSettled: async () => {
@@ -347,6 +349,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
       queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
+      queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
+      queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
       setRankRefreshKey(k => k + 1); // ランキングも再取得
     },
     onSettled: async () => {

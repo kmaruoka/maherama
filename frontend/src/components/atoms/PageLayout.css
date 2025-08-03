@@ -1,0 +1,15 @@
+/* 共通ページレイアウト */
+.page-layout {
+  padding: 1rem;
+  background: var(--color-background);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .page-layout {
+    padding: 0.5rem;
+  }
+} 

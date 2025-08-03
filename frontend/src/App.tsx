@@ -3,6 +3,8 @@ import { Modal, Button } from 'react-bootstrap';
 import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
 import SubmenuPage from './components/pages/SubmenuPage';
+import MissionPage from './components/pages/MissionPage';
+import MissionPane from './components/organisms/MissionPane';
 import ShrinePane from './components/organisms/ShrinePane';
 import DietyPage from './components/organisms/DietyPane';
 import UserPane from './components/organisms/UserPane';
@@ -20,15 +22,16 @@ import useLogs, { useClientLogs } from './hooks/useLogs';
 import { useShrineDetail } from './hooks/useShrineDetail';
 import { useDietyDetail } from './hooks/useDietyDetail';
 import { useUserInfo } from './hooks/useUserInfo';
+import { useMissions } from './hooks/useMissions';
 import useLocalStorageState from './hooks/useLocalStorageState';
 import CustomLink from './components/atoms/CustomLink';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
-type ModalType = { type: 'shrine' | 'diety' | 'user', id: number } | null;
+type ModalType = { type: 'shrine' | 'diety' | 'user' | 'mission', id: number } | null;
 
 // ナビゲーション履歴の型
 interface NavigationHistoryItem {
-  type: 'shrine' | 'diety' | 'user';
+  type: 'shrine' | 'diety' | 'user' | 'mission';
   id: number;
   name: string;
 }
@@ -56,8 +59,8 @@ function ModalHeader({
   onGoForward: () => void;
   getPreviousItemName: () => string;
   getNextItemName: () => string;
-  getPreviousItemType: () => 'shrine' | 'diety' | 'user';
-  getNextItemType: () => 'shrine' | 'diety' | 'user';
+  getPreviousItemType: () => 'shrine' | 'diety' | 'user' | 'mission';
+  getNextItemType: () => 'shrine' | 'diety' | 'user' | 'mission';
 }) {
   return (
     <div className="modal__header">
@@ -106,7 +109,7 @@ function ModalHeader({
 }
 
 function App() {
-  const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu'>('map');
+  const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission'>('map');
   const [modal, setModal] = useState<ModalType>(null);
   const [currentUserId] = useLocalStorageState<number | null>('userId', null);
   useSkin();
@@ -120,14 +123,16 @@ function App() {
   const dietyPaneRef = useRef<{ backToOverview: () => void }>(null);
   const userPaneRef = useRef<{ backToOverview: () => void }>(null);
   const myPageRef = useRef<{ backToOverview: () => void }>(null);
+  const missionPaneRef = useRef<{ backToOverview: () => void }>(null);
 
   // モーダルヘッダー用のデータ取得
   const { data: shrineData } = useShrineDetail(modal?.type === 'shrine' ? modal.id : undefined);
   const { data: dietyData } = useDietyDetail(modal?.type === 'diety' ? modal.id : undefined);
   const { data: userData } = useUserInfo(modal?.type === 'user' ? modal.id : undefined, null);
+  const { data: missions = [] } = useMissions();
 
   // ナビゲーション履歴の管理関数
-  const addToHistory = (type: 'shrine' | 'diety' | 'user', id: number, name: string) => {
+  const addToHistory = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, name: string) => {
     const newItem: NavigationHistoryItem = { type, id, name };
     
     // 現在の位置より後の履歴を削除し、新しい項目を追加
@@ -178,7 +183,7 @@ function App() {
   };
 
   // 前のアイテムタイプを取得
-  const getPreviousItemType = (): 'shrine' | 'diety' | 'user' => {
+  const getPreviousItemType = (): 'shrine' | 'diety' | 'user' | 'mission' => {
     if (historyIndex > 0) {
       return navigationHistory[historyIndex - 1].type;
     }
@@ -186,7 +191,7 @@ function App() {
   };
 
   // 次のアイテムタイプを取得
-  const getNextItemType = (): 'shrine' | 'diety' | 'user' => {
+  const getNextItemType = (): 'shrine' | 'diety' | 'user' | 'mission' => {
     if (historyIndex < navigationHistory.length - 1) {
       return navigationHistory[historyIndex + 1].type;
     }
@@ -194,7 +199,7 @@ function App() {
   };
 
   // 履歴追加機能付きモーダル遷移
-  const navigateToModal = (type: 'shrine' | 'diety' | 'user', id: number, clearHistory: boolean = false) => {
+  const navigateToModal = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, clearHistory: boolean = false) => {
     let name = '';
     
     // 現在のデータから名前を取得
@@ -204,6 +209,9 @@ function App() {
       name = dietyData.name;
     } else if (type === 'user' && userData && userData.id === id) {
       name = userData.name;
+    } else if (type === 'mission' && missions) {
+      const mission = missions.find(m => m.id === id);
+      name = mission ? mission.name : '';
     } else {
       // データが未取得の場合は一時的な名前を設定
       name = type === 'shrine' ? '神社' : type === 'diety' ? '神様' : 'ユーザー';
@@ -266,6 +274,9 @@ function App() {
           return userData.name;
         }
         return 'ユーザー詳細';
+      case 'mission':
+        const mission = missions?.find(m => m.id === modal.id);
+        return mission?.name || 'ミッション詳細';
       default:
         return '';
     }
@@ -287,6 +298,9 @@ function App() {
         } else {
           userPaneRef.current?.backToOverview();
         }
+        break;
+      case 'mission':
+        missionPaneRef.current?.backToOverview();
         break;
     }
   };
@@ -313,6 +327,8 @@ function App() {
         return <SettingsPage />;
       case 'submenu':
         return <SubmenuPage />;
+      case 'mission':
+        return <MissionPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowDiety={(id: number) => navigateToModal('diety', id)} onShowMission={(id: number) => navigateToModal('mission', id)} />;
       default:
         return null;
     }
@@ -436,6 +452,40 @@ function App() {
                         }}
                       />
                     )}
+                  </div>
+                </>
+              )}
+              {modal.type === 'mission' && (
+                <>
+                  <ModalHeader 
+                    title={getModalTitle()} 
+                    onBack={closeModal} 
+                    onTitleClick={handleBackToOverview}
+                    canGoBack={historyIndex > 0}
+                    canGoForward={historyIndex < navigationHistory.length - 1}
+                    onGoBack={goBack}
+                    onGoForward={goForward}
+                    getPreviousItemName={getPreviousItemName}
+                    getNextItemName={getNextItemName}
+                    getPreviousItemType={getPreviousItemType}
+                    getNextItemType={getNextItemType}
+                  />
+                  <div className="modal__content">
+                    {(() => {
+                      const mission = missions?.find(m => m.id === modal.id);
+                      return mission ? (
+                        <MissionPane
+                          ref={missionPaneRef}
+                          mission={mission}
+                          onShowShrine={id => navigateToModal('shrine', id)}
+                          onShowDiety={id => navigateToModal('diety', id)}
+                        />
+                      ) : (
+                        <div style={{ padding: '20px', textAlign: 'center' }}>
+                          ミッションが見つかりませんでした (ID: {modal.id})
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}

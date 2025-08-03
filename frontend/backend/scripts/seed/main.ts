@@ -10,6 +10,7 @@ import { seedTitle } from './title';
 import { seedLevel } from './level';
 import { seedShrineImage } from './shrineImage';
 import { seedDietyImage } from './dietyImage';
+import { seedMissions } from './mission';
 
 const prisma = new PrismaClient();
 
@@ -42,6 +43,7 @@ async function main() {
   await seedLevel(prisma);
   await seedShrineImage(prisma);
   await seedDietyImage(prisma);
+  await seedMissions();
   // 全マスターデータが揃った後にトランザクションデータを生成
   await seedRealisticTransactions(prisma);
   console.log("✅ Seeding completed.");

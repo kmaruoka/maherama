@@ -13,6 +13,7 @@ export const EXP_REWARDS = {
   YEARLY_RANKING_1: 10000,  // 年間ランキング1位
   YEARLY_RANKING_2: 5000,  // 年間ランキング2位
   YEARLY_RANKING_3: 2000,  // 年間ランキング3位
+  MISSION_COMPLETION: 100,  // ミッション達成
 } as const;
 
 export type ExpRewardType = keyof typeof EXP_REWARDS;

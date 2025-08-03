@@ -72,6 +72,202 @@ function getSimulateDate() {
   return simulateDate ? simulateDate.toISOString() : null;
 }
 
+// ミッション達成チェックと報酬付与
+async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId?: number) {
+  const currentDate = getCurrentDate();
+  
+  console.log(`[DEBUG] checkAndRewardMissions called - userId: ${userId}, shrineId: ${shrineId}, dietyId: ${dietyId}`);
+  
+  // ユーザーの進行中ミッションを取得
+  const userMissions = await prisma.userMission.findMany({
+    where: {
+      user_id: userId,
+      is_completed: false
+    },
+    include: {
+      mission: {
+        include: {
+          mission_shrines: {
+            include: {
+              shrine: true
+            }
+          },
+          mission_dieties: {
+            include: {
+              diety: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  console.log(`[DEBUG] Found ${userMissions.length} active missions for user ${userId}`);
+
+  const completedMissions = [];
+
+  for (const userMission of userMissions) {
+    const mission = userMission.mission;
+    
+    console.log(`[DEBUG] Checking mission: ${mission.name} (ID: ${mission.id})`);
+    
+    // イベントミッションの場合は期間チェック
+    if (mission.mission_type === 'event') {
+      if (mission.start_at && currentDate < mission.start_at) {
+        console.log(`[DEBUG] Mission ${mission.id} not started yet`);
+        continue;
+      }
+      if (mission.end_at && currentDate > mission.end_at) {
+        console.log(`[DEBUG] Mission ${mission.id} already ended`);
+        continue;
+      }
+    }
+
+    let progress = 0;
+    let totalRequired = 0;
+
+    // 神社参拝ミッションのチェック
+    if (mission.mission_shrines.length > 0) {
+      console.log(`[DEBUG] Mission ${mission.id} has ${mission.mission_shrines.length} shrine targets`);
+      for (const missionShrine of mission.mission_shrines) {
+        totalRequired += missionShrine.count;
+        
+        // 参拝回数をカウント（ShrinePray + RemotePray）
+        const shrinePrayCount = await prisma.shrinePray.count({
+          where: {
+            user_id: userId,
+            shrine_id: missionShrine.shrine_id
+          }
+        });
+        const remotePrayCount = await prisma.remotePray.count({
+          where: {
+            user_id: userId,
+            shrine_id: missionShrine.shrine_id
+          }
+        });
+        const totalPrayCount = shrinePrayCount + remotePrayCount;
+        progress += Math.min(totalPrayCount, missionShrine.count);
+        
+        console.log(`[DEBUG] Shrine ${missionShrine.shrine_id} (${missionShrine.shrine.name}): required=${missionShrine.count}, shrinePray=${shrinePrayCount}, remotePray=${remotePrayCount}, total=${totalPrayCount}, progress+=${Math.min(totalPrayCount, missionShrine.count)}`);
+      }
+    }
+
+    // 神様参拝ミッションのチェック
+    if (mission.mission_dieties.length > 0) {
+      console.log(`[DEBUG] Mission ${mission.id} has ${mission.mission_dieties.length} diety targets`);
+      for (const missionDiety of mission.mission_dieties) {
+        totalRequired += missionDiety.count;
+        
+        // 過去の参拝回数をカウント（今回の参拝も含む）
+        const prayCount = await prisma.dietyPray.count({
+          where: {
+            user_id: userId,
+            diety_id: missionDiety.diety_id
+          }
+        });
+        progress += Math.min(prayCount, missionDiety.count);
+        
+        console.log(`[DEBUG] Diety ${missionDiety.diety_id} (${missionDiety.diety.name}): required=${missionDiety.count}, prayCount=${prayCount}, progress+=${Math.min(prayCount, missionDiety.count)}`);
+      }
+    }
+
+    console.log(`[DEBUG] Mission ${mission.id} progress: ${progress}/${totalRequired}`);
+    
+    // ミッション達成チェック
+    if (progress >= totalRequired && totalRequired > 0) {
+      console.log(`[DEBUG] Mission ${mission.id} COMPLETED! Updating database...`);
+      // ミッション達成
+      await prisma.userMission.update({
+        where: {
+          user_id_mission_id: {
+            user_id: userId,
+            mission_id: mission.id
+          }
+        },
+        data: {
+          progress: totalRequired,
+          is_completed: true,
+          completed_at: currentDate
+        }
+      });
+
+      // 報酬付与
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (user) {
+        let updatedUser = { ...user };
+
+        // 経験値報酬
+        if (mission.exp_reward > 0) {
+          await addExperience(prisma, userId, mission.exp_reward, 'MISSION_COMPLETION');
+        }
+
+        // 能力値報酬
+        if (mission.ability_reward) {
+          const abilityReward = mission.ability_reward as any;
+          for (const [abilityId, points] of Object.entries(abilityReward)) {
+            updatedUser.ability_points += points as number;
+          }
+        }
+
+        // 称号報酬
+        const missionTitles = await prisma.missionTitle.findMany({
+          where: { mission_id: mission.id },
+          include: { title: true }
+        });
+
+        for (const missionTitle of missionTitles) {
+          await prisma.userTitle.create({
+            data: {
+              user_id: userId,
+              title_id: missionTitle.title_id,
+              awarded_at: currentDate,
+              display_name: missionTitle.title.name_template
+            }
+          });
+        }
+
+        // ユーザー情報更新
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            exp: updatedUser.exp,
+            level: updatedUser.level,
+            ability_points: updatedUser.ability_points
+          }
+        });
+      }
+
+      completedMissions.push({
+        id: mission.id,
+        name: mission.name,
+        content: mission.content,
+        exp_reward: mission.exp_reward,
+        ability_reward: mission.ability_reward
+      });
+    } else {
+      console.log(`[DEBUG] Mission ${mission.id} not completed yet, updating progress to ${progress}`);
+      // 進捗更新
+      await prisma.userMission.update({
+        where: {
+          user_id_mission_id: {
+            user_id: userId,
+            mission_id: mission.id
+          }
+        },
+        data: {
+          progress: progress
+        }
+      });
+    }
+  }
+
+  console.log(`[DEBUG] checkAndRewardMissions completed. ${completedMissions.length} missions completed.`);
+  return completedMissions;
+}
+
 
 
 
@@ -545,6 +741,8 @@ async function prayAtShrine({
   userId,
   logType = '参拝', // '参拝' or '遥拝'
 }) {
+  console.log(`[DEBUG] prayAtShrine called - shrineId: ${shrineId}, userId: ${userId}, logType: ${logType}`);
+  
   // 神社・祭神情報取得
   const shrine = await prisma.shrine.findUnique({
     where: { id: shrineId },
@@ -558,8 +756,11 @@ async function prayAtShrine({
     }
   });
   if (!shrine) {
+    console.log(`[DEBUG] Shrine not found: ${shrineId}`);
     throw new Error('Not found');
   }
+  
+  console.log(`[DEBUG] Found shrine: ${shrine.name} with ${shrine.shrine_dieties.length} dieties`);
 
   // 参拝/遥拝記録
   if (logType === '参拝') {
@@ -634,12 +835,22 @@ async function prayAtShrine({
   const dietyLinksText = dietyLinks.length > 0 ? `(${dietyLinks.join('、')})` : '';
   await addLog(`<shrine:${shrineId}:${shrine.name}>${dietyLinksText}を${logType}しました`);
 
+  // ミッション達成チェック（神社と神様の両方）
+  console.log(`[DEBUG] prayAtShrine: Checking missions for shrine ${shrineId} with ${shrine.shrine_dieties.length} dieties`);
+  const completedMissions = [];
+  for (const sd of shrine.shrine_dieties) {
+    console.log(`[DEBUG] prayAtShrine: Checking missions for diety ${sd.diety.id} (${sd.diety.name})`);
+    const missions = await checkAndRewardMissions(userId, shrineId, sd.diety.id);
+    completedMissions.push(...missions);
+  }
+
   return {
     success: true,
     count: totalCount._sum.count || 0,
     level_up: expResult.levelUp,
     new_level: expResult.newLevel,
-    ability_points_gained: expResult.abilityPointsGained
+    ability_points_gained: expResult.abilityPointsGained,
+    completedMissions
   };
 }
 
@@ -706,6 +917,9 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
 app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const userId = parseInt(req.headers['x-user-id']) || 1;
+  
+  console.log(`[DEBUG] Remote pray API called - shrineId: ${id}, userId: ${userId}`);
+  
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
   }
@@ -715,19 +929,231 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   // 遥拝回数チェック
   const maxWorshipCount = await getUserWorshipCount(userId);
   const todayWorshipCount = await getTodayWorshipCount(userId);
+  console.log(`[DEBUG] Remote pray check - maxWorshipCount: ${maxWorshipCount}, todayWorshipCount: ${todayWorshipCount}`);
+  
   if (todayWorshipCount >= maxWorshipCount) {
+    console.log(`[DEBUG] Remote pray limit exceeded`);
     return res.status(400).json({ error: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）` });
   }
   try {
+    console.log(`[DEBUG] Calling prayAtShrine for remote pray`);
     const result = await prayAtShrine({
       prisma,
       shrineId: id,
       userId,
       logType: '遥拝',
     });
+    console.log(`[DEBUG] prayAtShrine completed successfully`);
     res.json(result);
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// ミッション一覧取得API
+app.get('/missions', authenticateJWT, async (req, res) => {
+  const userId = parseInt(req.headers['x-user-id']) || 1;
+  console.log(`[DEBUG] Missions API called - userId: ${userId}`);
+  
+  if (!userId || isNaN(userId) || userId <= 0) {
+    return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
+  }
+
+  try {
+    const currentDate = getCurrentDate();
+    console.log(`[DEBUG] Current date: ${currentDate}`);
+    
+    // 利用可能なミッションを取得
+    const missions = await prisma.missionMaster.findMany({
+      where: {
+        OR: [
+          { mission_type: 'permanent' },
+          {
+            mission_type: 'event',
+            start_at: { lte: currentDate },
+            end_at: { gte: currentDate }
+          }
+        ]
+      },
+      include: {
+        mission_shrines: {
+          include: {
+            shrine: {
+              select: {
+                id: true,
+                name: true,
+                location: true
+              }
+            }
+          }
+        },
+        mission_dieties: {
+          include: {
+            diety: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        mission_titles: {
+          include: {
+            title: {
+              select: {
+                id: true,
+                name_template: true,
+                description: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // ユーザーの進行状況を取得
+    const userMissions = await prisma.userMission.findMany({
+      where: { user_id: userId },
+      select: {
+        mission_id: true,
+        progress: true,
+        is_completed: true,
+        completed_at: true
+      }
+    });
+
+    const userMissionMap = new Map(userMissions.map(um => [um.mission_id, um]));
+
+    console.log(`[DEBUG] Found ${missions.length} available missions, ${userMissions.length} user missions`);
+
+    // ミッション情報と進行状況を結合
+    const missionsWithProgress = await Promise.all(missions.map(async (mission) => {
+      const userMission = userMissionMap.get(mission.id) as any;
+      const progress = userMission ? userMission.progress : 0;
+      const isCompleted = userMission ? userMission.is_completed : false;
+      const completedAt = userMission ? userMission.completed_at : null;
+
+      // 必要回数を計算
+      let totalRequired = 0;
+      mission.mission_shrines.forEach(ms => totalRequired += ms.count);
+      mission.mission_dieties.forEach(md => totalRequired += md.count);
+
+      // 各神社の達成状況を計算
+      const shrinesWithProgress = await Promise.all(mission.mission_shrines.map(async (ms) => {
+        const shrinePrayCount = await prisma.shrinePray.count({
+          where: {
+            user_id: userId,
+            shrine_id: ms.shrine_id
+          }
+        });
+        const remotePrayCount = await prisma.remotePray.count({
+          where: {
+            user_id: userId,
+            shrine_id: ms.shrine_id
+          }
+        });
+        const totalPrayCount = shrinePrayCount + remotePrayCount;
+        const achieved = Math.min(totalPrayCount, ms.count);
+        const isCompleted = achieved >= ms.count;
+
+        return {
+          id: ms.shrine.id,
+          name: ms.shrine.name,
+          location: ms.shrine.location,
+          count: ms.count,
+          achieved: achieved,
+          is_completed: isCompleted
+        };
+      }));
+
+      // 各神様の達成状況を計算
+      const dietiesWithProgress = await Promise.all(mission.mission_dieties.map(async (md) => {
+        const prayCount = await prisma.dietyPray.count({
+          where: {
+            user_id: userId,
+            diety_id: md.diety_id
+          }
+        });
+        const achieved = Math.min(prayCount, md.count);
+        const isCompleted = achieved >= md.count;
+
+        return {
+          id: md.diety.id,
+          name: md.diety.name,
+          count: md.count,
+          achieved: achieved,
+          is_completed: isCompleted
+        };
+      }));
+
+      return {
+        id: mission.id,
+        name: mission.name,
+        content: mission.content,
+        mission_type: mission.mission_type,
+        start_at: mission.start_at,
+        end_at: mission.end_at,
+        exp_reward: mission.exp_reward,
+        ability_reward: mission.ability_reward,
+        progress,
+        total_required: totalRequired,
+        is_completed: isCompleted,
+        completed_at: completedAt,
+        shrines: shrinesWithProgress,
+        dieties: dietiesWithProgress,
+        titles: mission.mission_titles.map(mt => ({
+          id: mt.title.id,
+          name: mt.title.name_template,
+          description: mt.title.description
+        }))
+      };
+    }));
+
+    res.json(missionsWithProgress);
+  } catch (err) {
+    console.error('Error fetching missions:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+// イベント一覧取得API
+app.get('/events', async (req, res) => {
+  try {
+    const currentDate = getCurrentDate();
+    
+    const events = await prisma.eventMaster.findMany({
+      where: {
+        start_at: { lte: currentDate },
+        end_at: { gte: currentDate }
+      },
+      include: {
+        image: {
+          select: {
+            url_l: true,
+            url_m: true,
+            url_s: true,
+            url_xl: true,
+            url_xs: true
+          }
+        },
+        event_missions: {
+          include: {
+            mission: {
+              select: {
+                id: true,
+                name: true,
+                content: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.json(events);
+  } catch (err) {
+    console.error('Error fetching events:', err);
     res.status(500).json({ error: 'DB error' });
   }
 });

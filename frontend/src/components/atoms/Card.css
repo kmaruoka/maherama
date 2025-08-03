@@ -1,0 +1,124 @@
+/* ベースカードスタイル */
+.card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.5rem;
+  background: var(--color-card, #fffde7);
+  border: 1px solid var(--color-border, #bfa14a);
+  overflow: hidden;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+/* サイズバリアント - react-window対応 */
+.card--small {
+  width: 120px;
+  height: 180px;
+  min-width: 120px;
+  max-width: 120px;
+  font-size: 0.75rem;
+}
+
+.card--medium {
+  width: 162px;
+  height: 252px;
+  min-width: 162px;
+  max-width: 162px;
+  font-size: 0.8rem;
+}
+
+.card--large {
+  width: 240px;
+  height: 320px;
+  min-width: 240px;
+  max-width: 240px;
+  font-size: 0.9rem;
+}
+
+.card--custom {
+  /* カスタムサイズの場合は外部でスタイルを指定 */
+}
+
+/* バリアント */
+.card--default {
+  box-shadow: 0 2px 8px rgba(80,60,10,0.08);
+}
+
+.card--elevated {
+  box-shadow: 0 4px 16px rgba(80,60,10,0.16);
+}
+
+.card--outlined {
+  box-shadow: none;
+  border: 2px solid var(--color-border, #bfa14a);
+}
+
+.card--filled {
+  background: var(--color-primary, #bfa14a);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(80,60,10,0.08);
+}
+
+/* クリック可能状態 */
+.card--clickable {
+  cursor: pointer;
+}
+
+.card--clickable:hover {
+  box-shadow: 0 4px 16px rgba(80,60,10,0.16);
+  transform: translateY(-1px);
+}
+
+.card--clickable:focus {
+  outline: 2px solid var(--color-primary, #bfa14a);
+  outline-offset: 2px;
+}
+
+/* 無効状態 */
+.card--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.card--disabled:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(80,60,10,0.08);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .card--small {
+    width: 100px;
+    height: 150px;
+    min-width: 100px;
+    font-size: 0.7rem;
+  }
+  
+  .card--medium {
+    width: 140px;
+    height: 220px;
+    min-width: 140px;
+    font-size: 0.75rem;
+  }
+  
+  .card--large {
+    width: 200px;
+    height: 280px;
+    min-width: 200px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ダークテーマ対応 */
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: var(--color-card-dark, #2d2d2d);
+    border-color: var(--color-border-dark, #555);
+  }
+  
+  .card--filled {
+    background: var(--color-primary-dark, #666);
+  }
+} 

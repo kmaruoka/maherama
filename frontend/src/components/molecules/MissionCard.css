@@ -1,0 +1,146 @@
+/* ミッションカード固有のスタイル */
+.mission-card {
+  width: 162px;
+  height: 252px;
+  min-width: 162px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(80,60,10,0.08);
+  background: var(--color-card, #fffde7);
+  border: 1px solid var(--color-border, #bfa14a);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.mission-card:hover {
+  box-shadow: 0 4px 16px rgba(80,60,10,0.16);
+}
+
+.mission-card__header {
+  width: 100%;
+  padding: 6px 6px 4px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: transparent;
+}
+
+.mission-card__title {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.mission-card__completed {
+  background: #27ae60;
+  color: white;
+  padding: 2px 4px;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.mission-card__body {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 0 6px 8px 6px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  background: transparent;
+}
+
+.mission-card__content {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.2;
+}
+
+.mission-card__progress {
+  margin-bottom: 8px;
+}
+
+.mission-card__progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.mission-card__progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.mission-card__progress-text {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.mission-card__rewards {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mission-card__reward {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+}
+
+.mission-card__reward-icon {
+  font-size: 0.8rem;
+}
+
+.mission-card__reward-text {
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .mission-card__title {
+    font-size: 0.8rem;
+  }
+  
+  .mission-card__content {
+    font-size: 0.7rem;
+  }
+  
+  .mission-card__reward {
+    font-size: 0.65rem;
+  }
+} 
