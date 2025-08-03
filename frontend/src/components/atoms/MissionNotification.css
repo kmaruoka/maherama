@@ -95,10 +95,7 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.mission-notification__reward-icon {
-  margin-right: 8px;
-  font-size: 1.1rem;
-}
+/* 古いアイコン用スタイルを削除 - RewardIconコンポーネントに統合済み */
 
 .mission-notification__reward-text {
   font-weight: 500;

@@ -115,9 +115,7 @@
   font-size: 0.7rem;
 }
 
-.mission-card__reward-icon {
-  font-size: 0.8rem;
-}
+/* 古いアイコン用スタイルを削除 - RewardIconコンポーネントに統合済み */
 
 .mission-card__reward-text {
   color: var(--color-text-secondary);

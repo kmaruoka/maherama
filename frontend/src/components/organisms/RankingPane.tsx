@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import CustomLink from '../atoms/CustomLink';
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import { useSkin } from '../../skins/SkinContext';
-import { GiLibertyWing, GiShintoShrine } from 'react-icons/gi';
+import RankingItem from '../atoms/RankingItem';
 
 export type Period = 'all' | 'yearly' | 'monthly' | 'weekly';
 
-export interface RankingItem {
+export interface RankingItemData {
   rank: number;
   id: number;
   name: string;
@@ -15,7 +14,7 @@ export interface RankingItem {
 }
 
 interface RankingPaneProps {
-  itemsByPeriod?: { [key in Period]: RankingItem[] };
+  itemsByPeriod?: { [key in Period]: RankingItemData[] };
   type: 'shrine' | 'diety';
   isLoading?: boolean;
   onItemClick?: (id: number) => void;
@@ -34,6 +33,7 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
   const [period, setPeriod] = useState<Period>('all');
   const safeItemsByPeriod = itemsByPeriod ?? { all: [], yearly: [], monthly: [], weekly: [] };
   const items = safeItemsByPeriod[period] || [];
+
   return (
     <div className="ranking-pane">
       <Tabs
@@ -49,50 +49,24 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
           />
         ))}
       </Tabs>
+      
       <div className="d-grid gap-2 mt-2">
         {isLoading ? (
           <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>読み込み中...</div>
         ) : items.length === 0 ? (
           <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>データがありません</div>
         ) : (
-          items.slice(0, maxItems).map((item, idx) => {
-            let badgeClass = '';
-            if (idx === 0) badgeClass = 'award-badge gold';
-            else if (idx === 1) badgeClass = 'award-badge silver';
-            else if (idx === 2) badgeClass = 'award-badge bronze';
-            else badgeClass = 'award-badge';
-            
-            // ランキングタイプに応じてアイコンを選択
-            const getRankingIcon = () => {
-              if (type === 'shrine') {
-                return <GiShintoShrine />;
-              } else if (type === 'diety') {
-                return <GiLibertyWing />;
-              }
-            };
-            
-            return (
-              <div key={item.id + '-' + item.rank} className="d-flex align-items-center gap-2 rounded px-3 py-2"
-                style={{
-                  background: skin.colors.rankingRowBg,
-                  border: `1px solid ${skin.colors.rankingRowBorder}`,
-                }}
-              >
-                <span className={badgeClass}>
-                  {getRankingIcon()}
-                </span>
-                <span style={{ fontSize: '1.1rem', fontWeight: 500, color: skin.colors.text }}>
-                  <CustomLink
-                    onClick={() => onItemClick && onItemClick(item.id)}
-                    type={type}
-                  >
-                    {item.name}
-                  </CustomLink>
-                </span>
-                <span className="small ms-2" style={{ color: skin.colors.text }}>{item.count}回</span>
-              </div>
-            );
-          })
+          items.slice(0, maxItems).map((item) => (
+            <RankingItem
+              key={item.id + '-' + item.rank}
+              rank={item.rank}
+              id={item.id}
+              name={item.name}
+              count={item.count}
+              type={type}
+              onItemClick={onItemClick}
+            />
+          ))
         )}
       </div>
     </div>

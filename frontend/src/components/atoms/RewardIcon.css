@@ -1,0 +1,42 @@
+.reward-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  color: var(--color-text);
+  transition: transform 0.2s ease;
+}
+
+.reward-icon:hover {
+  transform: scale(1.1);
+}
+
+.reward-icon--exp {
+  color: #f39c12;
+}
+
+.reward-icon--ability {
+  color: #3498db;
+}
+
+.reward-icon--title {
+  color: #e74c3c;
+}
+
+/* モーダル内での報酬アイコン用スタイル */
+.modal-item .reward-icon {
+  font-size: 1.1rem;
+  margin-right: 8px;
+}
+
+.modal-item .reward-icon--exp {
+  color: #f39c12;
+}
+
+.modal-item .reward-icon--ability {
+  color: #3498db;
+}
+
+.modal-item .reward-icon--title {
+  color: #e74c3c;
+} 

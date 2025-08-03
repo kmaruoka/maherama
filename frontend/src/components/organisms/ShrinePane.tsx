@@ -2,7 +2,7 @@ import React, { forwardRef, useImperativeHandle } from 'react';
 import { useShrineDetail } from '../../hooks/useShrineDetail';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
-import type { Period, RankingItem } from './RankingPane';
+import type { Period, RankingItemData } from './RankingPane';
 import { useState, useEffect } from 'react';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import ImageVoteButton from '../atoms/ImageVoteButton';
@@ -38,8 +38,8 @@ function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: n
 }
 
 // userRankingsByPeriodのuserName→name変換
-function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }): { [key in Period]: RankingItem[] } {
-  const result: { [key in Period]: RankingItem[] } = { all: [], yearly: [], monthly: [], weekly: [] };
+function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }): { [key in Period]: RankingItemData[] } {
+  const result: { [key in Period]: RankingItemData[] } = { all: [], yearly: [], monthly: [], weekly: [] };
   for (const period of ['all', 'yearly', 'monthly', 'weekly'] as Period[]) {
     result[period] = (data[period] || []).map(item => ({
       ...item,

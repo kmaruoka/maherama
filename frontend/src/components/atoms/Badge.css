@@ -1,0 +1,92 @@
+/* 基本バッジクラス - すべてのバッジが参照する基本クラス */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: var(--badge-size, 1.4em);
+  height: var(--badge-size, 1.4em);
+  flex-shrink: 0;
+  color: rgba(0, 0, 0, 0.2);
+  font-weight: bold;
+  transition: transform 0.2s ease;
+  margin-right: 0.25rem;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.badge:hover {
+  transform: scale(1.1);
+}
+
+/* 光沢効果（濃淡だけの透過グラデーション） */
+.badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(0, 0, 0, 0.1) 100%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 金色の下地背景（年間、月間、イベントなどのランキング1位） */
+.badge-gold {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+/* 銀色の下地背景（年間、月間、イベントなどのランキング2位） */
+.badge-silver {
+  background: linear-gradient(135deg, #c0c0c0, #e5e5e5);
+  box-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);
+}
+
+/* 銅色の下地背景（年間、月間、イベントなどのランキング3位） */
+.badge-bronze {
+  background: linear-gradient(135deg, #cd7f32, #daa520);
+  box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
+}
+
+/* 緑色の下地背景（ミッション） */
+.badge-mission {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+/* 将来の拡張用 */
+.badge-platinum {
+  background: linear-gradient(135deg, #e5e4e2, #b4b4b4);
+  box-shadow: 0 2px 4px rgba(229, 228, 226, 0.3);
+}
+
+.badge-diamond {
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+/* デフォルト（グレー） */
+.badge-default {
+  background: linear-gradient(135deg, #6c757d, #868e96);
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+/* 神社バッジ特有のスタイル */
+.shrine-badge {
+  /* 神社特有のスタイルがあれば追加 */
+}
+
+/* 神様バッジ特有のスタイル */
+.diety-badge {
+  /* 神様特有のスタイルがあれば追加 */
+}
+
+/* ミッションバッジ特有のスタイル */
+.mission-badge {
+  /* ミッション特有のスタイルがあれば追加 */
+}
+
+ 

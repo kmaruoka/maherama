@@ -1,5 +1,7 @@
 import React from 'react';
 import './MissionCard.css';
+import RewardIcon from '../atoms/RewardIcon';
+import { useTranslation } from 'react-i18next';
 
 export interface MissionCardProps {
   mission: {
@@ -22,6 +24,8 @@ const MissionCard: React.FC<MissionCardProps> = ({
   onClick,
   className = ''
 }) => {
+  const { t } = useTranslation();
+  
   const progressPercentage = mission.total_required > 0 
     ? Math.min((mission.progress / mission.total_required) * 100, 100) 
     : 0;
@@ -49,7 +53,7 @@ const MissionCard: React.FC<MissionCardProps> = ({
       <div className="mission-card__header">
         <div className="mission-card__title">{mission.name}</div>
         {mission.is_completed && (
-          <span className="mission-card__completed">達成済み</span>
+          <span className="mission-card__completed">{t('missionCompleted')}</span>
         )}
       </div>
       
@@ -71,14 +75,14 @@ const MissionCard: React.FC<MissionCardProps> = ({
         <div className="mission-card__rewards">
           {mission.exp_reward > 0 && (
             <div className="mission-card__reward">
-              <span className="mission-card__reward-icon">⭐</span>
-              <span className="mission-card__reward-text">経験値 +{mission.exp_reward}</span>
+              <RewardIcon type="exp" />
+              <span className="mission-card__reward-text">{t('experience')} +{mission.exp_reward}</span>
             </div>
           )}
           {totalAbilityPoints > 0 && (
             <div className="mission-card__reward">
-              <span className="mission-card__reward-icon">🔧</span>
-              <span className="mission-card__reward-text">能力ポイント +{totalAbilityPoints}</span>
+              <RewardIcon type="ability" />
+              <span className="mission-card__reward-text">{t('abilityPoints')} +{totalAbilityPoints}</span>
             </div>
           )}
         </div>

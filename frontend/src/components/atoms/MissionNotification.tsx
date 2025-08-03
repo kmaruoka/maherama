@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSkin } from '../../skins/SkinContext';
 import './MissionNotification.css';
+import RewardIcon from './RewardIcon';
+import { useTranslation } from 'react-i18next';
 
 interface MissionNotificationProps {
   completedMissions: Array<{
@@ -18,6 +20,7 @@ export const MissionNotification: React.FC<MissionNotificationProps> = ({
   onClose 
 }) => {
   const { skin } = useSkin();
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -54,15 +57,15 @@ export const MissionNotification: React.FC<MissionNotificationProps> = ({
             <div className="mission-notification__rewards">
               {mission.exp_reward > 0 && (
                 <div className="mission-notification__reward">
-                  <span className="mission-notification__reward-icon">⭐</span>
-                  <span className="mission-notification__reward-text">経験値 +{mission.exp_reward}</span>
+                  <RewardIcon type="exp" />
+                  <span className="mission-notification__reward-text">{t('experience')} +{mission.exp_reward}</span>
                 </div>
               )}
               {mission.ability_reward && Object.keys(mission.ability_reward).length > 0 && (
                 <div className="mission-notification__reward">
-                  <span className="mission-notification__reward-icon">🔧</span>
+                  <RewardIcon type="ability" />
                   <span className="mission-notification__reward-text">
-                    能力ポイント +{Object.values(mission.ability_reward).reduce((a: any, b: any) => a + b, 0)}
+                    {t('abilityPoints')} +{Object.values(mission.ability_reward as Record<string, number>).reduce((a, b) => a + b, 0)}
                   </span>
                 </div>
               )}

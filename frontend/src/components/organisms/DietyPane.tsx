@@ -4,7 +4,7 @@ import { useDietyDetail } from '../../hooks/useDietyDetail';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
-import type { Period, RankingItem } from './RankingPane';
+import type { Period, RankingItemData } from './RankingPane';
 import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
 import { NOIMAGE_DIETY_URL } from '../../constants';
 import { FaCloudUploadAlt, FaVoteYea, FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
@@ -15,7 +15,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
 
-function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItem[] } {
+function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItemData[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
   if (!allRankings) return empty;
   return {

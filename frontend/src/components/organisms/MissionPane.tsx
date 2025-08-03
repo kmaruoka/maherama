@@ -1,6 +1,8 @@
 import React, { forwardRef } from 'react';
 import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
+import RewardIcon from '../atoms/RewardIcon';
+import { useTranslation } from 'react-i18next';
 
 interface MissionPaneProps {
   mission: any;
@@ -14,6 +16,7 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
   onShowDiety 
 }, ref) => {
   const { skin } = useSkin();
+  const { t } = useTranslation();
   
   const progressPercentage = mission.total_required > 0 
     ? Math.min((mission.progress / mission.total_required) * 100, 100) 
@@ -39,19 +42,19 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
           textAlign: 'center',
           fontWeight: 'bold'
         }}>
-          達成済み
+          {t('missionCompleted')}
         </div>
       )}
 
       {/* ミッション内容 */}
       <div className="modal-section">
-        <div className="modal-subtitle">内容</div>
+        <div className="modal-subtitle">{t('missionContent')}</div>
         <p style={{ margin: 0, lineHeight: '1.5' }}>{mission.content}</p>
       </div>
 
       {/* 進捗 */}
       <div className="modal-section">
-        <div className="modal-subtitle">進捗</div>
+        <div className="modal-subtitle">{t('missionProgress')}</div>
         <div style={{ 
           width: '100%', 
           height: '8px', 
@@ -83,7 +86,7 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
       {/* 対象神社・神様 */}
       {(mission.shrines && mission.shrines.length > 0 || mission.dieties && mission.dieties.length > 0) && (
         <div className="modal-section">
-          <div className="modal-subtitle">対象</div>
+          <div className="modal-subtitle">{t('missionTarget')}</div>
           <div>
             {mission.shrines && mission.shrines.length > 0 && (
               <div style={{ marginBottom: '10px' }}>
@@ -175,23 +178,23 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
 
       {/* 報酬 */}
       <div className="modal-section">
-        <div className="modal-subtitle">報酬</div>
+        <div className="modal-subtitle">{t('missionRewards')}</div>
         <div>
           {mission.exp_reward > 0 && (
             <div className="modal-item">
-              <span style={{ marginRight: '8px', fontSize: '1.1rem' }}>⭐</span>
-              <span style={{ fontWeight: '500' }}>経験値 +{mission.exp_reward}</span>
+              <RewardIcon type="exp" />
+              <span style={{ fontWeight: '500' }}>{t('experience')} +{mission.exp_reward}</span>
             </div>
           )}
           {mission.ability_reward && typeof mission.ability_reward === 'object' && Object.keys(mission.ability_reward).length > 0 && (
             <div className="modal-item">
-              <span style={{ marginRight: '8px', fontSize: '1.1rem' }}>🔧</span>
-              <span style={{ fontWeight: '500' }}>能力ポイント +{Object.values(mission.ability_reward as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
+              <RewardIcon type="ability" />
+              <span style={{ fontWeight: '500' }}>{t('abilityPoints')} +{Object.values(mission.ability_reward as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
             </div>
           )}
           {mission.titles && mission.titles.map((title: any) => (
             <div key={title.id} className="modal-item">
-              <span style={{ marginRight: '8px', fontSize: '1.1rem' }}>🏆</span>
+              <RewardIcon type="title" />
               <span style={{ fontWeight: '500' }}>{title.name}</span>
             </div>
           ))}
@@ -209,7 +212,7 @@ const MissionPane = forwardRef<{ backToOverview: () => void }, MissionPaneProps>
             background: 'rgba(0, 0, 0, 0.05)', 
             borderRadius: '6px' 
           }}>
-            期間: {new Date(mission.start_at).toLocaleDateString()} - {new Date(mission.end_at).toLocaleDateString()}
+            {t('missionPeriod')}: {new Date(mission.start_at).toLocaleDateString()} - {new Date(mission.end_at).toLocaleDateString()}
           </div>
         </div>
       )}

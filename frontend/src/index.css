@@ -29,6 +29,10 @@
   --modal-background: linear-gradient(135deg, #f8f5e4 0%, #f5e9c6 100%);
   --color-tab-inactive: #f3eedc;
   --bs-modal-width: calc(100vw - 16px);
+  --badge-size: 1.4em;
+  --badge-size-px: 14px;
+  --award-badge-size: 1.4em;
+  --award-badge-size-px: 14px;
 }
 
 @media (min-width: 600px) {
@@ -1564,12 +1568,60 @@ nav.d-flex.position-fixed {
   border-radius: 3px;
 }
 
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: white;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.1);
+}
+
+.badge--gold {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+.badge--silver {
+  background: linear-gradient(135deg, #c0c0c0, #e5e5e5);
+  box-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);
+}
+
+.badge--bronze {
+  background: linear-gradient(135deg, #cd7f32, #daa520);
+  box-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
+}
+
+.badge--default {
+  background: linear-gradient(135deg, #6c757d, #868e96);
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+/* 神社バッジ特有のスタイル */
+.shrine-badge {
+  /* 神社特有のスタイルがあれば追加 */
+}
+
+/* 神様バッジ特有のスタイル */
+.diety-badge {
+  /* 神様特有のスタイルがあれば追加 */
+}
+
+/* 元のaward-badgeスタイルを復元 */
 .award-badge {
   color: rgba(0, 0, 0, 0.2) !important;
   display: inline-block;
   margin-right: 0.25rem;
-  width: 1.8em;
-  height: 1.8em;
+  width: var(--award-badge-size);
+  height: var(--award-badge-size);
   padding: 0;
   border-radius: 50%;
   position: relative;
@@ -1587,11 +1639,11 @@ nav.d-flex.position-fixed {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(0,0,0,0.4) 0%, 
-    rgba(0,0,0,0.9) 25%, 
-    rgba(0,0,0,0.1) 50%, 
-    rgba(0,0,0,0.9) 75%, 
+  background: linear-gradient(135deg,
+    rgba(0,0,0,0.4) 0%,
+    rgba(0,0,0,0.9) 25%,
+    rgba(0,0,0,0.1) 50%,
+    rgba(0,0,0,0.9) 75%,
     rgba(0,0,0,0.4) 100%
   );
   pointer-events: none;

@@ -1,6 +1,10 @@
 import React from 'react';
 import { GiLibertyWing, GiShintoShrine } from "react-icons/gi";
 import { FaAward, FaTrophy } from "react-icons/fa6";
+import ShrineBadge from './ShrineBadge';
+import DietyBadge from './DietyBadge';
+import MissionBadge from './MissionBadge';
+import './Badge.css';
 
 interface CustomTextProps {
   children: React.ReactNode;
@@ -24,32 +28,13 @@ interface AwardIconProps {
   embed_data?: any; // 称号の埋め込みデータ
 }
 
-function getAwardClassName(grade: number) {
-  // デバッグ用ログ
-  console.log('getAwardClassName debug:', { grade });
-  
-  // 1位～3位は同じアイコンで色違い（メタリックなグラデーション）
-  if (grade >= 2 && grade <= 5) {
-    switch (grade) {
-      case 5: 
-        console.log('Returning award-badge gold for grade 5');
-        return 'award-badge gold'; // 1位（金）
-      case 4: 
-        console.log('Returning award-badge silver for grade 4');
-        return 'award-badge silver'; // 2位（銀）
-      case 2: 
-        console.log('Returning award-badge bronze for grade 2');
-        return 'award-badge bronze'; // 3位（銅）
-      default:
-        console.log('Returning empty string for grade:', grade);
-        return '';
-    }
-  }
-  console.log('Returning empty string for grade:', grade);
-  return '';
-}
-
 export function AwardIcon({ grade = 1, className, style, embed_data }: AwardIconProps) {
+  // CSS変数からバッジサイズを取得
+  const getBadgeSize = () => {
+    const size = getComputedStyle(document.documentElement).getPropertyValue('--award-badge-size-px');
+    return parseInt(size) || 14;
+  };
+
   const getAwardIcon = (grade: number, embed_data?: any) => {
     if (embed_data?.diety && grade >= 2 && grade <= 5) {
       return <GiLibertyWing />;
@@ -69,35 +54,37 @@ export function AwardIcon({ grade = 1, className, style, embed_data }: AwardIcon
     return <FaAward />;
   };
 
+  // 神社の称号の場合は専用バッジを使用
+  if (embed_data?.shrine && grade >= 2 && grade <= 5) {
+    return <ShrineBadge rank={grade === 5 ? 1 : grade === 4 ? 2 : 3} size={getBadgeSize()} className={className} />;
+  }
+  
+  // 神様の称号の場合は専用バッジを使用
+  if (embed_data?.diety && grade >= 2 && grade <= 5) {
+    return <DietyBadge rank={grade === 5 ? 1 : grade === 4 ? 2 : 3} size={getBadgeSize()} className={className} />;
+  }
+
+  // ミッションの称号の場合は専用バッジを使用
+  if (embed_data?.mission && grade >= 2 && grade <= 5) {
+    return <MissionBadge 
+      rank={grade === 5 ? 1 : grade === 4 ? 2 : 3} 
+      size={getBadgeSize()} 
+      className={className}
+      missionImageUrl={embed_data?.missionImageUrl}
+    />;
+  }
+
+  // その他の称号は元のaward-badgeシステムを使用
+  const getBadgeClass = () => {
+    if (grade === 5) return 'award-badge gold';
+    if (grade === 4) return 'award-badge silver';
+    if (grade === 2) return 'award-badge bronze';
+    return 'award-badge';
+  };
+
   return (
-    <>
-      <style>
-        {`
-          .trophy-icon svg,
-          .trophy-icon svg *,
-          .trophy-icon svg path,
-          .trophy-icon svg rect,
-          .trophy-icon svg circle,
-          .trophy-icon svg polygon,
-          .trophy-icon svg g,
-          .trophy-icon svg use,
-          .trophy-icon svg line,
-          .trophy-icon svg polyline,
-          .trophy-icon svg ellipse {
-            fill: currentColor !important;
-            color: currentColor !important;
-            stroke: currentColor !important;
-          }
-          .trophy-icon *[fill],
-          .trophy-icon *[stroke] {
-            fill: currentColor !important;
-            stroke: currentColor !important;
-          }
-        `}
-      </style>
-      <span className={`award-badge ${getAwardClassName(grade)}${className ? ' ' + className : ''}`.trim()} style={{ ...style, fontSize: '0.8em' }}>
-        {getAwardIcon(grade, embed_data)}
-      </span>
-    </>
+    <span className={`${getBadgeClass()} ${className || ''}`.trim()} style={{ ...style }}>
+      {getAwardIcon(grade, embed_data)}
+    </span>
   );
 }
