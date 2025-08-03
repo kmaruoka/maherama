@@ -18,7 +18,6 @@
 .ranking-item__name {
   flex: 1;
   font-size: 1.1rem;
-  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

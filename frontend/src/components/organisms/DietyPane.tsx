@@ -2,6 +2,7 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'rea
 import { useParams } from 'react-router-dom';
 import { useDietyDetail } from '../../hooks/useDietyDetail';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
+import useUserRankings from '../../hooks/useUserRankings';
 import CustomLink from '../atoms/CustomLink';
 import RankingPane from './RankingPane';
 import type { Period, RankingItemData } from './RankingPane';
@@ -15,7 +16,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
 
-function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings'): { [key in Period]: RankingItemData[] } {
+function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings' | 'userRankings'): { [key in Period]: RankingItemData[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
   if (!allRankings) return empty;
   return {
@@ -55,6 +56,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
 
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams || 0);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(idFromParams);
+  const { data: userRankings, isLoading: isUserRankingLoading } = useUserRankings('all');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [thumbCache, setThumbnailCache] = useState(Date.now());
 
@@ -188,9 +190,9 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
             <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
           </div>
           <RankingPane
-            itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
-            type="diety"
-            isLoading={isRankingLoading}
+            itemsByPeriod={{ all: userRankings || [], yearly: [], monthly: [], weekly: [] }}
+            type="user"
+            isLoading={isUserRankingLoading}
             onItemClick={onShowUser}
             maxItems={100}
           />
@@ -307,7 +309,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         </div>
         <RankingPane
           itemsByPeriod={getItemsByPeriod(allRankings, 'dietyRankings')}
-          type="diety"
+          type="user"
           isLoading={isRankingLoading}
           onItemClick={onShowUser}
           maxItems={3}

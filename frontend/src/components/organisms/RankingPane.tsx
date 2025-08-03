@@ -15,7 +15,7 @@ export interface RankingItemData {
 
 interface RankingPaneProps {
   itemsByPeriod?: { [key in Period]: RankingItemData[] };
-  type: 'shrine' | 'diety';
+  type: 'shrine' | 'diety' | 'user';
   isLoading?: boolean;
   onItemClick?: (id: number) => void;
   maxItems?: number;

@@ -50,12 +50,12 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
   const eventMissions = missions.filter(m => m.mission_type === 'event');
 
   return (
-    <PageLayout>
+    <PageLayout style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Tabs
         id="mission-tabs"
         activeKey={tab}
         onSelect={k => k && setTab(k as 'permanent' | 'event')}
-        className="mb-3"
+        className="mb-2"
       >
         <Tab eventKey="permanent" title="常設ミッション" />
         <Tab eventKey="event" title="限定ミッション" />

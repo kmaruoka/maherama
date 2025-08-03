@@ -10,7 +10,7 @@ export interface RankingItemProps {
   id: number;
   name: string;
   count: number;
-  type: 'shrine' | 'diety';
+  type: 'shrine' | 'diety' | 'user';
   onItemClick?: (id: number) => void;
 }
 
