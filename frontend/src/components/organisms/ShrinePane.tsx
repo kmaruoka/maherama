@@ -105,11 +105,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       // データが更新されたら画像状態をリセット
       imageActions.resetImageState();
       
-      // 画像をプリロードしてちらつきを防ぐ
+      // 画像URLの存在確認を行う
       const imageUrl = data.image_url_l || data.image_url_m || data.image_url || data.image_url_s;
-      if (imageUrl && imageUrl !== NOIMAGE_SHRINE_DISPLAY_URL) {
-        const img = new Image();
-        img.src = imageUrl + '?t=' + Date.now();
+      if (imageUrl) {
+        imageActions.handleImageUrlChange(imageUrl);
       }
     }
   }, [data?.image_url, data?.image_url_m, data?.image_url_s, data?.image_url_l]);
@@ -372,6 +371,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
           style={{ maxWidth: '100%', height: 'auto' }}
           loadingText="読み込み中..."
+          shouldUseFallback={imageState.shouldUseFallback}
         />
       );
     } else if (detailView === 'deities') {
@@ -447,6 +447,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
             alt="サムネイル"
             fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
             loadingText="読み込み中..."
+            shouldUseFallback={imageState.shouldUseFallback}
           />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {

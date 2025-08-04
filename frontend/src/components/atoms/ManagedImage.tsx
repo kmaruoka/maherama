@@ -11,6 +11,7 @@ interface ManagedImageProps {
   onError?: () => void;
   showLoadingOverlay?: boolean;
   loadingText?: string;
+  shouldUseFallback?: boolean;
 }
 
 export const ManagedImage: React.FC<ManagedImageProps> = ({
@@ -22,7 +23,8 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
   onLoad,
   onError,
   showLoadingOverlay = true,
-  loadingText = '読み込み中...'
+  loadingText = '読み込み中...',
+  shouldUseFallback = false
 }) => {
   const {
     retryCount,
@@ -37,9 +39,10 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const shouldRetry = handleImageError();
     if (shouldRetry) {
-      // リトライのため、srcを強制的に更新
+      // リトライのため、srcを強制的に更新（タイムスタンプを追加）
       const img = e.target as HTMLImageElement;
-      img.src = src + '?t=' + Date.now();
+      const timestamp = Date.now();
+      img.src = src + (src.includes('?') ? '&' : '?') + 'retry=' + timestamp;
     } else {
       onError?.();
     }
@@ -54,12 +57,15 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
     handleImageLoadStart();
   };
 
-  // 画像URLが変更されたらリセット
+  // 画像URLが変更されたらリセット（無限ループを防ぐため条件を追加）
   React.useEffect(() => {
-    resetImageState();
-  }, [src]);
+    // 同じURLの場合はリセットしない、またfallbackSrcの場合はリセットしない
+    if (src !== fallbackSrc && !src.includes('retry=') && !src.includes('?t=')) {
+      resetImageState();
+    }
+  }, [src, fallbackSrc, resetImageState]);
 
-  const displaySrc = imageLoadError ? fallbackSrc : src;
+  const displaySrc = (imageLoadError || shouldUseFallback) ? fallbackSrc : src;
   const containerStyle: React.CSSProperties = {
     position: 'relative',
     ...style

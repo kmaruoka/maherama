@@ -18,6 +18,7 @@ export interface ImageManagementState {
   imageLoadError: boolean;
   isImageLoading: boolean;
   isUploadModalOpen: boolean;
+  shouldUseFallback: boolean;
 }
 
 export interface ImageManagementActions {
@@ -26,6 +27,7 @@ export interface ImageManagementActions {
   handleImageVote: (imageId: number) => Promise<void>;
   setIsUploadModalOpen: (open: boolean) => void;
   resetImageState: () => void;
+  handleImageUrlChange: (imageUrl: string) => void;
 }
 
 export function useImageManagement(options: ImageManagementOptions): [ImageManagementState, ImageManagementActions] {
@@ -33,11 +35,12 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   
-  const [thumbCache, setThumbCache] = useState(Date.now());
+  const [thumbCache, setThumbCache] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [shouldUseFallback, setShouldUseFallback] = useState(false);
   
   const MAX_RETRIES = 2;
 
@@ -45,8 +48,28 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     setRetryCount(0);
     setImageLoadError(false);
     setIsImageLoading(false);
-    setThumbCache(Date.now());
+    setShouldUseFallback(false);
+    // キャッシュバスティングのためのタイムスタンプを更新
+    setThumbCache(prev => prev + 1);
   }, []);
+
+  // 画像URLが変更されたときに存在確認を行う（同期的に処理）
+  const handleImageUrlChange = useCallback((imageUrl: string) => {
+    if (!imageUrl || imageUrl === options.noImageUrl) {
+      setShouldUseFallback(true);
+      return;
+    }
+    
+    // 画像の存在確認を同期的に行う（エラー時はfallbackを使用）
+    const img = new Image();
+    img.onload = () => {
+      setShouldUseFallback(false);
+    };
+    img.onerror = () => {
+      setShouldUseFallback(true);
+    };
+    img.src = imageUrl;
+  }, [options.noImageUrl]);
 
   const handleUpload = useCallback(async (file: File) => {
     try {
@@ -84,7 +107,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       setIsImageLoading(false);
       
       // キャッシュを更新（強制的に再読み込み）
-      setThumbCache(Date.now());
+      setThumbCache(prev => prev + 1);
       
       if (result.isCurrentThumbnail) {
         showToast(t('uploadSuccess'), 'success');
@@ -183,7 +206,8 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     retryCount,
     imageLoadError,
     isImageLoading,
-    isUploadModalOpen
+    isUploadModalOpen,
+    shouldUseFallback
   };
 
   const actions: ImageManagementActions = useMemo(() => ({
@@ -191,8 +215,9 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     handleVote,
     handleImageVote,
     setIsUploadModalOpen,
-    resetImageState
-  }), [handleUpload, handleVote, handleImageVote, setIsUploadModalOpen, resetImageState]);
+    resetImageState,
+    handleImageUrlChange
+  }), [handleUpload, handleVote, handleImageVote, setIsUploadModalOpen, resetImageState, handleImageUrlChange]);
 
   return [state, actions];
 }
@@ -202,9 +227,9 @@ export function useImageLoading() {
   const [retryCount, setRetryCount] = useState(0);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const MAX_RETRIES = 2;
+  const MAX_RETRIES = 1; // リトライ回数を1回に制限
 
-  const handleImageError = () => {
+  const handleImageError = useCallback(() => {
     if (retryCount < MAX_RETRIES) {
       setRetryCount(prev => prev + 1);
       return true; // リトライ可能
@@ -212,16 +237,16 @@ export function useImageLoading() {
       setImageLoadError(true);
       return false; // リトライ不可
     }
-  };
+  }, [retryCount]);
 
-  const handleImageLoad = () => {
+  const handleImageLoad = useCallback(() => {
     setImageLoadError(false);
     setIsImageLoading(false);
-  };
+  }, []);
 
-  const handleImageLoadStart = () => {
+  const handleImageLoadStart = useCallback(() => {
     setIsImageLoading(true);
-  };
+  }, []);
 
   const resetImageState = useCallback(() => {
     setRetryCount(0);

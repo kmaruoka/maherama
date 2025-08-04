@@ -74,6 +74,8 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   useEffect(() => {
     if (diety?.image_url) {
       imageActions.resetImageState();
+      // 画像URLの存在確認を行う
+      imageActions.handleImageUrlChange(diety.image_url);
     }
   }, [diety?.image_url]);
 
@@ -149,6 +151,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           fallbackSrc={NOIMAGE_DIETY_URL}
           style={{ maxWidth: '100%', height: 'auto' }}
           loadingText="読み込み中..."
+          shouldUseFallback={imageState.shouldUseFallback}
         />
       );
     } else if (detailView === 'shrines') {
@@ -232,6 +235,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
             alt="サムネイル"
             fallbackSrc={NOIMAGE_DIETY_URL}
             loadingText="読み込み中..."
+            shouldUseFallback={imageState.shouldUseFallback}
           />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {

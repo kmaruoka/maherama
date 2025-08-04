@@ -119,12 +119,12 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
   // 型安全なサムネイル取得
   const userImageUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
 
-  // 画像URLが更新されたときにキャッシュをリセット
+  // 画像URLが変更されたときに存在確認を行う
   React.useEffect(() => {
-    if (userInfo?.image_url) {
-      imageActions.resetImageState();
+    if (userImageUrl) {
+      imageActions.handleImageUrlChange(userImageUrl);
     }
-  }, [userInfo?.image_url]);
+  }, [userImageUrl]);
 
   if (!currentUserId) {
     return <div className="p-3">{t('userIdNotSpecified')}</div>;
@@ -143,11 +143,12 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
       <div className="pane__header">
         <div className="pane__thumbnail" style={{ position: 'relative' }}>
           <ManagedImage
-            src={userImageUrl + '?t=' + imageState.thumbCache}
+            src={userImageUrl + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="ユーザーサムネイル"
             fallbackSrc={NOIMAGE_USER_URL}
             className="pane__thumbnail-img"
             loadingText="読み込み中..."
+            shouldUseFallback={imageState.shouldUseFallback}
           />
           <div className="pane__thumbnail-actions">
             <button className="pane__icon-btn" onClick={(e) => {
