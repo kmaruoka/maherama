@@ -1,9 +1,7 @@
-import useDebugLog from '../hooks/useDebugLog';
-
 // API_BASEの設定
 const getApiBase = () => {
-  // 開発環境
-  if (import.meta.env.DEV) {
+  // 開発環境またはローカル環境
+  if (import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     const port = import.meta.env.VITE_PORT || '3000';
     return `http://localhost:${port}`;
   }
