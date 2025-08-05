@@ -481,6 +481,8 @@ body, #root, .log-pane, .log-pane-expanded {
   position: relative;
   z-index: 1;
   min-width: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .custom-menu-item.active {
@@ -986,6 +988,14 @@ body.no-skin-padding, body.no-skin-padding #root {
   height: 56px;
   flex-shrink: 0;
   z-index: 10000;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .menu-pane--dialog-open {

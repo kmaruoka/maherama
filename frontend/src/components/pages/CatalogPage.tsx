@@ -133,7 +133,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           items={sorted}
           renderItem={renderItem}
           emptyMessage="アイテムがありません"
-          style={{ flex: 1, minHeight: 0, marginBottom: '2rem' }}
+          style={{ flex: 1, minHeight: 0 }}
         />
       ) : (
         <>
@@ -148,7 +148,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
             )}
           </AutoSizer>
           {/* リスト本体 */}
-          <div className="catalog-page__list-container" style={{ marginBottom: '2rem' }}>
+          <div className="catalog-page__list-container">
             <AutoSizer>
               {({ height, width }: { height: number; width: number }) => {
                 const LIST_ROW_HEIGHT = 40;
