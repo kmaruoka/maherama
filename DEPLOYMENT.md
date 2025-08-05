@@ -199,6 +199,10 @@ npm install
 npm run build
 # または、Viteを直接使用
 # npx vite build
+
+# ビルド後の権限設定（重要）
+sudo chown -R www-data:www-data /home/ubuntu/maherama/frontend/dist/
+sudo chmod -R 755 /home/ubuntu/maherama/frontend/dist/
 ```
 
 
@@ -324,6 +328,11 @@ ls -la /home/ubuntu/maherama/frontend/dist/
 sudo chown -R www-data:www-data /home/ubuntu/maherama/frontend/dist/
 sudo chmod -R 755 /home/ubuntu/maherama/frontend/dist/
 
+# 親ディレクトリの権限設定（重要）
+sudo chmod 755 /home/ubuntu/
+sudo chmod 755 /home/ubuntu/maherama/
+sudo chmod 755 /home/ubuntu/maherama/frontend/
+
 # デフォルトNginxサイトの無効化（重要）
 sudo rm -f /etc/nginx/sites-enabled/default
 
@@ -336,6 +345,9 @@ pm2 start ecosystem.config.js
 
 # Nginx設定の再読み込み
 sudo systemctl reload nginx
+
+# 動作確認
+curl http://localhost/api/shrines/all
 ```
 
 ## 6. SSL証明書の設定（ドメイン取得後）
@@ -510,6 +522,32 @@ sudo nginx -t
 
 # エラーログの確認
 sudo tail -f /var/log/nginx/error.log
+
+# 権限エラーの場合
+sudo chown -R www-data:www-data /home/ubuntu/maherama/frontend/dist/
+sudo chmod -R 755 /home/ubuntu/maherama/frontend/dist/
+sudo chmod 755 /home/ubuntu/
+sudo chmod 755 /home/ubuntu/maherama/
+sudo chmod 755 /home/ubuntu/maherama/frontend/
+
+# デフォルトサイトが表示される場合
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo systemctl restart nginx
+```
+
+**フロントエンドがAPIにアクセスできない**
+```bash
+# Nginx設定のproxy_passを確認
+sudo cat /etc/nginx/sites-available/maherama | grep proxy_pass
+
+# 正しい設定（末尾のスラッシュが重要）
+location /api/ {
+    proxy_pass http://localhost:3000/;
+}
+
+# バックエンドサーバーの起動確認
+pm2 status
+curl http://localhost:3000/shrines/all
 ```
 
 ## 12. 更新手順
@@ -530,10 +568,114 @@ pm2 restart maherama-backend
 # フロントエンドの更新
 cd ../../frontend
 npm install
-npm run build
+
+# 権限問題の解決（重要）
+sudo chown -R ubuntu:ubuntu /home/ubuntu/maherama/frontend/dist/
+npx vite build
+sudo chown -R www-data:www-data /home/ubuntu/maherama/frontend/dist/
+sudo chmod -R 755 /home/ubuntu/maherama/frontend/dist/
+
+# 親ディレクトリの権限も確認
+sudo chmod 755 /home/ubuntu/
+sudo chmod 755 /home/ubuntu/maherama/
+sudo chmod 755 /home/ubuntu/maherama/frontend/
 ```
 
-### 12.2 システムの更新
+### 12.2 Nginx設定の確認と修正（重要）
+```bash
+# Nginx設定ファイルの確認
+sudo cat /etc/nginx/sites-available/maherama
+
+# 設定ファイルが存在しない場合の作成
+sudo vi /etc/nginx/sites-available/maherama
+```
+
+以下の内容を追加:
+```nginx
+server {
+    listen 80;
+    server_name _;  # すべてのホスト名を受け入れる（IPアドレスでもドメインでも）
+
+    # フロントエンド（静的ファイル）
+    location / {
+        root /home/ubuntu/maherama/frontend/dist;
+        try_files $uri $uri/ /index.html;
+        
+        # キャッシュ設定
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
+    # バックエンドAPI（重要）
+    location /api/ {
+        proxy_pass http://localhost:3000/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # 画像ファイルの配信
+    location /images/ {
+        alias /home/ubuntu/maherama/frontend/public/images/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # セキュリティヘッダー
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+}
+```
+
+```bash
+# 設定ファイルの有効化
+sudo ln -s /etc/nginx/sites-available/maherama /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Nginx設定のテストと再起動
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### 12.3 バックエンドエンドポイントの確認と修正（重要）
+```bash
+# バックエンドのエンドポイントを確認
+cd ~/maherama/frontend/backend
+grep -r "app.get" ./index.ts
+
+# エンドポイントの構造に基づいてNginx設定を修正
+# 例：/shrines/all エンドポイントが存在する場合
+sudo vi /etc/nginx/sites-available/maherama
+```
+
+**Nginx設定の修正例：**
+```nginx
+# バックエンドAPI（/api/プレフィックスを削除してプロキシ）
+location /api/ {
+    proxy_pass http://localhost:3000/;
+    # 末尾のスラッシュが重要：/api/shrines/all → /shrines/all に転送
+}
+```
+
+```bash
+# Nginx再起動
+sudo systemctl restart nginx
+
+# プロキシの動作確認
+curl http://18.181.100.100/api/shrines/all
+```
+
+### 12.3 システムの更新
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo systemctl restart nginx
