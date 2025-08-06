@@ -1,7 +1,20 @@
+:root {
+  /* カードサイズの定数 */
+  --card-width: 114px;
+  --card-height: 200px;
+  --card-width-mobile: 114px;
+  --card-height-mobile: 200px;
+  --card-gap: 4px;
+  --card-gap-mobile: 2px;
+  --card-font-size: 0.6rem;
+  --card-title-font-size: 0.6rem;
+  --card-line-height: 1.3;
+}
+
 .catalog-card {
-  width: 162px;
-  height: 252px;
-  min-width: 162px;
+  width: var(--card-width);
+  height: var(--card-height);
+  min-width: var(--card-width);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,6 +27,15 @@
   padding: 0;
   overflow: hidden;
   transition: box-shadow 0.15s;
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .catalog-card {
+    width: var(--card-width-mobile);
+    height: var(--card-height-mobile);
+    min-width: var(--card-width-mobile);
+  }
 }
 .catalog-card:hover {
   box-shadow: 0 4px 16px rgba(80,60,10,0.16);
@@ -42,13 +64,13 @@
   flex-direction: column;
   justify-content: flex-start;
   padding: 6px 6px 8px 6px;
-  font-size: 0.8rem;
-  line-height: 1.3;
+  font-size: var(--card-font-size, 0.8rem);
+  line-height: var(--card-line-height, 1.3);
   background: transparent;
 }
 .catalog-card__title {
   font-weight: bold;
-  font-size: 0.9rem;
+  font-size: var(--card-title-font-size, 0.9rem);
   margin-bottom: 0.10rem;
   min-height: 1.5em;
   overflow: hidden;

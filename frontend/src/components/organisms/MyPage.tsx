@@ -116,8 +116,8 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
     refetch(); // ユーザー情報を再取得
   };
 
-  // 型安全なサムネイル取得
-  const userImageUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
+  // 型安全なサムネイル取得（mサイズを優先、次にsサイズ）
+  const userImageUrl = (userInfo as { image_url_m?: string; image_url_s?: string; image_url?: string } | undefined)?.image_url_m || (userInfo as { image_url_s?: string; image_url?: string } | undefined)?.image_url_s || (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
 
   // 画像URLが変更されたときに存在確認を行う
   React.useEffect(() => {

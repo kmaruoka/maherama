@@ -68,7 +68,7 @@ async function uploadDietyImage(
   const sizes = {
     original: '',
     urlXs: '64',
-    urlS: '160',
+    urlS: '112',
     urlM: '256',
     urlL: '512',
     urlXl: '1024'
@@ -93,9 +93,9 @@ async function uploadDietyImage(
     .jpeg({ quality: 90 })
     .toFile(filePaths.urlXs);
 
-  // 160x160
+  // 112x112
   await sharp(imageBuffer)
-    .resize(160, 160)
+    .resize(112, 112)
     .jpeg({ quality: 90 })
     .toFile(filePaths.urlS);
 

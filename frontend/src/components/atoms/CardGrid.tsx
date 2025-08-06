@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { CARD_WIDTH, CARD_HEIGHT } from '../../constants';
 import './CardGrid.css';
+
+// CSS変数から値を取得する関数
+const getCSSVariable = (variableName: string, defaultValue: number): number => {
+  if (typeof window === 'undefined') return defaultValue;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(variableName);
+  return value ? parseInt(value) : defaultValue;
+};
+
+const getCardWidth = (): number => getCSSVariable('--card-width', 114);
+const getCardHeight = (): number => getCSSVariable('--card-height', 200);
+const getCardGap = (): number => getCSSVariable('--card-gap', 4);
+const getCardGapMobile = (): number => getCSSVariable('--card-gap-mobile', 2);
 
 export interface CardGridProps<T> {
   items: T[];
@@ -32,9 +43,9 @@ interface GridItemData<T> {
 const CardGrid = <T extends any>({
   items,
   renderItem,
-  cardWidth = CARD_WIDTH,
-  cardHeight = CARD_HEIGHT,
-  gap = 6,
+  cardWidth,
+  cardHeight,
+  gap,
   className = '',
   style,
   scrollbarWidth = 25,
@@ -44,6 +55,24 @@ const CardGrid = <T extends any>({
   error = null,
   errorMessage = 'エラーが発生しました'
 }: CardGridProps<T>) => {
+  // デフォルト値をCSS変数から取得
+  const defaultCardWidth = cardWidth ?? getCardWidth();
+  const defaultCardHeight = cardHeight ?? getCardHeight();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 600);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // CSS変数からgapを取得（指定されていない場合）
+  const effectiveGap = gap ?? (isMobile ? getCardGapMobile() : getCardGap());
+
   // ローディング状態
   if (loading) {
     return (
@@ -76,18 +105,18 @@ const CardGrid = <T extends any>({
       <AutoSizer>
         {({ height, width }: { height: number; width: number }) => {
           const adjustedWidth = width - scrollbarWidth;
-          const columnCount = Math.max(1, Math.floor((adjustedWidth + gap / 2) / (cardWidth + gap)));
+          const columnCount = Math.max(1, Math.floor((adjustedWidth + effectiveGap / 2) / (defaultCardWidth + effectiveGap)));
           const rowCount = Math.ceil(items.length / columnCount);
 
           return (
             <Grid
               columnCount={columnCount}
               rowCount={rowCount}
-              columnWidth={cardWidth + gap}
-              rowHeight={cardHeight + gap}
+              columnWidth={defaultCardWidth + effectiveGap}
+              rowHeight={defaultCardHeight + effectiveGap}
               width={width}
               height={height}
-              itemData={{ items, columnCount, cardWidth, cardHeight, gap, renderItem }}
+              itemData={{ items, columnCount, cardWidth: defaultCardWidth, cardHeight: defaultCardHeight, gap: effectiveGap, renderItem }}
             >
               {({ columnIndex, rowIndex, style: cellStyle, data }: any) => {
                 const { items, columnCount, cardWidth, cardHeight, gap, renderItem } = data as GridItemData<T>;

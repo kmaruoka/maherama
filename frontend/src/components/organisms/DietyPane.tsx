@@ -144,11 +144,11 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   // 詳細表示のレンダリング関数
   const renderDetailContent = () => {
     if (detailView === 'thumbnail') {
-      return (
-        <ManagedImage
-          src={(diety.image_url_l || diety.image_url_m || diety.image_url) + '?t=' + imageState.thumbCache}
-          alt="サムネイル"
-          fallbackSrc={NOIMAGE_DIETY_URL}
+              return (
+          <ManagedImage
+            src={(diety.image_url_l || diety.image_url_m || diety.image_url_s || diety.image_url) + '?t=' + imageState.thumbCache}
+            alt="サムネイル"
+            fallbackSrc={NOIMAGE_DIETY_URL}
           style={{ maxWidth: '100%', height: 'auto' }}
           loadingText="読み込み中..."
           shouldUseFallback={imageState.shouldUseFallback}

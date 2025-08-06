@@ -19,7 +19,7 @@ export async function seedDietyImage(prisma: PrismaClient) {
     const baseName = `diety${img.dietyId}-u${img.userId}_d`;
     const originalUrl = `/uploads/${yyyymm}/${baseName}original.jpg`;
     const url64 = `/uploads/${yyyymm}/${baseName}marker.jpg`;
-    const url160 = `/uploads/${yyyymm}/${baseName}160.jpg`;
+    const url112 = `/uploads/${yyyymm}/${baseName}112.jpg`;
     const url256 = `/uploads/${yyyymm}/${baseName}256.jpg`;
     const url512 = `/uploads/${yyyymm}/${baseName}512.jpg`;
 
@@ -28,7 +28,7 @@ export async function seedDietyImage(prisma: PrismaClient) {
     data: {
       original_url: originalUrl,
       url_xs: url64,
-      url_s: url160,
+      url_s: url112,
       url_m: url256,
       url_l: url512,
       url_xl: originalUrl,

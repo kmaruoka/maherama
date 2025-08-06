@@ -3067,7 +3067,7 @@ function ensureDirSync(dir) {
 // 画像リサイズ設定
 const sizes = {
   marker: 64,
-  thumbnail: 160,
+  thumbnail: 112,
   original: 1024
 };
 
@@ -3091,13 +3091,13 @@ async function handleImageUpload(type, id, userId, fileBuffer) {
   // 6サイズ保存
   const markerPath = path.join(dir, getImageFileName(type, id, userId, 'marker'));
   const origPath = path.join(dir, getImageFileName(type, id, userId, 'original'));
-  const size160Path = path.join(dir, getImageFileName(type, id, userId, '160'));
+  const size112Path = path.join(dir, getImageFileName(type, id, userId, '112'));
   const size256Path = path.join(dir, getImageFileName(type, id, userId, '256'));
   const size512Path = path.join(dir, getImageFileName(type, id, userId, '512'));
   const size1024Path = path.join(dir, getImageFileName(type, id, userId, '1024'));
   
   await sharp(fileBuffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
-  await sharp(fileBuffer).resize(160, 160).jpeg({ quality: 90 }).toFile(size160Path);
+  await sharp(fileBuffer).resize(112, 112).jpeg({ quality: 90 }).toFile(size112Path);
   await sharp(fileBuffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
   await sharp(fileBuffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
   await sharp(fileBuffer).resize(1024, 1024).jpeg({ quality: 90 }).toFile(size1024Path);
@@ -3106,7 +3106,7 @@ async function handleImageUpload(type, id, userId, fileBuffer) {
   // URL生成
   const originalUrl = `/images/${yyyymm}/${getImageFileName(type, id, userId, 'original')}`;
   const urlXs = `/images/${yyyymm}/${getImageFileName(type, id, userId, 'marker')}`;
-  const urlS = `/images/${yyyymm}/${getImageFileName(type, id, userId, '160')}`;
+  const urlS = `/images/${yyyymm}/${getImageFileName(type, id, userId, '112')}`;
   const urlM = `/images/${yyyymm}/${getImageFileName(type, id, userId, '256')}`;
   const urlL = `/images/${yyyymm}/${getImageFileName(type, id, userId, '512')}`;
   const urlXl = `/images/${yyyymm}/${getImageFileName(type, id, userId, '1024')}`;
@@ -3353,13 +3353,13 @@ app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), as
     const markerPath = path.join(dir, getImageFileName('user', userId, userId, 'marker'));
     const thumbPath = path.join(dir, getImageFileName('user', userId, userId, 'thumbnail'));
     const origPath = path.join(dir, getImageFileName('user', userId, userId, 'original'));
-    const size160Path = path.join(dir, getImageFileName('user', userId, userId, '160'));
+    const size112Path = path.join(dir, getImageFileName('user', userId, userId, '112'));
     const size256Path = path.join(dir, getImageFileName('user', userId, userId, '256'));
     const size512Path = path.join(dir, getImageFileName('user', userId, userId, '512'));
     const size1024Path = path.join(dir, getImageFileName('user', userId, userId, '1024'));
     
     await sharp(req.file.buffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
-    await sharp(req.file.buffer).resize(160, 160).jpeg({ quality: 90 }).toFile(size160Path);
+    await sharp(req.file.buffer).resize(112, 112).jpeg({ quality: 90 }).toFile(size112Path);
     await sharp(req.file.buffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
     await sharp(req.file.buffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
     await sharp(req.file.buffer).resize(1024, 1024).jpeg({ quality: 90 }).toFile(size1024Path);
@@ -3368,7 +3368,7 @@ app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), as
     // URL生成
     const originalUrl = `/images/${yyyymm}/${getImageFileName('user', userId, userId, 'original')}`;
     const urlXs = `/images/${yyyymm}/${getImageFileName('user', userId, userId, 'marker')}`;
-    const urlS = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '160')}`;
+    const urlS = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '112')}`;
     const urlM = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '256')}`;
     const urlL = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '512')}`;
     const urlXl = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '1024')}`;

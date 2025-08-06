@@ -19,7 +19,7 @@ export async function seedShrineImage(prisma: PrismaClient) {
     const baseName = `shrine${img.shrineId}-u${img.userId}_s`;
     const originalUrl = `/images/${yyyymm}/${baseName}original.jpg`;
     const url64 = `/images/${yyyymm}/${baseName}marker.jpg`;
-    const url160 = `/images/${yyyymm}/${baseName}160.jpg`;
+    const url112 = `/images/${yyyymm}/${baseName}112.jpg`;
     const url256 = `/images/${yyyymm}/${baseName}256.jpg`;
     const url512 = `/images/${yyyymm}/${baseName}512.jpg`;
 
@@ -28,7 +28,7 @@ export async function seedShrineImage(prisma: PrismaClient) {
     data: {
       original_url: originalUrl,
       url_xs: url64,
-      url_s: url160,
+      url_s: url112,
       url_m: url256,
       url_l: url512,
       url_xl: originalUrl,

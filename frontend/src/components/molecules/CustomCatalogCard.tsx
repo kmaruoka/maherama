@@ -24,7 +24,7 @@ export default function CustomCatalogCard({ name, count, catalogedAt, lastPrayed
   const { t } = useTranslation();
   const { skin } = useSkin();
   const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_DISPLAY_URL;
-  // 適切なサイズの画像を選択（160pxを優先、なければ元のimage_url）
+  // 適切なサイズの画像を選択（112pxを優先、なければ元のimage_url）
   const imageSrc = image_url_s || image_url || noImage;
   return (
     <div className="catalog-card" onClick={onClick} role="button">

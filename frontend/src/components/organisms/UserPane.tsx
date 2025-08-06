@@ -101,8 +101,8 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
     return <div className="p-3">{t('userNotFound')}</div>;
   }
 
-  // 型安全なサムネイル取得
-  const userImageUrl = (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
+  // 型安全なサムネイル取得（mサイズを優先、次にsサイズ）
+  const userImageUrl = (userInfo as { image_url_m?: string; image_url_s?: string; image_url?: string } | undefined)?.image_url_m || (userInfo as { image_url_s?: string; image_url?: string } | undefined)?.image_url_s || (userInfo as { image_url?: string } | undefined)?.image_url || NOIMAGE_USER_URL;
 
 
   // 詳細表示のレンダリング関数

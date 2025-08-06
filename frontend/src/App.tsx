@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import MapPage from './components/pages/MapPage';
 import CatalogPage from './components/pages/CatalogPage';
