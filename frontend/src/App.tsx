@@ -342,7 +342,6 @@ function App() {
           <Modal
             show={modal !== null}
             onHide={closeModal}
-            centered
             dialogClassName="custom-modal-dialog"
             contentClassName="custom-modal-content-force"
           >
