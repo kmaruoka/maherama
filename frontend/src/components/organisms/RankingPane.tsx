@@ -16,6 +16,7 @@ export interface RankingItemData {
 interface RankingPaneProps {
   itemsByPeriod?: { [key in Period]: RankingItemData[] };
   type: 'shrine' | 'diety' | 'user';
+  rankingType?: 'shrine' | 'diety'; // ランキングの種類（神社ランキングか神様ランキングか）
   isLoading?: boolean;
   onItemClick?: (id: number) => void;
   maxItems?: number;
@@ -28,7 +29,7 @@ const periodLabels: Record<Period, string> = {
   weekly: '週間',
 };
 
-export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClick, maxItems = 3 }: RankingPaneProps) {
+export default function RankingPane({ itemsByPeriod, type, rankingType, isLoading, onItemClick, maxItems = 3 }: RankingPaneProps) {
   const { skin } = useSkin();
   const [period, setPeriod] = useState<Period>('all');
   const safeItemsByPeriod = itemsByPeriod ?? { all: [], yearly: [], monthly: [], weekly: [] };
@@ -64,6 +65,7 @@ export default function RankingPane({ itemsByPeriod, type, isLoading, onItemClic
               name={item.name}
               count={item.count}
               type={type}
+              rankingType={rankingType}
               onItemClick={onItemClick}
             />
           ))

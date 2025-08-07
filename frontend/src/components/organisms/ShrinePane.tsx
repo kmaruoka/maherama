@@ -408,6 +408,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           <RankingPane
             itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
             type="user"
+            rankingType="shrine"
             isLoading={false}
             onItemClick={onShowUser}
             maxItems={100}
@@ -571,6 +572,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         <RankingPane
           itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
           type="user"
+          rankingType="shrine"
           isLoading={false}
           onItemClick={onShowUser}
           maxItems={3}
