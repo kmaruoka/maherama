@@ -97,9 +97,10 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 ```
 
-### 2.6 PM2のインストール
+### 2.6 システムサービスの準備
 ```bash
-sudo npm install -g pm2
+# PM2は使用しないため、インストール不要
+# システムサービスとして管理するため、systemdを使用
 ```
 
 ## 3. アプリケーションのデプロイ
@@ -159,6 +160,9 @@ echo "バックエンドサーバーを起動しました。PID: $!"
 # サーバーの起動を待つ
 sleep 5
 
+# 既存データのクリーンアップ（重複エラー回避）
+npx prisma db execute --schema=prisma/schema.prisma --stdin <<< "DELETE FROM \"EventMission\" WHERE 1=1; DELETE FROM \"UserMission\" WHERE 1=1;"
+
 # シードデータの投入
 # 注意: 初回実行時は重複エラーが発生する可能性があります
 # エラーが発生した場合は、トラブルシューティングセクションを参照してください
@@ -207,42 +211,54 @@ sudo chmod -R 755 /home/ubuntu/maherama/frontend/dist/
 
 
 
-## 4. PM2でのプロセス管理
+## 4. システムサービスでのプロセス管理
 
-### 4.1 PM2設定ファイルの作成
+### 4.1 systemdサービスファイルの作成
 ```bash
 cd ~/maherama
+
+# サービスファイルを作成
+sudo vi /etc/systemd/system/maherama-backend.service
 ```
 
-`ecosystem.config.js`を作成:
-```javascript
-module.exports = {
-  apps: [{
-    name: 'maherama-backend',
-    script: 'frontend/backend/index.ts',
-    cwd: '/home/ubuntu/maherama',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000
-    },
-    interpreter: 'node',
-    interpreter_args: '-r ts-node/register'
-  }]
-};
+以下の内容を追加:
+```ini
+[Unit]
+Description=Maherama Backend Service
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/maherama/frontend/backend
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/usr/bin/node -r ts-node/register index.ts
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=maherama-backend
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-### 4.2 PM2でのアプリケーション起動
+### 4.2 システムサービスの有効化と起動
 ```bash
-# アプリケーションの起動
-pm2 start ecosystem.config.js
+# systemdの設定を再読み込み
+sudo systemctl daemon-reload
 
-# 自動起動の設定
-pm2 startup
-pm2 save
+# サービスの有効化（自動起動設定）
+sudo systemctl enable maherama-backend
+
+# サービスの起動
+sudo systemctl start maherama-backend
+
+# サービスの状態確認
+sudo systemctl status maherama-backend
 ```
 
 ## 5. Nginxの設定
@@ -337,11 +353,10 @@ sudo chmod 755 /home/ubuntu/maherama/frontend/
 sudo rm -f /etc/nginx/sites-enabled/default
 
 # バックエンドサーバーの起動確認
-pm2 status
+sudo systemctl status maherama-backend
 
 # 起動していない場合は起動
-cd ~/maherama
-pm2 start ecosystem.config.js
+sudo systemctl start maherama-backend
 
 # Nginx設定の再読み込み
 sudo systemctl reload nginx
@@ -386,16 +401,16 @@ sudo crontab -e
 
 ## 8. 監視とログ
 
-### 8.1 PM2の監視
+### 8.1 システムサービスの監視
 ```bash
 # プロセス状況の確認
-pm2 status
+sudo systemctl status maherama-backend
 
 # ログの確認
-pm2 logs maherama-backend
+sudo journalctl -u maherama-backend -f
 
-# モニタリング
-pm2 monit
+# 最近のログを表示
+sudo journalctl -u maherama-backend --lines 50
 ```
 
 ### 8.2 Nginxログの確認
@@ -443,9 +458,12 @@ crontab -e
 ## 10. デプロイ後の確認
 
 ### 10.1 動作確認
-1. ブラウザで `https://your-domain.com` にアクセス
+1. ブラウザで `http://your-ec2-ip` にアクセス
 2. フロントエンドが正常に表示されることを確認
 3. APIエンドポイントが正常に動作することを確認
+4. 地図とデータが正常に表示されることを確認
+
+**注意**: ドメインを取得していない場合は、EC2インスタンスのパブリックIPアドレスでアクセスしてください。
 
 ### 10.2 パフォーマンス確認
 ```bash
@@ -465,18 +483,32 @@ free -h
 
 **アプリケーションが起動しない**
 ```bash
-# PM2ログの確認
-pm2 logs maherama-backend
+# システムサービスログの確認
+sudo journalctl -u maherama-backend -f
 
 # 手動で起動してエラー確認
 cd ~/maherama/frontend/backend
-npm start
+PORT=3000 npm start
+```
+
+**フロントエンドがビルドできない**
+```bash
+# 権限をubuntuユーザーに戻す
+sudo chown -R ubuntu:ubuntu /home/ubuntu/maherama/frontend/dist/
+
+# ビルド実行
+cd ~/maherama/frontend
+npx vite build
+
+# ビルド後にNginx用の権限を設定
+sudo chown -R www-data:www-data /home/ubuntu/maherama/frontend/dist/
+sudo chmod -R 755 /home/ubuntu/maherama/frontend/dist/
 ```
 
 **シード実行時のエラー**
 ```bash
 # バックエンドサーバーが起動しているか確認
-curl http://localhost:3000/health
+curl http://localhost:3000/shrines/all
 
 # サーバーが起動していない場合は手動で起動
 cd ~/maherama/frontend/backend
@@ -495,8 +527,7 @@ cat backend.log
 **ユニーク制約違反エラーの場合**
 ```bash
 # 既存データをクリーンアップ（応急処置）
-psql -h localhost -U amana_user -d amana -c "DELETE FROM \"EventMission\" WHERE 1=1;"
-psql -h localhost -U amana_user -d amana -c "DELETE FROM \"UserMission\" WHERE 1=1;"
+npx prisma db execute --schema=prisma/schema.prisma --stdin <<< "DELETE FROM \"EventMission\" WHERE 1=1; DELETE FROM \"UserMission\" WHERE 1=1;"
 
 # シードを再実行
 npm run seed
@@ -546,8 +577,13 @@ location /api/ {
 }
 
 # バックエンドサーバーの起動確認
-pm2 status
+sudo systemctl status maherama-backend
 curl http://localhost:3000/shrines/all
+
+# フロントエンドのAPI設定確認
+cat ~/maherama/frontend/src/config/api.ts
+# 本番環境では以下の設定になっているはず
+# return `${window.location.origin}/api`;
 ```
 
 ## 12. 更新手順
@@ -563,7 +599,7 @@ git pull origin main
 cd frontend/backend
 npm install
 npx prisma migrate deploy
-pm2 restart maherama-backend
+sudo systemctl restart maherama-backend
 
 # フロントエンドの更新
 cd ../../frontend
@@ -679,6 +715,7 @@ curl http://18.181.100.100/api/shrines/all
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo systemctl restart nginx
+sudo systemctl restart maherama-backend
 ```
 
 ## 13. セキュリティ強化
@@ -738,7 +775,7 @@ sudo vi /etc/nginx/nginx.conf
 ## サポート
 
 デプロイ中に問題が発生した場合は、以下を確認してください：
-- PM2ログ: `pm2 logs`
+- バックエンドログ: `sudo journalctl -u maherama-backend`
 - Nginxログ: `/var/log/nginx/`
 - システムログ: `journalctl -u nginx`
 - データベースログ: `/var/log/postgresql/` 
