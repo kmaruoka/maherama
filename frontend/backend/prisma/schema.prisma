@@ -108,6 +108,12 @@ model Log {
 model User {
   id                        Int                      @id @default(autoincrement())
   name                      String
+  email                     String?                  @unique
+  password_hash             String?
+  is_verified               Boolean                  @default(false)
+  verification_token        String?
+  reset_token               String?
+  reset_token_expires       DateTime?
   ability_points            Int                      @default(0)
   exp                       Int                      @default(0)
   level                     Int                      @default(0)

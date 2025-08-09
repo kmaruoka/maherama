@@ -7,6 +7,9 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 import { LEVEL_SYSTEM } from './shared/constants/levelSystem';
 import { addExperience } from './shared/utils/expSystem';
 import { EXP_REWARDS } from './shared/constants/expRewards';
@@ -39,6 +42,74 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
+
+// メール送信設定
+const transporter = nodemailer.createTransporter({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+// 認証関連のユーティリティ関数
+function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function generateVerificationToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+async function sendVerificationEmail(email, token) {
+  const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/activate?token=${token}`;
+  
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: 'アカウント有効化 - 神社参拝アプリ',
+    html: `
+      <h2>アカウント有効化</h2>
+      <p>以下のリンクをクリックしてアカウントを有効化してください：</p>
+      <a href="${verificationUrl}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">アカウントを有効化</a>
+      <p>このリンクは24時間有効です。</p>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Verification email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    throw error;
+  }
+}
+
+async function sendPasswordResetEmail(email, token) {
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+  
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: 'パスワードリセット - 神社参拝アプリ',
+    html: `
+      <h2>パスワードリセット</h2>
+      <p>以下のリンクをクリックしてパスワードをリセットしてください：</p>
+      <a href="${resetUrl}" style="background: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">パスワードをリセット</a>
+      <p>このリンクは1時間有効です。</p>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+}
 
 let lastRemotePray = null;
 const REMOTE_INTERVAL_DAYS = 7;
@@ -1432,6 +1503,275 @@ function authenticateJWT(req, res, next) {
     next();
   });
 }
+
+// 認証関連API
+
+// ユーザー登録
+app.post('/auth/register', async (req, res) => {
+  try {
+    const { username, email } = req.body;
+
+    // バリデーション
+    if (!username || !email) {
+      return res.status(400).json({ error: 'ユーザー名とメールアドレスは必須です' });
+    }
+
+    if (username.length < 2) {
+      return res.status(400).json({ error: 'ユーザー名は2文字以上で入力してください' });
+    }
+
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      return res.status(400).json({ error: '有効なメールアドレスを入力してください' });
+    }
+
+    // 既存ユーザーチェック
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { name: username },
+          { email: email }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      if (existingUser.name === username) {
+        return res.status(400).json({ error: 'このユーザー名は既に使用されています' });
+      }
+      if (existingUser.email === email) {
+        return res.status(400).json({ error: 'このメールアドレスは既に使用されています' });
+      }
+    }
+
+    // 認証トークン生成
+    const verificationToken = generateVerificationToken();
+
+    // ユーザー作成
+    const user = await prisma.user.create({
+      data: {
+        name: username,
+        email: email,
+        verification_token: verificationToken,
+        is_verified: false,
+        level: 1,
+        exp: 0,
+        ability_points: 0
+      }
+    });
+
+    // 認証メール送信
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      // メール送信に失敗した場合でもユーザーは作成する
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'ユーザー登録が完了しました。確認メールをお送りしましたので、メール内のリンクをクリックしてアカウントを有効化してください。',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'ユーザー登録に失敗しました' });
+  }
+});
+
+// アカウント有効化
+app.post('/auth/activate', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: '認証トークンが必要です' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { verification_token: token }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: '無効な認証トークンです' });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        is_verified: true,
+        verification_token: null
+      }
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'アカウントが正常に有効化されました。ログインしてください。' 
+    });
+
+  } catch (error) {
+    console.error('Activation error:', error);
+    res.status(500).json({ error: 'アカウント有効化に失敗しました' });
+  }
+});
+
+// ログイン
+app.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'メールアドレスとパスワードは必須です' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: email }
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません' });
+    }
+
+    if (!user.is_verified) {
+      return res.status(401).json({ error: 'アカウントが有効化されていません。確認メールをチェックしてください。' });
+    }
+
+    // パスワードチェック（開発環境では簡易チェック）
+    if (process.env.NODE_ENV === 'production') {
+      if (!user.password_hash || !(await bcrypt.compare(password, user.password_hash))) {
+        return res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません' });
+      }
+    } else {
+      // 開発環境では任意のパスワードでログイン可能
+      if (!password) {
+        return res.status(401).json({ error: 'パスワードは必須です' });
+      }
+    }
+
+    // JWTトークン生成
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      success: true,
+      message: 'ログインが完了しました',
+      token: token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        level: user.level,
+        exp: user.exp,
+        ability_points: user.ability_points
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'ログインに失敗しました' });
+  }
+});
+
+// パスワードリセット要求
+app.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'メールアドレスは必須です' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: email }
+    });
+
+    if (!user) {
+      // セキュリティのため、ユーザーが存在しない場合でも成功レスポンスを返す
+      return res.json({ 
+        success: true, 
+        message: 'パスワードリセット用のメールをお送りしました。' 
+      });
+    }
+
+    const resetToken = generateToken();
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1時間
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        reset_token: resetToken,
+        reset_token_expires: resetTokenExpires
+      }
+    });
+
+    try {
+      await sendPasswordResetEmail(email, resetToken);
+    } catch (emailError) {
+      console.error('Password reset email sending failed:', emailError);
+      return res.status(500).json({ error: 'メール送信に失敗しました' });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'パスワードリセット用のメールをお送りしました。' 
+    });
+
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ error: 'パスワードリセットに失敗しました' });
+  }
+});
+
+// パスワードリセット実行
+app.post('/auth/reset-password/confirm', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ error: 'トークンと新しいパスワードは必須です' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        reset_token: token,
+        reset_token_expires: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: '無効または期限切れのリセットトークンです' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password_hash: passwordHash,
+        reset_token: null,
+        reset_token_expires: null
+      }
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'パスワードが正常にリセットされました。新しいパスワードでログインしてください。' 
+    });
+
+  } catch (error) {
+    console.error('Password reset confirmation error:', error);
+    res.status(500).json({ error: 'パスワードリセットに失敗しました' });
+  }
+});
 
 // 全ユーザー取得API
 app.get('/users', authenticateJWT, async (req, res) => {

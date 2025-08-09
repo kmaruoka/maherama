@@ -41,6 +41,14 @@
   text-decoration: underline;
 }
 
+.tag-mission {
+  background: var(--color-tag-mission);
+  color: var(--color-tag-mission-text);
+}
+.tag-mission:hover {
+  filter: brightness(1.05);
+}
+
 .modal-title {
   font-weight: bold;
   font-family: inherit;

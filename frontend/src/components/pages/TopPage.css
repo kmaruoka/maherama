@@ -1,0 +1,178 @@
+/* TopPage メインコンテナ */
+.top-page {
+  min-height: 100vh;
+  background: var(--color-background);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* html, bodyのoverflow: hiddenを上書き */
+html, body {
+  overflow-y: auto !important;
+}
+
+.app__content {
+  overflow-y: auto !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* ヒーローセクション - キービジュアル */
+.top-page__hero {
+  width: 100vw;
+  min-height: 400px;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-surface) 100%);
+}
+
+.top-page__hero-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+}
+
+/* 認証セクション */
+.top-page__auth-section {
+  padding: 2rem 1rem;
+  background: var(--color-background);
+}
+
+.top-page__auth-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+/* タブボタン */
+.top-page__auth-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.top-page__auth-tabs .btn {
+  flex: 1;
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+/* フォームセクション */
+.top-page__form-section {
+  padding: 1rem 0;
+}
+
+.top-page__form-section h4 {
+  color: var(--color-text);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.top-page__form-section .form-label {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.top-page__form-section .form-control {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--border-radius) / 2);
+  color: var(--color-text);
+}
+
+.top-page__form-section .form-control:focus {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(191, 161, 74, 0.25);
+  color: var(--color-text);
+}
+
+.top-page__form-section .btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  border-radius: calc(var(--border-radius) / 2);
+  font-weight: 500;
+}
+
+.top-page__form-section .btn-primary:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.top-page__form-section .btn-primary:disabled {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  opacity: 0.6;
+}
+
+/* アラート */
+.top-page__form-section .alert {
+  margin-bottom: 1rem;
+}
+
+.top-page__form-section .alert-success {
+  background: var(--color-tag-user);
+  border-color: var(--color-tag-user-text);
+  color: var(--color-tag-user-text);
+}
+
+.top-page__form-section .alert-danger {
+  background: #ffebee;
+  border-color: #e74c3c;
+  color: #c62828;
+}
+
+/* PCサイズでの画像制限 */
+@media (min-width: 769px) {
+  .top-page__hero {
+    min-height: 400px;
+    max-height: 60vh;
+  }
+  
+  .top-page__hero-image {
+    max-height: 60vh;
+  }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .top-page__hero {
+    min-height: 300px;
+  }
+  
+  .top-page__hero-image {
+    /* 自然なサイズで表示 */
+  }
+}
+
+@media (max-width: 400px) {
+  .top-page__hero {
+    min-height: 250px;
+  }
+  
+  .top-page__hero-image {
+    /* 自然なサイズで表示 */
+  }
+}
+
+@media (max-width: 576px) {
+  .top-page__auth-tabs {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .top-page__auth-tabs .btn {
+    width: 100%;
+    min-width: auto;
+  }
+}

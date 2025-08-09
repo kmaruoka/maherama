@@ -17,6 +17,7 @@ import SettingsPage from './components/pages/SettingsPage';
 import MenuPane from './components/organisms/MenuPane';
 import UserPage from './components/pages/UserPage';
 import LogPane from './components/organisms/LogPane';
+import TopPage from './components/pages/TopPage';
 import { useSkin } from './skins/SkinContext';
 import useLogs, { useClientLogs } from './hooks/useLogs';
 import { useShrineDetail } from './hooks/useShrineDetail';
@@ -111,7 +112,7 @@ function ModalHeader({
 function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission'>('map');
   const [modal, setModal] = useState<ModalType>(null);
-  const [currentUserId] = useLocalStorageState<number | null>('userId', null);
+  const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
   useSkin();
 
   // ナビゲーション履歴の管理
@@ -126,10 +127,28 @@ function App() {
   const missionPaneRef = useRef<{ backToOverview: () => void }>(null);
 
   // モーダルヘッダー用のデータ取得
-  const { data: shrineData } = useShrineDetail(modal?.type === 'shrine' ? modal.id : undefined);
-  const { data: dietyData } = useDietyDetail(modal?.type === 'diety' ? modal.id : undefined);
-  const { data: userData } = useUserInfo(modal?.type === 'user' ? modal.id : undefined, null);
+  const { data: shrineData } = useShrineDetail(modal?.type === 'shrine' && modal?.id ? modal.id : undefined);
+  const { data: dietyData } = useDietyDetail(modal?.type === 'diety' && modal?.id ? modal.id : undefined);
+  const { data: userData } = useUserInfo(modal?.type === 'user' && modal?.id ? modal.id : undefined, null);
   const { data: missions = [] } = useMissions();
+
+  // ログイン処理
+  const handleLogin = () => {
+    // ログイン後にアプリページにリダイレクト
+    setPage('map');
+  };
+
+  // ログアウト処理
+  const handleLogout = () => {
+    setCurrentUserId(null);
+    localStorage.removeItem('authToken');
+    setPage('map');
+  };
+
+  // 認証されていない場合はTopPageを表示
+  if (!currentUserId) {
+    return <TopPage onLogin={handleLogin} />;
+  }
 
   // ナビゲーション履歴の管理関数
   const addToHistory = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, name: string) => {
@@ -214,7 +233,7 @@ function App() {
       name = mission ? mission.name : '';
     } else {
       // データが未取得の場合は一時的な名前を設定
-      name = type === 'shrine' ? '神社' : type === 'diety' ? '神様' : 'ユーザー';
+      name = type === 'shrine' ? '神社' : type === 'diety' ? '神様' : type === 'user' ? 'ユーザー' : 'ミッション';
     }
     
     if (clearHistory) {
@@ -238,12 +257,15 @@ function App() {
     if (modal && navigationHistory.length > 0 && historyIndex >= 0) {
       let updatedName = '';
       
-      if (modal.type === 'shrine' && shrineData) {
+      if (modal.type === 'shrine' && shrineData && shrineData.id === modal.id) {
         updatedName = shrineData.name;
-      } else if (modal.type === 'diety' && dietyData) {
+      } else if (modal.type === 'diety' && dietyData && dietyData.id === modal.id) {
         updatedName = dietyData.name;
-      } else if (modal.type === 'user' && userData) {
+      } else if (modal.type === 'user' && userData && userData.id === modal.id) {
         updatedName = userData.name;
+      } else if (modal.type === 'mission' && missions) {
+        const mission = missions.find(m => m.id === modal.id);
+        updatedName = mission ? mission.name : '';
       }
       
       if (updatedName && navigationHistory[historyIndex]?.name !== updatedName) {
@@ -252,7 +274,7 @@ function App() {
         setNavigationHistory(updatedHistory);
       }
     }
-  }, [shrineData, dietyData, userData, modal, navigationHistory, historyIndex]);
+  }, [shrineData, dietyData, userData, missions, modal, navigationHistory, historyIndex]);
 
   // ヘッダータイトルを取得
   const getModalTitle = () => {
@@ -324,7 +346,7 @@ function App() {
       case 'user':
         return <UserPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowDiety={(id: number) => navigateToModal('diety', id)} onShowUser={(id: number) => navigateToModal('user', id)} />;
       case 'settings':
-        return <SettingsPage />;
+        return <SettingsPage onLogout={handleLogout} />;
       case 'submenu':
         return <SubmenuPage />;
       case 'mission':
@@ -474,7 +496,6 @@ function App() {
                       const mission = missions?.find(m => m.id === modal.id);
                       return mission ? (
                         <MissionPane
-                          ref={missionPaneRef}
                           mission={mission}
                           onShowShrine={id => navigateToModal('shrine', id)}
                           onShowDiety={id => navigateToModal('diety', id)}

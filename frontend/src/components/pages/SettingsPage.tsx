@@ -7,7 +7,11 @@ import { useBarrier } from '../../barriers/BarrierContext';
 import { barriers } from '../../barriers';
 import CustomButton from '../atoms/CustomButton';
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+  onLogout?: () => void;
+}
+
+export default function SettingsPage({ onLogout }: SettingsPageProps) {
   const [userId, setUserId] = useLocalStorageState<number | null>('userId', null);
   const [idInput, setIdInput] = useState('');
   const [debugMode, setDebugMode] = useLocalStorageState('debugMode', false);
@@ -25,6 +29,10 @@ export default function SettingsPage() {
 
   const handleLogout = () => {
     setUserId(null);
+    localStorage.removeItem('authToken');
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const toggleDebugMode = () => {

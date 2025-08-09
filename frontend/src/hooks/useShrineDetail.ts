@@ -30,10 +30,11 @@ export interface ShrineDetail {
   }>;
 }
 
-export function useShrineDetail(id: number) {
+export function useShrineDetail(id: number | undefined) {
   return useQuery<ShrineDetail>({
     queryKey: ['shrine', id],
     queryFn: async () => {
+      if (!id) throw new Error('Shrine ID is required');
       const response = await apiCall(`${API_BASE}/shrines/${id}`);
       return response.json();
     },

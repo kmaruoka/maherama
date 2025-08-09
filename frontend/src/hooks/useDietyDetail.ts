@@ -24,10 +24,11 @@ export interface DietyDetail {
   }>;
 }
 
-export function useDietyDetail(id: number) {
+export function useDietyDetail(id: number | undefined) {
   return useQuery<DietyDetail>({
     queryKey: ['diety', id],
     queryFn: async () => {
+      if (!id) throw new Error('Diety ID is required');
       const response = await apiCall(`${API_BASE}/dieties/${id}`);
       return response.json();
     },
