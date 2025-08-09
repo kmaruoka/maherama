@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
-import useAllUsers from '../../hooks/useAllUsers';
-import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { API_BASE } from '../../config/api';
+import useAllUsers from '../../hooks/useAllUsers';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
 import './TopPage.css';
 
 interface TopPageProps {
@@ -63,13 +63,21 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        setRegisterErrors(data.errors || { general: data.error || '登録に失敗しました' });
+        // エラーレスポンスの詳細を確認
+        if (data.errors) {
+          setRegisterErrors(data.errors);
+        } else if (data.error) {
+          setRegisterErrors({ general: data.error });
+        } else {
+          setRegisterErrors({ general: `登録に失敗しました (${response.status})` });
+        }
       } else {
         setRegisterSuccess(true);
         setRegisterForm({ username: '', email: '' });
       }
     } catch (error) {
-      setRegisterErrors({ general: 'ネットワークエラーが発生しました' });
+      console.error('Registration error:', error);
+      setRegisterErrors({ general: 'ネットワークエラーが発生しました。サーバーに接続できません。' });
     } finally {
       setIsRegistering(false);
     }
@@ -138,9 +146,12 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
 
     const user = users.find(u => u.id.toString() === selectedTestUserId);
     if (user) {
-      setCurrentUserId(user.id);
+      // localStorageを直接更新
+      localStorage.setItem('userId', JSON.stringify(user.id));
       localStorage.setItem('authToken', 'test-token');
-      onLogin();
+
+      // ページをリロードして状態を確実に反映
+      window.location.reload();
     }
   };
 

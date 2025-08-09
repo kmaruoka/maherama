@@ -1,20 +1,20 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
-import useCurrentPosition from '../../hooks/useCurrentPosition';
-import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { MapContainer, TileLayer, Marker, Pane } from 'react-leaflet';
-import '../../setupLeaflet';
-import { MAPBOX_API_KEY, API_BASE } from '../../config/api';
-import useAllShrines from '../../hooks/useAllShrines';
+import { useQueryClient } from '@tanstack/react-query';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { MapContainer, Marker, Pane, TileLayer } from 'react-leaflet';
+import { calculateDistance, EARTH_CIRCUMFERENCE_METERS } from "../../../backend/shared/utils/distance";
+import { useBarrier } from '../../barriers/BarrierContext';
+import { API_BASE, MAPBOX_API_KEY } from '../../config/api';
+import { useAllShrines } from '../../hooks/useAllShrines';
+import useCurrentPosition from '../../hooks/useCurrentPosition';
+import useDebugLog from '../../hooks/useDebugLog';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { useSubscription } from '../../hooks/useSubscription';
+import '../../setupLeaflet';
 import CustomCircle from '../atoms/CustomCircle';
 import ShrineMarker from '../atoms/ShrineMarker';
-import useDebugLog from '../../hooks/useDebugLog';
-import { useSubscription } from '../../hooks/useSubscription';
-import { useBarrier } from '../../barriers/BarrierContext';
 import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
-import { useQueryClient } from '@tanstack/react-query';
-import { calculateDistance, EARTH_CIRCUMFERENCE_METERS } from "../../../backend/shared/utils/distance";
 
 
 const debugCurrentIcon = new L.Icon({
@@ -51,17 +51,28 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   // 神社表示上限数の設定（デフォルト100、設定可能範囲: 10-500）
   const [maxShrineDisplay] = useLocalStorageState<number>('maxShrineDisplay', 100);
   useEffect(() => {
+    let isMounted = true;
+
     if (userId) {
       fetch(`${API_BASE}/users/${userId}/pray-distance`, {
         headers: { 'x-user-id': String(userId) }
       })
         .then(res => res.json())
         .then(data => {
-          if (typeof data.pray_distance === 'number') {
+          if (isMounted && typeof data.pray_distance === 'number') {
             setPrayDistance(data.pray_distance);
+          }
+        })
+        .catch(error => {
+          if (isMounted) {
+            console.error('[MapPage] pray-distance取得エラー:', error);
           }
         });
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
 
   // 参拝後にマーカー状態を更新する関数
@@ -179,7 +190,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
 
   // 参拝半径3倍以内の神社を距離順でソートして表示（上位100件に制限）
   const displayShrines = useMemo(() => {
-    if (!centerArray || !prayDistance) {
+    if (!centerArray) {
       return shrines;
     }
 
@@ -189,17 +200,17 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         ...s,
         distance: calculateDistance({ lat: centerArray[0], lng: centerArray[1] }, { lat: s.lat, lng: s.lng })
       }))
-      .filter(s => s.distance <= prayDistance * 3)
+      .filter(s => {
+        // prayDistanceが設定されている場合はフィルタリング、そうでなければ全て表示
+        if (prayDistance) {
+          return s.distance <= prayDistance * 3;
+        }
+        return true;
+      })
       .sort((a, b) => a.distance - b.distance) // 距離順にソート（近い順）
       .slice(0, maxShrineDisplay); // ユーザー設定に基づく上限でz-index範囲を制御
 
-    // console.log('[DEBUG] displayShrines sorted:', {
-    //   centerArray,
-    //   prayDistance,
-    //   totalShrines: shrines.length,
-    //   filteredCount: shrinesWithDistance.length,
-    //   first3Distances: shrinesWithDistance.slice(0, 3).map(s => ({ name: s.name, distance: s.distance?.toFixed(2) }))
-    // });
+
 
     return shrinesWithDistance;
   }, [shrines, centerArray, prayDistance, maxShrineDisplay]);
@@ -253,6 +264,28 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     }
   }, [minZoom, maxZoom, mapReady]);
 
+
+
+  // DOM要素の状態をデバッグ
+  useEffect(() => {
+    if (mapReady) {
+      const mapContainer = document.querySelector('.map-page__container');
+      const mapPage = document.querySelector('.map-page');
+
+
+
+      if (mapContainer) {
+        const computedStyle = getComputedStyle(mapContainer);
+
+      }
+
+      if (mapPage) {
+        const computedStyle = getComputedStyle(mapPage);
+
+      }
+    }
+  }, [mapReady]);
+
   return (
     <div className="map-page">
       <MapContainer
@@ -270,14 +303,29 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
       >
         <TileLayer
           key={`tilelayer-${minZoom}-${maxZoom}`}
-          attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a>'
-          url={`https://api.mapbox.com/styles/v1/kmigosso/cmcjan1td000401ridva77z79/tiles/512/{z}/{x}/{y}?access_token=${MAPBOX_API_KEY}`}
-          tileSize={512}
-          zoomOffset={-1}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url={MAPBOX_API_KEY
+            ? `https://api.mapbox.com/styles/v1/kmigosso/cmcjan1td000401ridva77z79/tiles/512/{z}/{x}/{y}?access_token=${MAPBOX_API_KEY}`
+            : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          }
+          tileSize={MAPBOX_API_KEY ? 512 : 256}
+          zoomOffset={MAPBOX_API_KEY ? -1 : 0}
           maxZoom={maxZoom}
           minZoom={minZoom}
           updateWhenZooming={false}
           updateWhenIdle={true}
+          eventHandlers={{
+            tileerror: (e) => {
+              console.error('[DEBUG] TileLayer error:', e);
+              console.error('[DEBUG] MAPBOX_API_KEY:', MAPBOX_API_KEY ? 'SET' : 'NOT SET');
+            },
+            tileloadstart: () => {
+              // TileLayer load started
+            },
+            tileload: () => {
+              // TileLayer tile loaded successfully
+            }
+          }}
         />
         <Pane name="barrierPane" className="map-page__barrier-pane">
           {/* 半透明円は従来通り */}
@@ -299,9 +347,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           // 最大60個程度の神社表示を想定（60 * 50 = 3000）
           const zIndex = 5000 - (index * 50);
 
-          // if (index < 5) {
-          //   console.log(`[DEBUG] Marker ${index}: ${s.name}, distance: ${s.distance?.toFixed(2)}m, zIndex: ${zIndex}`);
-          // }
+
 
           return (
             <ShrineMarker

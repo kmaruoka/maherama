@@ -195,8 +195,15 @@ export async function seedMissions() {
     });
 
     if (springEvent && springMission) {
-      await prisma.eventMission.create({
-        data: {
+      await prisma.eventMission.upsert({
+        where: {
+          event_id_mission_id: {
+            event_id: springEvent.id,
+            mission_id: springMission.id
+          }
+        },
+        update: {}, // 既存の場合は更新しない
+        create: {
           event_id: springEvent.id,
           mission_id: springMission.id
         }
@@ -204,8 +211,15 @@ export async function seedMissions() {
     }
 
     if (summerEvent && summerMission) {
-      await prisma.eventMission.create({
-        data: {
+      await prisma.eventMission.upsert({
+        where: {
+          event_id_mission_id: {
+            event_id: summerEvent.id,
+            mission_id: summerMission.id
+          }
+        },
+        update: {}, // 既存の場合は更新しない
+        create: {
           event_id: summerEvent.id,
           mission_id: summerMission.id
         }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function useLocalStorageState<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
   const getStored = (): T => {
@@ -18,7 +18,11 @@ export default function useLocalStorageState<T>(key: string, initialValue: T): [
 
   useEffect(() => {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      if (value !== null && value !== undefined) {
+        localStorage.setItem(key, JSON.stringify(value));
+      } else {
+        localStorage.removeItem(key);
+      }
     } catch {
       /* ignore */
     }

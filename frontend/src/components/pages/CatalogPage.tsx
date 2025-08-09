@@ -1,24 +1,23 @@
-import { useState, useCallback } from 'react';
-import { FixedSizeList as List } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import CustomCatalogCard from '../molecules/CustomCatalogCard';
-import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
-import { useShrineList } from '../../hooks/useShrineList';
-import { useDietyList } from '../../hooks/useDietyList';
-import Tabs from 'react-bootstrap/Tabs';
+import { useCallback, useEffect, useMemo } from 'react';
 import Tab from 'react-bootstrap/Tab';
-import Container from 'react-bootstrap/Container';
+import Tabs from 'react-bootstrap/Tabs';
 import { useTranslation } from 'react-i18next';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeList as List } from 'react-window';
+import { useDietyList } from '../../hooks/useDietyList';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { useShrineList } from '../../hooks/useShrineList';
 import CardGrid from '../atoms/CardGrid';
 import PageLayout from '../atoms/PageLayout';
-import useLocalStorageState from '../../hooks/useLocalStorageState';
+import CustomCatalogCard from '../molecules/CustomCatalogCard';
+import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
 
 interface Item {
   id: number;
   name: string;
   kana?: string;
   count: number;
-  catalogedAt: string;
+  catalogedAt?: string;
   lastPrayedAt?: string;
   image_id?: number;
   image_url?: string;
@@ -42,7 +41,10 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
 
   const { data: dieties = [] } = useDietyList();
 
-  const items = tab === 'shrine' ? shrines : dieties;
+
+
+  // タブに応じてアイテムを選択
+  const currentItems = tab === 'shrine' ? shrines : dieties;
 
   const handleItemClick = useCallback((item: Item) => {
     if (tab === 'shrine' && onShowShrine) {
@@ -54,44 +56,74 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
     }
   }, [tab, onShowShrine, onShowDiety, onShowUser]);
 
-  const sorted = [...items].sort((a, b) => {
+    // ソート処理
+  const sorted = useMemo(() => {
     const [key, dir] = sort.split('-');
     const mul = dir === 'asc' ? 1 : -1;
-    if (key === 'name') {
-      // 読み仮名（kana）があればそれでソート、なければname
-      const aKana = a.kana || a.name;
-      const bKana = b.kana || b.name;
-      return aKana.localeCompare(bKana) * mul;
-    }
-    if (key === 'count') return (a.count - b.count) * mul;
-    if (key === 'lastPrayedAt') {
-      // 最終参拝日でソート（nullの場合は最古として扱う）
-      const aDate = a.lastPrayedAt ? new Date(a.lastPrayedAt).getTime() : 0;
-      const bDate = b.lastPrayedAt ? new Date(b.lastPrayedAt).getTime() : 0;
-      return (aDate - bDate) * mul;
-    }
-    // catalogedAt（図鑑収録日）でソート
-    return (
-      new Date(a.catalogedAt).getTime() - new Date(b.catalogedAt).getTime()
-    ) * mul;
-  });
 
-  const renderItem = useCallback((item: Item & { image_url?: string }) => (
-    <CustomCatalogCard
-      key={item.id}
-      name={item.name}
-      count={item.count}
-      catalogedAt={item.catalogedAt}
-      lastPrayedAt={item.lastPrayedAt}
-      onClick={() => handleItemClick(item)}
-      countLabel={t('prayCount')}
-      type={tab === 'diety' ? 'diety' : 'shrine'}
-      image_url={item.image_url}
-      image_url_s={item.image_url_s}
-      image_url_m={item.image_url_m}
-      image_url_l={item.image_url_l}
-    />
-  ), [tab, t, handleItemClick]);
+    return currentItems.sort((a, b) => {
+      if (key === 'name') {
+        // 読み仮名（kana）があればそれでソート、なければname
+        const aKana = a.kana || a.name;
+        const bKana = b.kana || b.name;
+        return aKana.localeCompare(bKana) * mul;
+      }
+      if (key === 'count') return (a.count - b.count) * mul;
+      if (key === 'lastPrayedAt') {
+        // 最終参拝日でソート（nullの場合は最古として扱う）
+        const aDate = a.lastPrayedAt ? new Date(a.lastPrayedAt).getTime() : 0;
+        const bDate = b.lastPrayedAt ? new Date(b.lastPrayedAt).getTime() : 0;
+        return (aDate - bDate) * mul;
+      }
+      // catalogedAt（図鑑収録日）でソート
+      const aDate = a.catalogedAt ? new Date(a.catalogedAt).getTime() : 0;
+      const bDate = b.catalogedAt ? new Date(b.catalogedAt).getTime() : 0;
+      return (aDate - bDate) * mul;
+    });
+  }, [currentItems, sort]);
+
+
+
+  // DOM要素の状態をデバッグ
+  useEffect(() => {
+    const cardGrid = document.querySelector('.card-grid');
+    const listContainer = document.querySelector('.catalog-page__list-container');
+
+
+
+    if (cardGrid) {
+      const computedStyle = getComputedStyle(cardGrid);
+
+    }
+
+    if (listContainer) {
+      const computedStyle = getComputedStyle(listContainer);
+
+    }
+
+
+  }, [sorted.length, style]);
+
+  const renderItem = useCallback((item: Item & { image_url?: string }) => {
+
+
+    return (
+      <CustomCatalogCard
+        key={item.id}
+        name={item.name}
+        count={item.count}
+        catalogedAt={item.catalogedAt || ''}
+        lastPrayedAt={item.lastPrayedAt}
+        onClick={() => handleItemClick(item)}
+        countLabel={t('prayCount')}
+        type={tab === 'diety' ? 'diety' : 'shrine'}
+        image_url={item.image_url}
+        image_url_s={item.image_url_s}
+        image_url_m={item.image_url_m}
+        image_url_l={item.image_url_l}
+      />
+    );
+  }, [tab, t, handleItemClick]);
 
   return (
     <PageLayout style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -129,12 +161,14 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         </select>
       </div>
       {style === 'card' ? (
-        <CardGrid
-          items={sorted}
-          renderItem={renderItem}
-          emptyMessage="アイテムがありません"
-          style={{ flex: 1, minHeight: 0 }}
-        />
+        <div style={{ flex: 1, minHeight: 0, height: 'calc(100vh - 200px)' }}>
+          <CardGrid
+            items={sorted}
+            renderItem={renderItem}
+            emptyMessage="アイテムがありません"
+            style={{ height: '100%', width: '100%' }}
+          />
+        </div>
       ) : (
         <>
           {/* ヘッダ行 */}

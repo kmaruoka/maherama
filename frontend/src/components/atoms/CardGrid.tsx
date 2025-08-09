@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { FixedSizeGrid as Grid } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import React, { useEffect, useState } from 'react';
+import type { GridChildComponentProps } from 'react-window';
+import { FixedSizeGrid } from 'react-window';
 import './CardGrid.css';
 
 // CSS変数から値を取得する関数
@@ -29,15 +29,9 @@ export interface CardGridProps<T> {
   loadingMessage?: string;
   error?: string | null;
   errorMessage?: string;
-}
-
-interface GridItemData<T> {
-  items: T[];
-  columnCount: number;
-  cardWidth: number;
-  cardHeight: number;
-  gap: number;
-  renderItem: (item: T, index: number) => React.ReactNode;
+  overscanCount?: number;
+  height?: number;
+  width?: number;
 }
 
 const CardGrid = <T extends any>({
@@ -53,25 +47,52 @@ const CardGrid = <T extends any>({
   loading = false,
   loadingMessage = '読み込み中...',
   error = null,
-  errorMessage = 'エラーが発生しました'
+  errorMessage = 'エラーが発生しました',
+  overscanCount = 2,
+  height,
+  width
 }: CardGridProps<T>) => {
   // デフォルト値をCSS変数から取得
   const defaultCardWidth = cardWidth ?? getCardWidth();
   const defaultCardHeight = cardHeight ?? getCardHeight();
   const [isMobile, setIsMobile] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 600);
     };
 
+    const updateContainerSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerSize({ width: rect.width, height: rect.height });
+      }
+    };
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    updateContainerSize();
+
+    window.addEventListener('resize', () => {
+      checkMobile();
+      updateContainerSize();
+    });
+
+    return () => window.removeEventListener('resize', updateContainerSize);
   }, []);
 
   // CSS変数からgapを取得（指定されていない場合）
   const effectiveGap = gap ?? (isMobile ? getCardGapMobile() : getCardGap());
+
+  // コンテナサイズを計算
+  const containerWidth = width ?? containerSize.width;
+  const containerHeight = height ?? containerSize.height;
+
+  // グリッドの列数を計算
+  const columnCount = Math.floor((containerWidth - effectiveGap) / (defaultCardWidth + effectiveGap));
+  const actualColumnCount = Math.max(1, columnCount);
+  const rowCount = Math.ceil(items.length / actualColumnCount);
 
   // ローディング状態
   if (loading) {
@@ -100,50 +121,70 @@ const CardGrid = <T extends any>({
     );
   }
 
-  return (
-    <div className={`card-grid ${className}`} style={style}>
-      <AutoSizer>
-        {({ height, width }: { height: number; width: number }) => {
-          const adjustedWidth = width - scrollbarWidth;
-          const columnCount = Math.max(1, Math.floor((adjustedWidth + effectiveGap / 2) / (defaultCardWidth + effectiveGap)));
-          const rowCount = Math.ceil(items.length / columnCount);
+  // セルレンダラー
+  const Cell = ({ columnIndex, rowIndex, style }: GridChildComponentProps) => {
+    const index = rowIndex * actualColumnCount + columnIndex;
+    if (index >= items.length) return null;
 
-          return (
-            <Grid
-              columnCount={columnCount}
-              rowCount={rowCount}
-              columnWidth={defaultCardWidth + effectiveGap}
-              rowHeight={defaultCardHeight + effectiveGap}
-              width={width}
-              height={height}
-              itemData={{ items, columnCount, cardWidth: defaultCardWidth, cardHeight: defaultCardHeight, gap: effectiveGap, renderItem }}
-            >
-              {({ columnIndex, rowIndex, style: cellStyle, data }: any) => {
-                const { items, columnCount, cardWidth, cardHeight, gap, renderItem } = data as GridItemData<T>;
-                const index = rowIndex * columnCount + columnIndex;
-
-                if (index >= items.length) return null;
-
-                return (
-                  <div
-                    className="card-grid__cell"
-                    style={{
-                      ...cellStyle,
-                      left: cellStyle.left,
-                      top: cellStyle.top,
-                      width: cardWidth,
-                      height: cardHeight,
-                      margin: gap / 2,
-                    }}
-                  >
-                    {renderItem(items[index], index)}
-                  </div>
-                );
-              }}
-            </Grid>
-          );
+    return (
+      <div
+        className="card-grid__virtual-cell"
+        style={{
+          ...style,
+          padding: `${effectiveGap / 2}px`
         }}
-      </AutoSizer>
+      >
+        {renderItem(items[index], index)}
+      </div>
+    );
+  };
+
+  // コンテナサイズが取得できない場合は通常のグリッドを表示
+  if (!containerWidth || !containerHeight) {
+    const gridStyle = {
+      '--card-grid-template-columns': `repeat(auto-fit, ${defaultCardWidth}px)`,
+      '--card-grid-template-rows': `repeat(auto-fill, ${defaultCardHeight}px)`,
+      '--card-grid-gap': `${effectiveGap}px`,
+      '--card-grid-padding': `${effectiveGap}px`,
+      '--card-grid-cell-min-width': `${defaultCardWidth}px`,
+      '--card-grid-cell-min-height': `${defaultCardHeight}px`
+    } as React.CSSProperties;
+
+    return (
+      <div
+        ref={containerRef}
+        className={`card-grid ${className}`}
+        style={{ ...style, height: style?.height || '400px', width: style?.width || '100%' }}
+      >
+        <div className="card-grid__fallback-container" style={gridStyle}>
+          {items.map((item, index) => (
+            <div key={index} className="card-grid__fallback-cell">
+              {renderItem(item, index)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 仮想化グリッドを表示
+  return (
+    <div
+      ref={containerRef}
+      className={`card-grid ${className}`}
+      style={{ ...style, height: containerHeight, width: containerWidth }}
+    >
+      <FixedSizeGrid
+        columnCount={actualColumnCount}
+        columnWidth={defaultCardWidth + effectiveGap}
+        height={containerHeight}
+        rowCount={rowCount}
+        rowHeight={defaultCardHeight + effectiveGap}
+        width={containerWidth}
+        overscanRowCount={overscanCount}
+      >
+        {Cell}
+      </FixedSizeGrid>
     </div>
   );
 };

@@ -1,32 +1,28 @@
-import React, { useState, useRef } from 'react';
-import { Modal, Button } from 'react-bootstrap';
-import MapPage from './components/pages/MapPage';
-import CatalogPage from './components/pages/CatalogPage';
-import SubmenuPage from './components/pages/SubmenuPage';
-import MissionPage from './components/pages/MissionPage';
-import MissionPane from './components/organisms/MissionPane';
-import ShrinePane from './components/organisms/ShrinePane';
-import DietyPage from './components/organisms/DietyPane';
-import UserPane from './components/organisms/UserPane';
-import MyPage from './components/organisms/MyPage';
-import type { ShrinePaneRef } from './components/organisms/ShrinePane';
-import type { DietyPaneRef } from './components/organisms/DietyPane';
-import type { UserPaneRef } from './components/organisms/UserPane';
-import type { MyPageRef } from './components/organisms/MyPage';
-import SettingsPage from './components/pages/SettingsPage';
-import MenuPane from './components/organisms/MenuPane';
-import UserPage from './components/pages/UserPage';
-import LogPane from './components/organisms/LogPane';
-import TopPage from './components/pages/TopPage';
-import { useSkin } from './skins/SkinContext';
-import useLogs, { useClientLogs } from './hooks/useLogs';
-import { useShrineDetail } from './hooks/useShrineDetail';
-import { useDietyDetail } from './hooks/useDietyDetail';
-import { useUserInfo } from './hooks/useUserInfo';
-import { useMissions } from './hooks/useMissions';
-import useLocalStorageState from './hooks/useLocalStorageState';
-import CustomLink from './components/atoms/CustomLink';
+import React, { useEffect, useRef, useState } from 'react';
+import { Modal } from 'react-bootstrap';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import CustomLink from './components/atoms/CustomLink';
+import DietyPage from './components/organisms/DietyPane';
+import LogPane from './components/organisms/LogPane';
+import MenuPane from './components/organisms/MenuPane';
+import MissionPane from './components/organisms/MissionPane';
+import MyPage from './components/organisms/MyPage';
+import ShrinePane from './components/organisms/ShrinePane';
+import UserPane from './components/organisms/UserPane';
+import CatalogPage from './components/pages/CatalogPage';
+import MapPage from './components/pages/MapPage';
+import MissionPage from './components/pages/MissionPage';
+import SettingsPage from './components/pages/SettingsPage';
+import SubmenuPage from './components/pages/SubmenuPage';
+import TopPage from './components/pages/TopPage';
+import UserPage from './components/pages/UserPage';
+import { useDietyDetail } from './hooks/useDietyDetail';
+import useLocalStorageState from './hooks/useLocalStorageState';
+import useLogs, { useClientLogs } from './hooks/useLogs';
+import { useMissions } from './hooks/useMissions';
+import { useShrineDetail } from './hooks/useShrineDetail';
+import { useUserInfo } from './hooks/useUserInfo';
+import { useSkin } from './skins/SkinContext';
 
 type ModalType = { type: 'shrine' | 'diety' | 'user' | 'mission', id: number } | null;
 
@@ -115,6 +111,17 @@ function App() {
   const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
   useSkin();
 
+  // デバッグ用: ユーザーIDの確認
+
+
+  // ユーザーIDが設定されていない場合はデフォルト値を設定
+  useEffect(() => {
+    if (currentUserId === null) {
+
+      setCurrentUserId(3);
+    }
+  }, [currentUserId, setCurrentUserId]);
+
   // ナビゲーション履歴の管理
   const [navigationHistory, setNavigationHistory] = useState<NavigationHistoryItem[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -126,29 +133,68 @@ function App() {
   const myPageRef = useRef<{ backToOverview: () => void }>(null);
   const missionPaneRef = useRef<{ backToOverview: () => void }>(null);
 
-  // モーダルヘッダー用のデータ取得
+  // モーダルヘッダー用のデータ取得（条件付きで実行）
   const { data: shrineData } = useShrineDetail(modal?.type === 'shrine' && modal?.id ? modal.id : undefined);
   const { data: dietyData } = useDietyDetail(modal?.type === 'diety' && modal?.id ? modal.id : undefined);
   const { data: userData } = useUserInfo(modal?.type === 'user' && modal?.id ? modal.id : undefined, null);
   const { data: missions = [] } = useMissions();
 
+  // LogPane用のlogsデータ
+  const { clientLogs, addClientLog } = useClientLogs();
+  const {
+    data: logs = [],
+    refetch: refetchLogs,
+    isLoading: logsLoading,
+    error: logsError,
+  } = useLogs(clientLogs);
+
   // ログイン処理
   const handleLogin = () => {
-    // ログイン後にアプリページにリダイレクト
-    setPage('map');
+    // ユーザーIDが設定されているか確認
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      try {
+        // JSON.parseでパースを試行
+        const parsedUserId = JSON.parse(userId);
+        if (parsedUserId !== null && parsedUserId !== undefined) {
+          // ログイン後にアプリページにリダイレクト
+          setPage('map');
+        }
+      } catch {
+        // JSON.parseに失敗した場合は、そのまま使用
+        if (userId !== 'null' && userId !== 'undefined') {
+          // ログイン後にアプリページにリダイレクト
+          setPage('map');
+        }
+      }
+    }
   };
 
   // ログアウト処理
   const handleLogout = () => {
-    setCurrentUserId(null);
-    localStorage.removeItem('authToken');
-    setPage('map');
-  };
+    // モーダルとナビゲーション履歴をクリア
+    setModal(null);
+    setNavigationHistory([]);
+    setHistoryIndex(-1);
 
-  // 認証されていない場合はTopPageを表示
-  if (!currentUserId) {
-    return <TopPage onLogin={handleLogin} />;
-  }
+    // localStorageを完全にクリア
+    localStorage.removeItem('userId');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('debugMode');
+    localStorage.removeItem('maxShrineDisplay');
+    localStorage.removeItem('skinName');
+    localStorage.removeItem('barrierName');
+    localStorage.removeItem('debugMapCenter');
+
+    // ユーザーIDをクリア
+    setCurrentUserId(null);
+
+    // ページをマップに戻す
+    setPage('map');
+
+    // 強制的にページをリロードして状態を完全にリセット
+    window.location.reload();
+  };
 
   // ナビゲーション履歴の管理関数
   const addToHistory = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, name: string) => {
@@ -247,58 +293,27 @@ function App() {
         setModal({ type, id });
         return;
       }
+
       addToHistory(type, id, name);
     }
+
     setModal({ type, id });
   };
 
-  // データ取得後に履歴の名前を更新
-  React.useEffect(() => {
-    if (modal && navigationHistory.length > 0 && historyIndex >= 0) {
-      let updatedName = '';
-
-      if (modal.type === 'shrine' && shrineData && shrineData.id === modal.id) {
-        updatedName = shrineData.name;
-      } else if (modal.type === 'diety' && dietyData && dietyData.id === modal.id) {
-        updatedName = dietyData.name;
-      } else if (modal.type === 'user' && userData && userData.id === modal.id) {
-        updatedName = userData.name;
-      } else if (modal.type === 'mission' && missions) {
-        const mission = missions.find(m => m.id === modal.id);
-        updatedName = mission ? mission.name : '';
-      }
-
-      if (updatedName && navigationHistory[historyIndex]?.name !== updatedName) {
-        const updatedHistory = [...navigationHistory];
-        updatedHistory[historyIndex] = { ...updatedHistory[historyIndex], name: updatedName };
-        setNavigationHistory(updatedHistory);
-      }
-    }
-  }, [shrineData, dietyData, userData, missions, modal, navigationHistory, historyIndex]);
-
-  // ヘッダータイトルを取得
+  // モーダルタイトルを取得
   const getModalTitle = () => {
     if (!modal) return '';
 
     switch (modal.type) {
       case 'shrine':
-        if (shrineData) {
-          return shrineData.kana ? `${shrineData.name}（${shrineData.kana}）` : shrineData.name;
-        }
-        return '神社詳細';
+        return shrineData?.name || '神社';
       case 'diety':
-        if (dietyData) {
-          return dietyData.kana ? `${dietyData.name}（${dietyData.kana}）` : dietyData.name;
-        }
-        return '神様詳細';
+        return dietyData?.name || '神様';
       case 'user':
-        if (userData) {
-          return userData.name;
-        }
-        return 'ユーザー詳細';
+        return userData?.name || 'ユーザー';
       case 'mission':
-        const mission = missions?.find(m => m.id === modal.id);
-        return mission?.name || 'ミッション詳細';
+        const mission = missions.find(m => m.id === modal.id);
+        return mission?.name || 'ミッション';
       default:
         return '';
     }
@@ -327,15 +342,6 @@ function App() {
     }
   };
 
-  // LogPane用のlogsデータ
-  const { clientLogs, addClientLog } = useClientLogs();
-  const {
-    data: logs = [],
-    refetch: refetchLogs,
-    isLoading: logsLoading,
-    error: logsError,
-  } = useLogs(clientLogs);
-
   // ページ切り替え用
   const renderPage = () => {
     switch (page) {
@@ -355,6 +361,35 @@ function App() {
         return null;
     }
   };
+
+  // データ取得後に履歴の名前を更新
+  React.useEffect(() => {
+    if (modal && navigationHistory.length > 0 && historyIndex >= 0) {
+      let updatedName = '';
+
+      if (modal.type === 'shrine' && shrineData && shrineData.id === modal.id) {
+        updatedName = shrineData.name;
+      } else if (modal.type === 'diety' && dietyData && dietyData.id === modal.id) {
+        updatedName = dietyData.name;
+      } else if (modal.type === 'user' && userData && userData.id === modal.id) {
+        updatedName = userData.name;
+      } else if (modal.type === 'mission' && missions) {
+        const mission = missions.find(m => m.id === modal.id);
+        updatedName = mission ? mission.name : '';
+      }
+
+      if (updatedName && navigationHistory[historyIndex]?.name !== updatedName) {
+        const updatedHistory = [...navigationHistory];
+        updatedHistory[historyIndex] = { ...updatedHistory[historyIndex], name: updatedName };
+        setNavigationHistory(updatedHistory);
+      }
+    }
+  }, [shrineData, dietyData, userData, missions, modal, navigationHistory, historyIndex]);
+
+  // 認証されていない場合はTopPageを表示
+  if (!currentUserId) {
+    return <TopPage onLogin={handleLogin} />;
+  }
 
   return (
     <div className="app">
@@ -468,9 +503,6 @@ function App() {
                         onShowShrine={id => navigateToModal('shrine', id)}
                         onShowDiety={id => navigateToModal('diety', id)}
                         onShowUser={id => navigateToModal('user', id)}
-                        onDetailViewChange={(detailView) => {
-                          // UserPaneにはthumbnail表示がないため、何もしない
-                        }}
                       />
                     )}
                   </div>
@@ -518,8 +550,9 @@ function App() {
         loading={logsLoading}
         error={!!logsError}
         onShowShrine={(id: number) => navigateToModal('shrine', id)}
-        onShowUser={(id: number) => navigateToModal('user', id)}
         onShowDiety={(id: number) => navigateToModal('diety', id)}
+        onShowUser={(id: number) => navigateToModal('user', id)}
+        debugLogs={clientLogs.map(log => log.message)}
       />
       <MenuPane setPage={setPage} page={page} isDialogOpen={modal !== null} />
     </div>

@@ -37,11 +37,32 @@ if (isNaN(port) || port < 1 || port > 65535) {
   process.exit(1);
 }
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['warn', 'error'],
+});
+
+// データベース接続の確認
+prisma.$connect()
+  .then(() => {
+    console.log('✅ Database connected successfully');
+  })
+  .catch((error) => {
+    console.error('❌ Database connection failed:', error);
+    process.exit(1);
+  });
 
 app.use(cors());
 app.use(express.json());
 app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
+
+// ヘルスチェックエンドポイント
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    database: 'connected'
+  });
+});
 
 // メール送信設定
 const transporter = nodemailer.createTransport({
@@ -64,6 +85,12 @@ function generateVerificationToken() {
 }
 
 async function sendVerificationEmail(email, token) {
+  // SMTP設定が不完全な場合はエラーを投げる
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log('SMTP settings not configured, skipping email sending');
+    return;
+  }
+
   const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/activate?token=${token}`;
 
   const mailOptions = {
@@ -88,6 +115,12 @@ async function sendVerificationEmail(email, token) {
 }
 
 async function sendPasswordResetEmail(email, token) {
+  // SMTP設定が不完全な場合はエラーを投げる
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log('SMTP settings not configured, skipping email sending');
+    return;
+  }
+
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
   const mailOptions = {
@@ -1509,21 +1542,26 @@ function authenticateJWT(req, res, next) {
 // ユーザー登録
 app.post('/auth/register', async (req, res) => {
   try {
+    console.log('Registration request received:', req.body);
     const { username, email } = req.body;
 
     // バリデーション
     if (!username || !email) {
+      console.log('Validation failed: missing username or email');
       return res.status(400).json({ error: 'ユーザー名とメールアドレスは必須です' });
     }
 
     if (username.length < 2) {
+      console.log('Validation failed: username too short');
       return res.status(400).json({ error: 'ユーザー名は2文字以上で入力してください' });
     }
 
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      console.log('Validation failed: invalid email format');
       return res.status(400).json({ error: '有効なメールアドレスを入力してください' });
     }
 
+    console.log('Checking for existing user...');
     // 既存ユーザーチェック
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -1536,40 +1574,58 @@ app.post('/auth/register', async (req, res) => {
 
     if (existingUser) {
       if (existingUser.name === username) {
+        console.log('User already exists with same username');
         return res.status(400).json({ error: 'このユーザー名は既に使用されています' });
       }
       if (existingUser.email === email) {
+        console.log('User already exists with same email');
         return res.status(400).json({ error: 'このメールアドレスは既に使用されています' });
       }
     }
 
+    console.log('Generating verification token...');
     // 認証トークン生成
     const verificationToken = generateVerificationToken();
 
-    // ユーザー作成
+    console.log('Creating user...');
+    // ユーザー作成（levelフィールドはスキーマのデフォルト値を使用）
     const user = await prisma.user.create({
       data: {
         name: username,
         email: email,
         verification_token: verificationToken,
         is_verified: false,
-        level: 1,
         exp: 0,
         ability_points: 0
       }
     });
 
-    // 認証メール送信
+    console.log('User created successfully:', user.id);
+
+    // 認証メール送信（失敗してもユーザー作成は成功とする）
+    let emailSent = false;
+    let emailError = null;
+
     try {
-      await sendVerificationEmail(email, verificationToken);
+      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        console.log('Sending verification email...');
+        await sendVerificationEmail(email, verificationToken);
+        emailSent = true;
+        console.log('Verification email sent successfully');
+      } else {
+        console.log('SMTP settings not configured, skipping email sending');
+      }
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
-      // メール送信に失敗した場合でもユーザーは作成する
+      // メール送信エラーは記録するが、ユーザー作成は成功とする
     }
 
+    console.log('Registration completed successfully');
     res.json({
       success: true,
-      message: 'ユーザー登録が完了しました。確認メールをお送りしましたので、メール内のリンクをクリックしてアカウントを有効化してください。',
+      message: emailSent
+        ? 'ユーザー登録が完了しました。確認メールをお送りしましたので、メール内のリンクをクリックしてアカウントを有効化してください。'
+        : 'ユーザー登録が完了しました。',
       user: {
         id: user.id,
         name: user.name,
@@ -1579,6 +1635,25 @@ app.post('/auth/register', async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
+    // より詳細なエラー情報をログに出力
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+
+    // データベース接続エラーの場合
+    if (error.code === 'P1001' || error.code === 'P1002' || error.code === 'P1017') {
+      console.error('Database connection error detected');
+      return res.status(500).json({ error: 'データベース接続エラーが発生しました。しばらく時間をおいて再度お試しください。' });
+    }
+
+    // Prismaエラーの場合
+    if (error.code && error.code.startsWith('P')) {
+      console.error('Prisma error detected:', error.code);
+      return res.status(500).json({ error: 'データベースエラーが発生しました。' });
+    }
+
     res.status(500).json({ error: 'ユーザー登録に失敗しました' });
   }
 });

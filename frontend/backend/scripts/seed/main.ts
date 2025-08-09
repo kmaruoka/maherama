@@ -1,16 +1,16 @@
 import { PrismaClient } from '@prisma/client';
-import { seedShrine, seedShrinesFromTxt } from './shrine';
-import { seedDiety } from './diety';
-import { seedShrineDiety } from './shrineDiety';
-import { seedUser } from './user';
-import { seedRealisticTransactions } from './realisticTransactions';
-import { seedSubscription } from './subscription';
 import { seedAbility } from './ability';
-import { seedTitle } from './title';
-import { seedLevel } from './level';
-import { seedShrineImage } from './shrineImage';
+import { seedDiety } from './diety';
 import { seedDietyImage } from './dietyImage';
+import { seedLevel } from './level';
 import { seedMissions } from './mission';
+import { seedRealisticTransactions } from './realisticTransactions';
+import { seedShrine, seedShrinesFromTxt } from './shrine';
+import { seedShrineDiety } from './shrineDiety';
+import { seedShrineImage } from './shrineImage';
+import { seedSubscription } from './subscription';
+import { seedTitle } from './title';
+import { seedUser } from './user';
 
 const prisma = new PrismaClient();
 
@@ -40,7 +40,6 @@ async function main() {
   await seedSubscription(prisma);
   await seedAbility(prisma);
   await seedTitle(prisma);
-  await seedLevel(prisma);
   await seedShrineImage(prisma);
   await seedDietyImage(prisma);
   await seedMissions();

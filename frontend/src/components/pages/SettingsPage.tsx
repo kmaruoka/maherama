@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import useLocalStorageState from '../../hooks/useLocalStorageState';
-import useAllUsers from '../../hooks/useAllUsers';
-import { useSkin } from '../../skins/SkinContext';
-import { skins } from '../../skins';
-import { useBarrier } from '../../barriers/BarrierContext';
+import { useState } from 'react';
 import { barriers } from '../../barriers';
+import { useBarrier } from '../../barriers/BarrierContext';
+import useAllUsers from '../../hooks/useAllUsers';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { skins } from '../../skins';
+import { useSkin } from '../../skins/SkinContext';
 import CustomButton from '../atoms/CustomButton';
 
 interface SettingsPageProps {
@@ -28,11 +28,23 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   };
 
   const handleLogout = () => {
-    setUserId(null);
+    // localStorageを完全にクリア
+    localStorage.removeItem('userId');
     localStorage.removeItem('authToken');
+    localStorage.removeItem('debugMode');
+    localStorage.removeItem('maxShrineDisplay');
+    localStorage.removeItem('skinName');
+    localStorage.removeItem('barrierName');
+    localStorage.removeItem('debugMapCenter');
+
+    setUserId(null);
+
     if (onLogout) {
       onLogout();
     }
+
+    // 強制的にページをリロードして状態を完全にリセット
+    window.location.reload();
   };
 
   const toggleDebugMode = () => {

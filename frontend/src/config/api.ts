@@ -19,9 +19,17 @@ export const MAPBOX_API_KEY = import.meta.env.VITE_MAPBOX_API_KEY;
 function getUserId(): number | null {
   if (typeof window !== 'undefined') {
     const v = localStorage.getItem('userId');
-    return v ? Number(v) : 3; // デフォルト値として3を設定
+    if (v === null) {
+      return null;
+    }
+    try {
+      const parsed = Number(v);
+      return isNaN(parsed) ? null : parsed;
+    } catch {
+      return null;
+    }
   }
-  return 3; // デフォルト値として3を設定
+  return null;
 }
 
 // 認証ヘッダーを自動的に追加するAPI呼び出し関数
@@ -32,8 +40,10 @@ export async function apiCall(url: string, options: RequestInit = {}): Promise<R
     ...(options.headers as Record<string, string>),
   };
 
-  // 認証ヘッダーを追加（デフォルト値があるため常に追加）
-  headers['x-user-id'] = String(userId);
+  // 認証ヘッダーを追加（userIdがnullでない場合のみ）
+  if (userId !== null) {
+    headers['x-user-id'] = String(userId);
+  }
 
   const response = await fetch(url, {
     ...options,

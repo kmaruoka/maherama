@@ -1,30 +1,26 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
-import { useShrineDetail } from '../../hooks/useShrineDetail';
-import CustomLink from '../atoms/CustomLink';
-import RankingPane from './RankingPane';
-import type { Period, RankingItemData } from './RankingPane';
-import { useState, useEffect } from 'react';
-import { ImageUploadModal } from '../molecules/ImageUploadModal';
-import ImageVoteButton from '../atoms/ImageVoteButton';
-import { API_BASE } from '../../config/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import useLocalStorageState from '../../hooks/useLocalStorageState';
-import useDebugLog from '../../hooks/useDebugLog';
-import useCurrentPosition from '../../hooks/useCurrentPosition';
-import { useSubscription } from '../../hooks/useSubscription';
-import { NOIMAGE_SHRINE_URL, NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
-import { getDistanceMeters } from '../../hooks/usePrayDistance';
-import { formatDistance } from '../../../backend/shared/utils/distance';
-import { useWorshipLimit } from '../../hooks/usePrayDistance';
-import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
-import { FaCloudUploadAlt, FaVoteYea, FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
-import { CustomButton } from '../atoms/CustomButton';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
+import { formatDistance } from '../../../backend/shared/utils/distance';
+import { API_BASE } from '../../config/api';
+import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
+import useCurrentPosition from '../../hooks/useCurrentPosition';
+import useDebugLog from '../../hooks/useDebugLog';
+import { useImageManagement } from '../../hooks/useImageManagement';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { getDistanceMeters, useWorshipLimit } from '../../hooks/usePrayDistance';
+import { useShrineDetail } from '../../hooks/useShrineDetail';
+import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
+import { useSubscription } from '../../hooks/useSubscription';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
-import { useImageManagement } from '../../hooks/useImageManagement';
+import { CustomButton } from '../atoms/CustomButton';
+import CustomLink from '../atoms/CustomLink';
 import { ManagedImage } from '../atoms/ManagedImage';
+import { ImageUploadModal } from '../molecules/ImageUploadModal';
+import type { Period, RankingItemData } from './RankingPane';
+import RankingPane from './RankingPane';
 
 function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
   const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
@@ -116,16 +112,36 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   // 画像リスト取得
   useEffect(() => {
     if (!id) return;
+
+    let isMounted = true;
     setImageListLoading(true);
+
     // 前月のYYYYMMを計算
     const now = new Date();
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const yyyymm = `${prevMonth.getFullYear()}${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+
     fetch(`${API_BASE}/shrines/${id}/images?votingMonth=${yyyymm}`)
       .then(res => res.json())
-      .then(json => setImageList(json))
-      .catch(e => setImageListError(t('imageListError')))
-      .finally(() => setImageListLoading(false));
+      .then(json => {
+        if (isMounted) {
+          setImageList(json);
+        }
+      })
+      .catch(e => {
+        if (isMounted) {
+          setImageListError(t('imageListError'));
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setImageListLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [id, rankRefreshKey, t]);
 
   const handleUpload = async (file: File) => {
@@ -140,17 +156,28 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   // 追加: 参拝距離をAPIから取得
   useEffect(() => {
+    let isMounted = true;
+
     if (userId) {
       fetch(`${API_BASE}/users/${userId}/pray-distance`, {
         headers: { 'x-user-id': String(userId) }
       })
         .then(res => res.json())
         .then(data => {
-          if (typeof data.pray_distance === 'number') {
+          if (isMounted && typeof data.pray_distance === 'number') {
             setPrayDistance(data.pray_distance);
+          }
+        })
+        .catch(error => {
+          if (isMounted) {
+            console.error('[ShrinePane] pray-distance取得エラー:', error);
           }
         });
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
 
   // デバッグモード時の地図中心位置を取得

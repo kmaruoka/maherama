@@ -41,6 +41,7 @@ model Shrine {
   image_url_s               String?
   image_url_xl              String?
   image_url_xs              String?
+  mission_shrines           MissionShrine[]
   area                      Area?                    @relation(fields: [area_id], references: [id])
   image                     Image?                   @relation(fields: [image_id], references: [id])
   shrine_catalogs           ShrineCatalog[]
@@ -52,7 +53,6 @@ model Shrine {
   shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
   shrine_pray_stats_weekly  ShrinePrayStatsWeekly[]
   shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
-  mission_shrines           MissionShrine[]
 
   @@unique([name, location])
 }
@@ -81,8 +81,8 @@ model Diety {
   diety_pray_stats_monthly DietyPrayStatsMonthly[]
   diety_pray_stats_weekly  DietyPrayStatsWeekly[]
   diety_pray_stats_yearly  DietyPrayStatsYearly[]
-  shrine_dieties           ShrineDiety[]
   mission_dieties          MissionDiety[]
+  shrine_dieties           ShrineDiety[]
 }
 
 model ShrineDiety {
@@ -108,12 +108,6 @@ model Log {
 model User {
   id                        Int                      @id @default(autoincrement())
   name                      String
-  email                     String?                  @unique
-  password_hash             String?
-  is_verified               Boolean                  @default(false)
-  verification_token        String?
-  reset_token               String?
-  reset_token_expires       DateTime?
   ability_points            Int                      @default(0)
   exp                       Int                      @default(0)
   level                     Int                      @default(0)
@@ -127,6 +121,12 @@ model User {
   image_url_s               String?
   image_url_xl              String?
   image_url_xs              String?
+  email                     String?                  @unique
+  is_verified               Boolean                  @default(false)
+  password_hash             String?
+  reset_token               String?
+  reset_token_expires       DateTime?
+  verification_token        String?
   abilityLogs               AbilityLog[]
   diety_catalogs            DietyCatalog[]
   diety_images              DietyImage[]
@@ -149,9 +149,9 @@ model User {
   shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
   image                     Image?                   @relation(fields: [image_id], references: [id])
   userAbilities             UserAbility[]
+  user_missions             UserMission[]
   user_subscriptions        UserSubscription[]
   userTitles                UserTitle[]
-  user_missions             UserMission[]
 }
 
 model Follow {
@@ -427,17 +427,17 @@ model AbilityLog {
 }
 
 model TitleMaster {
-  id             Int         @id @default(autoincrement())
+  id             Int            @id @default(autoincrement())
   exp_reward     Int
   ability_reward Json?
-  code           String      @unique
-  created_at     DateTime    @default(now())
+  code           String         @unique
+  created_at     DateTime       @default(now())
   description    String?
   name_template  String
   type           String
-  updated_at     DateTime    @updatedAt
-  userTitles     UserTitle[]
+  updated_at     DateTime       @updatedAt
   mission_titles MissionTitle[]
+  userTitles     UserTitle[]
 }
 
 model UserTitle {
@@ -470,10 +470,10 @@ model Image {
   url_xs        String?
   dieties       Diety[]
   diety_images  DietyImage[]
+  events        EventMaster[]
   shrines       Shrine[]
   shrine_images ShrineImage[]
   users         User[]
-  events        EventMaster[]
 }
 
 model ShrineImage {
@@ -566,98 +566,98 @@ model ShrineApplication {
 }
 
 model MissionMaster {
-  id              Int      @id @default(autoincrement())
+  id              Int             @id @default(autoincrement())
   name            String
   content         String
-  mission_type    String   @default("permanent") // permanent, event
+  mission_type    String          @default("permanent")
   start_at        DateTime?
   end_at          DateTime?
-  exp_reward      Int      @default(0)
-  ability_reward  Json?    // {ability_id: points}
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  exp_reward      Int             @default(0)
+  ability_reward  Json?
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
   event_missions  EventMission[]
-  mission_shrines MissionShrine[]
   mission_dieties MissionDiety[]
+  mission_shrines MissionShrine[]
   mission_titles  MissionTitle[]
   user_missions   UserMission[]
 }
 
 model EventMaster {
-  id          Int      @id @default(autoincrement())
-  name        String
-  content     String
-  image_id    Int?
-  image_url   String?
-  start_at    DateTime
-  end_at      DateTime
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  image       Image?   @relation(fields: [image_id], references: [id])
+  id             Int            @id @default(autoincrement())
+  name           String
+  content        String
+  image_id       Int?
+  image_url      String?
+  start_at       DateTime
+  end_at         DateTime
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  image          Image?         @relation(fields: [image_id], references: [id])
   event_missions EventMission[]
 }
 
 model EventMission {
-  id          Int           @id @default(autoincrement())
-  event_id    Int
-  mission_id  Int
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  event       EventMaster   @relation(fields: [event_id], references: [id])
-  mission     MissionMaster @relation(fields: [mission_id], references: [id])
+  id         Int           @id @default(autoincrement())
+  event_id   Int
+  mission_id Int
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  event      EventMaster   @relation(fields: [event_id], references: [id])
+  mission    MissionMaster @relation(fields: [mission_id], references: [id])
 
   @@unique([event_id, mission_id])
 }
 
 model MissionShrine {
-  id          Int           @id @default(autoincrement())
-  mission_id  Int
-  shrine_id   Int
-  count       Int           @default(1)
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  mission     MissionMaster @relation(fields: [mission_id], references: [id])
-  shrine      Shrine        @relation(fields: [shrine_id], references: [id])
+  id         Int           @id @default(autoincrement())
+  mission_id Int
+  shrine_id  Int
+  count      Int           @default(1)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  mission    MissionMaster @relation(fields: [mission_id], references: [id])
+  shrine     Shrine        @relation(fields: [shrine_id], references: [id])
 
   @@unique([mission_id, shrine_id])
 }
 
 model MissionDiety {
-  id          Int           @id @default(autoincrement())
-  mission_id  Int
-  diety_id    Int
-  count       Int           @default(1)
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  mission     MissionMaster @relation(fields: [mission_id], references: [id])
-  diety       Diety         @relation(fields: [diety_id], references: [id])
+  id         Int           @id @default(autoincrement())
+  mission_id Int
+  diety_id   Int
+  count      Int           @default(1)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  diety      Diety         @relation(fields: [diety_id], references: [id])
+  mission    MissionMaster @relation(fields: [mission_id], references: [id])
 
   @@unique([mission_id, diety_id])
 }
 
 model MissionTitle {
-  id          Int           @id @default(autoincrement())
-  mission_id  Int
-  title_id    Int
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  mission     MissionMaster @relation(fields: [mission_id], references: [id])
-  title       TitleMaster   @relation(fields: [title_id], references: [id])
+  id         Int           @id @default(autoincrement())
+  mission_id Int
+  title_id   Int
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  mission    MissionMaster @relation(fields: [mission_id], references: [id])
+  title      TitleMaster   @relation(fields: [title_id], references: [id])
 
   @@unique([mission_id, title_id])
 }
 
 model UserMission {
-  id          Int           @id @default(autoincrement())
-  user_id     Int
-  mission_id  Int
-  progress    Int           @default(0)
-  is_completed Boolean      @default(false)
+  id           Int           @id @default(autoincrement())
+  user_id      Int
+  mission_id   Int
+  progress     Int           @default(0)
+  is_completed Boolean       @default(false)
   completed_at DateTime?
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
-  mission     MissionMaster @relation(fields: [mission_id], references: [id])
-  user        User          @relation(fields: [user_id], references: [id])
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  mission      MissionMaster @relation(fields: [mission_id], references: [id])
+  user         User          @relation(fields: [user_id], references: [id])
 
   @@unique([user_id, mission_id])
 }
