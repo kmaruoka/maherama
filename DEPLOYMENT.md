@@ -385,7 +385,7 @@ sudo crontab -e
 
 以下を追加:
 ```
-0 12 * * * /usr/bin/certbot renew --quiet
+30 2 * * * certbot renew --quiet && systemctl reload nginx
 ```
 
 **注意**: 
