@@ -1133,6 +1133,17 @@ nav.d-flex.position-fixed {
   position: relative;
 }
 
+/* デバッグモードOFF時のタッチ操作制御 */
+.map-page__container:not(.debug-mode) {
+  touch-action: pinch-zoom;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 .map-page__barrier-pane {
   z-index: 399;
 }

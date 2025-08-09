@@ -596,13 +596,13 @@ cd ~/maherama
 git pull origin main
 
 # バックエンドの更新
-cd frontend/backend
+cd ~/maherama/frontend/backend
 npm install
 npx prisma migrate deploy
 sudo systemctl restart maherama-backend
 
 # フロントエンドの更新
-cd ../../frontend
+cd ~/maherama/frontend
 npm install
 
 # 権限問題の解決（重要）
@@ -615,6 +615,9 @@ sudo chmod -R 755 /home/ubuntu/maherama/frontend/dist/
 sudo chmod 755 /home/ubuntu/
 sudo chmod 755 /home/ubuntu/maherama/
 sudo chmod 755 /home/ubuntu/maherama/frontend/
+
+# Nginx再起動
+sudo systemctl restart nginx
 ```
 
 ### 12.2 Nginx設定の確認と修正（重要）

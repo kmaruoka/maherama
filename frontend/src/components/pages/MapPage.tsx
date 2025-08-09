@@ -261,7 +261,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         dragging={debugMode}
         scrollWheelZoom={true}
         doubleClickZoom={debugMode}
-        className="map-page__container"
+        className={`map-page__container${debugMode ? ' debug-mode' : ''}`}
         whenReady={((event: { target: L.Map }) => { mapRef.current = event.target; setMapReady(true); }) as unknown as () => void}
       >
         <TileLayer
