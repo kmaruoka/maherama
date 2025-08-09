@@ -23,7 +23,7 @@ export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (pa
 
   return (
     <nav
-      className={`menu-pane d-flex border-top${page === 'catalog' ? ' menu-pane-catalog' : ''}${isDialogOpen ? ' menu-pane--dialog-open' : ''}`}
+      className={`menu-pane d-flex${page === 'catalog' ? ' menu-pane-catalog' : ''}${isDialogOpen ? ' menu-pane--dialog-open' : ''}`}
       style={{ 
         background: 'var(--color-surface)', 
         borderColor: 'var(--color-border)', 
