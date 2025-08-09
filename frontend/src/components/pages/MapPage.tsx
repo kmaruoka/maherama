@@ -76,7 +76,9 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   // GPS追従（通常モード）
   useEffect(() => {
     if (!debugMode && position && mapRef.current) {
-      mapRef.current.setView(position, defaultZoom);
+      // 現在のズームレベルを保持して座標のみ更新
+      const currentZoom = mapRef.current.getZoom();
+      mapRef.current.setView(position, currentZoom);
     }
   }, [position, debugMode]);
 
