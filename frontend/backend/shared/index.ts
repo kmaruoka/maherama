@@ -7,4 +7,4 @@ export * from './utils/distance';
 export * from './utils/expSystem';
 
 // 型定義
-export * from './types/game'; 
+export * from './types/game';

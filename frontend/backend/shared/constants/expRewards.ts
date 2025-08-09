@@ -1,5 +1,5 @@
 // 経験値獲得の種類
-export const EXP_REWARDS = {
+const EXP_REWARDS = {
   PRAY: 10,           // 参拝
   REMOTE_PRAY: 10,    // 遥拝
   IMAGE_POST: 20,     // 画像投稿
@@ -14,7 +14,8 @@ export const EXP_REWARDS = {
   YEARLY_RANKING_2: 5000,  // 年間ランキング2位
   YEARLY_RANKING_3: 2000,  // 年間ランキング3位
   MISSION_COMPLETION: 100,  // ミッション達成
-} as const;
+};
 
-export type ExpRewardType = keyof typeof EXP_REWARDS;
-export type ExpRewardValue = typeof EXP_REWARDS[ExpRewardType]; 
+module.exports = {
+  EXP_REWARDS
+};

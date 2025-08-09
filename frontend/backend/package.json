@@ -7,8 +7,10 @@
     "test": "jest",
     "db-seed": "node scripts/seedTestData.js",
     "start": "ts-node index.ts",
+    "dev": "nodemon --exec ts-node index.ts",
     "db-reset": "npx ts-node scripts/reset-db.ts",
-    "seed": "npx tsx scripts/seed/main.ts"
+    "seed": "npx tsx scripts/seed/main.ts",
+    "fix-line-endings": "node ../../scripts/fix-line-endings.js"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +38,7 @@
   "devDependencies": {
     "@types/react-icons": "^2.2.7",
     "jest": "^29.0.0",
+    "nodemon": "^3.1.10",
     "supertest": "^6.3.0",
     "ts-node": "^10.9.2"
   },

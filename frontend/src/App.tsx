@@ -38,21 +38,21 @@ interface NavigationHistoryItem {
 }
 
 // モーダルヘッダーコンポーネント
-function ModalHeader({ 
-  title, 
-  onBack, 
-  onTitleClick, 
-  canGoBack, 
-  canGoForward, 
-  onGoBack, 
+function ModalHeader({
+  title,
+  onBack,
+  onTitleClick,
+  canGoBack,
+  canGoForward,
+  onGoBack,
   onGoForward,
   getPreviousItemName,
   getNextItemName,
   getPreviousItemType,
   getNextItemType
-}: { 
-  title: string; 
-  onBack: () => void; 
+}: {
+  title: string;
+  onBack: () => void;
   onTitleClick?: () => void;
   canGoBack: boolean;
   canGoForward: boolean;
@@ -66,8 +66,8 @@ function ModalHeader({
   return (
     <div className="modal__header">
       <div className="modal__header-content">
-        <h3 
-          onClick={onTitleClick} 
+        <h3
+          onClick={onTitleClick}
           style={{ cursor: onTitleClick ? 'pointer' : 'default' }}
           className={onTitleClick ? 'modal__header-title--clickable' : ''}
         >
@@ -153,11 +153,11 @@ function App() {
   // ナビゲーション履歴の管理関数
   const addToHistory = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, name: string) => {
     const newItem: NavigationHistoryItem = { type, id, name };
-    
+
     // 現在の位置より後の履歴を削除し、新しい項目を追加
     const newHistory = navigationHistory.slice(0, historyIndex + 1);
     newHistory.push(newItem);
-    
+
     setNavigationHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
   };
@@ -220,7 +220,7 @@ function App() {
   // 履歴追加機能付きモーダル遷移
   const navigateToModal = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, clearHistory: boolean = false) => {
     let name = '';
-    
+
     // 現在のデータから名前を取得
     if (type === 'shrine' && shrineData && shrineData.id === id) {
       name = shrineData.name;
@@ -235,7 +235,7 @@ function App() {
       // データが未取得の場合は一時的な名前を設定
       name = type === 'shrine' ? '神社' : type === 'diety' ? '神様' : type === 'user' ? 'ユーザー' : 'ミッション';
     }
-    
+
     if (clearHistory) {
       // 履歴をクリアして新しい項目を追加
       setNavigationHistory([{ type, id, name }]);
@@ -256,7 +256,7 @@ function App() {
   React.useEffect(() => {
     if (modal && navigationHistory.length > 0 && historyIndex >= 0) {
       let updatedName = '';
-      
+
       if (modal.type === 'shrine' && shrineData && shrineData.id === modal.id) {
         updatedName = shrineData.name;
       } else if (modal.type === 'diety' && dietyData && dietyData.id === modal.id) {
@@ -267,7 +267,7 @@ function App() {
         const mission = missions.find(m => m.id === modal.id);
         updatedName = mission ? mission.name : '';
       }
-      
+
       if (updatedName && navigationHistory[historyIndex]?.name !== updatedName) {
         const updatedHistory = [...navigationHistory];
         updatedHistory[historyIndex] = { ...updatedHistory[historyIndex], name: updatedName };
@@ -279,7 +279,7 @@ function App() {
   // ヘッダータイトルを取得
   const getModalTitle = () => {
     if (!modal) return '';
-    
+
     switch (modal.type) {
       case 'shrine':
         if (shrineData) {
@@ -370,9 +370,9 @@ function App() {
             <Modal.Body style={{ padding: 0, height: 'auto', overflow: 'hidden' }}>
               {modal.type === 'shrine' && (
                 <>
-                  <ModalHeader 
-                    title={getModalTitle()} 
-                    onBack={closeModal} 
+                  <ModalHeader
+                    title={getModalTitle()}
+                    onBack={closeModal}
                     onTitleClick={handleBackToOverview}
                     canGoBack={historyIndex > 0}
                     canGoForward={historyIndex < navigationHistory.length - 1}
@@ -405,9 +405,9 @@ function App() {
               )}
               {modal.type === 'diety' && (
                 <>
-                  <ModalHeader 
-                    title={getModalTitle()} 
-                    onBack={closeModal} 
+                  <ModalHeader
+                    title={getModalTitle()}
+                    onBack={closeModal}
                     onTitleClick={handleBackToOverview}
                     canGoBack={historyIndex > 0}
                     canGoForward={historyIndex < navigationHistory.length - 1}
@@ -440,9 +440,9 @@ function App() {
               )}
               {modal.type === 'user' && (
                 <>
-                  <ModalHeader 
-                    title={getModalTitle()} 
-                    onBack={closeModal} 
+                  <ModalHeader
+                    title={getModalTitle()}
+                    onBack={closeModal}
                     onTitleClick={handleBackToOverview}
                     canGoBack={historyIndex > 0}
                     canGoForward={historyIndex < navigationHistory.length - 1}
@@ -478,9 +478,9 @@ function App() {
               )}
               {modal.type === 'mission' && (
                 <>
-                  <ModalHeader 
-                    title={getModalTitle()} 
-                    onBack={closeModal} 
+                  <ModalHeader
+                    title={getModalTitle()}
+                    onBack={closeModal}
                     onTitleClick={handleBackToOverview}
                     canGoBack={historyIndex > 0}
                     canGoForward={historyIndex < navigationHistory.length - 1}
@@ -513,13 +513,13 @@ function App() {
           </Modal>
         )}
       </div>
-      <LogPane 
-        logs={logs} 
-        loading={logsLoading} 
-        error={!!logsError} 
-        onShowShrine={(id: number) => navigateToModal('shrine', id)} 
-        onShowUser={(id: number) => navigateToModal('user', id)} 
-        onShowDiety={(id: number) => navigateToModal('diety', id)} 
+      <LogPane
+        logs={logs}
+        loading={logsLoading}
+        error={!!logsError}
+        onShowShrine={(id: number) => navigateToModal('shrine', id)}
+        onShowUser={(id: number) => navigateToModal('user', id)}
+        onShowDiety={(id: number) => navigateToModal('diety', id)}
       />
       <MenuPane setPage={setPage} page={page} isDialogOpen={modal !== null} />
     </div>

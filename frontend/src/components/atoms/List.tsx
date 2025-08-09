@@ -89,11 +89,11 @@ const List = <T extends any>({
 
     return (
       <div className="list list--virtualized" style={containerStyle}>
-        <div 
+        <div
           className="list__virtualized-container"
           style={{ height: items.length * itemHeight }}
         >
-          <div 
+          <div
             className="list__virtualized-content"
             style={{ transform: `translateY(${startIndex * itemHeight}px)` }}
           >
@@ -120,4 +120,4 @@ const List = <T extends any>({
   );
 };
 
-export default List; 
+export default List;

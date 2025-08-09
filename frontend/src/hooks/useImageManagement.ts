@@ -34,14 +34,14 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
   const { t } = useTranslation();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [thumbCache, setThumbCache] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [shouldUseFallback, setShouldUseFallback] = useState(false);
-  
+
   const MAX_RETRIES = 2;
 
   const resetImageState = useCallback(() => {
@@ -59,7 +59,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       setShouldUseFallback(true);
       return;
     }
-    
+
     // 画像の存在確認を同期的に行う（エラー時はfallbackを使用）
     const img = new Image();
     img.onload = () => {
@@ -75,40 +75,40 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     try {
       const formData = new FormData();
       formData.append('image', file);
-      
+
       const headers: Record<string, string> = {};
       if (options.userId) {
         headers['x-user-id'] = String(options.userId);
       }
-      
+
       const response = await fetch(`${API_BASE}/${options.entityType}s/${options.entityId}/images/upload`, {
         method: 'POST',
         headers,
         body: formData
       });
-      
+
       if (!response.ok) {
         throw new Error('アップロード失敗');
       }
-      
+
       const result = await response.json();
-      
+
       // クエリを無効化して再取得
       await Promise.all(
         options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
       );
-      
+
       // データの再取得を確実に待つ
       await queryClient.refetchQueries({ queryKey: [options.queryKeys[0]] });
-      
+
       // リトライカウントとエラーフラグをリセット
       setRetryCount(0);
       setImageLoadError(false);
       setIsImageLoading(false);
-      
+
       // キャッシュを更新（強制的に再読み込み）
       setThumbCache(prev => prev + 1);
-      
+
       if (result.isCurrentThumbnail) {
         showToast(t('uploadSuccess'), 'success');
       } else {
@@ -128,12 +128,12 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       if (options.userId) {
         headers['x-user-id'] = String(options.userId);
       }
-      
+
       const response = await fetch(`${API_BASE}/${options.entityType}s/${options.entityId}/images/vote`, {
         method: 'POST',
         headers
       });
-      
+
       if (!response.ok) {
         let errorMsg = '投票失敗';
         try {
@@ -149,7 +149,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
         }
         throw new Error(errorMsg);
       }
-      
+
       // 成功時はデータ再取得
       await Promise.all(
         options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
@@ -169,12 +169,12 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       if (options.userId) {
         headers['x-user-id'] = String(options.userId);
       }
-      
+
       const response = await fetch(`${API_BASE}/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
         method: 'POST',
         headers
       });
-      
+
       if (!response.ok) {
         let errorMsg = '投票失敗';
         try {
@@ -190,7 +190,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
         }
         throw new Error(errorMsg);
       }
-      
+
       await Promise.all(
         options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
       );
@@ -263,4 +263,4 @@ export function useImageLoading() {
     handleImageLoadStart,
     resetImageState
   };
-} 
+}

@@ -11,4 +11,4 @@ export type {
   FixedSize,
   SizeMode,
   KeyOf
-} from './types'; 
+} from './types';

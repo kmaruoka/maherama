@@ -198,11 +198,11 @@ export async function seedTitle(prisma: PrismaClient) {
   const titleMaster = await prisma.titleMaster.findFirst({
     where: { code: 'first_pray' }
   });
-  
+
   if (titleMaster) {
     await prisma.userTitle.createMany({
-      data: [{ 
-        user_id: 1, 
+      data: [{
+        user_id: 1,
         title_id: titleMaster.id,
         grade: 1,
         display_name: '初参拝'

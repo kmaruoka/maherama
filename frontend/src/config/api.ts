@@ -5,7 +5,7 @@ const getApiBase = () => {
     const port = import.meta.env.VITE_PORT || '3000';
     return `http://localhost:${port}`;
   }
-  
+
   // 本番環境（同じサーバー）
   const port = import.meta.env.VITE_API_PORT || '3000';
   return `http://${window.location.hostname}:${port}`;

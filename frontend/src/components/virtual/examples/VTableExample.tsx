@@ -2,13 +2,13 @@ import React from 'react';
 import { VirtualThemeProvider, VTable } from '../index';
 import type { ColumnDef } from '../types';
 
-type Row = { 
-  id: number; 
-  name: string; 
-  code: string; 
-  qty: number; 
-  price: number; 
-  note?: string; 
+type Row = {
+  id: number;
+  name: string;
+  code: string;
+  qty: number;
+  price: number;
+  note?: string;
 };
 
 const columns: ColumnDef<Row>[] = [
@@ -51,4 +51,4 @@ export default function VTableExample() {
       </div>
     </VirtualThemeProvider>
   );
-} 
+}

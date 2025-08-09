@@ -47,7 +47,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const { data: subscription } = useSubscription(userId);
 
   const [prayDistance, setPrayDistance] = useState<number>(100);
-  
+
   // 神社表示上限数の設定（デフォルト100、設定可能範囲: 10-500）
   const [maxShrineDisplay] = useLocalStorageState<number>('maxShrineDisplay', 100);
   useEffect(() => {
@@ -93,11 +93,11 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   // 地図の操作可否切り替え（touchZoom は MapContainer の props で制御）
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
-    
+
     // 少し遅延を入れて確実に適用
     const timer = setTimeout(() => {
       if (!mapRef.current) return;
-      
+
       if (debugMode) {
         mapRef.current.dragging.enable();
         mapRef.current.scrollWheelZoom.enable();
@@ -108,7 +108,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         mapRef.current.doubleClickZoom.disable();
       }
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [debugMode, mapReady]);
 
@@ -139,7 +139,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
 
     map.on('moveend', onMoveEnd);
     map.on('move', onMove);
-    return () => { 
+    return () => {
       map.off('moveend', onMoveEnd);
       map.off('move', onMove);
     };
@@ -182,7 +182,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     if (!centerArray || !prayDistance) {
       return shrines;
     }
-    
+
     // フィルタリングしつつ距離を計算
     const shrinesWithDistance = shrines
       .map(s => ({
@@ -298,11 +298,11 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
           // 神社マーカー専用のz-index範囲（5000-2000）を確保
           // 最大60個程度の神社表示を想定（60 * 50 = 3000）
           const zIndex = 5000 - (index * 50);
-          
+
           // if (index < 5) {
           //   console.log(`[DEBUG] Marker ${index}: ${s.name}, distance: ${s.distance?.toFixed(2)}m, zIndex: ${zIndex}`);
           // }
-          
+
           return (
             <ShrineMarker
               key={s.id}

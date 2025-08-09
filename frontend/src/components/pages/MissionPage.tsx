@@ -65,10 +65,10 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
           <CardGrid
             items={permanentMissions}
             renderItem={(mission) => (
-              <MissionCard 
-                key={mission.id} 
-                mission={mission} 
-                onClick={() => handleMissionClick(mission)} 
+              <MissionCard
+                key={mission.id}
+                mission={mission}
+                onClick={() => handleMissionClick(mission)}
               />
             )}
             cardWidth={114}
@@ -83,10 +83,10 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
           <CardGrid
             items={eventMissions}
             renderItem={(mission) => (
-              <MissionCard 
-                key={mission.id} 
-                mission={mission} 
-                onClick={() => handleMissionClick(mission)} 
+              <MissionCard
+                key={mission.id}
+                mission={mission}
+                onClick={() => handleMissionClick(mission)}
               />
             )}
             cardWidth={114}
@@ -100,4 +100,4 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
   );
 };
 
-export default MissionPage; 
+export default MissionPage;

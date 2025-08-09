@@ -16,8 +16,8 @@ const MissionPane: React.FC<MissionPaneProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const progressPercentage = mission.total_required > 0 
-    ? Math.min((mission.progress / mission.total_required) * 100, 100) 
+  const progressPercentage = mission.total_required > 0
+    ? Math.min((mission.progress / mission.total_required) * 100, 100)
     : 0;
 
   return (
@@ -27,8 +27,8 @@ const MissionPane: React.FC<MissionPaneProps> = ({
         <div className="modal-subtitle">{t('missionProgress')}</div>
         <div className="progress-container">
           <div className="progress-bar">
-            <div 
-              className="progress-fill" 
+            <div
+              className="progress-fill"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -62,7 +62,7 @@ const MissionPane: React.FC<MissionPaneProps> = ({
                         {shrine.name} ×{shrine.achieved}/{shrine.count}
                       </CustomLink>
                       {shrine.is_completed && (
-                        <CompletionBadge 
+                        <CompletionBadge
                           size={20}
                           className="position-absolute"
                           style={{
@@ -95,7 +95,7 @@ const MissionPane: React.FC<MissionPaneProps> = ({
                         {diety.name} ×{diety.achieved}/{diety.count}
                       </CustomLink>
                       {diety.is_completed && (
-                        <CompletionBadge 
+                        <CompletionBadge
                           size={20}
                           className="position-absolute"
                           style={{
@@ -141,13 +141,13 @@ const MissionPane: React.FC<MissionPaneProps> = ({
       {/* 期間（イベントミッションのみ） */}
       {mission.mission_type === 'event' && mission.start_at && mission.end_at && (
         <div className="modal-section">
-          <div style={{ 
-            fontSize: '0.9rem', 
-            opacity: 0.7, 
-            textAlign: 'center', 
-            padding: '10px', 
-            background: 'rgba(0, 0, 0, 0.05)', 
-            borderRadius: '6px' 
+          <div style={{
+            fontSize: '0.9rem',
+            opacity: 0.7,
+            textAlign: 'center',
+            padding: '10px',
+            background: 'rgba(0, 0, 0, 0.05)',
+            borderRadius: '6px'
           }}>
             {t('missionPeriod')}: {new Date(mission.start_at).toLocaleDateString()} - {new Date(mission.end_at).toLocaleDateString()}
           </div>
@@ -157,4 +157,4 @@ const MissionPane: React.FC<MissionPaneProps> = ({
   );
 };
 
-export default MissionPane; 
+export default MissionPane;

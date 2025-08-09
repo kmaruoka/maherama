@@ -59,10 +59,10 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
                 <div style={{ color: 'var(--color-text-muted)' }}>読み込み中...</div>
               ) : (
                 users.map(user => (
-                  <div 
-                    key={user.id} 
+                  <div
+                    key={user.id}
                     className={`py-1 settings-page__user-list-item ${Number(idInput) === user.id ? 'fw-bold' : ''}`}
-                    style={{ 
+                    style={{
                       color: Number(idInput) === user.id ? 'var(--color-primary)' : 'var(--color-text)',
                       cursor: 'pointer'
                     }}

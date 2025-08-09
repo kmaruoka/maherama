@@ -46,4 +46,4 @@ export function useMissions() {
     staleTime: 0, // 常に最新データを取得
     refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
   });
-} 
+}

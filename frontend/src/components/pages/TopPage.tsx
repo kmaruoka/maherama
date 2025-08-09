@@ -16,16 +16,16 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
   const { t } = useTranslation();
   const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
   const { data: users = [], isLoading: isLoadingUsers } = useAllUsers();
-  
+
   // フォーム状態管理
   const [activeForm, setActiveForm] = useState<FormType | null>(null);
-  
+
   // フォームデータ
   const [registerForm, setRegisterForm] = useState({ username: '', email: '' });
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [resetForm, setResetForm] = useState({ email: '' });
   const [selectedTestUserId, setSelectedTestUserId] = useState<string>('');
-  
+
   // エラー・ローディング状態
   const [registerErrors, setRegisterErrors] = useState<{ [key: string]: string }>({});
   const [loginErrors, setLoginErrors] = useState<{ [key: string]: string }>({});
@@ -135,7 +135,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
   // テストユーザーログイン処理
   const handleTestUserLogin = () => {
     if (!selectedTestUserId) return;
-    
+
     const user = users.find(u => u.id.toString() === selectedTestUserId);
     if (user) {
       setCurrentUserId(user.id);
@@ -153,9 +153,9 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
     <div className="top-page">
       {/* ヒーローセクション - キービジュアル */}
       <div className="top-page__hero">
-        <img 
-          src="/images/jinjourney.png" 
-          alt="神JOURNEY" 
+        <img
+          src="/images/jinjourney.png"
+          alt="神JOURNEY"
           className="top-page__hero-image"
           onError={handleImageError}
         />

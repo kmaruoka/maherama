@@ -104,7 +104,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     if (data?.image_url || data?.image_url_m || data?.image_url_s || data?.image_url_l) {
       // データが更新されたら画像状態をリセット
       imageActions.resetImageState();
-      
+
       // 画像URLの存在確認を行う
       const imageUrl = data.image_url_l || data.image_url_m || data.image_url || data.image_url_s;
       if (imageUrl) {
@@ -199,7 +199,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       }, 100); // 100ms間隔でチェック
 
       window.addEventListener('storage', handleStorageChange);
-      
+
       return () => {
         window.removeEventListener('storage', handleStorageChange);
         clearInterval(interval);
@@ -221,13 +221,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   // 参拝可能かどうかを判定
   const radius = prayDistance !== null ? prayDistance : getRadiusFromSlots(0);
   const distance = (currentPosition && data) ? getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng) : null;
-  
+
   // 距離判定（小数点誤差を吸収して比較）
   // GPS位置が取得できない場合は、距離チェックをスキップして参拝を許可
   const canPray = currentPosition === null ? true : (
-    distance !== null && 
-    !isNaN(distance) && 
-    !isNaN(radius) && 
+    distance !== null &&
+    !isNaN(distance) &&
+    !isNaN(radius) &&
     distance <= radius
   );
 
@@ -478,9 +478,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           </div>
         </div>
       </div>
-      
+
       <div className="small modal-item-text mb-4">{data.location}</div>
-      
+
       {data.founded && (
         <div className="modal-section">
           <div className="field-row">
@@ -489,7 +489,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           </div>
         </div>
       )}
-      
+
       {data.description && (
         <div className="modal-section">
           <div className="field-row">
@@ -533,7 +533,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           </div>
         )}
       </div>
-      
+
       <div className="modal-section">
         <div className="modal-subtitle" onClick={() => setDetailView('deities')} style={{ cursor: 'pointer' }}>
           {t('enshrinedDeities')}
@@ -555,14 +555,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           )}
         </div>
       </div>
-      
+
       {data.history && (
         <div className="modal-section">
           <div className="modal-subtitle">{t('history')}</div>
           <div className="small">{data.history}</div>
         </div>
       )}
-      
+
       {data.festivals && (
         <div className="modal-section">
           <div className="modal-subtitle">{t('festivals')}</div>

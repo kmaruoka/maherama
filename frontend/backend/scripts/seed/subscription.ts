@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 
 export async function seedSubscription(prisma: PrismaClient) {
   const users = await prisma.user.findMany({ select: { id: true }, orderBy: { id: 'asc' }, take: 5 });
-  
+
   if (users.length === 0) return;
 
   const now = new Date();
@@ -19,9 +19,9 @@ export async function seedSubscription(prisma: PrismaClient) {
     billing_cycle_end: oneMonthLater
   }));
 
-  await prisma.userSubscription.createMany({ 
-    data: subscriptions, 
-    skipDuplicates: true 
+  await prisma.userSubscription.createMany({
+    data: subscriptions,
+    skipDuplicates: true
   });
 
   // 奇数IDユーザーだけrange_multiplierサブスクリプションを付与
@@ -38,4 +38,4 @@ export async function seedSubscription(prisma: PrismaClient) {
       });
     }
   }
-} 
+}

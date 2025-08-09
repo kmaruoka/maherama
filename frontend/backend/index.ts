@@ -8,11 +8,11 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
-const crypto = require('crypto');
+const nodeCrypto = require('crypto');
 const nodemailer = require('nodemailer');
-import { LEVEL_SYSTEM } from './shared/constants/levelSystem';
-import { addExperience } from './shared/utils/expSystem';
-import { EXP_REWARDS } from './shared/constants/expRewards';
+const levelSystemModule = require('./shared/constants/levelSystem');
+const expSystemModule = require('./shared/utils/expSystem');
+const expRewardsModule = require('./shared/constants/expRewards');
 
 // Stripe初期化（APIキーが設定されている場合のみ）
 let stripe = null;
@@ -44,7 +44,7 @@ app.use(express.json());
 app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
 
 // メール送信設定
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
@@ -56,16 +56,16 @@ const transporter = nodemailer.createTransporter({
 
 // 認証関連のユーティリティ関数
 function generateToken() {
-  return crypto.randomBytes(32).toString('hex');
+  return nodeCrypto.randomBytes(32).toString('hex');
 }
 
 function generateVerificationToken() {
-  return crypto.randomBytes(32).toString('hex');
+  return nodeCrypto.randomBytes(32).toString('hex');
 }
 
 async function sendVerificationEmail(email, token) {
   const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/activate?token=${token}`;
-  
+
   const mailOptions = {
     from: process.env.SMTP_USER,
     to: email,
@@ -89,7 +89,7 @@ async function sendVerificationEmail(email, token) {
 
 async function sendPasswordResetEmail(email, token) {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
-  
+
   const mailOptions = {
     from: process.env.SMTP_USER,
     to: email,
@@ -128,12 +128,12 @@ function setSimulateDate(dateString) {
     simulateDate = null;
     return { success: true, message: 'シミュレート日付をクリアしました' };
   }
-  
+
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
     return { success: false, message: '無効な日付形式です' };
   }
-  
+
   simulateDate = date;
   return { success: true, message: `シミュレート日付を設定しました: ${date.toISOString()}` };
 }
@@ -146,9 +146,9 @@ function getSimulateDate() {
 // ミッション達成チェックと報酬付与
 async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId?: number) {
   const currentDate = getCurrentDate();
-  
+
   console.log(`[DEBUG] checkAndRewardMissions called - userId: ${userId}, shrineId: ${shrineId}, dietyId: ${dietyId}`);
-  
+
   // ユーザーの進行中ミッションを取得
   const userMissions = await prisma.userMission.findMany({
     where: {
@@ -179,9 +179,9 @@ async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId
 
   for (const userMission of userMissions) {
     const mission = userMission.mission;
-    
+
     console.log(`[DEBUG] Checking mission: ${mission.name} (ID: ${mission.id})`);
-    
+
     // イベントミッションの場合は期間チェック
     if (mission.mission_type === 'event') {
       if (mission.start_at && currentDate < mission.start_at) {
@@ -202,7 +202,7 @@ async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId
       console.log(`[DEBUG] Mission ${mission.id} has ${mission.mission_shrines.length} shrine targets`);
       for (const missionShrine of mission.mission_shrines) {
         totalRequired += missionShrine.count;
-        
+
         // 参拝回数をカウント（ShrinePray + RemotePray）
         const shrinePrayCount = await prisma.shrinePray.count({
           where: {
@@ -218,7 +218,7 @@ async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId
         });
         const totalPrayCount = shrinePrayCount + remotePrayCount;
         progress += Math.min(totalPrayCount, missionShrine.count);
-        
+
         console.log(`[DEBUG] Shrine ${missionShrine.shrine_id} (${missionShrine.shrine.name}): required=${missionShrine.count}, shrinePray=${shrinePrayCount}, remotePray=${remotePrayCount}, total=${totalPrayCount}, progress+=${Math.min(totalPrayCount, missionShrine.count)}`);
       }
     }
@@ -228,7 +228,7 @@ async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId
       console.log(`[DEBUG] Mission ${mission.id} has ${mission.mission_dieties.length} diety targets`);
       for (const missionDiety of mission.mission_dieties) {
         totalRequired += missionDiety.count;
-        
+
         // 過去の参拝回数をカウント（今回の参拝も含む）
         const prayCount = await prisma.dietyPray.count({
           where: {
@@ -237,13 +237,13 @@ async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId
           }
         });
         progress += Math.min(prayCount, missionDiety.count);
-        
+
         console.log(`[DEBUG] Diety ${missionDiety.diety_id} (${missionDiety.diety.name}): required=${missionDiety.count}, prayCount=${prayCount}, progress+=${Math.min(prayCount, missionDiety.count)}`);
       }
     }
 
     console.log(`[DEBUG] Mission ${mission.id} progress: ${progress}/${totalRequired}`);
-    
+
     // ミッション達成チェック
     if (progress >= totalRequired && totalRequired > 0) {
       console.log(`[DEBUG] Mission ${mission.id} COMPLETED! Updating database...`);
@@ -272,7 +272,7 @@ async function checkAndRewardMissions(userId: number, shrineId?: number, dietyId
 
         // 経験値報酬
         if (mission.exp_reward > 0) {
-          await addExperience(prisma, userId, mission.exp_reward, 'MISSION_COMPLETION');
+          await expSystemModule.addExperience(prisma, userId, mission.exp_reward, 'MISSION_COMPLETION');
         }
 
         // 能力値報酬
@@ -393,7 +393,7 @@ async function getUserPrayDistance(userId: number) {
   });
 
   const totalDistance = baseDistance + additionalDistance;
-  
+
   // --- 調査用ログ出力 ---
   // console.log('[調査] getUserPrayDistance:', {
   //   userId,
@@ -462,7 +462,7 @@ async function getUserWorshipCount(userId: number) {
   });
 
   const totalCount = baseCount + additionalCount;
-  
+
   if (activeSubscription) {
     return totalCount + 1;
   }
@@ -474,7 +474,7 @@ async function getUserWorshipCount(userId: number) {
 async function getTodayWorshipCount(userId: number) {
   const today = getCurrentDate();
   today.setHours(0, 0, 0, 0);
-  
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -533,7 +533,7 @@ async function canPurchaseAbility(userId, abilityId) {
 // 能力を購入
 async function purchaseAbility(userId, abilityId) {
   const checkResult = await canPurchaseAbility(userId, abilityId);
-  
+
   if (!checkResult.canPurchase) {
     return { success: false, reason: checkResult.reason };
   }
@@ -588,7 +588,7 @@ function getRadiusFromSlots(slots) {
 
 async function getUserSubscription(userId) {
   const subscription = await prisma.userSubscription.findFirst({
-    where: { 
+    where: {
       user_id: userId,
       is_active: true,
       expires_at: { gt: getCurrentDate() }
@@ -659,7 +659,7 @@ app.get('/shrines/all', async (req, res) => {
       dieties: (shrine.shrine_dieties || []).map(sd => sd.diety)
     }));
     //console.log(`/shrines/all: ${formattedShrines.length}件返却`);
-    
+
     res.json(formattedShrines);
   } catch (err) {
     console.error('Error fetching all shrines:', err);
@@ -715,7 +715,7 @@ app.get('/shrines', async (req, res) => {
       image_url_xl: shrine.image_url_xl,
       image_by: shrine.image_by
     }));
-    
+
     res.json(formattedShrines);
   } catch (err) {
     console.error('Error fetching shrines:', err);
@@ -770,22 +770,22 @@ app.get('/shrines/:id', authenticateJWT, async (req, res) => {
     let catalogedAt = null;
     let lastPrayedAt = null;
     const userId = req.user.id; // authenticateJWTミドルウェアで設定されたユーザーIDを使用
-    
+
     if (userId) {
       const catalog = await prisma.shrineCatalog.findFirst({
-        where: { 
+        where: {
           user_id: userId,
-          shrine_id: id 
+          shrine_id: id
         },
         select: { cataloged_at: true, last_prayed_at: true }
       });
-      
+
       if (catalog) {
         catalogedAt = catalog.cataloged_at;
         lastPrayedAt = catalog.last_prayed_at;
       }
     }
-    
+
     if (!shrine) {
       return res.status(404).json({ error: 'Shrine not found' });
     }
@@ -797,7 +797,7 @@ app.get('/shrines/:id', authenticateJWT, async (req, res) => {
       lastPrayedAt: lastPrayedAt,
       dieties: (shrine.shrine_dieties || []).map(sd => sd.diety)
     };
-    
+
     res.json(result);
   } catch (err) {
     console.error('Error fetching shrine:', err);
@@ -813,7 +813,7 @@ async function prayAtShrine({
   logType = '参拝', // '参拝' or '遥拝'
 }) {
   console.log(`[DEBUG] prayAtShrine called - shrineId: ${shrineId}, userId: ${userId}, logType: ${logType}`);
-  
+
   // 神社・祭神情報取得
   const shrine = await prisma.shrine.findUnique({
     where: { id: shrineId },
@@ -830,7 +830,7 @@ async function prayAtShrine({
     console.log(`[DEBUG] Shrine not found: ${shrineId}`);
     throw new Error('Not found');
   }
-  
+
   console.log(`[DEBUG] Found shrine: ${shrine.name} with ${shrine.shrine_dieties.length} dieties`);
 
   // 参拝/遥拝記録
@@ -898,8 +898,8 @@ async function prayAtShrine({
 
   // 経験値
   const expType = logType === '参拝' ? 'PRAY' : 'REMOTE_PRAY';
-  const expReward = logType === '参拝' ? EXP_REWARDS.PRAY : EXP_REWARDS.REMOTE_PRAY;
-  const expResult = await addExperience(prisma, userId, expReward, expType);
+  const expReward = logType === '参拝' ? expRewardsModule.EXP_REWARDS.PRAY : expRewardsModule.EXP_REWARDS.REMOTE_PRAY;
+  const expResult = await expSystemModule.addExperience(prisma, userId, expReward, expType);
 
   // ログ（神社と神様の両方をリンク表示）
   const dietyLinks = shrine.shrine_dieties.map(sd => `<diety:${sd.diety.id}:${sd.diety.name}>`);
@@ -954,7 +954,7 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   if (dist > prayDistance) {
     return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
   }
-  
+
   // 参拝制限チェック: 1ユーザー1日1神社につき1回のみ
   // ShrinePrayStatsDailyテーブルで判定（データ量最適化のため）
   const todaysPrayStats = await prisma.shrinePrayStatsDaily.findUnique({
@@ -965,11 +965,11 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
       }
     }
   });
-  
+
   if (todaysPrayStats && todaysPrayStats.count > 0) {
     return res.status(400).json({ error: 'この神社は今日既に参拝済みです' });
   }
-  
+
   try {
     const result = await prayAtShrine({
       prisma,
@@ -988,9 +988,9 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
 app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const userId = parseInt(req.headers['x-user-id']) || 1;
-  
+
   console.log(`[DEBUG] Remote pray API called - shrineId: ${id}, userId: ${userId}`);
-  
+
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
   }
@@ -1001,7 +1001,7 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const maxWorshipCount = await getUserWorshipCount(userId);
   const todayWorshipCount = await getTodayWorshipCount(userId);
   console.log(`[DEBUG] Remote pray check - maxWorshipCount: ${maxWorshipCount}, todayWorshipCount: ${todayWorshipCount}`);
-  
+
   if (todayWorshipCount >= maxWorshipCount) {
     console.log(`[DEBUG] Remote pray limit exceeded`);
     return res.status(400).json({ error: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）` });
@@ -1026,7 +1026,7 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
 app.get('/missions', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.headers['x-user-id']) || 1;
   console.log(`[DEBUG] Missions API called - userId: ${userId}`);
-  
+
   if (!userId || isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
   }
@@ -1034,7 +1034,7 @@ app.get('/missions', authenticateJWT, async (req, res) => {
   try {
     const currentDate = getCurrentDate();
     console.log(`[DEBUG] Current date: ${currentDate}`);
-    
+
     // 利用可能なミッションを取得
     const missions = await prisma.missionMaster.findMany({
       where: {
@@ -1192,7 +1192,7 @@ app.get('/missions', authenticateJWT, async (req, res) => {
 app.get('/events', async (req, res) => {
   try {
     const currentDate = getCurrentDate();
-    
+
     const events = await prisma.eventMaster.findMany({
       where: {
         start_at: { lte: currentDate },
@@ -1285,16 +1285,16 @@ app.get('/dieties', async (req, res) => {
 
 app.get('/dieties/:id', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  
+
   // デバッグ用ログ
   //console.log('Diety ID parameter:', req.params.id, 'Parsed ID:', id);
-  
+
   // IDが無効な値の場合はエラーを返す
   if (isNaN(id) || id <= 0) {
     console.error('Invalid diety ID:', req.params.id);
     return res.status(400).json({ error: 'Invalid ID parameter' });
   }
-  
+
   try {
     const diety = await prisma.diety.findUnique({
       where: { id },
@@ -1331,16 +1331,16 @@ app.get('/dieties/:id', authenticateJWT, async (req, res) => {
     let catalogedAt = null;
     let lastPrayedAt = null;
     const userId = req.user.id; // authenticateJWTミドルウェアで設定されたユーザーIDを使用
-    
+
     if (userId) {
       const catalog = await prisma.dietyCatalog.findFirst({
-        where: { 
+        where: {
           user_id: userId,
-          diety_id: id 
+          diety_id: id
         },
         select: { cataloged_at: true, last_prayed_at: true }
       });
-      
+
       if (catalog) {
         catalogedAt = catalog.cataloged_at;
         lastPrayedAt = catalog.last_prayed_at;
@@ -1464,7 +1464,7 @@ app.get('/logs', async (req, res) => {
       },
       take: 50
     });
-    
+
     res.json(logs);
   } catch (err) {
     console.error('Error fetching logs:', err);
@@ -1486,7 +1486,7 @@ function authenticateJWT(req, res, next) {
     console.log('開発環境: 認証バイパス、ユーザーID:', req.user.id);
     return next();
   }
-  
+
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ error: 'No token provided' });
@@ -1567,8 +1567,8 @@ app.post('/auth/register', async (req, res) => {
       // メール送信に失敗した場合でもユーザーは作成する
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'ユーザー登録が完了しました。確認メールをお送りしましたので、メール内のリンクをクリックしてアカウントを有効化してください。',
       user: {
         id: user.id,
@@ -1608,9 +1608,9 @@ app.post('/auth/activate', async (req, res) => {
       }
     });
 
-    res.json({ 
-      success: true, 
-      message: 'アカウントが正常に有効化されました。ログインしてください。' 
+    res.json({
+      success: true,
+      message: 'アカウントが正常に有効化されました。ログインしてください。'
     });
 
   } catch (error) {
@@ -1694,9 +1694,9 @@ app.post('/auth/reset-password', async (req, res) => {
 
     if (!user) {
       // セキュリティのため、ユーザーが存在しない場合でも成功レスポンスを返す
-      return res.json({ 
-        success: true, 
-        message: 'パスワードリセット用のメールをお送りしました。' 
+      return res.json({
+        success: true,
+        message: 'パスワードリセット用のメールをお送りしました。'
       });
     }
 
@@ -1718,9 +1718,9 @@ app.post('/auth/reset-password', async (req, res) => {
       return res.status(500).json({ error: 'メール送信に失敗しました' });
     }
 
-    res.json({ 
-      success: true, 
-      message: 'パスワードリセット用のメールをお送りしました。' 
+    res.json({
+      success: true,
+      message: 'パスワードリセット用のメールをお送りしました。'
     });
 
   } catch (error) {
@@ -1762,9 +1762,9 @@ app.post('/auth/reset-password/confirm', async (req, res) => {
       }
     });
 
-    res.json({ 
-      success: true, 
-      message: 'パスワードが正常にリセットされました。新しいパスワードでログインしてください。' 
+    res.json({
+      success: true,
+      message: 'パスワードが正常にリセットされました。新しいパスワードでログインしてください。'
     });
 
   } catch (error) {
@@ -1902,37 +1902,37 @@ app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res)
   try {
     const userId = parseInt(req.headers['x-user-id']) || 1;
     const { newSlots, stripeSubscriptionId } = req.body;
-    
+
     if (newSlots === undefined) {
       return res.status(400).json({ error: 'newSlots is required' });
     }
-    
+
     const slots = newSlots;
-    
+
     // 現在のアクティブなサブスクリプションを取得
     const currentSubscription = await prisma.userSubscription.findFirst({
-      where: { 
+      where: {
         user_id: userId,
         is_active: true,
         expires_at: { gt: getCurrentDate() }
       },
       orderBy: { created_at: 'desc' }
     });
-    
+
     const now = getCurrentDate();
-    
+
     if (currentSubscription) {
       // 現在のサブスクリプションを非アクティブ化
       await prisma.userSubscription.update({
         where: { id: currentSubscription.id },
         data: { is_active: false }
       });
-      
+
       // 秒割り計算用の新しいサブスクリプションを作成
       const newExpiresAt = currentSubscription.expires_at;
       const billingCycleStart = currentSubscription.billing_cycle_start || currentSubscription.created_at;
       const billingCycleEnd = currentSubscription.billing_cycle_end || currentSubscription.expires_at;
-      
+
       await prisma.userSubscription.create({
         data: {
           user_id: userId,
@@ -1959,7 +1959,7 @@ app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res)
         }
       });
     }
-    
+
     res.json({ success: true, slots: slots });
   } catch (err) {
     console.error('Subscription change error:', err);
@@ -1972,7 +1972,7 @@ app.post('/subscription/create-checkout-session', authenticateJWT, async (req, r
   try {
     const userId = parseInt(req.headers['x-user-id']) || 1;
     const { planId, platform } = req.body;
-    
+
     // プラン定義（slots数値のみ）
     const plans = {
       'slots-1': { price: 200, slots: 1 },
@@ -1980,12 +1980,12 @@ app.post('/subscription/create-checkout-session', authenticateJWT, async (req, r
       'slots-3': { price: 600, slots: 3 },
       'slots-4': { price: 800, slots: 4 }
     };
-    
+
     const plan = plans[planId];
     if (!plan) {
       return res.status(400).json({ error: 'Invalid plan' });
     }
-    
+
     // Stripe Checkoutセッション作成（実際の実装ではStripe SDKが必要）
     const sessionData = {
       planId,
@@ -2003,10 +2003,10 @@ app.post('/subscription/create-checkout-session', authenticateJWT, async (req, r
       //   metadata: { userId, planId }
       // });
     };
-    
+
     // 仮のセッションID（実際はStripeから取得）
     const sessionId = `cs_${Date.now()}_${userId}_${planId}`;
-    
+
     res.json({ sessionId, ...sessionData });
   } catch (err) {
     console.error('Checkout session creation error:', err);
@@ -2353,7 +2353,7 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
   try {
     const stats = await prisma.shrinePrayStats.findMany({
       where: { user_id: userId },
-      include: { 
+      include: {
         shrine: {
           select: {
             id: true,
@@ -2370,7 +2370,7 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
       },
       orderBy: { count: 'desc' },
     });
-    
+
     // ShrineCatalog から last_prayed_at と cataloged_at を取得
     const catalogs = await prisma.shrineCatalog.findMany({
       where: { user_id: userId },
@@ -2378,7 +2378,7 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
     });
     const lastPrayedMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.last_prayed_at]));
     const catalogedAtMap = Object.fromEntries(catalogs.map(b => [b.shrine_id, b.cataloged_at]));
-    
+
     const result = stats.map(s => {
       return {
         id: s.shrine.id,
@@ -2395,7 +2395,7 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
         image_url_xs: s.shrine.image_url_xs || null
       };
     });
-    
+
     // デバッグ用: 最初のアイテムのデータをログに出力
     console.log('=== SHRINE API CALLED ===');
     console.log('Result length:', result.length);
@@ -2404,7 +2404,7 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
     } else {
       console.log('No shrine data found');
     }
-    
+
     res.json(result);
   } catch (err) {
     console.error('Error fetching user shrines:', err);
@@ -2444,9 +2444,9 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
     // まずDietyPrayStatsからdiety_idとcountを取得
     const stats = await prisma.dietyPrayStats.findMany({
       where: { user_id: userId },
-      select: { 
-        diety_id: true, 
-        count: true 
+      select: {
+        diety_id: true,
+        count: true
       },
       orderBy: { count: 'desc' },
     });
@@ -2458,10 +2458,10 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
     // Dietyテーブルから神様情報を取得（画像URLも含む）
     const dieties = await prisma.diety.findMany({
       where: { id: { in: dietyIds } },
-      select: { 
-        id: true, 
-        name: true, 
-        kana: true, 
+      select: {
+        id: true,
+        name: true,
+        kana: true,
         image_url: true,
         image_url_xs: true,
         image_url_s: true,
@@ -2496,7 +2496,7 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
         image_url_xs: diety.image_url_xs || null
       };
     }).filter(Boolean);
-    
+
     // デバッグ用: 最初のアイテムのデータをログに出力
     console.log('=== DIETY API CALLED ===');
     console.log('Result length:', result.length);
@@ -2505,7 +2505,7 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
     } else {
       console.log('No diety data found');
     }
-    
+
     res.json(result);
   } catch (err) {
     console.error('Error fetching user dieties:', err);
@@ -2522,37 +2522,37 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
     // まずDietyPrayStatsからdiety_idとcountを取得
     const stats = await prisma.dietyPrayStats.findMany({
       where: { user_id: userId },
-      select: { 
-        diety_id: true, 
-        count: true 
+      select: {
+        diety_id: true,
+        count: true
       },
       orderBy: { count: 'desc' },
     });
-    
+
     if (stats.length === 0) {
       return res.json([]);
     }
-    
+
     // diety_idのリストを作成
     const dietyIds = stats.map(s => s.diety_id);
-    
+
     // Dietyテーブルから神様情報を取得
     const dieties = await prisma.diety.findMany({
       where: { id: { in: dietyIds } },
-      select: { 
-        id: true, 
-        name: true, 
-        kana: true, 
- 
+      select: {
+        id: true,
+        name: true,
+        kana: true,
+
       }
     });
-    
+
     const dietyMap = Object.fromEntries(dieties.map(d => [d.id, d]));
-    
+
     const result = stats.map(s => {
       const diety = dietyMap[s.diety_id];
       if (!diety) return null;
-      
+
       return {
         id: diety.id,
         name: diety.name,
@@ -2561,7 +2561,7 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
 
       };
     }).filter(Boolean);
-    
+
     res.json(result);
   } catch (err) {
     console.error('Error fetching user dieties:', err);
@@ -2608,13 +2608,13 @@ app.get('/users/:id/titles', authenticateJWT, async (req, res) => {
 app.get('/abilities', authenticateJWT, async (req, res) => {
   try {
     const abilities = await prisma.abilityMaster.findMany({
-      select: { 
-        id: true, 
-        name: true, 
+      select: {
+        id: true,
+        name: true,
         description: true,
-        base_cost: true, 
+        base_cost: true,
         cost_increase: true,
-        effect_type: true, 
+        effect_type: true,
         effect_value: true,
         max_level: true,
         prerequisite_ability_id: true
@@ -2631,16 +2631,16 @@ app.get('/abilities', authenticateJWT, async (req, res) => {
 app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
   const abilityId = parseInt(req.params.id, 10);
   const userId = req.user.id;
-  
+
   //console.log('能力獲得リクエスト:', { abilityId, userId });
-  
+
   if (isNaN(abilityId) || abilityId <= 0) {
     console.error('無効な能力ID:', abilityId);
     return res.status(400).json({ error: 'Invalid ability ID' });
   }
-  
+
   try {
-    const ability = await prisma.abilityMaster.findUnique({ 
+    const ability = await prisma.abilityMaster.findUnique({
       where: { id: abilityId },
       include: { prerequisite_ability: true }
     });
@@ -2648,13 +2648,13 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
       console.error('能力が見つかりません:', abilityId);
       return res.status(404).json({ error: 'Ability not found' });
     }
-    
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       console.error('ユーザーが見つかりません:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     // 前提能力のチェック
     if (ability.prerequisite_ability_id) {
       const prerequisite = await prisma.userAbility.findUnique({
@@ -2665,30 +2665,30 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
         return res.status(400).json({ error: 'Prerequisite ability not acquired' });
       }
     }
-    
+
     // 既に獲得済みかチェック
     const existing = await prisma.userAbility.findUnique({
       where: { user_id_ability_id: { user_id: userId, ability_id: abilityId } }
     });
-    
+
     if (existing) {
       console.error('既に獲得済みの能力:', { userId, abilityId });
       return res.status(400).json({ error: 'Ability already acquired' });
     }
-    
-    // console.log('能力情報:', { 
-    //   userId: user.id, 
-    //   abilityPoints: user.ability_points, 
+
+    // console.log('能力情報:', {
+    //   userId: user.id,
+    //   abilityPoints: user.ability_points,
     //   abilityCost: ability.cost
     // });
-    
+
     if (user.ability_points < ability.cost) {
       console.error('能力ポイント不足:', { current: user.ability_points, required: ability.cost });
       return res.status(400).json({ error: 'Insufficient ability points' });
     }
-    
+
     //console.log('能力獲得処理開始');
-    
+
     // 新しい能力を獲得
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -2706,7 +2706,7 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
         }
       });
     });
-    
+
     //console.log('能力獲得成功');
     res.json({ success: true, cost: ability.cost });
   } catch (err) {
@@ -2814,8 +2814,8 @@ app.get('/users/:id/level-info', authenticateJWT, async (req, res) => {
       level: {
         current: currentLevelMaster,
         next: nextLevelMaster,
-        progress: nextLevelMaster ? 
-          Math.min(100, Math.floor((user.exp - currentLevelMaster.required_exp) / (nextLevelMaster.required_exp - currentLevelMaster.required_exp) * 100)) : 
+        progress: nextLevelMaster ?
+          Math.min(100, Math.floor((user.exp - currentLevelMaster.required_exp) / (nextLevelMaster.required_exp - currentLevelMaster.required_exp) * 100)) :
           100
       },
       stats: {
@@ -2893,14 +2893,14 @@ app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
 app.post('/abilities/:id/purchase', authenticateJWT, async (req, res) => {
   const abilityId = parseInt(req.params.id, 10);
   const userId = req.user.id;
-  
+
   if (isNaN(abilityId) || abilityId <= 0) {
     return res.status(400).json({ error: 'Invalid ability ID' });
   }
 
   try {
     const result = await purchaseAbility(userId, abilityId);
-    
+
     if (!result.success) {
       return res.status(400).json({ error: result.reason });
     }
@@ -2911,9 +2911,9 @@ app.post('/abilities/:id/purchase', authenticateJWT, async (req, res) => {
       select: { ability_points: true }
     });
 
-    res.json({ 
-      success: true, 
-      ability_points: user.ability_points 
+    res.json({
+      success: true,
+      ability_points: user.ability_points
     });
   } catch (err) {
     console.error('Error purchasing ability:', err);
@@ -2930,7 +2930,7 @@ app.get('/users/:id/worship-limit', authenticateJWT, async (req, res) => {
   try {
     const maxWorshipCount = await getUserWorshipCount(userId);
     const todayWorshipCount = await getTodayWorshipCount(userId);
-    
+
     res.json({
       max_worship_count: maxWorshipCount,
       today_worship_count: todayWorshipCount,
@@ -2951,7 +2951,7 @@ app.get('/users/:id/pray-distance', authenticateJWT, async (req, res) => {
   }
   try {
     const prayDistance = await getUserPrayDistance(userId);
-    
+
     res.json({
       pray_distance: prayDistance
     });
@@ -2986,11 +2986,11 @@ app.get('/users/:id', authenticateJWT, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { 
-        id: true, 
-        name: true, 
-        level: true, 
-        exp: true, 
+      select: {
+        id: true,
+        name: true,
+        level: true,
+        exp: true,
         ability_points: true,
         image_id: true,
         image_url: true,
@@ -3072,8 +3072,8 @@ app.get('/users/:id/following', authenticateJWT, async (req, res) => {
       where: { follower_id: userId },
       include: {
         following: {
-          select: { 
-            id: true, 
+          select: {
+            id: true,
             name: true,
             image_id: true,
             image_url: true,
@@ -3087,7 +3087,7 @@ app.get('/users/:id/following', authenticateJWT, async (req, res) => {
         }
       }
     });
-    
+
     const result = following.map(f => ({
       id: f.following.id,
       name: f.following.name,
@@ -3100,7 +3100,7 @@ app.get('/users/:id/following', authenticateJWT, async (req, res) => {
       image_url_xl: f.following.image_url_xl,
       image_by: f.following.image_by
     }));
-    
+
     res.json(result);
   } catch (err) {
     console.error('Error fetching following:', err);
@@ -3119,8 +3119,8 @@ app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
       where: { following_id: userId },
       include: {
         follower: {
-          select: { 
-            id: true, 
+          select: {
+            id: true,
             name: true,
             image_id: true,
             image_url: true,
@@ -3134,7 +3134,7 @@ app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
         }
       }
     });
-    
+
     const result = followers.map(f => ({
       id: f.follower.id,
       name: f.follower.name,
@@ -3147,7 +3147,7 @@ app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
       image_url_xl: f.follower.image_url_xl,
       image_by: f.follower.image_by
     }));
-    
+
     res.json(result);
   } catch (err) {
     console.error('Error fetching followers:', err);
@@ -3161,12 +3161,12 @@ app.post('/follows', authenticateJWT, async (req, res) => {
   if (!followerId || !followingId) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  
+
   // 自分自身をフォローできないようにする
   if (followerId === followingId) {
     return res.status(400).json({ error: 'Cannot follow yourself' });
   }
-  
+
   try {
     // 既存のフォロー関係をチェック
     const existingFollow = await prisma.follow.findUnique({
@@ -3177,11 +3177,11 @@ app.post('/follows', authenticateJWT, async (req, res) => {
         }
       }
     });
-    
+
     if (existingFollow) {
       return res.status(400).json({ error: 'Already following this user' });
     }
-    
+
     await prisma.follow.create({
       data: {
         follower_id: followerId,
@@ -3264,7 +3264,7 @@ app.post('/subscription/reset-abilities/checkout', authenticateJWT, async (req, 
   if (!stripe) {
     return res.status(503).json({ error: 'Stripe機能が無効です。STRIPE_SECRET_KEYを設定してください。' });
   }
-  
+
   try {
     const userId = req.user.id;
     // Stripe Price IDは.envから取得
@@ -3290,7 +3290,7 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
   if (!stripe) {
     return res.status(503).json({ error: 'Stripe機能が無効です。STRIPE_SECRET_KEYを設定してください。' });
   }
-  
+
   const sig = req.headers['stripe-signature'];
   let event;
   try {
@@ -3329,24 +3329,24 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
 app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   const userId = parseInt(req.headers['x-user-id']) || 1;
-  
+
   if (isNaN(shrineId) || shrineId <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
   }
-  
+
   try {
     // 1. 図鑑収録済みかどうか（ShrineCatalogテーブルで判定）
     const shrineCatalog = await prisma.shrineCatalog.findUnique({
       where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } }
     });
     const isInZukan = !!shrineCatalog;
-    
+
     // 2. 合計参拝回数
     const shrineStats = await prisma.shrinePrayStats.findFirst({
       where: { shrine_id: shrineId, user_id: userId }
     });
     const totalPrayCount = shrineStats ? shrineStats.count : 0;
-    
+
     // 2. 今日の参拝済み判定（ShrinePrayStatsDailyで判定）
     const todayPrayStats = await prisma.shrinePrayStatsDaily.findUnique({
       where: {
@@ -3357,15 +3357,15 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
       }
     });
     const hasPrayedToday = todayPrayStats && todayPrayStats.count > 0;
-    
+
     // 3. 遥拝回数制限
     const maxWorshipCount = await getUserWorshipCount(userId);
     const todayWorshipCount = await getTodayWorshipCount(userId);
     const canRemotePray = todayWorshipCount < maxWorshipCount; // 神社個別の制限は削除
-    
+
     // 4. 参拝可能距離
     const prayDistance = await getUserPrayDistance(userId);
-    
+
     const response = {
       shrine_id: shrineId,
       total_pray_count: totalPrayCount,
@@ -3376,9 +3376,9 @@ app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
       max_worship_count: maxWorshipCount,
       today_worship_count: todayWorshipCount
     };
-    
+
     //console.log(`Shrine marker status for shrine ${shrineId}, user ${userId}:`, response);
-    
+
     res.json(response);
   } catch (err) {
     console.error('Error fetching shrine marker status:', err);
@@ -3427,7 +3427,7 @@ async function handleImageUpload(type, id, userId, fileBuffer) {
   const yyyymm = getYYYYMM();
   const dir = path.join(__dirname, '..', 'public', 'images', yyyymm);
   ensureDirSync(dir);
-  
+
   // 6サイズ保存
   const markerPath = path.join(dir, getImageFileName(type, id, userId, 'marker'));
   const origPath = path.join(dir, getImageFileName(type, id, userId, 'original'));
@@ -3435,14 +3435,14 @@ async function handleImageUpload(type, id, userId, fileBuffer) {
   const size256Path = path.join(dir, getImageFileName(type, id, userId, '256'));
   const size512Path = path.join(dir, getImageFileName(type, id, userId, '512'));
   const size1024Path = path.join(dir, getImageFileName(type, id, userId, '1024'));
-  
+
   await sharp(fileBuffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
   await sharp(fileBuffer).resize(112, 112).jpeg({ quality: 90 }).toFile(size112Path);
   await sharp(fileBuffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
   await sharp(fileBuffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
   await sharp(fileBuffer).resize(1024, 1024).jpeg({ quality: 90 }).toFile(size1024Path);
   await sharp(fileBuffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
-  
+
   // URL生成
   const originalUrl = `/images/${yyyymm}/${getImageFileName(type, id, userId, 'original')}`;
   const urlXs = `/images/${yyyymm}/${getImageFileName(type, id, userId, 'marker')}`;
@@ -3450,7 +3450,7 @@ async function handleImageUpload(type, id, userId, fileBuffer) {
   const urlM = `/images/${yyyymm}/${getImageFileName(type, id, userId, '256')}`;
   const urlL = `/images/${yyyymm}/${getImageFileName(type, id, userId, '512')}`;
   const urlXl = `/images/${yyyymm}/${getImageFileName(type, id, userId, '1024')}`;
-  
+
   return {
     originalUrl,
     urlXs,
@@ -3472,10 +3472,10 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
   try {
     // 共通画像アップロード処理
     const imageData = await handleImageUpload('shrine', shrineId, userId, req.file.buffer);
-    
+
     // ユーザー情報取得
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+
     // Imageテーブルに登録
     const image = await prisma.image.create({
       data: {
@@ -3488,12 +3488,12 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
         uploaded_by: user?.name || '不明'
       }
     });
-    
+
     // 現在のサムネイルがあるかチェック
     const currentThumbnail = await prisma.shrineImage.findFirst({
       where: { shrine_id: shrineId, is_current_thumbnail: true }
     });
-    
+
     // ShrineImageテーブルに登録
     const newImage = await prisma.shrineImage.create({
       data: {
@@ -3504,7 +3504,7 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
         is_current_thumbnail: !currentThumbnail // サムネイルがない場合は即採用
       }
     });
-    
+
     // サムネイルがない場合は神社テーブルも更新
     if (!currentThumbnail) {
       await prisma.shrine.update({
@@ -3521,7 +3521,7 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
         }
       });
     }
-    
+
     res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
   } catch (err) {
     console.error('Shrine画像アップロード失敗:', err);
@@ -3539,10 +3539,10 @@ app.post('/dietys/:id/images/upload', authenticateJWT, upload.single('image'), a
   try {
     // 共通画像アップロード処理
     const imageData = await handleImageUpload('diety', dietyId, userId, req.file.buffer);
-    
+
     // ユーザー情報取得
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+
     // Imageテーブルに登録
     const image = await prisma.image.create({
       data: {
@@ -3555,12 +3555,12 @@ app.post('/dietys/:id/images/upload', authenticateJWT, upload.single('image'), a
         uploaded_by: user?.name || '不明'
       }
     });
-    
+
     // 現在のサムネイルがあるかチェック
     const currentThumbnail = await prisma.dietyImage.findFirst({
       where: { diety_id: dietyId, is_current_thumbnail: true }
     });
-    
+
     // DietyImageテーブルに登録
     const newImage = await prisma.dietyImage.create({
       data: {
@@ -3571,7 +3571,7 @@ app.post('/dietys/:id/images/upload', authenticateJWT, upload.single('image'), a
         is_current_thumbnail: !currentThumbnail // サムネイルがない場合は即採用
       }
     });
-    
+
     // サムネイルがない場合は神様テーブルも更新
     if (!currentThumbnail) {
       await prisma.diety.update({
@@ -3588,7 +3588,7 @@ app.post('/dietys/:id/images/upload', authenticateJWT, upload.single('image'), a
         }
       });
     }
-    
+
     res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
   } catch (err) {
     console.error('Diety画像アップロード失敗:', err);
@@ -3606,10 +3606,10 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
   try {
     // 共通画像アップロード処理
     const imageData = await handleImageUpload('diety', dietyId, userId, req.file.buffer);
-    
+
     // ユーザー情報取得
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+
     // Imageテーブルに登録
     const image = await prisma.image.create({
       data: {
@@ -3622,12 +3622,12 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
         uploaded_by: user?.name || '不明'
       }
     });
-    
+
     // 現在のサムネイルがあるかチェック
     const currentThumbnail = await prisma.dietyImage.findFirst({
       where: { diety_id: dietyId, is_current_thumbnail: true }
     });
-    
+
     // DietyImageテーブルに登録
     const newImage = await prisma.dietyImage.create({
       data: {
@@ -3638,7 +3638,7 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
         is_current_thumbnail: !currentThumbnail // サムネイルがない場合は即採用
       }
     });
-    
+
     // サムネイルがない場合は神様テーブルも更新
     if (!currentThumbnail) {
       await prisma.diety.update({
@@ -3655,7 +3655,7 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
         }
       });
     }
-    
+
     res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
   } catch (err) {
     console.error('Diety画像アップロード失敗:', err);
@@ -3667,28 +3667,28 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
 app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   const authenticatedUserId = req.user.id;
-  
+
   // 自分の画像のみアップロード可能
   if (userId !== authenticatedUserId) {
     return res.status(403).json({ error: '自分の画像のみアップロード可能です' });
   }
-  
+
   if (isNaN(userId) || !req.file) {
     return res.status(400).json({ error: 'IDまたは画像が不正です' });
   }
-  
+
   try {
     const yyyymm = getYYYYMM();
     const dir = path.join(__dirname, '..', 'public', 'images', yyyymm);
     ensureDirSync(dir);
-    
+
     // ユーザー画像用のサイズ設定
     const sizes = {
       marker: 64,
       thumbnail: 200,
       original: 800
     };
-    
+
     // 6サイズ保存
     const markerPath = path.join(dir, getImageFileName('user', userId, userId, 'marker'));
     const thumbPath = path.join(dir, getImageFileName('user', userId, userId, 'thumbnail'));
@@ -3697,14 +3697,14 @@ app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), as
     const size256Path = path.join(dir, getImageFileName('user', userId, userId, '256'));
     const size512Path = path.join(dir, getImageFileName('user', userId, userId, '512'));
     const size1024Path = path.join(dir, getImageFileName('user', userId, userId, '1024'));
-    
+
     await sharp(req.file.buffer).resize(64, 64).jpeg({ quality: 90 }).toFile(markerPath);
     await sharp(req.file.buffer).resize(112, 112).jpeg({ quality: 90 }).toFile(size112Path);
     await sharp(req.file.buffer).resize(256, 256).jpeg({ quality: 90 }).toFile(size256Path);
     await sharp(req.file.buffer).resize(512, 512).jpeg({ quality: 90 }).toFile(size512Path);
     await sharp(req.file.buffer).resize(1024, 1024).jpeg({ quality: 90 }).toFile(size1024Path);
     await sharp(req.file.buffer).resize(sizes.original, sizes.original, { fit: 'inside' }).jpeg({ quality: 90 }).toFile(origPath);
-    
+
     // URL生成
     const originalUrl = `/images/${yyyymm}/${getImageFileName('user', userId, userId, 'original')}`;
     const urlXs = `/images/${yyyymm}/${getImageFileName('user', userId, userId, 'marker')}`;
@@ -3712,10 +3712,10 @@ app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), as
     const urlM = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '256')}`;
     const urlL = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '512')}`;
     const urlXl = `/images/${yyyymm}/${getImageFileName('user', userId, userId, '1024')}`;
-    
+
     // ユーザー情報取得
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+
     // Imageテーブルに登録
     const image = await prisma.image.create({
       data: {
@@ -3728,7 +3728,7 @@ app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), as
         uploaded_by: user?.name || '不明'
       }
     });
-    
+
     // ユーザーテーブルを更新
     await prisma.user.update({
       where: { id: userId },
@@ -3743,7 +3743,7 @@ app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), as
         image_by: user?.name || '不明'
       }
     });
-    
+
     res.json({ success: true, image: image, isCurrentThumbnail: true });
   } catch (err) {
     console.error('ユーザー画像アップロード失敗:', err);
@@ -3763,8 +3763,8 @@ app.get('/shrines/:id/images', authenticateJWT, async (req, res) => {
     }
     const images = await prisma.shrineImage.findMany({
       where,
-      include: { 
-        user: { select: { id: true, name: true } }, 
+      include: {
+        user: { select: { id: true, name: true } },
         votes: true,
         image: true
       },
@@ -3784,8 +3784,8 @@ app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
   try {
     const images = await prisma.dietyImage.findMany({
       where: { diety_id: dietyId },
-      include: { 
-        user: { select: { id: true, name: true } }, 
+      include: {
+        user: { select: { id: true, name: true } },
         votes: true,
         image: true
       },
@@ -3812,10 +3812,10 @@ app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req,
     await prisma.imageVote.deleteMany({ where: { user_id: userId, shrine_image_id: imageId } });
     // 投票
     await prisma.imageVote.create({ data: { user_id: userId, shrine_image_id: imageId } });
-    
+
     // 投票結果に基づいてサムネイル更新をチェック
     await updateShrineThumbnailFromVotes(shrineId);
-    
+
     res.json({ success: true });
   } catch (err) {
     console.error('神社画像投票失敗:', err);
@@ -3837,10 +3837,10 @@ app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, 
     await prisma.dietyImageVote.deleteMany({ where: { user_id: userId, diety_image_id: imageId } });
     // 投票
     await prisma.dietyImageVote.create({ data: { user_id: userId, diety_image_id: imageId } });
-    
+
     // 投票結果に基づいてサムネイル更新をチェック
     await updateDietyThumbnailFromVotes(dietyId);
-    
+
     res.json({ success: true });
   } catch (err) {
     console.error('神様画像投票失敗:', err);
@@ -3904,41 +3904,41 @@ function getWeekNumber(date) {
 // 週間ランキング1位に経験値・能力値を付与する関数
 async function awardWeeklyRewards(currentDate) {
   console.log(`🏆 週間ランキング1位の報酬付与処理を開始...`);
-  
+
   const dateFormat = (date) => `${date.getFullYear()}-W${String(getWeekNumber(date)).padStart(2, '0')}`;
   const periodLabel = dateFormat(currentDate);
-  
+
   try {
     console.log(`📊 週間ランキング集計開始: ${periodLabel}`);
-    
+
     // 神社ランキング1位を取得
     const shrineStats = await prisma.shrinePrayStatsWeekly.findMany({
       orderBy: { count: 'desc' },
-      include: { 
+      include: {
         shrine: { select: { id: true, name: true } },
         user: { select: { id: true, name: true } }
       },
       take: 1,
     });
-    
+
     // 神様ランキング1位を取得
     const dietyStats = await prisma.dietyPrayStatsWeekly.findMany({
       orderBy: { count: 'desc' },
-      include: { 
+      include: {
         diety: { select: { id: true, name: true } },
         user: { select: { id: true, name: true } }
       },
       take: 1,
     });
-    
+
     // 神社ランキング1位に経験値を付与
     if (shrineStats.length > 0 && shrineStats[0].count > 0) {
       const topShrine = shrineStats[0];
-      const expReward = EXP_REWARDS.WEEKLY_RANKING; // 週間は100EXP
-      
+      const expReward = expRewardsModule.EXP_REWARDS.WEEKLY_RANKING; // 週間は100EXP
+
       // 経験値を付与
-      const expResult = await addExperience(prisma, topShrine.user.id, expReward, 'WEEKLY_RANKING');
-      
+      const expResult = await expSystemModule.addExperience(prisma, topShrine.user.id, expReward, 'WEEKLY_RANKING');
+
       console.log(`🏆 神社ランキング1位: ${topShrine.user.name} が週間報酬を獲得 (${expReward}EXP)`);
       if (expResult.levelUp) {
         console.log(`🏆 神社ランキング1位: ${topShrine.user.name} レベルアップ →${expResult.newLevel}, 獲得AP: ${expResult.abilityPointsGained}`);
@@ -3946,15 +3946,15 @@ async function awardWeeklyRewards(currentDate) {
     } else {
       console.log(`📊 週間神社ランキング: 該当者なし`);
     }
-    
+
     // 神様ランキング1位に経験値を付与
     if (dietyStats.length > 0 && dietyStats[0].count > 0) {
       const topDiety = dietyStats[0];
-      const expReward = EXP_REWARDS.WEEKLY_RANKING; // 週間は100EXP
-      
+      const expReward = expRewardsModule.EXP_REWARDS.WEEKLY_RANKING; // 週間は100EXP
+
       // 経験値を付与
-      const expResult = await addExperience(prisma, topDiety.user.id, expReward, 'WEEKLY_RANKING');
-      
+      const expResult = await expSystemModule.addExperience(prisma, topDiety.user.id, expReward, 'WEEKLY_RANKING');
+
       console.log(`🏆 神様ランキング1位: ${topDiety.user.name} が週間報酬を獲得 (${expReward}EXP)`);
       if (expResult.levelUp) {
         console.log(`🏆 神様ランキング1位: ${topDiety.user.name} レベルアップ →${expResult.newLevel}, 獲得AP: ${expResult.abilityPointsGained}`);
@@ -3962,16 +3962,16 @@ async function awardWeeklyRewards(currentDate) {
     } else {
       console.log(`📊 週間神様ランキング: 該当者なし`);
     }
-    
+
     console.log(`📊 週間ランキング集計完了: ${periodLabel}`);
     console.log(`🏆 週間ランキング1位の報酬付与処理が完了しました`);
-    
+
     // 週間ランキングテーブルをクリア
     console.log(`🗑️ 週間ランキングテーブルをクリア中...`);
     await prisma.shrinePrayStatsWeekly.deleteMany();
     await prisma.dietyPrayStatsWeekly.deleteMany();
     console.log(`✅ 週間ランキングテーブルのクリアが完了しました`);
-    
+
   } catch (error) {
     console.error(`❌ 週間ランキング報酬付与エラー:`, error);
   }
@@ -3990,18 +3990,18 @@ async function awardRankingTitles(period, currentDate) {
     }
     return period;
   };
-  
+
   const periodText = getPeriodText(period, currentDate);
 
   try {
     console.log(`📊 ${periodText}ランキング集計開始`);
-    
+
     // 神社ごとに1位～3位ユーザーに付与
     const shrineModel = period === 'yearly' ? prisma.shrinePrayStatsYearly : prisma.shrinePrayStatsMonthly;
     const allShrines = await prisma.shrine.findMany({ select: { id: true, name: true } });
-    
+
     console.log(`📊 ${periodText}神社ランキング集計: ${allShrines.length}神社を処理中...`);
-    
+
     for (const shrine of allShrines) {
       // その神社の上位3件を取得
       const topStats = await shrineModel.findMany({
@@ -4010,13 +4010,13 @@ async function awardRankingTitles(period, currentDate) {
         take: 3,
         include: { user: { select: { id: true, name: true } } }
       });
-      
+
       if (topStats.length === 0) continue;
 
       for (let i = 0; i < topStats.length; i++) {
         const stat = topStats[i];
         const rank = i + 1;
-        
+
         // ランクに応じた称号コードを生成
         let titleCode;
         if (period === 'yearly') {
@@ -4031,12 +4031,12 @@ async function awardRankingTitles(period, currentDate) {
           else titleCode = 'monthly_rank_shrine_1st'; // フォールバック
         }
         const titleMaster = await prisma.titleMaster.findUnique({ where: { code: titleCode } });
-        
+
         if (!titleMaster) {
           console.log(`❌ 称号マスターが見つかりません: ${titleCode}`);
           continue;
         }
-        
+
         // 表示名を生成
         let displayName = titleMaster.name_template;
         const embedData = {
@@ -4048,14 +4048,14 @@ async function awardRankingTitles(period, currentDate) {
         for (const key of Object.keys(embedData)) {
           displayName = displayName.replace(new RegExp(`<\{${key}\}>`, 'g'), embedData[key]);
         }
-        
+
         // ランクに応じたグレードを設定
         let grade;
         if (rank === 1) grade = 5; // 1位は金
         else if (rank === 2) grade = 4; // 2位は銀
         else if (rank === 3) grade = 2; // 3位は銅
         else grade = 1; // その他
-        
+
         // 既存の称号を確認してから作成または更新
         const existingTitle = await prisma.userTitle.findFirst({
           where: {
@@ -4066,7 +4066,7 @@ async function awardRankingTitles(period, currentDate) {
             }
           }
         });
-        
+
         if (existingTitle) {
           // 既存の称号を更新
           await prisma.userTitle.update({
@@ -4090,7 +4090,7 @@ async function awardRankingTitles(period, currentDate) {
             }
           });
         }
-        
+
         // 称号獲得時のポイント付与
         const titlePoint = await prisma.titleMaster.findUnique({
           where: { id: titleMaster.id },
@@ -4098,20 +4098,20 @@ async function awardRankingTitles(period, currentDate) {
         });
         // exp_rewardを参照して経験値付与
         const expReward = titlePoint?.exp_reward || 0;
-        const expResult = await addExperience(prisma, stat.user.id, expReward, 'TITLE_ACQUISITION');
+        const expResult = await expSystemModule.addExperience(prisma, stat.user.id, expReward, 'TITLE_ACQUISITION');
         console.log(`🏆 神社${periodText}${rank}位: ${stat.user.name} (${shrine.name}) が称号「${titleMaster.name_template}」を獲得 (${expReward}EXP)`);
         if (expResult.levelUp) {
           console.log(`🏆 神社${periodText}${rank}位: ${stat.user.name} レベルアップ →${expResult.newLevel}, 獲得AP: ${expResult.abilityPointsGained}`);
         }
       }
     }
-    
+
     // 神様ごとに1位～3位ユーザーに付与
     const dietyModel = period === 'yearly' ? prisma.dietyPrayStatsYearly : prisma.dietyPrayStatsMonthly;
     const allDieties = await prisma.diety.findMany({ select: { id: true, name: true } });
-    
+
     console.log(`📊 ${periodText}神様ランキング集計: ${allDieties.length}神様を処理中...`);
-    
+
     for (const diety of allDieties) {
       // その神様の上位3件を取得
       const topStats = await dietyModel.findMany({
@@ -4120,13 +4120,13 @@ async function awardRankingTitles(period, currentDate) {
         take: 3,
         include: { user: { select: { id: true, name: true } } }
       });
-      
+
       if (topStats.length === 0) continue;
 
       for (let i = 0; i < topStats.length; i++) {
         const stat = topStats[i];
         const rank = i + 1;
-        
+
         // ランクに応じた称号コードを生成
         let titleCode;
         if (period === 'yearly') {
@@ -4141,12 +4141,12 @@ async function awardRankingTitles(period, currentDate) {
           else titleCode = 'monthly_rank_diety_1st'; // フォールバック
         }
         const titleMaster = await prisma.titleMaster.findUnique({ where: { code: titleCode } });
-        
+
         if (!titleMaster) {
           console.log(`❌ 称号マスターが見つかりません: ${titleCode}`);
           continue;
         }
-        
+
         // 表示名を生成
         let displayName = titleMaster.name_template;
         const embedData = {
@@ -4158,14 +4158,14 @@ async function awardRankingTitles(period, currentDate) {
         for (const key of Object.keys(embedData)) {
           displayName = displayName.replace(new RegExp(`<\{${key}\}>`, 'g'), embedData[key]);
         }
-        
+
         // ランクに応じたグレードを設定
         let grade;
         if (rank === 1) grade = 5; // 1位は金
         else if (rank === 2) grade = 4; // 2位は銀
         else if (rank === 3) grade = 2; // 3位は銅
         else grade = 1; // その他
-        
+
         // 既存の称号を確認してから作成または更新
         const existingDietyTitle = await prisma.userTitle.findFirst({
           where: {
@@ -4176,7 +4176,7 @@ async function awardRankingTitles(period, currentDate) {
             }
           }
         });
-        
+
         if (existingDietyTitle) {
           // 既存の称号を更新
           await prisma.userTitle.update({
@@ -4200,7 +4200,7 @@ async function awardRankingTitles(period, currentDate) {
             }
           });
         }
-        
+
         // 称号獲得時のポイント付与
         const titlePoint = await prisma.titleMaster.findUnique({
           where: { id: titleMaster.id },
@@ -4208,7 +4208,7 @@ async function awardRankingTitles(period, currentDate) {
         });
         // exp_rewardを参照して経験値付与
         const expReward = titlePoint?.exp_reward || 0;
-        const expResult = await addExperience(prisma, stat.user.id, expReward, 'TITLE_ACQUISITION');
+        const expResult = await expSystemModule.addExperience(prisma, stat.user.id, expReward, 'TITLE_ACQUISITION');
         console.log(`🏆 神様${periodText}${rank}位: ${stat.user.name} (${diety.name}) が称号「${titleMaster.name_template}」を獲得 (${expReward}EXP)`);
         if (expResult.levelUp) {
           console.log(`🏆 神様${periodText}${rank}位: ${stat.user.name} レベルアップ →${expResult.newLevel}, 獲得AP: ${expResult.abilityPointsGained}`);
@@ -4217,7 +4217,7 @@ async function awardRankingTitles(period, currentDate) {
     }
     console.log(`📊 ${periodText}ランキング集計完了`);
     console.log(`🏆 ${period}ランキング1位の称号付与処理が完了しました`);
-    
+
     // ランキングテーブルをクリア
     console.log(`🗑️ ${periodText}ランキングテーブルをクリア中...`);
     if (period === 'yearly') {
@@ -4228,7 +4228,7 @@ async function awardRankingTitles(period, currentDate) {
       await prisma.dietyPrayStatsMonthly.deleteMany();
     }
     console.log(`✅ ${periodText}ランキングテーブルのクリアが完了しました`);
-    
+
   } catch (error) {
     console.error(`❌ ${period}ランキング称号付与エラー:`, error);
   }
@@ -4237,25 +4237,25 @@ async function awardRankingTitles(period, currentDate) {
 // 定期的なランキング集計処理を実行する関数
 async function runPeriodicRankingAwards() {
   const now = getCurrentDate();
-  
+
   // 週間ランキング（月曜日の午前0時に実行）
   if (now.getDay() === 1 && now.getHours() === 0) {
     console.log(`🕐 定期実行: 週間ランキング集計を開始します`);
     await awardWeeklyRewards(new Date(now.getTime() - 24 * 60 * 60 * 1000));
   }
-  
+
   // 月間ランキング（月初の午前0時に実行）
   if (now.getDate() === 1 && now.getHours() === 0) {
     console.log(`🕐 定期実行: 月間ランキング集計を開始します`);
     await awardRankingTitles('monthly', new Date(now.getFullYear(), now.getMonth() - 1, 0));
   }
-  
+
   // 年間ランキング（1月1日の午前0時に実行）
   if (now.getMonth() === 0 && now.getDate() === 1 && now.getHours() === 0) {
     console.log(`🕐 定期実行: 年間ランキング集計を開始します`);
     await awardRankingTitles('yearly', new Date(now.getFullYear() - 1, 11, 31));
   }
-  
+
   // 日次処理（毎日午前0時に実行）
   if (now.getHours() === 0 && now.getMinutes() === 0) {
     console.log(`🕐 定期実行: 日次ランキングテーブルクリアを開始します`);
@@ -4315,11 +4315,11 @@ async function updateShrineThumbnailFromVotes(shrineId: number) {
     // 現在の投票期間の画像を取得
     const currentMonth = getYYYYMM();
     const images = await prisma.shrineImage.findMany({
-      where: { 
-        shrine_id: shrineId, 
-        voting_month: currentMonth 
+      where: {
+        shrine_id: shrineId,
+        voting_month: currentMonth
       },
-      include: { 
+      include: {
         votes: true,
         image: true,
         user: true
@@ -4333,7 +4333,7 @@ async function updateShrineThumbnailFromVotes(shrineId: number) {
     if (images.length === 0) return;
 
     // 最多票の画像を取得
-    const topImage = images.reduce((prev, current) => 
+    const topImage = images.reduce((prev, current) =>
       (current.votes.length > prev.votes.length) ? current : prev
     );
 
@@ -4385,11 +4385,11 @@ async function updateDietyThumbnailFromVotes(dietyId: number) {
     // 現在の投票期間の画像を取得
     const currentMonth = getYYYYMM();
     const images = await prisma.dietyImage.findMany({
-      where: { 
-        diety_id: dietyId, 
-        voting_month: currentMonth 
+      where: {
+        diety_id: dietyId,
+        voting_month: currentMonth
       },
-      include: { 
+      include: {
         votes: true,
         image: true,
         user: true
@@ -4403,7 +4403,7 @@ async function updateDietyThumbnailFromVotes(dietyId: number) {
     if (images.length === 0) return;
 
     // 最多票の画像を取得
-    const topImage = images.reduce((prev, current) => 
+    const topImage = images.reduce((prev, current) =>
       (current.votes.length > prev.votes.length) ? current : prev
     );
 
@@ -4461,24 +4461,24 @@ app.post('/api/simulate-date', (req, res) => {
   try {
     const { date } = req.body;
     const result = setSimulateDate(date);
-    
+
     if (result.success) {
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: result.message,
         simulateDate: getSimulateDate()
       });
     } else {
-      res.status(400).json({ 
-        success: false, 
-        message: result.message 
+      res.status(400).json({
+        success: false,
+        message: result.message
       });
     }
   } catch (error) {
     console.error('シミュレート日付設定エラー:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'サーバーエラーが発生しました' 
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
     });
   }
 });
@@ -4487,16 +4487,16 @@ app.post('/api/simulate-date', (req, res) => {
 app.delete('/api/simulate-date', (req, res) => {
   try {
     const result = setSimulateDate(null);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: result.message,
       simulateDate: getSimulateDate()
     });
   } catch (error) {
     console.error('シミュレート日付クリアエラー:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'サーバーエラーが発生しました' 
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
     });
   }
 });
@@ -4504,16 +4504,16 @@ app.delete('/api/simulate-date', (req, res) => {
 // シミュレート日付を取得
 app.get('/api/simulate-date', (req, res) => {
   try {
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       simulateDate: getSimulateDate(),
       currentDate: getCurrentDate().toISOString()
     });
   } catch (error) {
     console.error('シミュレート日付取得エラー:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'サーバーエラーが発生しました' 
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
     });
   }
 });
@@ -4524,23 +4524,23 @@ app.get('/api/simulate-date', (req, res) => {
 app.post('/api/simulation/start', (req, res) => {
   try {
     const { daysAgo } = req.body;
-    
+
     if (typeof daysAgo !== 'number' || daysAgo < 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'daysAgoは0以上の数値である必要があります' 
+      return res.status(400).json({
+        success: false,
+        message: 'daysAgoは0以上の数値である必要があります'
       });
     }
-    
+
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysAgo);
     startDate.setHours(0, 0, 0, 0); // 日付の開始時刻に設定
-    
+
     const result = setSimulateDate(startDate.toISOString());
-    
+
     if (result.success) {
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: `シミュレーションを${daysAgo}日前から開始しました`,
         simulateDate: getSimulateDate(),
         currentDate: getCurrentDate().toISOString(),
@@ -4551,9 +4551,9 @@ app.post('/api/simulation/start', (req, res) => {
     }
   } catch (error) {
     console.error('シミュレーション開始エラー:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'サーバーエラーが発生しました' 
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
     });
   }
 });
@@ -4562,17 +4562,17 @@ app.post('/api/simulation/start', (req, res) => {
 app.post('/api/simulation/end', (req, res) => {
   try {
     const result = setSimulateDate(null);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'シミュレーションを終了しました',
       simulateDate: getSimulateDate(),
       currentDate: getCurrentDate().toISOString()
     });
   } catch (error) {
     console.error('シミュレーション終了エラー:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'サーバーエラーが発生しました' 
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
     });
   }
 });
@@ -4582,14 +4582,14 @@ app.get('/api/simulation/status', (req, res) => {
   try {
     const simulateDate = getSimulateDate();
     const currentDate = getCurrentDate();
-    
+
     let daysElapsed = null;
     if (simulateDate) {
       const startDate = new Date(simulateDate);
       const diffTime = currentDate.getTime() - startDate.getTime();
       daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     }
-    
+
     res.json({
       success: true,
       isActive: !!simulateDate,
@@ -4599,9 +4599,9 @@ app.get('/api/simulation/status', (req, res) => {
     });
   } catch (error) {
     console.error('シミュレーション状態取得エラー:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'サーバーエラーが発生しました' 
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
     });
   }
 });

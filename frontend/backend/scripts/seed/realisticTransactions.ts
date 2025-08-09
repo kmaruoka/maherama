@@ -23,14 +23,14 @@ async function setSimulateDate(dateString: string | null): Promise<{ success: bo
     }
     return { success: true, message: 'シミュレート日付をクリアしました' };
   }
-  
+
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
     return { success: false, message: '無効な日付形式です' };
   }
-  
+
   simulateDate = date;
-  
+
   // サーバーのシミュレート日付も設定
   try {
     await axios.post(`http://localhost:${API_PORT}/api/simulate-date`, {
@@ -39,7 +39,7 @@ async function setSimulateDate(dateString: string | null): Promise<{ success: bo
   } catch (error) {
     console.error('サーバーのシミュレート日付設定に失敗:', error);
   }
-  
+
   return { success: true, message: `シミュレート日付を設定しました: ${date.toISOString()}` };
 }
 
@@ -80,12 +80,12 @@ async function getShrinePositions(prisma: PrismaClient) {
   const shrines = await prisma.shrine.findMany({
     select: { id: true, lat: true, lng: true }
   });
-  
+
   const positions: { [key: number]: { lat: number; lng: number } } = {};
   for (const shrine of shrines) {
     positions[shrine.id] = { lat: shrine.lat, lng: shrine.lng };
   }
-  
+
   return positions;
 }
 
@@ -241,11 +241,11 @@ function getWeekNumber(date: Date): number {
 
 // 週間ランキング1位に経験値・能力値のみ付与する関数（称号なし）
 async function awardWeeklyRewards(
-  prisma: PrismaClient, 
+  prisma: PrismaClient,
   currentDate: Date
 ) {
   console.log(`🏆 週間ランキング1位の報酬付与処理を開始...`);
-  
+
   try {
     console.log(`🔗 サーバーAPI呼び出し: http://localhost:${API_PORT}/admin/ranking-awards`);
     // サーバー側のAPIを呼び出してランキング集計と報酬付与を実行
@@ -267,12 +267,12 @@ async function awardWeeklyRewards(
 
 // ランキング1位の人に称号を付与する汎用関数
 async function awardRankingTitles(
-  prisma: PrismaClient, 
-  period: 'yearly' | 'monthly', 
+  prisma: PrismaClient,
+  period: 'yearly' | 'monthly',
   currentDate: Date
 ) {
   console.log(`🏆 ${period}ランキング1位の称号付与処理を開始...`);
-  
+
   try {
     const typeParam = period === 'yearly' ? 'yearly' : 'monthly';
     console.log(`🔗 サーバーAPI呼び出し: http://localhost:${API_PORT}/admin/ranking-awards?type=${typeParam}`);
@@ -296,20 +296,20 @@ async function awardRankingTitles(
 // シード処理完了後に称号を付与する関数（サーバーAPI呼び出し）
 async function awardTitlesAfterSeed(prisma: PrismaClient) {
   console.log('🏆 シード後の称号付与処理を開始...');
-  
+
   try {
     // 月間ランキング称号付与
     console.log('月間ランキング称号付与中...');
     const monthlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=monthly`);
     console.log(`📡 月間称号付与API応答: ${monthlyResponse.status} ${monthlyResponse.statusText}`);
-    
+
     // 年間ランキング称号付与
     console.log('年間ランキング称号付与中...');
     const yearlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=yearly`);
     console.log(`📡 年間称号付与API応答: ${yearlyResponse.status} ${yearlyResponse.statusText}`);
-    
+
     console.log('✅ 称号付与処理が完了しました');
-    
+
   } catch (error: any) {
     console.error('❌ 称号付与エラー:', error.message);
     if (error.response) {
@@ -321,13 +321,13 @@ async function awardTitlesAfterSeed(prisma: PrismaClient) {
 
 export async function seedRealisticTransactions(prisma: PrismaClient) {
   console.log(`🚀 リアルなトランザクションデータの生成を開始... (${DAYS_TO_SIMULATE}日間)`);
-  
+
   // シミュレーション開始（DAYS_TO_SIMULATE日前から開始）
   const simulationStartDate = new Date(getCurrentDate().getTime() - DAYS_TO_SIMULATE * 24 * 60 * 60 * 1000);
   simulationStartDate.setHours(0, 0, 0, 0);
   await setSimulateDate(simulationStartDate.toISOString());
   console.log(`📅 シミュレーション開始日: ${simulationStartDate.toISOString()}`);
-  
+
   // 既存のトランザクションデータをクリア
   await prisma.shrinePray.deleteMany();
   await prisma.remotePray.deleteMany();
@@ -349,7 +349,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   // 神社の位置情報とIDを取得
   const shrinePositions = await getShrinePositions(prisma);
   const shrineIds = Object.keys(shrinePositions).map(id => parseInt(id));
-  
+
   if (shrineIds.length === 0) {
     console.log('⚠️ 神社データが見つかりません。先に神社データをseedしてください。');
     return;
@@ -364,11 +364,11 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   let prevMonth = currentDate.getMonth();
   let prevWeek = getWeekNumber(currentDate);
   let prevDay = currentDate.getDate();
-  
+
   while (currentDate <= END_DATE) {
     // シミュレート日付を現在の日付に更新
     await setSimulateDate(currentDate.toISOString());
-    
+
     // 日切り替え判定
     const currentDay = currentDate.getDate();
     if (currentDay !== prevDay) {
@@ -378,7 +378,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
       await prisma.dietyPrayStatsDaily.deleteMany();
       prevDay = currentDay;
     }
-    
+
     // 年切り替え判定
     const currentYear = currentDate.getFullYear();
     if (currentYear !== prevYear) {
@@ -404,7 +404,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
       prevWeek = currentWeek;
     }
     console.log(`📅 ${currentDate.toISOString().split('T')[0]} の参拝をシミュレート中...`);
-    
+
     for (const [userId, activity] of Object.entries(USER_ACTIVITY_LEVELS)) {
       const userIdNum = parseInt(userId);
       if (currentDate < activity.startDate) continue;
@@ -474,18 +474,18 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
     select: { id: true, name: true, level: true, exp: true, ability_points: true },
     orderBy: { id: 'asc' }
   });
-  
+
   for (const user of finalUsers) {
     console.log(`[最終AP] ユーザー${user.id}(${user.name}): レベル${user.level}, EXP${user.exp}, AP${user.ability_points}`);
   }
 
   console.log('✅ トランザクションデータの生成が完了しました！');
-  
+
   // シード処理完了後に称号を付与
   console.log('🏆 称号付与処理を開始...');
   await awardTitlesAfterSeed(prisma);
   console.log('🏆 称号付与処理が完了しました！');
-  
+
   // シミュレーション終了（日付をクリア）
   await setSimulateDate(null);
   console.log('📅 シミュレーション終了: 日付をクリアしました');

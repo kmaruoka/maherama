@@ -25,13 +25,13 @@ const MissionCard: React.FC<MissionCardProps> = ({
   className = ''
 }) => {
   const { t } = useTranslation();
-  
-  const progressPercentage = mission.total_required > 0 
-    ? Math.min((mission.progress / mission.total_required) * 100, 100) 
+
+  const progressPercentage = mission.total_required > 0
+    ? Math.min((mission.progress / mission.total_required) * 100, 100)
     : 0;
 
-  const totalAbilityPoints = mission.ability_reward && 
-    typeof mission.ability_reward === 'object' && 
+  const totalAbilityPoints = mission.ability_reward &&
+    typeof mission.ability_reward === 'object' &&
     Object.keys(mission.ability_reward).length > 0
     ? Object.values(mission.ability_reward as Record<string, number>).reduce((a, b) => a + b, 0)
     : 0;
@@ -56,14 +56,14 @@ const MissionCard: React.FC<MissionCardProps> = ({
           <CompletionBadge size={16} className="mission-card__completed" />
         )}
       </div>
-      
+
       <div className="mission-card__body">
         <div className="mission-card__content">{mission.content}</div>
-        
+
         <div className="mission-card__progress">
           <div className="mission-card__progress-bar">
-            <div 
-              className="mission-card__progress-fill" 
+            <div
+              className="mission-card__progress-fill"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -97,4 +97,4 @@ const MissionCard: React.FC<MissionCardProps> = ({
   );
 };
 
-export default MissionCard; 
+export default MissionCard;

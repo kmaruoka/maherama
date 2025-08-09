@@ -44,4 +44,4 @@ describe('レベル1ユーザーの参拝距離・回数API値と定義の一致
     expect(res.statusCode).toBe(200);
     expect(res.body.pray_distance).toBe(level1Def.pray_distance);
   });
-}); 
+});

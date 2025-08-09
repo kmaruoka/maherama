@@ -122,10 +122,10 @@ export function useCanPray(
     if (!position || prayDistance === null) {
       return { distance: null, canPray: false };
     }
-    
+
     const distance = getDistanceMeters(position[0], position[1], shrineLat, shrineLng);
     const canPray = !isNaN(distance) && !isNaN(prayDistance) && distance <= prayDistance;
-    
+
     return { distance, canPray };
   }, [position, shrineLat, shrineLng, prayDistance]);
 }
@@ -143,4 +143,4 @@ export default function usePrayDistanceOld(
     const canPray = distance <= radius;
     return { distance, radius, canPray };
   }, [position, shrineLat, shrineLng, slots]);
-} 
+}

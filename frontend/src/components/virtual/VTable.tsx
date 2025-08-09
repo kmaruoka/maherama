@@ -131,4 +131,4 @@ function alignToJustify(a: 'left' | 'center' | 'right' | undefined) {
     case 'right': return 'flex-end';
     default: return 'flex-start';
   }
-} 
+}

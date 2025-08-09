@@ -45,4 +45,4 @@ describe('POST /shrines/:id/remote-pray', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('success', true);
   });
-}); 
+});

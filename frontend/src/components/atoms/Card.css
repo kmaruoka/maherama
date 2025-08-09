@@ -95,14 +95,14 @@
     min-width: 100px;
     font-size: 0.7rem;
   }
-  
+
   .card--medium {
     width: 140px;
     height: 220px;
     min-width: 140px;
     font-size: 0.75rem;
   }
-  
+
   .card--large {
     width: 200px;
     height: 280px;
@@ -117,8 +117,8 @@
     background: var(--color-card-dark, #2d2d2d);
     border-color: var(--color-border-dark, #555);
   }
-  
+
   .card--filled {
     background: var(--color-primary-dark, #666);
   }
-} 
+}

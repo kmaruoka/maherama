@@ -11,11 +11,11 @@ interface RewardIconProps {
   style?: React.CSSProperties;
 }
 
-const RewardIcon: React.FC<RewardIconProps> = ({ 
-  type, 
-  size = 18, 
-  className = '', 
-  style = {} 
+const RewardIcon: React.FC<RewardIconProps> = ({
+  type,
+  size = 18,
+  className = '',
+  style = {}
 }) => {
   const getIcon = () => {
     switch (type) {
@@ -31,7 +31,7 @@ const RewardIcon: React.FC<RewardIconProps> = ({
   };
 
   return (
-    <span 
+    <span
       className={`reward-icon reward-icon--${type} ${className}`}
       style={style}
     >
@@ -40,4 +40,4 @@ const RewardIcon: React.FC<RewardIconProps> = ({
   );
 };
 
-export default RewardIcon; 
+export default RewardIcon;

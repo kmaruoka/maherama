@@ -50,4 +50,4 @@ export function useEvents() {
   }, []);
 
   return { events, loading, error };
-} 
+}

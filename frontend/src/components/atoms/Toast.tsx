@@ -12,11 +12,11 @@ interface ToastProps {
   onClose: () => void;
 }
 
-export const Toast: React.FC<ToastProps> = ({ 
-  message, 
-  type, 
-  duration = 3000, 
-  onClose 
+export const Toast: React.FC<ToastProps> = ({
+  message,
+  type,
+  duration = 3000,
+  onClose
 }) => {
   const { skin } = useSkin();
   const [isVisible, setIsVisible] = useState(false);
@@ -44,8 +44,8 @@ export const Toast: React.FC<ToastProps> = ({
     <div className={`toast toast--${type} toast--${skin} ${isVisible ? 'toast--visible' : ''}`}>
       <div className="toast__icon">{getIcon()}</div>
       <div className="toast__message">{message}</div>
-      <button 
-        className="toast__close" 
+      <button
+        className="toast__close"
         onClick={() => {
           setIsVisible(false);
           setTimeout(onClose, 300);
@@ -55,4 +55,4 @@ export const Toast: React.FC<ToastProps> = ({
       </button>
     </div>
   );
-}; 
+};

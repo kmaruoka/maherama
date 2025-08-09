@@ -10,4 +10,4 @@
     "outDir": "./dist"
   },
   "include": ["scripts/seed/**/*.ts", "index.ts"]
-} 
+}

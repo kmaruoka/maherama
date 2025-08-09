@@ -31,12 +31,12 @@ export function useAbilities(userId: number | null) {
 // 能力購入
 export function usePurchaseAbility() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ userId, abilityId }: { userId: number; abilityId: number }) => {
       const res = await fetch(`${API_BASE}/abilities/${abilityId}/purchase`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'x-user-id': String(userId),
           'Content-Type': 'application/json'
         },
@@ -60,12 +60,12 @@ export function usePurchaseAbility() {
 // 能力リセット
 export function useResetAbilities() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (userId: number) => {
       const res = await fetch(`${API_BASE}/user/reset-abilities`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'x-user-id': String(userId),
           'Content-Type': 'application/json'
         },
@@ -84,4 +84,4 @@ export function useResetAbilities() {
       queryClient.invalidateQueries({ queryKey: ['worship-limit', userId] });
     },
   });
-} 
+}

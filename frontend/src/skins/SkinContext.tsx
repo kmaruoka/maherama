@@ -62,4 +62,4 @@ export function useSkin() {
   const ctx = React.useContext(SkinContext);
   if (!ctx) throw new Error('useSkin must be used within a SkinProvider');
   return ctx;
-} 
+}

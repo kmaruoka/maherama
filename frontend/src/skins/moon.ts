@@ -39,6 +39,6 @@ const tsukiSkin = {
       background: 'linear-gradient(135deg, #11162a 0%, #0a0f1f 100%)',
     },
   };
-  
+
   export default tsukiSkin;
-  
+

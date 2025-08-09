@@ -11,7 +11,7 @@ describe('GET /dieties', () => {
   it('should return dieties with required fields', async () => {
     const res = await request(app).get('/dieties');
     expect(res.statusCode).toBe(200);
-    
+
     if (res.body.length > 0) {
       const diety = res.body[0];
       expect(diety).toHaveProperty('id');
@@ -19,4 +19,4 @@ describe('GET /dieties', () => {
       expect(diety).toHaveProperty('count');
     }
   });
-}); 
+});

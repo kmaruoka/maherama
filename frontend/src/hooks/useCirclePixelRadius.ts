@@ -16,4 +16,4 @@ export function useCirclePixelRadius(center: [number, number], radius: number): 
   const latLngX = map.containerPointToLatLng(pointX);
   const metersPerPixel = map.distance(centerLatLng, latLngX);
   return radius / metersPerPixel;
-} 
+}

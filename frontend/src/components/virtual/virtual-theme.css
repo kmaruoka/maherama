@@ -33,18 +33,18 @@
   scrollbar-gutter: stable;
 }
 
-.v-scroll::-webkit-scrollbar { 
-  height: 10px; 
-  width: 10px; 
+.v-scroll::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
 }
 
-.v-scroll::-webkit-scrollbar-thumb { 
-  background: var(--v-scrollbar-thumb); 
-  border-radius: 6px; 
+.v-scroll::-webkit-scrollbar-thumb {
+  background: var(--v-scrollbar-thumb);
+  border-radius: 6px;
 }
 
-.v-scroll::-webkit-scrollbar-track { 
-  background: var(--v-scrollbar-track); 
+.v-scroll::-webkit-scrollbar-track {
+  background: var(--v-scrollbar-track);
 }
 
 .v-row {
@@ -55,12 +55,12 @@
   border-bottom: 1px solid var(--v-color-border);
 }
 
-.v-row:hover { 
-  background: var(--v-row-hover-bg); 
+.v-row:hover {
+  background: var(--v-row-hover-bg);
 }
 
-.v-row.is-selected { 
-  background: var(--v-row-selected-bg); 
+.v-row.is-selected {
+  background: var(--v-row-selected-bg);
 }
 
 .v-cell {
@@ -77,10 +77,10 @@
 }
 
 .v-header {
-  position: sticky; 
-  top: 0; 
+  position: sticky;
+  top: 0;
   z-index: 1;
-  display: flex; 
+  display: flex;
   align-items: center;
   height: var(--v-row-height);
   background: var(--v-header-bg);
@@ -89,6 +89,6 @@
   box-sizing: border-box;
 }
 
-.v-header .v-cell { 
-  font-weight: 600; 
-} 
+.v-header .v-cell {
+  font-weight: 600;
+}

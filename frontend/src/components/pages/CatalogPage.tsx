@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'; 
+import { useState, useCallback } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import CustomCatalogCard from '../molecules/CustomCatalogCard';
@@ -163,7 +163,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
                     {({ index, style, data }: { index: number; style: React.CSSProperties; data: any }) => {
                       const { sorted, tab, onShowShrine, onShowDiety, onShowUser } = data;
                       const item = sorted[index];
-                      
+
 
                       return (
                         <div className="catalog-page__list-row" style={style}>

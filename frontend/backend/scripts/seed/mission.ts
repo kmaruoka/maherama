@@ -131,7 +131,7 @@ export async function seedMissions() {
     // ミッションを作成
     for (const missionData of [...permanentMissions, ...eventMissions]) {
       const { shrines, dieties, titles, ...missionInfo } = missionData;
-      
+
       const mission = await prisma.missionMaster.create({
         data: {
           ...missionInfo
@@ -214,17 +214,17 @@ export async function seedMissions() {
 
     // ユーザーミッションの初期化
     console.log('🔄 ユーザーミッションの初期化を開始します...');
-    
+
     // 全ユーザーを取得
     const users = await prisma.user.findMany({
       select: { id: true }
     });
-    
+
     // 全ミッションを取得
     const allMissions = await prisma.missionMaster.findMany({
       select: { id: true }
     });
-    
+
     // 各ユーザーに対して全ミッションのUserMissionレコードを作成
     for (const user of users) {
       for (const mission of allMissions) {
@@ -245,7 +245,7 @@ export async function seedMissions() {
         });
       }
     }
-    
+
     console.log(`✅ ユーザーミッション初期化完了: ${users.length}ユーザー × ${allMissions.length}ミッション`);
 
     console.log('✅ ミッションシステムのシードが完了しました！');
@@ -253,4 +253,4 @@ export async function seedMissions() {
     console.error('❌ ミッションシステムのシード中にエラーが発生しました:', error);
     throw error;
   }
-} 
+}

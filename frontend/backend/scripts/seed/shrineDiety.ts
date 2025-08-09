@@ -4,7 +4,7 @@ export async function seedShrineDiety(prisma: PrismaClient, shrineIds: number[])
   // 神様IDリストを取得
   const allDieties = await prisma.diety.findMany({ select: { id: true } });
   console.log(`Found ${allDieties.length} dieties for shrine-diety relationship generation`);
-  
+
   if (allDieties.length === 0) {
     console.log('⚠️ No dieties found. Skipping shrine-diety relationship generation.');
     return;

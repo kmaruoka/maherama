@@ -18,4 +18,4 @@ export default function useUserRankingsBundle(id: number | null | undefined, per
     },
     enabled: !!id,
   });
-} 
+}

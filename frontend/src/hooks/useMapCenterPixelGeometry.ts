@@ -28,9 +28,9 @@ export default function useMapCenterPixelGeometry(radius: number): MapCenterPixe
     recalc();
   }, [recalc]);
 
-  useMapEvents({ 
-    move: recalc, 
-    zoom: recalc 
+  useMapEvents({
+    move: recalc,
+    zoom: recalc
   });
 
   return geom;

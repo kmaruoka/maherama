@@ -7,7 +7,7 @@ process.env.PORT = process.env.PORT || '3001';
 
 beforeAll(async () => {
   console.log('🧪 テスト用DB接続確認中...');
-  
+
   try {
     // DB接続確認のみ
     await prisma.$connect();
@@ -21,4 +21,4 @@ beforeAll(async () => {
 afterAll(async () => {
   console.log('🧹 テスト終了・DB接続切断');
   await prisma.$disconnect();
-}); 
+});

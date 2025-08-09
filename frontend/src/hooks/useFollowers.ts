@@ -26,4 +26,4 @@ export function useFollowers(userId: number) {
     },
     enabled: !!userId,
   });
-} 
+}

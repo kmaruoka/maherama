@@ -16,4 +16,4 @@ export const skins = {
 
 export type SkinName = keyof typeof skins;
 
-export default skins; 
+export default skins;

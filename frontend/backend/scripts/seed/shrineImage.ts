@@ -50,4 +50,4 @@ export async function seedShrineImage(prisma: PrismaClient) {
     });
   }
   console.log('✅ ShrineImage seed completed.');
-} 
+}

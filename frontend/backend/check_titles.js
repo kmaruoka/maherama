@@ -13,9 +13,9 @@ async function checkTitles() {
 
     // ユーザー称号の確認
     const userTitles = await prisma.userTitle.findMany({
-      include: { 
-        title: true, 
-        user: { select: { id: true, name: true } } 
+      include: {
+        title: true,
+        user: { select: { id: true, name: true } }
       }
     });
     console.log('\nユーザー称号数:', userTitles.length);
@@ -29,7 +29,7 @@ async function checkTitles() {
       include: { user: { select: { id: true, name: true } }, shrine: { select: { id: true, name: true } } }
     });
     console.log('\n神社月間統計数:', shrineStats.length);
-    
+
     const dietyStats = await prisma.dietyPrayStatsMonthly.findMany({
       include: { user: { select: { id: true, name: true } }, diety: { select: { id: true, name: true } } }
     });
@@ -47,4 +47,4 @@ async function checkTitles() {
   }
 }
 
-checkTitles(); 
+checkTitles();

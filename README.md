@@ -8,6 +8,27 @@
 - PostgreSQL がローカルの `127.0.0.1:15432` で動作していること
   - 別の場所で動かす場合は `.env` の `DATABASE_URL` で指定してください
 
+## 開発環境の設定
+
+### 改行コードの統一
+このプロジェクトでは改行コードをLF（Unix形式）に統一しています。
+
+- `.editorconfig`ファイルで改行コードの設定を管理
+- `.gitattributes`でGitでの改行コード変換を設定
+- VSCode設定で`files.eol: "\n"`を設定
+- 末尾スペースは自動的に削除されます
+
+既存ファイルの改行コードと末尾スペースを修正する場合：
+```bash
+# フロントエンド
+cd frontend
+npm run fix-line-endings
+
+# バックエンド
+cd frontend/backend
+npm run fix-line-endings
+```
+
 ## 環境変数の設定
 
 ### バックエンド
@@ -56,7 +77,7 @@ npm test
 
 テスト内容：
 - `/user-rankings` APIの正常系テスト
-- `/shrines` APIの正常系テスト  
+- `/shrines` APIの正常系テスト
 - `/dieties` APIの正常系テスト
 - `/users/:id` APIの正常系・異常系テスト
 

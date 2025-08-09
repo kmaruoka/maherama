@@ -53,4 +53,4 @@ export default function useRankingsBundleAll(dietyId?: number) {
 export async function fetchDietyRankingsBundle(dietyId: number) {
   const res = await fetch(`${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}`);
   return res.json();
-} 
+}

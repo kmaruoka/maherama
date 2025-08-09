@@ -50,7 +50,7 @@ export default function RankingPane({ itemsByPeriod, type, rankingType, isLoadin
           />
         ))}
       </Tabs>
-      
+
       <div className="d-grid gap-2 mt-2">
         {isLoading ? (
           <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>読み込み中...</div>

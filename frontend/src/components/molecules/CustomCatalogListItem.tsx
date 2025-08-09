@@ -19,7 +19,7 @@ interface CustomCatalogListItemProps {
 export default function CustomCatalogListItem({ name, count, catalogedAt, lastPrayedAt, onClick, countLabel = '参拝数', showLabels = true }: CustomCatalogListItemProps) {
   const { t } = useTranslation();
   const { skin } = useSkin();
-  
+
   const containerClass = `catalog-list-item${onClick ? ' catalog-list-item--clickable' : ''}`;
 
   return (
@@ -53,4 +53,4 @@ export default function CustomCatalogListItem({ name, count, catalogedAt, lastPr
       </div>
     </div>
   );
-} 
+}

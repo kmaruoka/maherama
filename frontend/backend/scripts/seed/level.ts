@@ -38,7 +38,7 @@ export async function seedLevel(prisma: PrismaClient) {
     let pray_distance = 100 + (level - 1) * 10; // 例: 100, 110, 120, ...
     if (level > 10) pray_distance += Math.floor((level - 10) * 10); // 10以降は少し伸びを緩やかに
     let worship_count = 1 + Math.floor((level - 1) / 10); // 10, 20, 30, ...で+1
-    
+
     // レベルに応じたAP獲得量を設定
     let ability_points = 100; // 基本値
     if (level >= 11 && level <= 20) ability_points = 120;      // レベル11-20: 120AP
@@ -50,7 +50,7 @@ export async function seedLevel(prisma: PrismaClient) {
     else if (level >= 71 && level <= 80) ability_points = 240; // レベル71-80: 240AP
     else if (level >= 81 && level <= 90) ability_points = 260; // レベル81-90: 260AP
     else if (level >= 91) ability_points = 280;                // レベル91+: 280AP
-    
+
     levels.push({ level, required_exp, pray_distance, worship_count, ability_points });
   }
 
@@ -58,4 +58,4 @@ export async function seedLevel(prisma: PrismaClient) {
     data: levels,
     skipDuplicates: true,
   });
-} 
+}

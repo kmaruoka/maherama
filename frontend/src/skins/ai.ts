@@ -39,6 +39,6 @@ const aiSkin = {
       background: 'linear-gradient(135deg, #1b263b 0%, #0d1b2a 100%)',
     },
   };
-  
+
   export default aiSkin;
-  
+

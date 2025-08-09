@@ -132,8 +132,8 @@
     max-width: none;
     transform: translateY(-100%);
   }
-  
+
   .toast--visible {
     transform: translateY(0);
   }
-} 
+}

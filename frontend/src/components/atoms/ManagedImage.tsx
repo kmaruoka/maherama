@@ -104,4 +104,4 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
       />
     </div>
   );
-}; 
+};

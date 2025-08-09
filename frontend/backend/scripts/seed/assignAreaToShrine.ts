@@ -43,4 +43,4 @@ if (require.main === module) {
     });
 }
 
-export { assignAreaToShrine }; 
+export { assignAreaToShrine };

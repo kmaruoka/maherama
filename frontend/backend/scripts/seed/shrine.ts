@@ -66,7 +66,7 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
 
   let inserted = 0, relInserted = 0;
   const shrineDietyPairs: { shrine_id: number; diety_id: number }[] = [];
-  
+
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(/\t|\s{2,}/);
     if (cols.length < 4) continue;
@@ -83,17 +83,17 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
     const latNum = parseFloat(lat);
     const lngNum = parseFloat(lng);
     if (!name || isNaN(latNum) || isNaN(lngNum)) continue;
-    
+
     // 既存の神社を確認
     const existingShrine = await prisma.shrine.findFirst({
-      where: { 
+      where: {
         AND: [
           { name: name },
           { location: location }
         ]
       }
     });
-    
+
     let shrine;
     if (existingShrine) {
       // 既存の神社を更新
@@ -108,7 +108,7 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
       });
       inserted++;
     }
-    
+
     // 祭神リレーション（既存を消さずに新規のみ追加）
     if (dietiesIdx >= 0 && cols[dietiesIdx]) {
       // カンマ・読点・全角カンマ区切り対応
@@ -125,7 +125,7 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
       }
     }
   }
-  
+
   // 祭神リレーションを一括で新規追加（既存はそのまま）
   if (shrineDietyPairs.length > 0) {
     await prisma.shrineDiety.createMany({
@@ -134,7 +134,7 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
     });
     relInserted = shrineDietyPairs.length;
   }
-  
+
   console.log(`shrines.txtから神社${inserted}件、祭神リレーション${relInserted}件を追加しました（既存データは保持）`);
 }
 
@@ -153,8 +153,8 @@ export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
 
   // 神社データを変換
   const shrines = geoJsonData.features
-    .filter(feature => 
-      feature.properties.amenity === 'place_of_worship' && 
+    .filter(feature =>
+      feature.properties.amenity === 'place_of_worship' &&
       feature.properties.religion === 'shinto' &&
       feature.properties.name // 名前があるもののみ
     )
@@ -175,9 +175,9 @@ export async function seedShrine(prisma: PrismaClient): Promise<number[]> {
   console.log(`Found ${shrines.length} shrines from JSON data`);
 
   // データベースに挿入
-  const result = await prisma.shrine.createMany({ 
-    data: shrines.map(({ saijin, ...rest }) => rest), 
-    skipDuplicates: true 
+  const result = await prisma.shrine.createMany({
+    data: shrines.map(({ saijin, ...rest }) => rest),
+    skipDuplicates: true
   });
 
   console.log(`Inserted ${result.count} shrines`);

@@ -138,7 +138,7 @@ html, body {
     min-height: 400px;
     max-height: 60vh;
   }
-  
+
   .top-page__hero-image {
     max-height: 60vh;
   }
@@ -149,7 +149,7 @@ html, body {
   .top-page__hero {
     min-height: 300px;
   }
-  
+
   .top-page__hero-image {
     /* 自然なサイズで表示 */
   }
@@ -159,7 +159,7 @@ html, body {
   .top-page__hero {
     min-height: 250px;
   }
-  
+
   .top-page__hero-image {
     /* 自然なサイズで表示 */
   }
@@ -170,7 +170,7 @@ html, body {
     flex-direction: column;
     gap: 0.25rem;
   }
-  
+
   .top-page__auth-tabs .btn {
     width: 100%;
     min-width: auto;

@@ -8,8 +8,8 @@ export interface DietyBadgeProps {
   className?: string;
 }
 
-const DietyBadge: React.FC<DietyBadgeProps> = ({ 
-  rank, 
+const DietyBadge: React.FC<DietyBadgeProps> = ({
+  rank,
   size = 20,
   className = ''
 }) => {
@@ -27,4 +27,4 @@ const DietyBadge: React.FC<DietyBadgeProps> = ({
   );
 };
 
-export default DietyBadge; 
+export default DietyBadge;

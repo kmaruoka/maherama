@@ -637,7 +637,7 @@ body, #root, .log-pane, .log-pane-expanded {
   .d-flex.flex-column.gap-2 {
     flex-direction: row !important;
   }
-  
+
   .d-flex.flex-column.gap-2 .btn-pray,
   .d-flex.flex-column.gap-2 .btn-remote-pray {
     flex: 1;
@@ -1321,7 +1321,7 @@ nav.d-flex.position-fixed {
     height: 256px;
     min-width: 256px;
   }
-  
+
   .pane__thumbnail img {
     width: 256px;
     height: 256px;

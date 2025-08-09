@@ -11,7 +11,7 @@ describe('GET /shrines', () => {
   it('should return shrines with required fields', async () => {
     const res = await request(app).get('/shrines');
     expect(res.statusCode).toBe(200);
-    
+
     if (res.body.length > 0) {
       const shrine = res.body[0];
       expect(shrine).toHaveProperty('id');
@@ -21,4 +21,4 @@ describe('GET /shrines', () => {
       expect(shrine).toHaveProperty('count');
     }
   });
-}); 
+});

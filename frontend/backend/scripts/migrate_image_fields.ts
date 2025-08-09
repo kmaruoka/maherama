@@ -11,9 +11,9 @@ async function migrateImageFields() {
 
     // 2. Shrineテーブルのフィールド名を更新
     console.log('Shrineテーブルのフィールド名を更新中...');
-    
+
     await prisma.$executeRaw`
-      ALTER TABLE "Shrine" 
+      ALTER TABLE "Shrine"
       ADD COLUMN IF NOT EXISTS "image_url_xs" TEXT,
       ADD COLUMN IF NOT EXISTS "image_url_s" TEXT,
       ADD COLUMN IF NOT EXISTS "image_url_m" TEXT,
@@ -22,8 +22,8 @@ async function migrateImageFields() {
     `;
 
     await prisma.$executeRaw`
-      UPDATE "Shrine" 
-      SET 
+      UPDATE "Shrine"
+      SET
         "image_url_xs" = "image_url64",
         "image_url_s" = "image_url128",
         "image_url_m" = "image_url256",
@@ -34,9 +34,9 @@ async function migrateImageFields() {
 
     // 3. Dietyテーブルのフィールド名を更新
     console.log('Dietyテーブルのフィールド名を更新中...');
-    
+
     await prisma.$executeRaw`
-      ALTER TABLE "Diety" 
+      ALTER TABLE "Diety"
       ADD COLUMN IF NOT EXISTS "image_url_xs" TEXT,
       ADD COLUMN IF NOT EXISTS "image_url_s" TEXT,
       ADD COLUMN IF NOT EXISTS "image_url_m" TEXT,
@@ -45,8 +45,8 @@ async function migrateImageFields() {
     `;
 
     await prisma.$executeRaw`
-      UPDATE "Diety" 
-      SET 
+      UPDATE "Diety"
+      SET
         "image_url_xs" = "image_url64",
         "image_url_s" = "image_url128",
         "image_url_m" = "image_url256",
@@ -64,4 +64,4 @@ async function migrateImageFields() {
 }
 
 // スクリプトを実行
-migrateImageFields(); 
+migrateImageFields();

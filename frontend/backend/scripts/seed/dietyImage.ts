@@ -50,4 +50,4 @@ export async function seedDietyImage(prisma: PrismaClient) {
     });
   }
   console.log('✅ DietyImage seed completed.');
-} 
+}

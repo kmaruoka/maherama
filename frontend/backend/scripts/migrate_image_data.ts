@@ -112,4 +112,4 @@ if (require.main === module) {
     });
 }
 
-export { migrateImageData }; 
+export { migrateImageData };

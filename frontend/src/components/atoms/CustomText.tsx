@@ -58,7 +58,7 @@ export function AwardIcon({ grade = 1, className, style, embed_data }: AwardIcon
   if (embed_data?.shrine && grade >= 2 && grade <= 5) {
     return <ShrineBadge rank={grade === 5 ? 1 : grade === 4 ? 2 : 3} size={getBadgeSize()} className={className} />;
   }
-  
+
   // 神様の称号の場合は専用バッジを使用
   if (embed_data?.diety && grade >= 2 && grade <= 5) {
     return <DietyBadge rank={grade === 5 ? 1 : grade === 4 ? 2 : 3} size={getBadgeSize()} className={className} />;
@@ -66,9 +66,9 @@ export function AwardIcon({ grade = 1, className, style, embed_data }: AwardIcon
 
   // ミッションの称号の場合は専用バッジを使用
   if (embed_data?.mission && grade >= 2 && grade <= 5) {
-    return <MissionBadge 
-      rank={grade === 5 ? 1 : grade === 4 ? 2 : 3} 
-      size={getBadgeSize()} 
+    return <MissionBadge
+      rank={grade === 5 ? 1 : grade === 4 ? 2 : 3}
+      size={getBadgeSize()}
       className={className}
       missionImageUrl={embed_data?.missionImageUrl}
     />;

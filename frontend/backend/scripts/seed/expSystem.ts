@@ -108,7 +108,7 @@ export async function getTodayWorshipCount(
 ): Promise<number> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -177,7 +177,7 @@ export async function purchaseAbility(
   abilityId: number
 ): Promise<{ success: boolean; reason?: string }> {
   const checkResult = await canPurchaseAbility(prisma, userId, abilityId);
-  
+
   if (!checkResult.canPurchase) {
     return { success: false, reason: checkResult.reason };
   }
@@ -221,4 +221,4 @@ export async function purchaseAbility(
   });
 
   return { success: true };
-} 
+}

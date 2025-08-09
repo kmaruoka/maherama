@@ -19,7 +19,7 @@ CSS変数を提供するテーマプロバイダーです。
 ```tsx
 import { VirtualThemeProvider } from './components/virtual';
 
-<VirtualThemeProvider 
+<VirtualThemeProvider
   tokens={{
     'v-row-height': 36,
     'v-font-size': '13px',
@@ -134,4 +134,4 @@ import { VGrid } from './components/virtual';
 5. **キーの既定値を統一**: rowKey 未指定時は index。IDがあるなら必ず渡す
 6. **可変行高も対応**: sizeMode.mode === 'variable' で getItemSize を渡せばOK
 7. **拡張ポイント**: cellRenderer でセル単位の表現カスタム、rowClassName で条件付きスタイル
-8. **外部UIとの共存**: className を噛ませて MUI / Bootstrap のユーティリティやテーマを併用可 
+8. **外部UIとの共存**: className を噛ませて MUI / Bootstrap のユーティリティやテーマを併用可

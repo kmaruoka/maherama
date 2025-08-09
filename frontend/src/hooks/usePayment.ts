@@ -32,21 +32,21 @@ export function getPaymentMethod() {
 // Stripe課金開始
 export function useStripeCheckout() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (planId: string) => {
       const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
       if (!plan) throw new Error('プランが見つかりません');
-      
+
       const res = await fetch(`${API_BASE}/subscription/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId, platform: 'web' }),
       });
-      
+
       if (!res.ok) throw new Error('決済セッションの作成に失敗しました');
       const { sessionId } = await res.json();
-      
+
       // Stripe Checkoutにリダイレクト（実装は後で追加）
       // console.log('Stripe Checkout開始:', sessionId);
       // window.location.href = `/checkout?session_id=${sessionId}`;
@@ -60,7 +60,7 @@ export function useStripeCheckout() {
 // App Store課金開始
 export function useAppStorePurchase() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (planId: string) => {
       // iOS In-App Purchase実装
@@ -80,7 +80,7 @@ export function useAppStorePurchase() {
 export function useStartSubscription() {
   const stripeCheckout = useStripeCheckout();
   const appStorePurchase = useAppStorePurchase();
-  
+
   return {
     mutate: (planId: string) => {
       const method = getPaymentMethod();
@@ -93,4 +93,4 @@ export function useStartSubscription() {
     isLoading: stripeCheckout.isPending || appStorePurchase.isPending,
     error: stripeCheckout.error || appStorePurchase.error,
   };
-} 
+}

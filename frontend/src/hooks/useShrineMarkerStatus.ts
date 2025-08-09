@@ -29,4 +29,4 @@ export function useShrineMarkerStatus(shrineId: number | null, userId: number | 
     retry: 2, // エラー時に2回リトライ
     refetchOnWindowFocus: false, // ウィンドウフォーカス時に再取得しない
   });
-} 
+}

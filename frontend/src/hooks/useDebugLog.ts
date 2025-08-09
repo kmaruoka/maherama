@@ -25,4 +25,4 @@ export default function useDebugLog() {
     const timestamp = `${now.toISOString()}.${ms}`;
     //console.log(`%c[DEBUG] [${timestamp}] ${msg}`, 'color: #1976d2; font-weight: bold;');
   }, []);
-} 
+}

@@ -99,11 +99,11 @@
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
     gap: 4px !important;
   }
-  
+
   .list--horizontal {
     gap: 4px;
   }
-  
+
   .list--loading,
   .list--error,
   .list--empty {
@@ -117,8 +117,8 @@
   .list--horizontal::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
   }
-  
+
   .list--horizontal::-webkit-scrollbar-thumb {
     background: var(--color-border-dark, #555);
   }
-} 
+}

@@ -64,7 +64,7 @@ const CardGrid = <T extends any>({
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 600);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -121,9 +121,9 @@ const CardGrid = <T extends any>({
               {({ columnIndex, rowIndex, style: cellStyle, data }: any) => {
                 const { items, columnCount, cardWidth, cardHeight, gap, renderItem } = data as GridItemData<T>;
                 const index = rowIndex * columnCount + columnIndex;
-                
+
                 if (index >= items.length) return null;
-                
+
                 return (
                   <div
                     className="card-grid__cell"
@@ -148,4 +148,4 @@ const CardGrid = <T extends any>({
   );
 };
 
-export default CardGrid; 
+export default CardGrid;

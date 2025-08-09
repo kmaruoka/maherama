@@ -77,11 +77,11 @@
   .mission-page {
     padding: 10px;
   }
-  
+
   .mission-page__title {
     font-size: 1.5rem;
   }
-  
+
   .mission-page__grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 15px;
@@ -225,16 +225,16 @@
   .mission-page {
     padding: 0.5rem;
   }
-  
+
   .mission-card__title {
     font-size: 0.8rem;
   }
-  
+
   .mission-card__content {
     font-size: 0.7rem;
   }
-  
+
   .mission-card__reward {
     font-size: 0.65rem;
   }
-} 
+}

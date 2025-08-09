@@ -20,4 +20,4 @@ export const VirtualThemeProvider: React.FC<Props> = ({ className, style, childr
       {children}
     </div>
   );
-}; 
+};

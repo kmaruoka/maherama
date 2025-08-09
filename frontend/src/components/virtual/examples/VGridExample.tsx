@@ -1,10 +1,10 @@
 import React from 'react';
 import { VirtualThemeProvider, VGrid } from '../index';
 
-type Product = { 
-  id: number; 
-  name: string; 
-  image: string; 
+type Product = {
+  id: number;
+  name: string;
+  image: string;
 };
 
 const products: Product[] = Array.from({ length: 1000 }).map((_, i) => ({
@@ -40,4 +40,4 @@ export default function VGridExample() {
       </div>
     </VirtualThemeProvider>
   );
-} 
+}

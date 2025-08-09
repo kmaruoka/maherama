@@ -54,7 +54,7 @@ async function uploadDietyImage(
 ): Promise<UploadedFileInfo> {
   const yyyymm = new Date().toISOString().slice(0, 7).replace('-', '');
   const uploadDir = path.join(__dirname, '..', '..', '..', 'public', 'images', yyyymm);
-  
+
   // アップロードディレクトリを作成
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -63,7 +63,7 @@ async function uploadDietyImage(
   // ファイル名を生成（diety + 元ファイル名）
   const baseName = path.parse(originalName).name;
   const uploadedName = `diety-${baseName}`;
-  
+
   // 各サイズのファイル名を生成
   const sizes = {
     original: '',
@@ -86,7 +86,7 @@ async function uploadDietyImage(
 
   // 画像を各サイズでリサイズして保存
   const imageBuffer = fs.readFileSync(imagePath);
-  
+
   // 64x64 (マーカー用)
   await sharp(imageBuffer)
     .resize(64, 64)
@@ -158,25 +158,25 @@ async function uploadDietyImage(
 export async function seedDiety(prisma: PrismaClient) {
   // アップロード済みファイル情報を読み込み
   const uploadedFiles = loadUploadedFiles();
-  
+
   // dieties.txtファイルを読み込み
   const txtPath = path.join(__dirname, '..', 'dieties.txt');
   const fileContent = fs.readFileSync(txtPath, 'utf-8');
-  
+
   // 行ごとに分割し、ヘッダー行を除外
   const lines = fileContent.split('\n').filter(line => line.trim() !== '');
   const dataLines = lines.slice(1); // ヘッダー行（id	name	reading	image	description）を除外
-  
+
   // タブ区切りで分割してデータを変換
   const dieties = dataLines.map((line) => {
     const [id, name, reading, image, description] = line.split('\t');
-    
+
     // nameが空の場合はスキップ
     if (!name || !name.trim()) {
       console.warn(`Skipping line with empty name: ${line}`);
       return null;
     }
-    
+
     return {
       id: Number(id?.trim() || 0),
       name: name.trim(),
@@ -202,7 +202,7 @@ export async function seedDiety(prisma: PrismaClient) {
   for (const diety of dietiesWithImages) {
     try {
       const imagePath = path.join(__dirname, 'images', diety.image);
-      
+
       // 画像ファイルが存在しない場合はスキップ
       if (!fs.existsSync(imagePath)) {
         console.warn(`Image file not found: ${imagePath}`);
@@ -215,17 +215,17 @@ export async function seedDiety(prisma: PrismaClient) {
       if (uploadedFiles[diety.image]) {
         console.log(`Using existing uploaded image for ${diety.image}`);
         fileInfo = uploadedFiles[diety.image];
-        
+
         // Imageテーブルに実際に存在するかチェック
         const existingImage = await prisma.image.findUnique({
           where: { id: fileInfo.imageId }
         });
-        
+
         if (!existingImage) {
           console.log(`Image ID ${fileInfo.imageId} not found in database, re-uploading: ${diety.image}`);
           // 新規アップロード
           fileInfo = await uploadDietyImage(prisma, diety.image, imagePath);
-          
+
           // アップロード済みファイル情報を更新
           uploadedFiles[diety.image] = fileInfo;
           saveUploadedFiles(uploadedFiles);
@@ -234,7 +234,7 @@ export async function seedDiety(prisma: PrismaClient) {
         // 新規アップロード
         console.log(`Uploading new image: ${diety.image}`);
         fileInfo = await uploadDietyImage(prisma, diety.image, imagePath);
-        
+
         // アップロード済みファイル情報に追加
         uploadedFiles[diety.image] = fileInfo;
         saveUploadedFiles(uploadedFiles);
@@ -260,6 +260,6 @@ export async function seedDiety(prisma: PrismaClient) {
       console.error(`Failed to process image for diety ${diety.id} (${diety.name}):`, error);
     }
   }
-  
+
   console.log(`Completed image processing for ${dietiesWithImages.length} dieties`);
 }

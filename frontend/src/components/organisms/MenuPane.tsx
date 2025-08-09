@@ -7,10 +7,10 @@ import { FaMapLocationDot, FaBook, FaUser, FaGear, FaBars, FaFlag } from "react-
 export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission') => void, page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission', isDialogOpen?: boolean }) {
   useSkin();
   const { t } = useTranslation();
-  
+
   // 最後に選択したメニューを記憶する状態
   const [lastSelectedMenu, setLastSelectedMenu] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission'>(page);
-  
+
   const handleNavClick = (e: React.MouseEvent) => {
     // メニュー以外の場所をクリックしてもページ状態を変更しないようにする
     e.stopPropagation();
@@ -24,9 +24,9 @@ export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (pa
   return (
     <nav
       className={`menu-pane d-flex${page === 'catalog' ? ' menu-pane-catalog' : ''}${isDialogOpen ? ' menu-pane--dialog-open' : ''}`}
-      style={{ 
-        background: 'var(--color-surface)', 
-        borderColor: 'var(--color-border)', 
+      style={{
+        background: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
       }}
       onClick={handleNavClick}
     >

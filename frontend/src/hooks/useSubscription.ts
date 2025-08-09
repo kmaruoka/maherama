@@ -38,4 +38,4 @@ export function useSubscriptionOld(userId: number | null) {
     },
     enabled: !!userId,
   });
-} 
+}

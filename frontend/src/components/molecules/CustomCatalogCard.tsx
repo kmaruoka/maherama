@@ -50,4 +50,4 @@ export default function CustomCatalogCard({ name, count, catalogedAt, lastPrayed
       </div>
     </div>
   );
-} 
+}

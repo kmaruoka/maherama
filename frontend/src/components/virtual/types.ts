@@ -36,4 +36,4 @@ export type FixedSize = {
   itemSize: number; // px
 };
 
-export type SizeMode = VariableSize | FixedSize; 
+export type SizeMode = VariableSize | FixedSize;

@@ -33,21 +33,21 @@ async function moveUploadedFiles() {
         if (!fs.existsSync(targetPath)) {
           fs.mkdirSync(targetPath, { recursive: true });
         }
-        
+
         const subItems = fs.readdirSync(sourcePath);
         for (const subItem of subItems) {
           const subSourcePath = path.join(sourcePath, subItem);
           const subTargetPath = path.join(targetPath, subItem);
-          
+
           if (fs.existsSync(subTargetPath)) {
             console.log(`ファイルが既に存在します、スキップ: ${subTargetPath}`);
             continue;
           }
-          
+
           fs.copyFileSync(subSourcePath, subTargetPath);
           console.log(`ファイルを移動しました: ${subSourcePath} -> ${subTargetPath}`);
         }
-        
+
         // 元のディレクトリを削除
         fs.rmSync(sourcePath, { recursive: true, force: true });
         console.log(`ディレクトリを削除しました: ${sourcePath}`);
@@ -57,7 +57,7 @@ async function moveUploadedFiles() {
           console.log(`ファイルが既に存在します、スキップ: ${targetPath}`);
           continue;
         }
-        
+
         fs.copyFileSync(sourcePath, targetPath);
         fs.unlinkSync(sourcePath);
         console.log(`ファイルを移動しました: ${sourcePath} -> ${targetPath}`);
@@ -71,4 +71,4 @@ async function moveUploadedFiles() {
 }
 
 // スクリプトを実行
-moveUploadedFiles(); 
+moveUploadedFiles();

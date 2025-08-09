@@ -9,8 +9,8 @@ export interface MissionBadgeProps {
   missionImageUrl?: string; // ミッション専用アイコンがある場合のURL
 }
 
-const MissionBadge: React.FC<MissionBadgeProps> = ({ 
-  rank, 
+const MissionBadge: React.FC<MissionBadgeProps> = ({
+  rank,
   size = 20,
   className = '',
   missionImageUrl
@@ -38,4 +38,4 @@ const MissionBadge: React.FC<MissionBadgeProps> = ({
   );
 };
 
-export default MissionBadge; 
+export default MissionBadge;

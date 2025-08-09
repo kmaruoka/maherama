@@ -8,15 +8,15 @@ export interface PageLayoutProps {
   style?: React.CSSProperties;
 }
 
-const PageLayout: React.FC<PageLayoutProps> = ({ 
-  children, 
-  className = '', 
-  style 
+const PageLayout: React.FC<PageLayoutProps> = ({
+  children,
+  className = '',
+  style
 }) => {
   const { skin } = useSkin();
 
   return (
-    <div 
+    <div
       className={`page-layout page-layout--${skin} ${className}`}
       style={style}
     >
@@ -25,4 +25,4 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   );
 };
 
-export default PageLayout; 
+export default PageLayout;

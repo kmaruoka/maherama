@@ -4,14 +4,14 @@
  */
 export function formatDisplayDate(dateStr: string): string {
   if (!dateStr) return '';
-  
+
   const date = new Date(dateStr);
   const now = new Date();
   const currentYear = now.getFullYear();
   const dateYear = date.getFullYear();
-  
+
   const pad = (num: number) => num.toString().padStart(2, '0');
-  
+
   if (dateYear === currentYear) {
     // 本年中: MM/dd HH:mm形式（より読みやすい）
     return `${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;

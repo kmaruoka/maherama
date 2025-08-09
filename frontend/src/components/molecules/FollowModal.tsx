@@ -83,7 +83,7 @@ export default function FollowModal({
               }}
             />
           </div>
-          
+
           <div className="modal-body">
             {isLoading && (
               <div className="text-center py-3">
@@ -92,19 +92,19 @@ export default function FollowModal({
                 </div>
               </div>
             )}
-            
+
             {error && (
               <div className="alert alert-danger" role="alert">
                 {error}
               </div>
             )}
-            
+
             {!isLoading && !error && users.length === 0 && (
               <div className="text-center py-3 text-muted">
                 ユーザーが見つかりません
               </div>
             )}
-            
+
             {!isLoading && !error && users.length > 0 && (
               <div className="list-group list-group-flush">
                 {users.map((user) => (
@@ -142,7 +142,7 @@ export default function FollowModal({
               </div>
             )}
           </div>
-          
+
           <div
             className="modal-footer"
             style={{
@@ -178,4 +178,4 @@ export default function FollowModal({
       </div>
     </div>
   );
-} 
+}

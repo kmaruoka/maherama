@@ -7,13 +7,13 @@ export interface CompletionBadgeProps {
   style?: React.CSSProperties;
 }
 
-const CompletionBadge: React.FC<CompletionBadgeProps> = ({ 
+const CompletionBadge: React.FC<CompletionBadgeProps> = ({
   size = 20,
   className = '',
   style = {}
 }) => {
   return (
-    <span 
+    <span
       className={`badge badge-mission ${className}`}
       style={{
         '--badge-size': `${size}px`,
@@ -25,4 +25,4 @@ const CompletionBadge: React.FC<CompletionBadgeProps> = ({
   );
 };
 
-export default CompletionBadge; 
+export default CompletionBadge;

@@ -5,7 +5,7 @@ export default function useCurrentPosition(): [number, number] | null {
 
   useEffect(() => {
     console.log('[GPS] 位置情報の取得を開始');
-    
+
     const successCallback = (pos: GeolocationPosition) => {
       const newPosition: [number, number] = [pos.coords.latitude, pos.coords.longitude];
       console.log('[GPS] 位置情報取得成功:', newPosition);
@@ -34,7 +34,7 @@ export default function useCurrentPosition(): [number, number] | null {
     };
 
     const watchId = navigator.geolocation.watchPosition(successCallback, errorCallback, options);
-    
+
     return () => {
       console.log('[GPS] 位置情報の監視を停止');
       navigator.geolocation.clearWatch(watchId);

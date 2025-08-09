@@ -240,7 +240,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
                 <FaFolder /> ストレージから選択
               </button>
             </div>
-            
+
             {/* カメラプレビュー */}
             <div style={{ marginBottom: 20 }}>
               <video
@@ -303,7 +303,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
                 <img src={imageSrc} alt="トリミング対象" style={{ maxWidth: '100%' }} onLoad={e => handleImageLoaded(e.currentTarget)} />
               </ReactCrop>
             </div>
-            
+
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setStep('select')}
@@ -343,4 +343,4 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       </div>
     </div>
   );
-}; 
+};

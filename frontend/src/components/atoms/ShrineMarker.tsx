@@ -31,7 +31,7 @@ interface ShrineMarkerProps {
 }
 
 function createShrineIcon(
-  image_url?: string, 
+  image_url?: string,
   isInZukan: boolean = false,
   isPrayable: boolean = false,
   isRemotePrayable: boolean = false, // 未使用（互換性のため残す）
@@ -44,14 +44,14 @@ function createShrineIcon(
 ) {
   // 状態に応じたCSSクラスを決定
   const statusClasses = [];
-  
+
   // 図鑑収録状態
   if (isInZukan) {
     statusClasses.push('shrine-marker-zukan');
   } else {
     statusClasses.push('shrine-marker-not-in-zukan');
   }
-  
+
   // 参拝状態（参拝後は最優先）
   if (hasPrayedToday) {
     statusClasses.push('shrine-marker-prayed-today');
@@ -60,14 +60,14 @@ function createShrineIcon(
   } else if (isUnprayable) {
     statusClasses.push('shrine-marker-unprayable');
   }
-  
+
   // 距離による透過度クラスを追加
   if (isInRange) {
     statusClasses.push('shrine-marker-in-range');
   } else {
     statusClasses.push('shrine-marker-out-of-range');
   }
-  
+
   const statusClassString = statusClasses.join(' ');
 
   return L.divIcon({
@@ -167,4 +167,4 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
       }}
     />
   );
-} 
+}

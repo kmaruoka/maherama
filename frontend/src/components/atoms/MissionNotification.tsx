@@ -15,9 +15,9 @@ interface MissionNotificationProps {
   onClose: () => void;
 }
 
-export const MissionNotification: React.FC<MissionNotificationProps> = ({ 
-  completedMissions, 
-  onClose 
+export const MissionNotification: React.FC<MissionNotificationProps> = ({
+  completedMissions,
+  onClose
 }) => {
   const { skin } = useSkin();
   const { t } = useTranslation();
@@ -47,13 +47,13 @@ export const MissionNotification: React.FC<MissionNotificationProps> = ({
           ×
         </button>
       </div>
-      
+
       <div className="mission-notification__content">
         {completedMissions.map(mission => (
           <div key={mission.id} className="mission-notification__mission">
             <h4 className="mission-notification__mission-name">{mission.name}</h4>
             <p className="mission-notification__mission-content">{mission.content}</p>
-            
+
             <div className="mission-notification__rewards">
               {mission.exp_reward > 0 && (
                 <div className="mission-notification__reward">
@@ -75,4 +75,4 @@ export const MissionNotification: React.FC<MissionNotificationProps> = ({
       </div>
     </div>
   );
-}; 
+};

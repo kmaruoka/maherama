@@ -16,14 +16,14 @@ export interface RankingItemProps {
   onItemClick?: (id: number) => void;
 }
 
-const RankingItem: React.FC<RankingItemProps> = ({ 
-  rank, 
-  id, 
-  name, 
-  count, 
-  type, 
+const RankingItem: React.FC<RankingItemProps> = ({
+  rank,
+  id,
+  name,
+  count,
+  type,
   rankingType,
-  onItemClick 
+  onItemClick
 }) => {
   const { skin } = useSkin();
 
@@ -38,7 +38,7 @@ const RankingItem: React.FC<RankingItemProps> = ({
         // ランキングの種類に応じてアイコンを選択
         const IconComponent = rankingType === 'diety' ? GiLibertyWing : GiShintoShrine;
         return (
-          <span 
+          <span
             className={`award-badge ${rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze'}`}
             style={{
               display: 'flex',
@@ -54,7 +54,7 @@ const RankingItem: React.FC<RankingItemProps> = ({
         );
       } else {
         return (
-          <span 
+          <span
             className="ranking-item__rank-number"
             style={{
               background: '#6c757d',
@@ -102,4 +102,4 @@ const RankingItem: React.FC<RankingItemProps> = ({
   );
 };
 
-export default RankingItem; 
+export default RankingItem;

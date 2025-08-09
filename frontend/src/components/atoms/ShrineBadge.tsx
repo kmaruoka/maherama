@@ -8,8 +8,8 @@ export interface ShrineBadgeProps {
   className?: string;
 }
 
-const ShrineBadge: React.FC<ShrineBadgeProps> = ({ 
-  rank, 
+const ShrineBadge: React.FC<ShrineBadgeProps> = ({
+  rank,
   size = 20,
   className = ''
 }) => {
@@ -27,4 +27,4 @@ const ShrineBadge: React.FC<ShrineBadgeProps> = ({
   );
 };
 
-export default ShrineBadge; 
+export default ShrineBadge;

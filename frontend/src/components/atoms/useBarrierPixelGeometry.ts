@@ -19,4 +19,4 @@ export function useBarrierPixelGeometry(center: [number, number] | undefined, ra
   const metersPerPixel = map.distance(center, [latLngX.lat, latLngX.lng]);
   const pixelRadius = radius / metersPerPixel;
   return { pixelX: point.x, pixelY: point.y, pixelRadius };
-} 
+}

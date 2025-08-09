@@ -127,4 +127,4 @@ async function cleanupDuplicates() {
   await prisma.$disconnect();
 }
 
-cleanupDuplicates(); 
+cleanupDuplicates();

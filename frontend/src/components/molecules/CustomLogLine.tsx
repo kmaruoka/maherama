@@ -83,7 +83,7 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
   }
 
   return (
-    <div className="px-2 py-1"> 
+    <div className="px-2 py-1">
       <span style={{ color: skin.colors.logText }}>{formatTime(log.logged_at)}</span>{' '}
       <span style={{ color: skin.colors.logText }}>{renderMessage(log.message)}</span>
     </div>

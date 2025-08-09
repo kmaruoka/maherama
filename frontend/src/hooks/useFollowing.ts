@@ -26,4 +26,4 @@ export function useFollowing(userId: number) {
     },
     enabled: !!userId,
   });
-} 
+}

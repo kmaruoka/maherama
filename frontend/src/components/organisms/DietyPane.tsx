@@ -115,7 +115,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         let errorMsg = '投票失敗';
         try {
@@ -131,7 +131,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         }
         throw new Error(errorMsg);
       }
-      
+
       // 成功時はデータ再取得
       // setRefreshKey(prev => prev + 1); // This line was removed as per the new_code
       alert(t('voteSuccess'));

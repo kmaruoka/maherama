@@ -7,4 +7,4 @@ describe('GET /user-rankings', () => {
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
-}); 
+});

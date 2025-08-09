@@ -16,7 +16,7 @@
 2. EC2ダッシュボードで「インスタンスを起動」
 3. 推奨設定:
    - **AMI**: Ubuntu 22.04 LTS
-   - **インスタンスタイプ**: 
+   - **インスタンスタイプ**:
      - **開発・テスト**: t3.medium（2vCPU, 4GB RAM）
      - **本番**: t3.large（2vCPU, 8GB RAM）
      - **注意**: t3.small（2vCPU, 2GB RAM）では性能不足の可能性があります
@@ -280,7 +280,7 @@ server {
     location / {
         root /home/ubuntu/maherama/frontend/dist;
         try_files $uri $uri/ /index.html;
-        
+
         # キャッシュ設定
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
             expires 1y;
@@ -388,7 +388,7 @@ sudo crontab -e
 30 2 * * * certbot renew --quiet && systemctl reload nginx
 ```
 
-**注意**: 
+**注意**:
 - ドメインを取得していない場合は、この手順は後回しにしてください。
 - SSL証明書を設定する前に、HTTPでの動作を必ず確認してください。
 - 証明書の設定後に問題が発生した場合は、`sudo certbot delete --cert-name your-domain.com`で証明書を削除してHTTPに戻すことができます。
@@ -639,7 +639,7 @@ server {
     location / {
         root /home/ubuntu/maherama/frontend/dist;
         try_files $uri $uri/ /index.html;
-        
+
         # キャッシュ設定
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
             expires 1y;
@@ -781,4 +781,4 @@ sudo vi /etc/nginx/nginx.conf
 - バックエンドログ: `sudo journalctl -u maherama-backend`
 - Nginxログ: `/var/log/nginx/`
 - システムログ: `journalctl -u nginx`
-- データベースログ: `/var/log/postgresql/` 
+- データベースログ: `/var/log/postgresql/`

@@ -17,7 +17,7 @@ async function seedAreas() {
     // area.txtファイルを読み込み
     const areaFilePath = path.join(__dirname, '../area.txt');
     const fileContent = fs.readFileSync(areaFilePath, 'utf-8');
-    
+
     // ヘッダー行をスキップしてデータを解析
     const lines = fileContent.split('\n').slice(1);
     const areas: AreaData[] = [];
@@ -103,4 +103,4 @@ if (require.main === module) {
     });
 }
 
-export { seedAreas }; 
+export { seedAreas };

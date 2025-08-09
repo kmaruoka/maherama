@@ -84,4 +84,4 @@ export interface Subscription {
     worshipBoost?: number;
     canResetAbilities?: boolean;
   };
-} 
+}
