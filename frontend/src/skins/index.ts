@@ -4,7 +4,6 @@ import forest from './forest';
 import ai from './ai';
 import moon from './moon';
 import snow from './snow';
-import kane from './kane';
 
 export const skins = {
   wa,
@@ -13,7 +12,6 @@ export const skins = {
   ai,
   moon,
   snow,
-  kane,
 };
 
 export type SkinName = keyof typeof skins;
