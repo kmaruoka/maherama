@@ -90,6 +90,8 @@ const resources = {
       radius: '半径',
       locationUnavailable: '位置情報が取得できません',
       shrineInfoUnavailable: '神社情報が読み込まれていません',
+      gpsNotAvailable: 'GPS位置情報が取得できません',
+      prayWithoutDistanceCheck: '距離チェックなしで参拝可能',
       // Catalog sorting
       sortByRegisteredDateDesc: '図鑑収録日（新しい順）',
       sortByRegisteredDateAsc: '図鑑収録日（古い順）',
@@ -191,6 +193,8 @@ const resources = {
       radius: 'Radius',
       locationUnavailable: 'Location unavailable',
       shrineInfoUnavailable: 'Shrine info unavailable',
+      gpsNotAvailable: 'GPS location unavailable',
+      prayWithoutDistanceCheck: 'Pray without distance check',
       // Catalog sorting
       sortByRegisteredDateDesc: 'Registered Date (Newest)',
       sortByRegisteredDateAsc: 'Registered Date (Oldest)',

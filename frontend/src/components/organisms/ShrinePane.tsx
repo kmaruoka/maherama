@@ -223,18 +223,21 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const distance = (currentPosition && data) ? getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng) : null;
   
   // 距離判定（小数点誤差を吸収して比較）
-  const canPray = distance !== null && 
+  // GPS位置が取得できない場合は、距離チェックをスキップして参拝を許可
+  const canPray = currentPosition === null ? true : (
+    distance !== null && 
     !isNaN(distance) && 
     !isNaN(radius) && 
-    distance <= radius;
+    distance <= radius
+  );
 
   // デバッグ情報を出力
-  // useEffect(() => {
-  //   if (currentPosition && data) {
-  //     const d = getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng);
-  //     debugLog(`神社: ${data.name} | 現在位置: [${currentPosition[0]}, ${currentPosition[1]}] | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${formatDistance(d)} (typeof: ${typeof d}) | 半径: ${formatDistance(radius)} (typeof: ${typeof radius}) | 参拝可能: ${canPray} | デバッグモード: ${debugMode}`);
-  //   }
-  // }, [currentPosition, data, radius, canPray, debugMode, debugLog]);
+  useEffect(() => {
+    if (data) {
+      const d = currentPosition ? getDistanceMeters(currentPosition[0], currentPosition[1], data.lat, data.lng) : null;
+      debugLog(`神社: ${data.name} | 現在位置: ${currentPosition ? `[${currentPosition[0]}, ${currentPosition[1]}]` : 'null'} | 神社位置: [${data.lat}, ${data.lng}] | 距離: ${d !== null ? formatDistance(d) : 'null'} | 半径: ${formatDistance(radius)} | 参拝可能: ${canPray} | デバッグモード: ${debugMode} | GPS位置: ${position ? `[${position[0]}, ${position[1]}]` : 'null'}`);
+    }
+  }, [currentPosition, data, radius, canPray, debugMode, debugLog, position]);
 
   const prayMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -519,7 +522,11 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
             }
           </CustomButton>
         </div>
-        {distance !== null && (
+        {currentPosition === null ? (
+          <div className="text-muted small mt-2">
+            {t('gpsNotAvailable')} - {t('prayWithoutDistanceCheck')}
+          </div>
+        ) : distance !== null && (
           <div className="text-muted small mt-2">
             {t('distance')}: {formatDistance(distance)}
             {canPray ? ` (${t('prayable')})` : ` (${t('outOfRange')})`}
