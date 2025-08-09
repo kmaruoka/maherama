@@ -1133,9 +1133,9 @@ nav.d-flex.position-fixed {
   position: relative;
 }
 
-/* デバッグモードOFF時のタッチ操作制御 */
+/* デバッグモードOFF時のタッチ操作制御（ネイティブ操作は抑止） */
 .map-page__container:not(.debug-mode) {
-  touch-action: pinch-zoom;
+  touch-action: none; /* ← pinch-zoom から none に変更 */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;

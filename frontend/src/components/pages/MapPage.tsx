@@ -88,7 +88,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     }
   }, [debugMode, center]);
 
-  // 地図の操作可否切り替え（確実に適用するため）
+  // 地図の操作可否切り替え（touchZoom は MapContainer の props で制御）
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
     
@@ -254,11 +254,13 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   return (
     <div className="map-page">
       <MapContainer
+        key={`map-${debugMode ? 'debug' : 'normal'}`}  // ← 再マウント用
         center={debugMode ? center : (position || defaultCenter)}
         zoom={minZoom}
         minZoom={minZoom}
         maxZoom={maxZoom}
         dragging={debugMode}
+        touchZoom={debugMode ? true : 'center'}        // ← ここが肝
         scrollWheelZoom={true}
         doubleClickZoom={debugMode}
         className={`map-page__container${debugMode ? ' debug-mode' : ''}`}
