@@ -1,12 +1,25 @@
 /* TopPage メインコンテナ */
 .top-page {
   min-height: 100vh;
-  background: var(--color-background);
+  background: #0a0f1f !important; /* 深い藍黒（夜空） */
   margin: 0;
   padding: 0;
   overflow-y: auto !important;
   height: auto !important;
   max-height: none !important;
+}
+
+/* Bootstrap CSS変数の上書き */
+.top-page {
+  --bs-btn-bg: #ffffff !important;
+  --bs-btn-border-color: #ffffff !important;
+  --bs-btn-color: #0a0f1f !important;
+  --bs-btn-hover-bg: #f0f4f8 !important;
+  --bs-btn-hover-border-color: #f0f4f8 !important;
+  --bs-btn-hover-color: #0a0f1f !important;
+  --bs-btn-disabled-bg: #37474f !important;
+  --bs-btn-disabled-border-color: #37474f !important;
+  --bs-btn-disabled-color: #90a4ae !important;
 }
 
 /* html, bodyのoverflow: hiddenを上書き */
@@ -30,7 +43,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-surface) 100%);
+  background: linear-gradient(135deg, #0a0f1f 0%, #11162a 100%) !important; /* ダーク系グラデーション */
 }
 
 .top-page__hero-image {
@@ -40,96 +53,276 @@ html, body {
   object-position: center top;
 }
 
+/* キャッチフレーズセクション */
+.top-page__catchphrase {
+  padding: 3rem 1rem;
+  background: #0a0f1f !important; /* 深い藍黒（夜空） */
+  text-align: center;
+}
+
+.top-page__catchphrase-text {
+  color: #ffffff !important; /* 純白 - 強力な視認性 */
+  font-size: 1.5rem;
+  font-weight: 600 !important;
+  line-height: 1.8;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5) !important; /* 光る効果を追加 */
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .top-page__catchphrase {
+    padding: 2rem 1rem;
+  }
+
+  .top-page__catchphrase-text {
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 576px) {
+  .top-page__catchphrase {
+    padding: 1.5rem 1rem;
+  }
+
+  .top-page__catchphrase-text {
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+}
+
 /* 認証セクション */
 .top-page__auth-section {
   padding: 2rem 1rem;
-  background: var(--color-background);
+  background: #0a0f1f !important; /* 深い藍黒（夜空） */
 }
 
 .top-page__auth-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  background: #11162a !important; /* 少し明るい藍（闇の中に月光が届くような） */
+  border: 1px solid #2c3e50 !important; /* 夜の静けさを感じる青みグレー */
+  border-radius: 0.75rem !important; /* 適切な角丸サイズ */
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5), 0 0 0 6px #0a0f1f !important; /* ダーク系シャドウ */
+  overflow: hidden !important; /* 角丸をはみ出さないように */
 }
 
-/* タブボタン */
-.top-page__auth-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+/* React Bootstrap Card の上書き */
+.top-page__auth-card .card {
+  background: #11162a !important;
+  border: 1px solid #2c3e50 !important;
+  color: #f0f4f8 !important;
+  border-radius: 0.75rem !important; /* 適切な角丸サイズ */
+  overflow: hidden !important; /* 角丸をはみ出さないように */
 }
 
-.top-page__auth-tabs .btn {
-  flex: 1;
-  min-width: 120px;
-  white-space: nowrap;
+.top-page__auth-card .card-body {
+  background: #11162a !important;
+  color: #f0f4f8 !important;
+  border-radius: 0.75rem !important; /* 適切な角丸サイズ */
+  overflow: hidden !important; /* 角丸をはみ出さないように */
+}
+
+/* タブスタイル - React Bootstrap Tabs の強力な上書き */
+.top-page__auth-card .nav-tabs {
+  border-bottom: 1px solid #2c3e50 !important; /* 夜の静けさを感じる青みグレー */
+  background: #11162a !important;
+}
+
+.top-page__auth-card .nav-tabs .nav-link {
+  color: #ffffff !important; /* 純白 - 強力な視認性 */
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  padding: 0.75rem 1rem !important;
+  font-weight: 600 !important; /* フォントウェイトを上げて視認性向上 */
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3) !important; /* 光る効果を追加 */
+}
+
+.top-page__auth-card .nav-tabs .nav-link:hover {
+  color: #b0c4de !important; /* 月光のようなライトスチールブルー */
+  background: transparent !important;
+  border-color: transparent !important;
+  text-shadow: 0 0 12px rgba(176, 196, 222, 0.8) !important; /* より強い光る効果 */
+}
+
+.top-page__auth-card .nav-tabs .nav-link.active {
+  color: #0a0f1f !important; /* ダーク背景に合わせた濃い文字色 */
+  background: #ffffff !important; /* 純白背景 */
+  border-color: #ffffff !important; /* 純白ボーダー */
+  font-weight: 700 !important; /* より太いフォント */
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3) !important; /* 光る効果を追加 */
+}
+
+/* タブコンテンツ */
+.top-page__auth-card .tab-content {
+  min-height: auto;
+  background: #11162a !important;
+}
+
+.top-page__auth-card .tab-pane {
+  padding: 0 !important;
+  display: block !important;
+  background: #11162a !important;
+}
+
+.top-page__auth-card .tab-pane.active {
+  display: block !important;
+}
+
+.top-page__auth-card .tab-pane:not(.active) {
+  display: none !important;
 }
 
 /* フォームセクション */
 .top-page__form-section {
-  padding: 1rem 0;
+  padding: 1.5rem 0;
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: #11162a !important;
 }
 
 .top-page__form-section h4 {
-  color: var(--color-text);
-  margin-bottom: 1rem;
+  color: #ffffff !important; /* 純白 - 強力な視認性 */
+  margin-bottom: 1.5rem;
   text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700 !important; /* フォントウェイトを上げて視認性向上 */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4) !important; /* 光る効果を追加 */
 }
 
+/* React Bootstrap Form の強力な上書き */
 .top-page__form-section .form-label {
-  color: var(--color-text);
-  font-weight: 500;
+  color: #ffffff !important; /* 純白 - 強力な視認性 */
+  font-weight: 600 !important; /* フォントウェイトを上げて視認性向上 */
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3) !important; /* 光る効果を追加 */
 }
 
 .top-page__form-section .form-control {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: #1b263b !important; /* より明るい背景 */
+  border: 1px solid #2c3e50 !important; /* 夜の静けさを感じる青みグレー */
   border-radius: calc(var(--border-radius) / 2);
-  color: var(--color-text);
+  color: #ffffff !important; /* 純白文字 */
+  margin-bottom: 1rem;
+  font-weight: 500 !important;
 }
 
 .top-page__form-section .form-control:focus {
-  background: var(--color-surface);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 0.2rem rgba(191, 161, 74, 0.25);
-  color: var(--color-text);
+  background: #1b263b !important; /* より明るい背景 */
+  border-color: #b0c4de !important; /* 月光のようなライトスチールブルー */
+  box-shadow: 0 0 0 0.2rem rgba(176, 196, 222, 0.25) !important; /* 月光色のフォーカス */
+  color: #ffffff !important; /* 純白文字 */
 }
 
-.top-page__form-section .btn-primary {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+.top-page__form-section .form-select {
+  background: #1b263b !important; /* より明るい背景 */
+  border: 1px solid #2c3e50 !important; /* 夜の静けさを感じる青みグレー */
   border-radius: calc(var(--border-radius) / 2);
-  font-weight: 500;
+  color: #ffffff !important; /* 純白文字 */
+  margin-bottom: 1rem;
+  font-weight: 500 !important;
 }
 
-.top-page__form-section .btn-primary:hover {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+.top-page__form-section .form-select:focus {
+  background: #1b263b !important; /* より明るい背景 */
+  border-color: #b0c4de !important; /* 月光のようなライトスチールブルー */
+  box-shadow: 0 0 0 0.2rem rgba(176, 196, 222, 0.25) !important; /* 月光色のフォーカス */
+  color: #ffffff !important; /* 純白文字 */
 }
 
-.top-page__form-section .btn-primary:disabled {
-  background: var(--color-border);
-  border-color: var(--color-border);
-  opacity: 0.6;
+/* React Bootstrap Button の強力な上書き */
+.top-page__form-section .btn-primary,
+.top-page__form-section button.btn-primary,
+.top-page__form-section .btn.btn-primary,
+.top-page__form-section button[type="submit"].btn-primary,
+.top-page__form-section button[type="button"].btn-primary {
+  background: #ffffff !important; /* 純白背景 */
+  border-color: #ffffff !important; /* 純白ボーダー */
+  border-radius: calc(var(--border-radius) / 2) !important;
+  font-weight: 700 !important; /* フォントウェイトを上げて視認性向上 */
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem !important;
+  color: #0a0f1f !important; /* ダーク背景に合わせた濃い文字色 */
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3) !important; /* 光る効果を追加 */
+  text-shadow: none !important;
+  opacity: 1 !important;
+  /* Bootstrap のデフォルトスタイルを完全に無効化 */
+  background-color: #ffffff !important;
+  border: 1px solid #ffffff !important;
+  color: #0a0f1f !important;
 }
 
-/* アラート */
-.top-page__form-section .alert {
+.top-page__form-section .btn-primary:hover,
+.top-page__form-section button.btn-primary:hover,
+.top-page__form-section .btn.btn-primary:hover {
+  background: #f0f4f8 !important; /* 蒼白に近い月光色 */
+  border-color: #f0f4f8 !important; /* 蒼白に近い月光色 */
+  color: #0a0f1f !important; /* ダーク背景に合わせた濃い文字色 */
+  box-shadow: 0 6px 20px rgba(240, 244, 248, 0.4) !important; /* より強い光る効果 */
+  transform: translateY(-1px) !important; /* ホバー時に少し上に移動 */
+}
+
+.top-page__form-section .btn-primary:disabled,
+.top-page__form-section button.btn-primary:disabled,
+.top-page__form-section .btn.btn-primary:disabled {
+  background: #37474f !important; /* 無効状態のダークグレー */
+  border-color: #37474f !important; /* 無効状態のダークグレー */
+  color: #90a4ae !important; /* 無効状態でも見える文字色 */
+  opacity: 0.8 !important; /* 透明度を上げて視認性向上 */
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* リンクボタンスタイル - React Bootstrap Button Link の強力な上書き */
+.top-page__form-section .btn-link {
+  color: #ffffff !important; /* 純白 - 強力な視認性 */
+  text-decoration: underline !important;
+  padding: 0.5rem 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 0.9rem;
+  font-weight: 600 !important; /* フォントウェイトを上げて視認性向上 */
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4) !important; /* 光る効果を追加 */
+}
+
+.top-page__form-section .btn-link:hover {
+  color: #b0c4de !important; /* 月光のようなライトスチールブルー */
+  text-decoration: underline !important;
+  text-shadow: 0 0 12px rgba(176, 196, 222, 0.8) !important; /* より強い光る効果 */
+  transform: translateY(-1px) !important; /* ホバー時に少し上に移動 */
+}
+
+/* フォームグループの余白調整 */
+.top-page__form-section .form-group {
   margin-bottom: 1rem;
 }
 
+.top-page__form-section .form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* React Bootstrap Alert の強力な上書き */
+.top-page__form-section .alert {
+  margin-bottom: 1rem;
+  border-radius: calc(var(--border-radius) / 2);
+  font-weight: 500 !important;
+}
+
 .top-page__form-section .alert-success {
-  background: var(--color-tag-user);
-  border-color: var(--color-tag-user-text);
-  color: var(--color-tag-user-text);
+  background: #4b5d67 !important; /* 蒼く落ち着いた親しみ */
+  border-color: #b0bec5 !important; /* 月の影のようなグレー */
+  color: #ffffff !important; /* 純白文字 */
 }
 
 .top-page__form-section .alert-danger {
-  background: #ffebee;
-  border-color: #e74c3c;
-  color: #c62828;
+  background: #3a3f5d !important; /* 月と神性の静かな融合 */
+  border-color: #d1c4e9 !important; /* 月に照らされた紫苑（しおん） */
+  color: #ffffff !important; /* 純白文字 */
 }
 
 /* PCサイズでの画像制限 */
@@ -166,13 +359,18 @@ html, body {
 }
 
 @media (max-width: 576px) {
-  .top-page__auth-tabs {
-    flex-direction: column;
-    gap: 0.25rem;
+  .top-page__auth-card .nav-tabs .nav-link {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.9rem;
   }
 
-  .top-page__auth-tabs .btn {
-    width: 100%;
-    min-width: auto;
+  .top-page__form-section {
+    padding: 1rem 0;
+    min-height: auto;
+  }
+
+  .top-page__form-section h4 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
   }
 }

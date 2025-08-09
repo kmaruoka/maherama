@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { API_BASE } from '../../config/api';
 import useAllUsers from '../../hooks/useAllUsers';
@@ -10,7 +10,7 @@ interface TopPageProps {
   onLogin: () => void;
 }
 
-type FormType = 'register' | 'login' | 'password-reset' | 'test-user';
+type FormType = 'register' | 'login' | 'test-user';
 
 const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
   const { t } = useTranslation();
@@ -18,7 +18,8 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
   const { data: users = [], isLoading: isLoadingUsers } = useAllUsers();
 
   // フォーム状態管理
-  const [activeForm, setActiveForm] = useState<FormType | null>(null);
+  const [activeForm, setActiveForm] = useState<FormType>('login');
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   // フォームデータ
   const [registerForm, setRegisterForm] = useState({ username: '', email: '' });
@@ -39,11 +40,19 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
   // フォーム切り替え処理
   const switchForm = (formType: FormType) => {
     setActiveForm(formType);
+    setShowPasswordReset(false);
     // エラーとサクセスメッセージをクリア
     setRegisterErrors({});
     setLoginErrors({});
     setResetErrors({});
     setRegisterSuccess(false);
+    setResetSuccess(false);
+  };
+
+  // パスワードリセット表示切り替え
+  const togglePasswordReset = () => {
+    setShowPasswordReset(!showPasswordReset);
+    setResetErrors({});
     setResetSuccess(false);
   };
 
@@ -172,6 +181,15 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
         />
       </div>
 
+      {/* キャッチフレーズセクション */}
+      <div className="top-page__catchphrase">
+        <div className="top-page__catchphrase-text">
+          地図を開き、時空を巡る旅に出よう。
+          <br />
+          神代の物語は、まだ終わらない。
+        </div>
+      </div>
+
       {/* 認証セクション */}
       <div className="top-page__auth-section">
         <Container>
@@ -179,41 +197,22 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
             <Col md={8} lg={6}>
               <Card className="top-page__auth-card">
                 <Card.Body>
-                  {/* タブボタン */}
-                  <div className="top-page__auth-tabs">
-                    <Button
-                      variant={activeForm === 'register' ? 'primary' : 'outline-primary'}
-                      onClick={() => switchForm('register')}
-                      className="me-2"
-                    >
-                      ユーザー登録
-                    </Button>
-                    <Button
-                      variant={activeForm === 'login' ? 'primary' : 'outline-primary'}
-                      onClick={() => switchForm('login')}
-                      className="me-2"
-                    >
-                      ログイン
-                    </Button>
-                    <Button
-                      variant={activeForm === 'password-reset' ? 'primary' : 'outline-primary'}
-                      onClick={() => switchForm('password-reset')}
-                      className="me-2"
-                    >
-                      パスワードリセット
-                    </Button>
-                    <Button
-                      variant={activeForm === 'test-user' ? 'primary' : 'outline-primary'}
-                      onClick={() => switchForm('test-user')}
-                    >
-                      テストユーザー
-                    </Button>
-                  </div>
+                  {/* タブ */}
+                  <Tabs
+                    id="auth-tabs"
+                    activeKey={activeForm}
+                    onSelect={(k) => k && switchForm(k as FormType)}
+                    className="mb-3"
+                  >
+                    <Tab eventKey="register" title="新規登録" />
+                    <Tab eventKey="login" title="ログイン" />
+                    <Tab eventKey="test-user" title="テストプレイ" />
+                  </Tabs>
 
-                  {/* ユーザー登録フォーム */}
-                  {activeForm === 'register' && (
+                  {/* 新規登録フォーム */}
+                  <Tab.Pane eventKey="register" active={activeForm === 'register'}>
                     <div className="top-page__form-section">
-                      <h4>ユーザー登録</h4>
+                      <h4>新規登録</h4>
                       {registerSuccess && (
                         <Alert variant="success">
                           登録が完了しました。確認メールをお送りしましたので、メール内のリンクをクリックしてアカウントを有効化してください。
@@ -249,79 +248,111 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
                             {registerErrors.email}
                           </Form.Control.Feedback>
                         </Form.Group>
-                        <Button type="submit" variant="primary" disabled={isRegistering} className="w-100">
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={isRegistering || !registerForm.username || !registerForm.email}
+                          className="w-100"
+                        >
                           {isRegistering ? '登録中...' : '登録'}
                         </Button>
                       </Form>
                     </div>
-                  )}
+                  </Tab.Pane>
 
                   {/* ログインフォーム */}
-                  {activeForm === 'login' && (
+                  <Tab.Pane eventKey="login" active={activeForm === 'login'}>
                     <div className="top-page__form-section">
-                      <h4>ログイン</h4>
-                      {loginErrors.general && (
-                        <Alert variant="danger">{loginErrors.general}</Alert>
+                      {!showPasswordReset ? (
+                        <>
+                          <h4>ログイン</h4>
+                          {loginErrors.general && (
+                            <Alert variant="danger">{loginErrors.general}</Alert>
+                          )}
+                          <Form onSubmit={handleLogin}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>メールアドレス</Form.Label>
+                              <Form.Control
+                                type="email"
+                                value={loginForm.email}
+                                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                                required
+                              />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                              <Form.Label>パスワード</Form.Label>
+                              <Form.Control
+                                type="password"
+                                value={loginForm.password}
+                                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                                required
+                              />
+                            </Form.Group>
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              disabled={isLoggingIn || !loginForm.email || !loginForm.password}
+                              className="w-100 mb-2"
+                            >
+                              {isLoggingIn ? 'ログイン中...' : 'ログイン'}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="link"
+                              onClick={togglePasswordReset}
+                              className="w-100 p-0"
+                            >
+                              パスワードを忘れた方はこちら
+                            </Button>
+                          </Form>
+                        </>
+                      ) : (
+                        <>
+                          <h4>パスワードリセット</h4>
+                          {resetSuccess && (
+                            <Alert variant="success">
+                              パスワードリセット用のメールをお送りしました。メール内のリンクをクリックしてパスワードをリセットしてください。
+                            </Alert>
+                          )}
+                          {resetErrors.general && (
+                            <Alert variant="danger">{resetErrors.general}</Alert>
+                          )}
+                          <Form onSubmit={handlePasswordReset}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>メールアドレス</Form.Label>
+                              <Form.Control
+                                type="email"
+                                value={resetForm.email}
+                                onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })}
+                                required
+                              />
+                            </Form.Group>
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              disabled={isResetting || !resetForm.email}
+                              className="w-100 mb-2"
+                            >
+                              {isResetting ? '送信中...' : 'パスワードリセット'}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="link"
+                              onClick={togglePasswordReset}
+                              className="w-100 p-0"
+                            >
+                              ログインに戻る
+                            </Button>
+                          </Form>
+                        </>
                       )}
-                      <Form onSubmit={handleLogin}>
-                        <Form.Group className="mb-3">
-                          <Form.Label>メールアドレス</Form.Label>
-                          <Form.Control
-                            type="email"
-                            value={loginForm.email}
-                            onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                            required
-                          />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                          <Form.Label>パスワード</Form.Label>
-                          <Form.Control
-                            type="password"
-                            value={loginForm.password}
-                            onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                            required
-                          />
-                        </Form.Group>
-                        <Button type="submit" variant="primary" disabled={isLoggingIn} className="w-100">
-                          {isLoggingIn ? 'ログイン中...' : 'ログイン'}
-                        </Button>
-                      </Form>
                     </div>
-                  )}
+                  </Tab.Pane>
 
-                  {/* パスワードリセットフォーム */}
-                  {activeForm === 'password-reset' && (
+                  {/* テストプレイフォーム */}
+                  <Tab.Pane eventKey="test-user" active={activeForm === 'test-user'}>
                     <div className="top-page__form-section">
-                      <h4>パスワードリセット</h4>
-                      {resetSuccess && (
-                        <Alert variant="success">
-                          パスワードリセット用のメールをお送りしました。メール内のリンクをクリックしてパスワードをリセットしてください。
-                        </Alert>
-                      )}
-                      {resetErrors.general && (
-                        <Alert variant="danger">{resetErrors.general}</Alert>
-                      )}
-                      <Form onSubmit={handlePasswordReset}>
-                        <Form.Group className="mb-3">
-                          <Form.Label>メールアドレス</Form.Label>
-                          <Form.Control
-                            type="email"
-                            value={resetForm.email}
-                            onChange={(e) => setResetForm({ ...resetForm, email: e.target.value })}
-                            required
-                          />
-                        </Form.Group>
-                        <Button type="submit" variant="primary" disabled={isResetting} className="w-100">
-                          {isResetting ? '送信中...' : 'パスワードリセット'}
-                        </Button>
-                      </Form>
-                    </div>
-                  )}
-
-                  {/* テストユーザーログインフォーム */}
-                  {activeForm === 'test-user' && (
-                    <div className="top-page__form-section">
-                      <h4>テストユーザーでログイン</h4>
+                      <h4>テストプレイ</h4>
                       <Form.Group className="mb-3">
                         <Form.Label>テストユーザーを選択</Form.Label>
                         {isLoadingUsers ? (
@@ -344,12 +375,12 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
                         variant="primary"
                         onClick={handleTestUserLogin}
                         disabled={!selectedTestUserId}
-                        className="w-100"
+                        className="w-100 mb-2"
                       >
                         ログイン
                       </Button>
                     </div>
-                  )}
+                  </Tab.Pane>
                 </Card.Body>
               </Card>
             </Col>
