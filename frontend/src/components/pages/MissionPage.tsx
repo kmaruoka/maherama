@@ -71,6 +71,9 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
                 onClick={() => handleMissionClick(mission)} 
               />
             )}
+            cardWidth={114}
+            cardHeight={200}
+            gap={4}
             emptyMessage="常設ミッションがありません"
             style={{ flex: 1, minHeight: 0 }}
           />
@@ -86,6 +89,9 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
                 onClick={() => handleMissionClick(mission)} 
               />
             )}
+            cardWidth={114}
+            cardHeight={200}
+            gap={4}
             emptyMessage="限定ミッションがありません"
             style={{ flex: 1, minHeight: 0 }}
           />

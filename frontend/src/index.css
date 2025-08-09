@@ -33,6 +33,15 @@
   --badge-size-px: 14px;
   --award-badge-size: 1.4em;
   --award-badge-size-px: 14px;
+  /* カードサイズの定数 */
+  --card-width: 114px;
+  --card-height: 200px;
+  --card-gap: 4px;
+  --card-gap-mobile: 2px;
+  /* ミッションカードサイズの定数 */
+  --mission-card-width: 114px;
+  --mission-card-height: 200px;
+  --mission-card-gap: 4px;
 }
 
 @media (min-width: 600px) {
