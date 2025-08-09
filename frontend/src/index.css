@@ -43,7 +43,8 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: var(--font-family) !important;
   background: var(--color-background);
   color: var(--color-text);
@@ -997,7 +998,8 @@ body.no-skin-padding, body.no-skin-padding #root {
   padding: 0 !important;
   margin: 0 !important;
   max-width: 100vw !important;
-  overflow: hidden !important;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--color-background) !important;
 }
 
@@ -1046,19 +1048,22 @@ nav.d-flex.position-fixed {
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100%;
 }
 
 .app__content {
   overflow-y: auto;
-  height: calc(100vh - 56px);
+  flex: 1;
+  min-height: calc(100vh - 56px);
   position: relative;
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
   scrollbar-width: thin;
 }
 
 .app__content.modal-open {
-  overflow: hidden !important;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .app__content::-webkit-scrollbar {
