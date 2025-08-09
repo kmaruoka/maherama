@@ -88,18 +88,26 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     }
   }, [debugMode, center]);
 
-  // 地図の操作可否切り替え
+  // 地図の操作可否切り替え（確実に適用するため）
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
-    if (debugMode) {
-      mapRef.current.dragging.enable();
-      mapRef.current.scrollWheelZoom.enable();
-      mapRef.current.doubleClickZoom.enable();
-    } else {
-      mapRef.current.dragging.disable();
-      mapRef.current.scrollWheelZoom.disable();
-      mapRef.current.doubleClickZoom.disable();
-    }
+    
+    // 少し遅延を入れて確実に適用
+    const timer = setTimeout(() => {
+      if (!mapRef.current) return;
+      
+      if (debugMode) {
+        mapRef.current.dragging.enable();
+        mapRef.current.scrollWheelZoom.enable();
+        mapRef.current.doubleClickZoom.enable();
+      } else {
+        mapRef.current.dragging.disable();
+        mapRef.current.scrollWheelZoom.enable(); // ズームは許可
+        mapRef.current.doubleClickZoom.disable();
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [debugMode, mapReady]);
 
   // moveend イベントハンドラ（debugMode時のみ）
@@ -250,6 +258,9 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         zoom={minZoom}
         minZoom={minZoom}
         maxZoom={maxZoom}
+        dragging={debugMode}
+        scrollWheelZoom={true}
+        doubleClickZoom={debugMode}
         className="map-page__container"
         whenReady={((event: { target: L.Map }) => { mapRef.current = event.target; setMapReady(true); }) as unknown as () => void}
       >
@@ -271,7 +282,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         {/* アニメーション */}
         <BarrierAnimationOverlay radius={prayDistance} barrierType={barrierName} />
         {/* デバッグ用: 現在地ピン */}
-        {position && (
+        {debugMode && position && (
           <Marker position={position} icon={debugCurrentIcon}>
           </Marker>
         )}
