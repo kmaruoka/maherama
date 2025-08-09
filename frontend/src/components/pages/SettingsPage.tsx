@@ -42,9 +42,6 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
     if (onLogout) {
       onLogout();
     }
-
-    // 強制的にページをリロードして状態を完全にリセット
-    window.location.reload();
   };
 
   const toggleDebugMode = () => {

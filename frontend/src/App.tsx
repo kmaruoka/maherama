@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import CustomLink from './components/atoms/CustomLink';
@@ -114,13 +114,7 @@ function App() {
   // デバッグ用: ユーザーIDの確認
 
 
-  // ユーザーIDが設定されていない場合はデフォルト値を設定
-  useEffect(() => {
-    if (currentUserId === null) {
 
-      setCurrentUserId(3);
-    }
-  }, [currentUserId, setCurrentUserId]);
 
   // ナビゲーション履歴の管理
   const [navigationHistory, setNavigationHistory] = useState<NavigationHistoryItem[]>([]);
@@ -188,12 +182,6 @@ function App() {
 
     // ユーザーIDをクリア
     setCurrentUserId(null);
-
-    // ページをマップに戻す
-    setPage('map');
-
-    // 強制的にページをリロードして状態を完全にリセット
-    window.location.reload();
   };
 
   // ナビゲーション履歴の管理関数
