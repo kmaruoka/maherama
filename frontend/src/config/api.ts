@@ -8,7 +8,7 @@ const getApiBase = () => {
 
   // 本番環境（同じサーバー）
   const protocol = window.location.protocol;
-  return `${protocol}//${window.location.hostname}`;
+  return `${protocol}//${window.location.hostname}/api`;
 };
 
 export const API_BASE = getApiBase();
