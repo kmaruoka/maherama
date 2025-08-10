@@ -1,7 +1,14 @@
+import { Button } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useSkin } from '../../skins/SkinContext';
+import './SubmenuPage.css';
 
-export default function SubmenuPage() {
+interface SubmenuPageProps {
+  onNavigateToTerms?: () => void;
+  onNavigateToCommercialTransaction?: () => void;
+}
+
+export default function SubmenuPage({ onNavigateToTerms, onNavigateToCommercialTransaction }: SubmenuPageProps) {
   const { t } = useTranslation();
   useSkin();
 
@@ -10,16 +17,29 @@ export default function SubmenuPage() {
       <div className="submenu-page__content">
         <h2 className="submenu-page__title">{t('submenu')}</h2>
         <div className="submenu-page__items">
-          {/* サブメニューの項目をここに追加 */}
-          <div className="submenu-page__item">
-            <p>サブメニュー項目1</p>
-          </div>
-          <div className="submenu-page__item">
-            <p>サブメニュー項目2</p>
-          </div>
-          <div className="submenu-page__item">
-            <p>サブメニュー項目3</p>
-          </div>
+          {/* 利用規約と特定商取引に基づく表記へのリンク */}
+          {onNavigateToTerms && (
+            <div className="submenu-page__item">
+              <Button
+                variant="link"
+                onClick={onNavigateToTerms}
+                className="submenu-page__link"
+              >
+                利用規約
+              </Button>
+            </div>
+          )}
+          {onNavigateToCommercialTransaction && (
+            <div className="submenu-page__item">
+              <Button
+                variant="link"
+                onClick={onNavigateToCommercialTransaction}
+                className="submenu-page__link"
+              >
+                特定商取引に基づく表記
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -374,3 +374,45 @@ html, body {
     font-size: 1.1rem;
   }
 }
+
+/* フッターリンク */
+.top-page__footer {
+  margin-top: 2rem;
+  padding: 1rem 0;
+  border-top: 1px solid #2c3e50; /* 統一されたボーダー色 */
+  background: #0a0f1f; /* 統一された背景色 */
+}
+
+.top-page__footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.top-page__footer-link {
+  color: #ffffff !important; /* 統一された白色 */
+  text-decoration: none !important;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-weight: 500 !important; /* 視認性向上 */
+}
+
+.top-page__footer-link:hover {
+  color: #b0c4de !important; /* 統一されたアクセント色 */
+  background: #11162a; /* 統一されたカード背景色 */
+  text-decoration: underline !important;
+}
+
+@media (max-width: 576px) {
+  .top-page__footer-links {
+    gap: 1rem;
+  }
+
+  .top-page__footer-link {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem !important;
+  }
+}

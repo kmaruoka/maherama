@@ -8,11 +8,13 @@ import './TopPage.css';
 
 interface TopPageProps {
   onLogin: () => void;
+  onNavigateToTerms?: () => void;
+  onNavigateToCommercialTransaction?: () => void;
 }
 
 type FormType = 'register' | 'login' | 'test-user';
 
-const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
+const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigateToCommercialTransaction }) => {
   const { t } = useTranslation();
   const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
   const { data: users = [], isLoading: isLoadingUsers } = useAllUsers();
@@ -386,6 +388,32 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin }) => {
             </Col>
           </Row>
         </Container>
+
+        {/* フッターリンク */}
+        <div className="top-page__footer">
+          <Container>
+            <div className="top-page__footer-links">
+              {onNavigateToTerms && (
+                <Button
+                  variant="link"
+                  onClick={onNavigateToTerms}
+                  className="top-page__footer-link"
+                >
+                  利用規約
+                </Button>
+              )}
+              {onNavigateToCommercialTransaction && (
+                <Button
+                  variant="link"
+                  onClick={onNavigateToCommercialTransaction}
+                  className="top-page__footer-link"
+                >
+                  特定商取引に基づく表記
+                </Button>
+              )}
+            </div>
+          </Container>
+        </div>
       </div>
     </div>
   );

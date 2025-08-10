@@ -154,7 +154,7 @@ npm test
 
 ### 本番環境
 - **AWS EC2** + **Nginx** + **PM2**
-- デプロイスクリプト: `deploy.sh`
+- デプロイ手順: `DEPLOYMENT.md`
 - 設定ファイル: `DEPLOYMENT.md`
 
 ### 環境変数

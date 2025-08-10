@@ -1,22 +1,22 @@
 import { useState } from 'react';
-import CustomMenuItem from '../atoms/CustomMenuItem';
-import { useSkin } from '../../skins/SkinContext';
 import { useTranslation } from 'react-i18next';
-import { FaMapLocationDot, FaBook, FaUser, FaGear, FaBars, FaFlag } from "react-icons/fa6";
+import { FaBars, FaBook, FaFlag, FaGear, FaMapLocationDot, FaUser } from "react-icons/fa6";
+import { useSkin } from '../../skins/SkinContext';
+import CustomMenuItem from '../atoms/CustomMenuItem';
 
-export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission') => void, page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission', isDialogOpen?: boolean }) {
+export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction') => void, page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction', isDialogOpen?: boolean }) {
   useSkin();
   const { t } = useTranslation();
 
   // 最後に選択したメニューを記憶する状態
-  const [lastSelectedMenu, setLastSelectedMenu] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission'>(page);
+  const [lastSelectedMenu, setLastSelectedMenu] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction'>(page);
 
   const handleNavClick = (e: React.MouseEvent) => {
     // メニュー以外の場所をクリックしてもページ状態を変更しないようにする
     e.stopPropagation();
   };
 
-  const handleMenuItemClick = (menuPage: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission') => {
+  const handleMenuItemClick = (menuPage: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction') => {
     setPage(menuPage);
     setLastSelectedMenu(menuPage);
   };

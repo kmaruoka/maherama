@@ -23,7 +23,7 @@ if (process.env.STRIPE_SECRET_KEY) {
 // 環境変数のチェック
 if (!process.env.PORT) {
   console.error('エラー: PORT環境変数が設定されていません');
-  console.error('例: PORT=3001 npm start');
+  console.error('例: PORT=3000 npm start');
   process.exit(1);
 }
 

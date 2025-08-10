@@ -3,7 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // テスト実行時のポート番号を固定
-process.env.PORT = process.env.PORT || '3001';
+process.env.PORT = process.env.PORT || '3000';
 
 beforeAll(async () => {
   console.log('🧪 テスト用DB接続確認中...');

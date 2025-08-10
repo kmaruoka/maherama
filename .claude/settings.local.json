@@ -11,8 +11,8 @@
       "Bash(npx ts-node:*)",
       "Bash(npx tsc:*)",
       "Bash(cmd /c:*)",
-      "Bash(PORT=3001 npm start)",
-      "Bash(API_PORT=3001 npm run seed)"
+      "Bash(PORT=3000 npm start)",
+      "Bash(API_PORT=3000 npm run seed)"
     ],
     "deny": []
   }

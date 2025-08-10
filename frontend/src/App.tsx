@@ -10,10 +10,12 @@ import MyPage from './components/organisms/MyPage';
 import ShrinePane from './components/organisms/ShrinePane';
 import UserPane from './components/organisms/UserPane';
 import CatalogPage from './components/pages/CatalogPage';
+import CommercialTransactionPage from './components/pages/CommercialTransactionPage';
 import MapPage from './components/pages/MapPage';
 import MissionPage from './components/pages/MissionPage';
 import SettingsPage from './components/pages/SettingsPage';
 import SubmenuPage from './components/pages/SubmenuPage';
+import TermsPage from './components/pages/TermsPage';
 import TopPage from './components/pages/TopPage';
 import UserPage from './components/pages/UserPage';
 import { useDietyDetail } from './hooks/useDietyDetail';
@@ -106,7 +108,7 @@ function ModalHeader({
 }
 
 function App() {
-  const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission'>('map');
+  const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction'>('map');
   const [modal, setModal] = useState<ModalType>(null);
   const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
   useSkin();
@@ -342,9 +344,18 @@ function App() {
       case 'settings':
         return <SettingsPage onLogout={handleLogout} />;
       case 'submenu':
-        return <SubmenuPage />;
+        return (
+          <SubmenuPage
+            onNavigateToTerms={() => setPage('terms')}
+            onNavigateToCommercialTransaction={() => setPage('commercial-transaction')}
+          />
+        );
       case 'mission':
         return <MissionPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowDiety={(id: number) => navigateToModal('diety', id)} onShowMission={(id: number) => navigateToModal('mission', id)} />;
+      case 'terms':
+        return <TermsPage />;
+      case 'commercial-transaction':
+        return <CommercialTransactionPage />;
       default:
         return null;
     }
@@ -376,7 +387,13 @@ function App() {
 
   // 認証されていない場合はTopPageを表示
   if (!currentUserId) {
-    return <TopPage onLogin={handleLogin} />;
+    return (
+      <TopPage
+        onLogin={handleLogin}
+        onNavigateToTerms={() => setPage('terms')}
+        onNavigateToCommercialTransaction={() => setPage('commercial-transaction')}
+      />
+    );
   }
 
   return (

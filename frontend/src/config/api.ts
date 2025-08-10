@@ -8,7 +8,8 @@ const getApiBase = () => {
 
   // 本番環境（同じサーバー）
   const port = import.meta.env.VITE_API_PORT || '3000';
-  return `http://${window.location.hostname}:${port}`;
+  const protocol = window.location.protocol;
+  return `${protocol}//${window.location.hostname}:${port}`;
 };
 
 export const API_BASE = getApiBase();
