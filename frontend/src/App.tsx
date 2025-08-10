@@ -385,8 +385,14 @@ function App() {
     }
   }, [shrineData, dietyData, userData, missions, modal, navigationHistory, historyIndex]);
 
-  // 認証されていない場合はTopPageを表示
+  // 認証されていない場合はTopPageまたは利用規約・特定商取引法ページを表示
   if (!currentUserId) {
+    if (page === 'terms') {
+      return <TermsPage onBack={() => setPage('map')} />;
+    }
+    if (page === 'commercial-transaction') {
+      return <CommercialTransactionPage onBack={() => setPage('map')} />;
+    }
     return (
       <TopPage
         onLogin={handleLogin}

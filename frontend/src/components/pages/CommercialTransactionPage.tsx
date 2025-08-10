@@ -1,9 +1,13 @@
-import { Card, Container } from 'react-bootstrap';
+import { Button, Card, Container } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useSkin } from '../../skins/SkinContext';
 import './CommercialTransactionPage.css';
 
-export default function CommercialTransactionPage() {
+interface CommercialTransactionPageProps {
+  onBack?: () => void;
+}
+
+export default function CommercialTransactionPage({ onBack }: CommercialTransactionPageProps) {
   const { t } = useTranslation();
   useSkin();
 
@@ -12,6 +16,15 @@ export default function CommercialTransactionPage() {
       <Container>
         <Card className="commercial-transaction-page__card">
           <Card.Body className="commercial-transaction-page__content">
+            {onBack && (
+              <Button
+                variant="outline-secondary"
+                onClick={onBack}
+                className="mb-3"
+              >
+                ← 戻る
+              </Button>
+            )}
             <h1 className="commercial-transaction-page__title">特定商取引に基づく表記</h1>
 
             <div className="commercial-transaction-page__section">

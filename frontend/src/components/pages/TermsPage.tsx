@@ -1,9 +1,13 @@
-import { Card, Container } from 'react-bootstrap';
+import { Button, Card, Container } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useSkin } from '../../skins/SkinContext';
 import './TermsPage.css';
 
-export default function TermsPage() {
+interface TermsPageProps {
+  onBack?: () => void;
+}
+
+export default function TermsPage({ onBack }: TermsPageProps) {
   const { t } = useTranslation();
   useSkin();
 
@@ -12,6 +16,15 @@ export default function TermsPage() {
       <Container>
         <Card className="terms-page__card">
           <Card.Body className="terms-page__content">
+            {onBack && (
+              <Button
+                variant="outline-secondary"
+                onClick={onBack}
+                className="mb-3"
+              >
+                ← 戻る
+              </Button>
+            )}
             <h1 className="terms-page__title">利用規約</h1>
 
             <div className="terms-page__section">
