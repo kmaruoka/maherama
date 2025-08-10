@@ -13,7 +13,9 @@ export default function useAllUsers() {
   return useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await apiCall(`${API_BASE}/users`);
+      // 開発環境では認証不要のエンドポイントを使用
+      const endpoint = import.meta.env.DEV ? '/test/users' : '/users';
+      const response = await apiCall(`${API_BASE}${endpoint}`);
       return response.json();
     },
   });

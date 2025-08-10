@@ -65,15 +65,33 @@ app.get('/health', (req, res) => {
 });
 
 // メール送信設定
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+let transporter;
+
+if (process.env.NODE_ENV === 'development') {
+  // 開発環境ではメール送信をシミュレート
+  transporter = {
+    sendMail: async (mailOptions) => {
+      console.log('=== 開発環境: メール送信シミュレーション ===');
+      console.log('送信者:', mailOptions.from);
+      console.log('宛先:', mailOptions.to);
+      console.log('件名:', mailOptions.subject);
+      console.log('本文:', mailOptions.html);
+      console.log('==========================================');
+      return { messageId: 'dev-' + Date.now() };
+    }
+  };
+} else {
+  // 本番環境では設定されたSMTPサーバーを使用
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+}
 
 // 認証関連のユーティリティ関数
 function generateToken() {
@@ -85,8 +103,8 @@ function generateVerificationToken() {
 }
 
 async function sendVerificationEmail(email, token) {
-  // SMTP設定が不完全な場合はエラーを投げる
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  // 開発環境の場合は常にメール送信を試行
+  if (process.env.NODE_ENV !== 'development' && (!process.env.SMTP_USER || !process.env.SMTP_PASS)) {
     console.log('SMTP settings not configured, skipping email sending');
     return;
   }
@@ -94,7 +112,7 @@ async function sendVerificationEmail(email, token) {
   const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/activate?token=${token}`;
 
   const mailOptions = {
-    from: process.env.SMTP_USER,
+    from: process.env.NODE_ENV === 'development' ? 'test@localhost' : process.env.SMTP_USER,
     to: email,
     subject: 'アカウント有効化 - 神社参拝アプリ',
     html: `
@@ -115,8 +133,8 @@ async function sendVerificationEmail(email, token) {
 }
 
 async function sendPasswordResetEmail(email, token) {
-  // SMTP設定が不完全な場合はエラーを投げる
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  // 開発環境の場合は常にメール送信を試行
+  if (process.env.NODE_ENV !== 'development' && (!process.env.SMTP_USER || !process.env.SMTP_PASS)) {
     console.log('SMTP settings not configured, skipping email sending');
     return;
   }
@@ -124,7 +142,7 @@ async function sendPasswordResetEmail(email, token) {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
   const mailOptions = {
-    from: process.env.SMTP_USER,
+    from: process.env.NODE_ENV === 'development' ? 'test@localhost' : process.env.SMTP_USER,
     to: email,
     subject: 'パスワードリセット - 神社参拝アプリ',
     html: `
@@ -1607,7 +1625,7 @@ app.post('/auth/register', async (req, res) => {
     let emailError = null;
 
     try {
-      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      if (process.env.NODE_ENV === 'development' || (process.env.SMTP_USER && process.env.SMTP_PASS)) {
         console.log('Sending verification email...');
         await sendVerificationEmail(email, verificationToken);
         emailSent = true;
@@ -1657,6 +1675,62 @@ app.post('/auth/register', async (req, res) => {
     res.status(500).json({ error: 'ユーザー登録に失敗しました' });
   }
 });
+
+// 開発環境用のテストエンドポイント
+if (process.env.NODE_ENV === 'development') {
+  // テストユーザー取得エンドポイント（認証不要）
+  app.get('/test/users', async (req, res) => {
+    try {
+      const users = await prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          level: true,
+          exp: true,
+          ability_points: true
+        },
+        orderBy: { id: 'asc' }
+      });
+      res.json(users);
+    } catch (err) {
+      console.error('Error fetching test users:', err);
+      res.status(500).json({ error: 'DB error' });
+    }
+  });
+
+  // メール送信テスト用HTMLページ
+  app.get('/test/email', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-email.html'));
+  });
+
+  // メール送信テスト用エンドポイント
+  app.post('/test/send-email', async (req, res) => {
+    try {
+      const { email, subject, message } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: 'メールアドレスが必要です' });
+      }
+
+      const testMailOptions = {
+        from: 'test@localhost',
+        to: email,
+        subject: subject || 'テストメール - 神社参拝アプリ',
+        html: message || '<h2>テストメール</h2><p>これは開発環境でのテストメールです。</p>'
+      };
+
+      await transporter.sendMail(testMailOptions);
+
+      res.json({
+        success: true,
+        message: 'テストメールが送信されました（開発環境ではコンソールに表示されます）'
+      });
+    } catch (error) {
+      console.error('Test email error:', error);
+      res.status(500).json({ error: 'テストメールの送信に失敗しました' });
+    }
+  });
+}
 
 // アカウント有効化
 app.post('/auth/activate', async (req, res) => {
@@ -4693,8 +4767,9 @@ if (require.main === module) {
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
     console.log(`Current date: ${getCurrentDate().toISOString()}`);
+    const simulateDate = getSimulateDate();
     if (simulateDate) {
-      console.log(`Simulate date: ${simulateDate.toISOString()}`);
+      console.log(`Simulate date: ${simulateDate}`);
     }
   });
 }
