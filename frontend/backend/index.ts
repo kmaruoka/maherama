@@ -27,6 +27,12 @@ if (!process.env.PORT) {
   process.exit(1);
 }
 
+// 本番環境ではJWT_SECRETが必須
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  console.error('エラー: 本番環境ではJWT_SECRET環境変数が必須です');
+  process.exit(1);
+}
+
 const app = express();
 const port = parseInt(process.env.PORT, 10);
 
@@ -51,17 +57,49 @@ prisma.$connect()
     process.exit(1);
   });
 
-app.use(cors());
-app.use(express.json());
+// CORS設定
+const whitelist = (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || whitelist.length === 0 || whitelist.includes(origin)) {
+      return cb(null, true);
+    }
+    cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
+
+// レート制限（認証系API）
+const rateLimit = require('express-rate-limit');
+const authLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10分
+  max: 50, // 最大50回
+  message: { error: 'Too many requests from this IP, please try again later.' }
+});
+
+app.use(express.json({ limit: '256kb' }));
 app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
 
 // ヘルスチェックエンドポイント
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    database: 'connected'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // データベース接続確認
+    await prisma.$queryRaw`SELECT 1`;
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: error.message
+    });
+  }
 });
 
 // メール送信設定
@@ -81,16 +119,27 @@ if (process.env.NODE_ENV === 'development') {
     }
   };
 } else {
-  // 本番環境では設定されたSMTPサーバーを使用
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  // 本番環境ではSMTP設定が必須
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.warn('警告: SMTP設定が不完全です。メール送信機能が無効になります。');
+    transporter = {
+      sendMail: async () => {
+        console.warn('メール送信がスキップされました（SMTP設定なし）');
+        return { messageId: 'skipped-' + Date.now() };
+      }
+    };
+  } else {
+    // 設定されたSMTPサーバーを使用
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
 }
 
 // 認証関連のユーティリティ関数
@@ -1502,7 +1551,7 @@ app.post('/diety-images/:id/vote', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/logs', async (req, res) => {
+app.get('/logs', authenticateJWT, requireAdmin, async (req, res) => {
   try {
     const logs = await prisma.log.findMany({
       select: {
@@ -1523,34 +1572,65 @@ app.get('/logs', async (req, res) => {
   }
 });
 
-// JWT認証ミドルウェア（開発用：一時的に無効化）
-function authenticateJWT(req, res, next) {
-  // 開発環境では認証をスキップ（NODE_ENVが未設定の場合も開発環境として扱う）
-  if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
-    // フロントエンドから送信されたユーザーIDを使用、またはデフォルト値
-    console.log('=== AUTHENTICATE JWT DEBUG ===');
-    console.log('All headers:', req.headers);
-    console.log('x-user-id header:', req.headers['x-user-id']);
+// 型定義
+type AuthedUser = { id: number; email?: string; is_admin?: boolean; role?: string };
+type AuthedRequest = any & { user?: AuthedUser };
+
+// 共通バリデーション関数
+function validateId(id: any): number | null {
+  const parsed = parseInt(id, 10);
+  return isNaN(parsed) || parsed <= 0 ? null : parsed;
+}
+
+function validateEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// 機微情報をマスクするログ関数
+function safeLogHeaders(headers) {
+  const h = { ...headers };
+  if (h.authorization) h.authorization = '***redacted***';
+  if (h.cookie) h.cookie = '***redacted***';
+  return h;
+}
+
+// 管理権限チェックミドルウェア
+function requireAdmin(req: AuthedRequest, res, next) {
+  if (!req.user?.is_admin && req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+  next();
+}
+
+// 認証ミドルウェア
+function authenticateJWT(req: AuthedRequest, res, next) {
+  const env = process.env.NODE_ENV || 'development';
+
+  // 明示的に development だけバイパス（test/staging は必ず認証）
+  if (env === 'development') {
     const userIdFromHeader = req.headers['x-user-id'];
-    const userId = userIdFromHeader ? parseInt(userIdFromHeader, 10) : 3;
-    req.user = { id: userId };
+    const userId = userIdFromHeader ? parseInt(userIdFromHeader as string, 10) : 3;
+    req.user = { id: userId, role: 'dev' };
     console.log('開発環境: 認証バイパス、ユーザーID:', req.user.id);
     return next();
   }
 
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No token provided' });
   }
   const token = authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    // セキュリティ観点でサーバー起動時に必須にすべきだが、ここでもガード
+    console.error('JWT_SECRET is not configured');
+    return res.status(500).json({ error: 'Server misconfigured' });
   }
-  jwt.verify(token, process.env.JWT_SECRET || 'secret', (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Invalid token' });
-    }
-    req.user = user;
+
+  jwt.verify(token, secret, (err, payload) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = payload; // { id, email, is_admin, role? }
     next();
   });
 }
@@ -1558,7 +1638,7 @@ function authenticateJWT(req, res, next) {
 // 認証関連API
 
 // ユーザー登録
-app.post('/auth/register', async (req, res) => {
+app.post('/auth/register', authLimiter, async (req, res) => {
   try {
     console.log('Registration request received:', req.body);
     const { username, email } = req.body;
@@ -1602,8 +1682,9 @@ app.post('/auth/register', async (req, res) => {
     }
 
     console.log('Generating verification token...');
-    // 認証トークン生成
+    // 認証トークン生成（24時間有効）
     const verificationToken = generateVerificationToken();
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     console.log('Creating user...');
     // ユーザー作成（levelフィールドはスキーマのデフォルト値を使用）
@@ -1612,6 +1693,7 @@ app.post('/auth/register', async (req, res) => {
         name: username,
         email: email,
         verification_token: verificationToken,
+        verification_token_expires: verificationExpires,
         is_verified: false,
         exp: 0,
         ability_points: 0
@@ -1749,18 +1831,22 @@ app.post('/auth/activate', async (req, res) => {
     }
 
     const user = await prisma.user.findFirst({
-      where: { verification_token: token }
+      where: {
+        verification_token: token,
+        verification_token_expires: { gt: new Date() },
+      },
     });
 
     if (!user) {
-      return res.status(400).json({ error: '無効な認証トークンです' });
+      return res.status(400).json({ error: '無効または期限切れのトークンです' });
     }
 
     await prisma.user.update({
       where: { id: user.id },
       data: {
         is_verified: true,
-        verification_token: null
+        verification_token: null,
+        verification_token_expires: null
       }
     });
 
@@ -1776,7 +1862,7 @@ app.post('/auth/activate', async (req, res) => {
 });
 
 // ログイン
-app.post('/auth/login', async (req, res) => {
+app.post('/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -1809,10 +1895,16 @@ app.post('/auth/login', async (req, res) => {
     }
 
     // JWTトークン生成
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('JWT_SECRET is not configured');
+      return res.status(500).json({ error: 'Server misconfigured' });
+    }
+
     const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '24h' }
+      { id: user.id, email: user.email, is_admin: user.is_admin },
+      secret,
+      { expiresIn: '24h', issuer: 'maherama-app' }
     );
 
     res.json({
@@ -1836,7 +1928,7 @@ app.post('/auth/login', async (req, res) => {
 });
 
 // パスワードリセット要求
-app.post('/auth/reset-password', async (req, res) => {
+app.post('/auth/reset-password', authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -4429,7 +4521,7 @@ async function runPeriodicRankingAwards() {
 setInterval(runPeriodicRankingAwards, 60 * 1000); // 1分ごと
 
 // 管理用API: ランキング集計と報酬付与を実行（type=weekly|monthly|yearly 指定で分岐）
-app.post('/admin/ranking-awards', authenticateJWT, async (req, res) => {
+app.post('/admin/ranking-awards', authenticateJWT, requireAdmin, async (req, res) => {
   try {
     const currentDate = getCurrentDate();
     const type = req.query.type || 'weekly'; // デフォルトはweekly
@@ -4499,33 +4591,36 @@ async function updateShrineThumbnailFromVotes(shrineId: number) {
     });
 
     if (!currentThumbnail || currentThumbnail.id !== topImage.id) {
-      // 現在のサムネイルを解除
-      if (currentThumbnail) {
-        await prisma.shrineImage.update({
-          where: { id: currentThumbnail.id },
-          data: { is_current_thumbnail: false }
-        });
-      }
-
-      // 新しいサムネイルを設定
-      await prisma.shrineImage.update({
-        where: { id: topImage.id },
-        data: { is_current_thumbnail: true }
-      });
-
-      // 神社テーブルを更新
-      await prisma.shrine.update({
-        where: { id: shrineId },
-        data: {
-          image_id: topImage.image.id,
-          image_url: topImage.image.url_m,
-          image_url_xs: topImage.image.url_xs,
-          image_url_s: topImage.image.url_s,
-          image_url_m: topImage.image.url_m,
-          image_url_l: topImage.image.url_l,
-          image_url_xl: topImage.image.url_xl,
-          image_by: topImage.user.name
+      // トランザクションでサムネイル付け替えを実行
+      await prisma.$transaction(async (tx) => {
+        // 現在のサムネイルを解除
+        if (currentThumbnail) {
+          await tx.shrineImage.update({
+            where: { id: currentThumbnail.id },
+            data: { is_current_thumbnail: false }
+          });
         }
+
+        // 新しいサムネイルを設定
+        await tx.shrineImage.update({
+          where: { id: topImage.id },
+          data: { is_current_thumbnail: true }
+        });
+
+        // 神社テーブルを更新
+        await tx.shrine.update({
+          where: { id: shrineId },
+          data: {
+            image_id: topImage.image.id,
+            image_url: topImage.image.url_m,
+            image_url_xs: topImage.image.url_xs,
+            image_url_s: topImage.image.url_s,
+            image_url_m: topImage.image.url_m,
+            image_url_l: topImage.image.url_l,
+            image_url_xl: topImage.image.url_xl,
+            image_by: topImage.user.name
+          }
+        });
       });
 
       console.log(`神社${shrineId}のサムネイルが投票結果により更新されました`);

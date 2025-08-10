@@ -127,6 +127,7 @@ model User {
   reset_token               String?
   reset_token_expires       DateTime?
   verification_token        String?
+  verification_token_expires DateTime?
   abilityLogs               AbilityLog[]
   diety_catalogs            DietyCatalog[]
   diety_images              DietyImage[]
