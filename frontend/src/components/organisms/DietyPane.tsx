@@ -145,7 +145,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     if (detailView === 'thumbnail') {
               return (
           <ManagedImage
-            src={(diety.image_url_l || diety.image_url_m || diety.image_url_s || diety.image_url) + '?t=' + imageState.thumbCache}
+            src={(diety.image_url_l || diety.image_url_m || diety.image_url_s || diety.image_url) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_DIETY_URL}
           style={{ maxWidth: '100%', height: 'auto' }}
@@ -231,7 +231,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
           <ManagedImage
-            src={(diety.image_url_m || diety.image_url_s || diety.image_url) ? ((diety.image_url_m || diety.image_url_s || diety.image_url) + '?t=' + imageState.thumbCache) : NOIMAGE_DIETY_URL}
+            src={(diety.image_url_m || diety.image_url_s || diety.image_url) ? ((diety.image_url_m || diety.image_url_s || diety.image_url) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')) : NOIMAGE_DIETY_URL}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_DIETY_URL}
             loadingText="読み込み中..."

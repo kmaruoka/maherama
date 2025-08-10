@@ -1,12 +1,12 @@
-import { Marker } from 'react-leaflet';
 import L from 'leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Marker } from 'react-leaflet';
 import { NOIMAGE_SHRINE_URL } from '../../constants';
-import { usePrayDistance, useCanPray, useWorshipLimit } from '../../hooks/usePrayDistance';
 import useDebugLog from '../../hooks/useDebugLog';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { useCanPray, usePrayDistance } from '../../hooks/usePrayDistance';
 import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
-import { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 
 export interface Shrine {
   id: number;
@@ -76,7 +76,7 @@ function createShrineIcon(
       <div class="shrine-marker-frame-anim ${statusClassString}">
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
-          <img src="${(image_url || NOIMAGE_SHRINE_URL) + '?t=' + imageCache}" alt="shrine" onerror="this.onerror=null; this.src='${NOIMAGE_SHRINE_URL}?t=' + Date.now();" />
+          <img src="${(image_url || NOIMAGE_SHRINE_URL) + (imageCache > 0 ? '?t=' + imageCache : '')}" alt="shrine" onerror="this.onerror=null; this.src='${NOIMAGE_SHRINE_URL}';" />
           <div class="shrine-marker-thumbnail-gloss ${isPrayable && !hasPrayedToday ? 'active' : ''}"></div>
         </div>
         <div class="shrine-marker-pin"></div>
@@ -93,14 +93,14 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
   const { t } = useTranslation();
   const debugLog = useDebugLog();
   const [userId] = useLocalStorageState<number | null>('userId', null);
-  const [imageCache, setImageCache] = useState(Date.now());
+  const [imageCache, setImageCache] = useState(0);
 
   const { data: markerStatus } = useShrineMarkerStatus(shrine.id, userId);
 
   // 画像URLが変更された時にキャッシュを更新
   useEffect(() => {
     if (shrine.image_url_xs || shrine.image_url) {
-      setImageCache(Date.now());
+      setImageCache(prev => prev + 1);
     }
   }, [shrine.image_url_xs, shrine.image_url]);
 

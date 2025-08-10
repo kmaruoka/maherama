@@ -39,10 +39,9 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const shouldRetry = handleImageError();
     if (shouldRetry) {
-      // リトライのため、srcを強制的に更新（タイムスタンプを追加）
+      // リトライのため、srcを強制的に更新（リトライカウントを使用）
       const img = e.target as HTMLImageElement;
-      const timestamp = Date.now();
-      img.src = src + (src.includes('?') ? '&' : '?') + 'retry=' + timestamp;
+      img.src = src + (src.includes('?') ? '&' : '?') + 'retry=' + retryCount;
     } else {
       onError?.();
     }

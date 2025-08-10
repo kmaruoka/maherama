@@ -396,7 +396,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     if (detailView === 'thumbnail') {
               return (
           <ManagedImage
-            src={(data.image_url_l || data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + imageState.thumbCache}
+            src={(data.image_url_l || data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
           style={{ maxWidth: '100%', height: 'auto' }}
@@ -474,7 +474,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
           <ManagedImage
-            src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + '?t=' + imageState.thumbCache}
+            src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
             loadingText="読み込み中..."

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/atoms';
 import { API_BASE } from '../config/api';
@@ -42,6 +42,9 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [shouldUseFallback, setShouldUseFallback] = useState(false);
 
+  // 画像存在確認の重複を防ぐためのref
+  const checkingImageRef = useRef<string | null>(null);
+
   const MAX_RETRIES = 2;
 
   const resetImageState = useCallback(() => {
@@ -49,25 +52,35 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     setImageLoadError(false);
     setIsImageLoading(false);
     setShouldUseFallback(false);
-    // キャッシュバスティングのためのタイムスタンプを更新
-    setThumbCache(prev => prev + 1);
+    // キャッシュバスティングは必要な時のみ実行
+    // setThumbCache(prev => prev + 1);
   }, []);
 
-    // 画像URLが変更されたときに存在確認を行う（同期的に処理）
+  // 画像URLが変更されたときに存在確認を行う（同期的に処理）
   const handleImageUrlChange = useCallback((imageUrl: string) => {
     if (!imageUrl || imageUrl === options.noImageUrl || imageUrl.includes('noimage') || imageUrl.includes('null')) {
       // NoImageの場合はfallbackを使用しない（無限ループを防ぐ）
       setShouldUseFallback(false);
+      checkingImageRef.current = null;
       return;
     }
+
+    // 既に同じ画像をチェック中の場合はスキップ
+    if (checkingImageRef.current === imageUrl) {
+      return;
+    }
+
+    checkingImageRef.current = imageUrl;
 
     // 画像の存在確認を同期的に行う（エラー時はfallbackを使用）
     const img = new Image();
     img.onload = () => {
       setShouldUseFallback(false);
+      checkingImageRef.current = null;
     };
     img.onerror = () => {
       setShouldUseFallback(true);
+      checkingImageRef.current = null;
     };
     img.src = imageUrl;
   }, [options.noImageUrl]);
@@ -107,7 +120,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       setImageLoadError(false);
       setIsImageLoading(false);
 
-      // キャッシュを更新（強制的に再読み込み）
+      // アップロード成功時のみキャッシュを更新
       setThumbCache(prev => prev + 1);
 
       if (result.isCurrentThumbnail) {
