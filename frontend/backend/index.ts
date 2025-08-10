@@ -1698,41 +1698,38 @@ async function requireAdmin(req: AuthedRequest, res, next) {
 
 // 認証ミドルウェア
 function authenticateJWT(req: AuthedRequest, res, next) {
-  const env = process.env.NODE_ENV || 'development';
+  // 1. JWT認証を優先（両環境共通）
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const secret = process.env.JWT_SECRET;
 
-  // 明示的に development だけバイパス（test/staging は必ず認証）
-  if (env === 'development') {
-    const userIdFromHeader = req.headers['x-user-id'];
-    if (!userIdFromHeader) {
-      return res.status(401).json({ error: '開発環境ではx-user-idヘッダーが必要です' });
+    if (!secret) {
+      console.error('JWT_SECRET is not configured');
+      return res.status(500).json({ error: 'Server misconfigured' });
     }
+
+    jwt.verify(token, secret, (err, payload) => {
+      if (err) return res.status(403).json({ error: 'Invalid token' });
+      req.user = payload; // { id, email, is_admin, role? }
+      next();
+    });
+    return;
+  }
+
+  // 2. x-user-idヘッダーをフォールバック（両環境共通）
+  const userIdFromHeader = req.headers['x-user-id'];
+  if (userIdFromHeader) {
     const userId = parseInt(userIdFromHeader as string, 10);
     if (isNaN(userId) || userId <= 0) {
       return res.status(401).json({ error: '有効なユーザーIDが必要です' });
     }
-    req.user = { id: userId, role: 'dev' };
-    // 開発環境の認証バイパスログは削除（大量ログ防止）
+    req.user = { id: userId, role: 'header' };
     return next();
   }
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-  const token = authHeader.split(' ')[1];
-
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    // セキュリティ観点でサーバー起動時に必須にすべきだが、ここでもガード
-    console.error('JWT_SECRET is not configured');
-    return res.status(500).json({ error: 'Server misconfigured' });
-  }
-
-  jwt.verify(token, secret, (err, payload) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
-    req.user = payload; // { id, email, is_admin, role? }
-    next();
-  });
+  // 3. 認証情報が不足
+  return res.status(401).json({ error: '認証が必要です。Authorizationヘッダーまたはx-user-idヘッダーを提供してください。' });
 }
 
 // 認証関連API

@@ -8,7 +8,10 @@ const getApiBase = () => {
 
   // 本番環境（同じサーバー）
   const protocol = window.location.protocol;
-  return `${protocol}//${window.location.hostname}/api`;
+  const apiBase = `${protocol}//${window.location.hostname}/api`;
+
+  console.log('API Base URL:', apiBase);
+  return apiBase;
 };
 
 export const API_BASE = getApiBase();
@@ -112,56 +115,46 @@ export async function apiCall(url: string, options: RequestInit = {}): Promise<R
   }
 
   // 認証情報を自動的に追加
-  // 1. JWTトークンをAuthorizationヘッダーに追加
+  // 1. JWTトークンをAuthorizationヘッダーに追加（優先）
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // 2. 開発環境ではx-user-idヘッダーを追加
-  if (import.meta.env.DEV) {
-    const userData = SecureTokenManager.getUserData();
-    const localStorageUserId = localStorage.getItem('userId');
+  // 2. x-user-idヘッダーをフォールバックとして追加（両環境共通）
+  const userData = SecureTokenManager.getUserData();
+  const localStorageUserId = localStorage.getItem('userId');
 
-    // 現在のユーザーデータとlocalStorageのuserIdが一致するかチェック
-    if (userData?.id && localStorageUserId) {
-      try {
-        const parsedLocalStorageUserId = JSON.parse(localStorageUserId);
-        if (parsedLocalStorageUserId !== userData.id) {
-          // 一致しない場合はlocalStorageをクリア
-          console.warn('localStorageのuserIdが現在のユーザーと一致しません。クリアします。', {
-            localStorageUserId: parsedLocalStorageUserId,
-            currentUserId: userData.id
-          });
-          localStorage.removeItem('userId');
-        }
-      } catch {
-        // JSONパースエラーの場合もクリア
+  // 現在のユーザーデータとlocalStorageのuserIdが一致するかチェック
+  if (userData?.id && localStorageUserId) {
+    try {
+      const parsedLocalStorageUserId = JSON.parse(localStorageUserId);
+      if (parsedLocalStorageUserId !== userData.id) {
+        // 一致しない場合はlocalStorageをクリア
+        console.warn('localStorageのuserIdが現在のユーザーと一致しません。クリアします。', {
+          localStorageUserId: parsedLocalStorageUserId,
+          currentUserId: userData.id
+        });
         localStorage.removeItem('userId');
       }
-    }
-
-    // 現在のユーザーデータを優先してヘッダーに設定
-    if (userData?.id) {
-      headers['x-user-id'] = userData.id.toString();
-    } else if (localStorageUserId) {
-      try {
-        const parsedUserId = JSON.parse(localStorageUserId);
-        if (parsedUserId !== null && parsedUserId !== undefined) {
-          headers['x-user-id'] = parsedUserId.toString();
-        }
-      } catch {
-        if (localStorageUserId !== 'null' && localStorageUserId !== 'undefined') {
-          headers['x-user-id'] = localStorageUserId;
-        }
-      }
+    } catch {
+      // JSONパースエラーの場合もクリア
+      localStorage.removeItem('userId');
     }
   }
 
-  // 3. 本番環境ではセッションストレージからユーザーIDを取得
-  if (!import.meta.env.DEV) {
-    const userData = SecureTokenManager.getUserData();
-    if (userData?.id) {
-      headers['x-user-id'] = userData.id.toString();
+  // 現在のユーザーデータを優先してヘッダーに設定
+  if (userData?.id) {
+    headers['x-user-id'] = userData.id.toString();
+  } else if (localStorageUserId) {
+    try {
+      const parsedUserId = JSON.parse(localStorageUserId);
+      if (parsedUserId !== null && parsedUserId !== undefined) {
+        headers['x-user-id'] = parsedUserId.toString();
+      }
+    } catch {
+      if (localStorageUserId !== 'null' && localStorageUserId !== 'undefined') {
+        headers['x-user-id'] = localStorageUserId;
+      }
     }
   }
 

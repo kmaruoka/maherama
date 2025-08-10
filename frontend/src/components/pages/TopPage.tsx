@@ -108,12 +108,15 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     setLoginErrors({});
 
     try {
+      console.log('ログイン試行:', { email: loginForm.email, apiBase: API_BASE });
+
       const response = await apiCall(`${API_BASE}/auth/login`, {
         method: 'POST',
         body: JSON.stringify(loginForm),
       });
 
       const data = await response.json();
+      console.log('ログイン成功:', data);
 
       // セキュアな認証システムを使用
       login(data.token, {
@@ -122,8 +125,24 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
         email: data.user.email
       });
       onLogin();
-    } catch (error) {
-      setLoginErrors({ general: 'ログインに失敗しました' });
+    } catch (error: any) {
+      console.error('ログインエラー:', error);
+
+      // エラーレスポンスの詳細を確認
+      if (error.message && error.message.includes('API Error')) {
+        try {
+          const errorData = JSON.parse(error.message.split(': ')[2]);
+          if (errorData.error) {
+            setLoginErrors({ general: errorData.error });
+          } else {
+            setLoginErrors({ general: 'ログインに失敗しました' });
+          }
+        } catch {
+          setLoginErrors({ general: 'ログインに失敗しました' });
+        }
+      } else {
+        setLoginErrors({ general: 'ネットワークエラーが発生しました。サーバーに接続できません。' });
+      }
     } finally {
       setIsLoggingIn(false);
     }
