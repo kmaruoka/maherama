@@ -222,11 +222,22 @@ export async function seedDiety(prisma: PrismaClient) {
         });
 
         if (!existingImage) {
-          console.log(`Image ID ${fileInfo.imageId} not found in database, re-uploading: ${diety.image}`);
-          // 新規アップロード
-          fileInfo = await uploadDietyImage(prisma, diety.image, imagePath);
+          console.log(`Image ID ${fileInfo.imageId} not found in database, creating new Image record from uploaded file info: ${diety.image}`);
+          // アップロード済みファイル情報からImageテーブルに新しく登録
+          const newImage = await prisma.image.create({
+            data: {
+              original_url: fileInfo.urls.original,
+              url_xs: fileInfo.urls.urlXs,
+              url_s: fileInfo.urls.urlS,
+              url_m: fileInfo.urls.urlM,
+              url_l: fileInfo.urls.urlL,
+              url_xl: fileInfo.urls.urlXl,
+              uploaded_by: 'シードデータ'
+            }
+          });
 
-          // アップロード済みファイル情報を更新
+          // 新しいImage IDでfileInfoを更新
+          fileInfo.imageId = newImage.id;
           uploadedFiles[diety.image] = fileInfo;
           saveUploadedFiles(uploadedFiles);
         }
