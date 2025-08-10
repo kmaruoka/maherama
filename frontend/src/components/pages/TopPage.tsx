@@ -193,7 +193,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
       {/* キャッチフレーズセクション */}
       <div className="top-page__catchphrase">
         <div className="top-page__catchphrase-text">
-          地図を開き、時空を巡る旅に出よう。
+          地図を手に、時空を巡る旅に出よう。
           <br />
           神代の物語は、まだ終わらない。
         </div>
@@ -221,7 +221,6 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                   {/* 新規登録フォーム */}
                   <Tab.Pane eventKey="register" active={activeForm === 'register'}>
                     <div className="top-page__form-section">
-                      <h4>新規登録</h4>
                       {registerSuccess && (
                         <Alert variant="success">
                           登録が完了しました。確認メールをお送りしましたので、メール内のリンクをクリックしてアカウントを有効化してください。
@@ -274,7 +273,6 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                     <div className="top-page__form-section">
                       {!showPasswordReset ? (
                         <>
-                          <h4>ログイン</h4>
                           {loginErrors.general && (
                             <Alert variant="danger">{loginErrors.general}</Alert>
                           )}
@@ -361,7 +359,6 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                   {/* テストプレイフォーム */}
                   <Tab.Pane eventKey="test-user" active={activeForm === 'test-user'}>
                     <div className="top-page__form-section">
-                      <h4>テストプレイ</h4>
                       <Form.Group className="mb-3">
                         <Form.Label>テストユーザーを選択</Form.Label>
                         {isLoadingUsers ? (
