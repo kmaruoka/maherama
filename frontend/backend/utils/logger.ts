@@ -14,7 +14,6 @@ const customFormat = format.combine(
     format: 'YYYY-MM-DD HH:mm:ss.SSS'
   }),
   format.errors({ stack: true }),
-  format.json(),
   format.printf(({ timestamp, level, message, ...meta }) => {
     const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
     return `[${timestamp}] ${level.toUpperCase()}: ${message}${metaStr}`;

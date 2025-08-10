@@ -14,6 +14,9 @@ const levelSystemModule = require('./shared/constants/levelSystem');
 const expSystemModule = require('./shared/utils/expSystem');
 const expRewardsModule = require('./shared/constants/expRewards');
 
+// APIロガーのインポート
+const { apiLogger, errorLogger, apiStats, createApiLogger } = require('./utils/apiLogger.js');
+
 // Stripe初期化（APIキーが設定されている場合のみ）
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
@@ -77,7 +80,42 @@ const authLimiter = rateLimit({
   message: { error: 'Too many requests from this IP, please try again later.' }
 });
 
-app.use(express.json({ limit: '256kb' }));
+// APIロギングミドルウェアを追加（環境変数で制御）
+const enableApiLogging = process.env.ENABLE_API_LOGGING !== 'false'; // デフォルトで有効
+const enableApiStats = process.env.ENABLE_API_STATS !== 'false'; // デフォルトで有効
+
+if (enableApiLogging) {
+  const customApiLogger = createApiLogger({
+    excludePaths: ['/health', '/images'], // ヘルスチェックと画像ファイルは除外
+    excludeMethods: ['OPTIONS'], // OPTIONSリクエストは除外
+    logRequestBody: process.env.LOG_REQUEST_BODY !== 'false', // デフォルトで有効
+    logResponseBody: process.env.LOG_RESPONSE_BODY !== 'false', // デフォルトで有効
+    maxResponseSize: parseInt(process.env.MAX_RESPONSE_LOG_SIZE || '1000') // レスポンスボディの最大サイズを1000に制限
+  });
+
+  app.use(customApiLogger);
+  console.log('✅ API Logging enabled');
+  console.log(`📊 Max response size: ${process.env.MAX_RESPONSE_LOG_SIZE || '1000'} characters`);
+} else {
+  console.log('⚠️ API Logging disabled');
+}
+
+if (enableApiStats) {
+  app.use(apiStats); // API統計情報の収集
+  console.log('✅ API Stats enabled');
+} else {
+  console.log('⚠️ API Stats disabled');
+}
+
+// JSON解析ミドルウェア（画像アップロードエンドポイント以外に適用）
+app.use((req, res, next) => {
+  // 画像アップロードエンドポイントの場合はJSON解析をスキップ
+  if (req.path.includes('/images/upload')) {
+    return next();
+  }
+  express.json({ limit: '256kb' })(req, res, next);
+});
+
 app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images')));
 
 // ヘルスチェックエンドポイント
@@ -98,6 +136,55 @@ app.get('/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       database: 'disconnected',
       error: error.message
+    });
+  }
+});
+
+// APIログ設定取得エンドポイント
+app.get('/api/logs/config', requireAdmin, (req, res) => {
+  try {
+    res.json({
+      success: true,
+      config: {
+        enableApiLogging: process.env.ENABLE_API_LOGGING !== 'false',
+        enableApiStats: process.env.ENABLE_API_STATS !== 'false',
+        logRequestBody: process.env.LOG_REQUEST_BODY !== 'false',
+        logResponseBody: process.env.LOG_RESPONSE_BODY !== 'false',
+        maxResponseSize: parseInt(process.env.MAX_RESPONSE_LOG_SIZE || '2000'),
+        excludePaths: ['/health', '/images'],
+        excludeMethods: ['OPTIONS']
+      }
+    });
+  } catch (error) {
+    console.error('API Log Config Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
+// APIログテストエンドポイント
+app.post('/api/logs/test', (req, res) => {
+  try {
+    const testData = {
+      message: 'APIログテスト',
+      timestamp: new Date().toISOString(),
+      requestBody: req.body,
+      queryParams: req.query,
+      headers: req.headers
+    };
+
+    res.json({
+      success: true,
+      message: 'APIログテストが完了しました',
+      data: testData
+    });
+  } catch (error) {
+    console.error('API Log Test Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
     });
   }
 });
@@ -3701,7 +3788,19 @@ async function handleImageUpload(type, id, userId, fileBuffer) {
 }
 
 // Shrine画像アップロードAPI
-app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), async (req, res) => {
+app.post('/shrines/:id/images/upload', authenticateJWT, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'ファイルサイズが5MBを超えています' });
+      }
+      return res.status(400).json({ error: 'ファイルアップロードエラー: ' + err.message });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   if (isNaN(shrineId) || !req.file) {
@@ -3768,7 +3867,19 @@ app.post('/shrines/:id/images/upload', authenticateJWT, upload.single('image'), 
 });
 
 // Diety画像アップロードAPI（複数形エンドポイント）
-app.post('/dietys/:id/images/upload', authenticateJWT, upload.single('image'), async (req, res) => {
+app.post('/dietys/:id/images/upload', authenticateJWT, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'ファイルサイズが5MBを超えています' });
+      }
+      return res.status(400).json({ error: 'ファイルアップロードエラー: ' + err.message });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   if (isNaN(dietyId) || !req.file) {
@@ -3835,7 +3946,19 @@ app.post('/dietys/:id/images/upload', authenticateJWT, upload.single('image'), a
 });
 
 // Diety画像アップロードAPI（単数形エンドポイント - 後方互換性）
-app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), async (req, res) => {
+app.post('/dieties/:id/images/upload', authenticateJWT, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'ファイルサイズが5MBを超えています' });
+      }
+      return res.status(400).json({ error: 'ファイルアップロードエラー: ' + err.message });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   if (isNaN(dietyId) || !req.file) {
@@ -3902,7 +4025,19 @@ app.post('/dieties/:id/images/upload', authenticateJWT, upload.single('image'), 
 });
 
 // ユーザー画像アップロードAPI
-app.post('/users/:id/images/upload', authenticateJWT, upload.single('image'), async (req, res) => {
+app.post('/users/:id/images/upload', authenticateJWT, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'ファイルサイズが5MBを超えています' });
+      }
+      return res.status(400).json({ error: 'ファイルアップロードエラー: ' + err.message });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   const authenticatedUserId = req.user.id;
 
@@ -4846,6 +4981,9 @@ app.get('/api/simulation/status', (req, res) => {
     });
   }
 });
+
+// エラーハンドリングミドルウェアを追加
+app.use(errorLogger);
 
 // すべての未定義APIはJSONで404を返す
 app.use((req, res) => {

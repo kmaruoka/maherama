@@ -103,9 +103,13 @@ class SecureTokenManager {
 export async function apiCall(url: string, options: RequestInit = {}): Promise<Response> {
   const token = SecureTokenManager.getToken();
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  // FormDataの場合はContent-Typeを自動設定に任せる
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // 認証情報を自動的に追加
   // 1. JWTトークンをAuthorizationヘッダーに追加
