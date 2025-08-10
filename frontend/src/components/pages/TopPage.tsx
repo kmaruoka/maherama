@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { API_BASE } from '../../config/api';
+import { API_BASE, useSecureAuth } from '../../config/api';
 import useAllUsers from '../../hooks/useAllUsers';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import './TopPage.css';
@@ -94,6 +94,9 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     }
   };
 
+  // セキュアな認証フックを使用
+  const { login } = useSecureAuth();
+
   // ログイン処理
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,8 +115,12 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
       if (!response.ok) {
         setLoginErrors({ general: data.error || 'ログインに失敗しました' });
       } else {
-        setCurrentUserId(data.user.id);
-        localStorage.setItem('authToken', data.token);
+        // セキュアな認証システムを使用
+        login(data.token, {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email
+        });
         onLogin();
       }
     } catch (error) {

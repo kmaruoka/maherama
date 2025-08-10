@@ -103,7 +103,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
       // 画像URLの存在確認を行う
       const imageUrl = data.image_url_l || data.image_url_m || data.image_url || data.image_url_s;
-      if (imageUrl) {
+      if (imageUrl && imageUrl !== NOIMAGE_SHRINE_DISPLAY_URL) {
         imageActions.handleImageUrlChange(imageUrl);
       }
     }

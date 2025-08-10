@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
-import { useToast } from '../components/atoms';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../components/atoms';
+import { API_BASE } from '../config/api';
 
 export interface ImageManagementOptions {
   entityType: 'shrine' | 'diety' | 'user';
@@ -53,10 +53,11 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     setThumbCache(prev => prev + 1);
   }, []);
 
-  // 画像URLが変更されたときに存在確認を行う（同期的に処理）
+    // 画像URLが変更されたときに存在確認を行う（同期的に処理）
   const handleImageUrlChange = useCallback((imageUrl: string) => {
-    if (!imageUrl || imageUrl === options.noImageUrl) {
-      setShouldUseFallback(true);
+    if (!imageUrl || imageUrl === options.noImageUrl || imageUrl.includes('noimage') || imageUrl.includes('null')) {
+      // NoImageの場合はfallbackを使用しない（無限ループを防ぐ）
+      setShouldUseFallback(false);
       return;
     }
 

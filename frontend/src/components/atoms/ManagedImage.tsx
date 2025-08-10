@@ -65,7 +65,10 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
     }
   }, [src, fallbackSrc, resetImageState]);
 
-  const displaySrc = (imageLoadError || shouldUseFallback) ? fallbackSrc : src;
+    // NoImageの場合は無限ループを防ぐため、fallbackを使用しない
+  const isNoImage = src === fallbackSrc || src.includes('noimage') || src.includes('null');
+  // NoImageの場合はクエリパラメータを除去して元のファイルパスを使用
+  const displaySrc = isNoImage ? fallbackSrc : ((imageLoadError || shouldUseFallback) ? fallbackSrc : src);
   const containerStyle: React.CSSProperties = {
     position: 'relative',
     ...style

@@ -1,24 +1,24 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
-import useLocalStorageState from '../../hooks/useLocalStorageState';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FaCloudUploadAlt } from 'react-icons/fa';
 import { API_BASE, apiCall } from '../../config/api';
+import { NOIMAGE_USER_URL } from '../../constants';
+import useAbilityList from '../../hooks/useAbilityList';
+import { useFollowers } from '../../hooks/useFollowers';
+import { useFollowing } from '../../hooks/useFollowing';
+import { useImageManagement } from '../../hooks/useImageManagement';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { useLevelInfo } from '../../hooks/usePrayDistance';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useUserInfo } from '../../hooks/useUserInfo';
 import { useUserTitles } from '../../hooks/useUserTitles';
-import useAbilityList from '../../hooks/useAbilityList';
-import { useFollowing } from '../../hooks/useFollowing';
-import { useFollowers } from '../../hooks/useFollowers';
-import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
-import { NOIMAGE_USER_URL } from '../../constants';
 import { CompletionBadge, CustomButton } from '../atoms';
-import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
-import { useSubscription } from '../../hooks/useSubscription';
-import { useTranslation } from 'react-i18next';
-import { useImageManagement } from '../../hooks/useImageManagement';
 import { ManagedImage } from '../atoms/ManagedImage';
+import FollowModal from '../molecules/FollowModal';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
-import { FaCloudUploadAlt } from 'react-icons/fa';
 
 interface MyPageProps {
   onShowShrine?: (id: number) => void;
@@ -121,7 +121,7 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
 
   // 画像URLが変更されたときに存在確認を行う
   React.useEffect(() => {
-    if (userImageUrl) {
+    if (userImageUrl && userImageUrl !== NOIMAGE_USER_URL) {
       imageActions.handleImageUrlChange(userImageUrl);
     }
   }, [userImageUrl]);

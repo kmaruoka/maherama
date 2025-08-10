@@ -1,23 +1,22 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { useParams } from 'react-router-dom';
+import { API_BASE } from '../../config/api';
+import { NOIMAGE_DIETY_URL } from '../../constants';
 import { useDietyDetail } from '../../hooks/useDietyDetail';
+import { useImageManagement } from '../../hooks/useImageManagement';
+import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
 import useUserRankings from '../../hooks/useUserRankings';
-import CustomLink from '../atoms/CustomLink';
-import RankingPane from './RankingPane';
-import type { Period, RankingItemData } from './RankingPane';
-import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
-import { NOIMAGE_DIETY_URL } from '../../constants';
-import { FaCloudUploadAlt, FaVoteYea, FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
-import { ImageUploadModal } from '../molecules/ImageUploadModal';
-import { API_BASE } from '../../config/api';
-import { useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
-import { useImageManagement } from '../../hooks/useImageManagement';
+import CustomLink from '../atoms/CustomLink';
 import { ManagedImage } from '../atoms/ManagedImage';
+import { ImageUploadModal } from '../molecules/ImageUploadModal';
+import type { Period, RankingItemData } from './RankingPane';
+import RankingPane from './RankingPane';
 
 function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key: 'dietyRankings' | 'userRankings'): { [key in Period]: RankingItemData[] } {
   const empty = { all: [], yearly: [], monthly: [], weekly: [] };
@@ -72,12 +71,12 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   });
 
   useEffect(() => {
-    if (diety?.image_url) {
+    if (diety?.image_url && diety.image_url !== NOIMAGE_DIETY_URL) {
       imageActions.resetImageState();
-      // 画像URLの存在確認を行う
+      // 画像URLの存在確認を行う（NoImageの場合は除外）
       imageActions.handleImageUrlChange(diety.image_url);
     }
-  }, [diety?.image_url]);
+  }, [diety?.image_url, imageActions]);
 
   const queryClient = useQueryClient();
 
@@ -232,7 +231,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           setDetailView('thumbnail');
         }} style={{ cursor: 'pointer' }}>
           <ManagedImage
-            src={(diety.image_url_m || diety.image_url_s || diety.image_url || NOIMAGE_DIETY_URL) + '?t=' + imageState.thumbCache}
+            src={(diety.image_url_m || diety.image_url_s || diety.image_url) ? ((diety.image_url_m || diety.image_url_s || diety.image_url) + '?t=' + imageState.thumbCache) : NOIMAGE_DIETY_URL}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_DIETY_URL}
             loadingText="読み込み中..."

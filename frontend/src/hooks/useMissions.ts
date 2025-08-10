@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { API_BASE, apiCall, useSecureAuth } from '../config/api';
 
 export interface Mission {
   id: number;
@@ -37,6 +37,8 @@ export interface Mission {
 }
 
 export function useMissions() {
+  const { isAuthenticated } = useSecureAuth();
+
   return useQuery({
     queryKey: ['missions'],
     queryFn: async (): Promise<Mission[]> => {
@@ -45,5 +47,6 @@ export function useMissions() {
     },
     staleTime: 0, // 常に最新データを取得
     refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
+    enabled: isAuthenticated,
   });
 }

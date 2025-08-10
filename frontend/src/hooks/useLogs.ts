@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
-import { API_BASE } from '../config/api';
+import { useCallback, useState } from 'react';
 import type { LogItem } from '../components/molecules/CustomLogLine';
+import { API_BASE, useSecureAuth } from '../config/api';
 
 export function useClientLogs() {
   const [clientLogs, setClientLogs] = useState<LogItem[]>([]);
@@ -13,6 +13,8 @@ export function useClientLogs() {
 }
 
 export default function useLogs(clientLogs?: LogItem[]) {
+  const { isAuthenticated } = useSecureAuth();
+
   const { data: serverLogs = [] , ...rest } = useQuery<LogItem[]>({
     queryKey: ['logs'],
     queryFn: async () => {
@@ -22,6 +24,7 @@ export default function useLogs(clientLogs?: LogItem[]) {
     },
     refetchInterval: 5000,
     retry: 3,
+    enabled: isAuthenticated,
   });
   // クライアントログがあれば合成して返す
   return { data: clientLogs ? [...clientLogs, ...serverLogs] : serverLogs, ...rest };
