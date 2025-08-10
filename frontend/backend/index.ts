@@ -1551,7 +1551,7 @@ app.post('/diety-images/:id/vote', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/logs', authenticateJWT, requireAdmin, async (req, res) => {
+app.get('/logs', authenticateJWT, async (req, res) => {
   try {
     const logs = await prisma.log.findMany({
       select: {
@@ -1594,12 +1594,50 @@ function safeLogHeaders(headers) {
   return h;
 }
 
-// 管理権限チェックミドルウェア
-function requireAdmin(req: AuthedRequest, res, next) {
-  if (!req.user?.is_admin && req.user?.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin only' });
+// 管理者専用APIキー認証ミドルウェア
+function requireAdminApiKey(req: AuthedRequest, res, next) {
+  const adminApiKey = process.env.ADMIN_API_KEY;
+  if (!adminApiKey) {
+    console.error('ADMIN_API_KEY is not configured');
+    return res.status(500).json({ error: 'Server misconfigured' });
   }
+
+  const providedApiKey = req.headers['x-admin-api-key'];
+  if (!providedApiKey || providedApiKey !== adminApiKey) {
+    return res.status(403).json({ error: 'Invalid admin API key' });
+  }
+
   next();
+}
+
+// 管理権限チェックミドルウェア（JWTトークンベース）
+async function requireAdmin(req: AuthedRequest, res, next) {
+  try {
+    if (!req.user?.id) {
+      return res.status(403).json({ error: 'Authentication required' });
+    }
+
+    // データベースからユーザー情報を取得して管理者権限をチェック
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, role: true }
+    });
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+
+    // 管理者権限を確認できたので、req.userを更新
+    req.user = {
+      id: user.id,
+      role: user.role
+    };
+
+    next();
+  } catch (error) {
+    console.error('管理者権限チェックエラー:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 // 認証ミドルウェア
@@ -4521,7 +4559,7 @@ async function runPeriodicRankingAwards() {
 setInterval(runPeriodicRankingAwards, 60 * 1000); // 1分ごと
 
 // 管理用API: ランキング集計と報酬付与を実行（type=weekly|monthly|yearly 指定で分岐）
-app.post('/admin/ranking-awards', authenticateJWT, requireAdmin, async (req, res) => {
+app.post('/admin/ranking-awards', requireAdminApiKey, async (req, res) => {
   try {
     const currentDate = getCurrentDate();
     const type = req.query.type || 'weekly'; // デフォルトはweekly

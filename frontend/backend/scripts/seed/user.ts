@@ -16,4 +16,17 @@ export async function seedUser(prisma: PrismaClient) {
     ],
     skipDuplicates: true,
   });
+
+  // 管理者ユーザーを作成（role='admin'）
+  const adminUser = await prisma.user.create({
+    data: {
+      name: 'admin',
+      level: 1,
+      exp: 0,
+      ability_points: 0,
+      role: 'admin'
+    }
+  });
+
+  console.log(`✅ 管理者ユーザーを作成しました: ID=${adminUser.id}, role=${adminUser.role}`);
 }

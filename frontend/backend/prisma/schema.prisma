@@ -128,6 +128,7 @@ model User {
   reset_token_expires       DateTime?
   verification_token        String?
   verification_token_expires DateTime?
+  role                      String?                  @default("user")
   abilityLogs               AbilityLog[]
   diety_catalogs            DietyCatalog[]
   diety_images              DietyImage[]

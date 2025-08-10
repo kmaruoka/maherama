@@ -242,14 +242,25 @@ function getWeekNumber(date: Date): number {
 // 週間ランキング1位に経験値・能力値のみ付与する関数（称号なし）
 async function awardWeeklyRewards(
   prisma: PrismaClient,
-  currentDate: Date
+  currentDate: Date,
+  adminUserId: number
 ) {
   console.log(`🏆 週間ランキング1位の報酬付与処理を開始...`);
 
   try {
+    const adminApiKey = process.env.ADMIN_API_KEY;
+    if (!adminApiKey) {
+      console.error('❌ ADMIN_API_KEY is not configured');
+      return;
+    }
+
     console.log(`🔗 サーバーAPI呼び出し: http://localhost:${API_PORT}/admin/ranking-awards`);
     // サーバー側のAPIを呼び出してランキング集計と報酬付与を実行
-    const response = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards`);
+    const response = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards`, {}, {
+      headers: {
+        'x-admin-api-key': adminApiKey
+      }
+    });
     console.log(`📡 API応答: ${response.status} ${response.statusText}`);
     if (response.status === 200) {
       console.log(`✅ 週間ランキング報酬付与が完了しました`);
@@ -269,15 +280,26 @@ async function awardWeeklyRewards(
 async function awardRankingTitles(
   prisma: PrismaClient,
   period: 'yearly' | 'monthly',
-  currentDate: Date
+  currentDate: Date,
+  adminUserId: number
 ) {
   console.log(`🏆 ${period}ランキング1位の称号付与処理を開始...`);
 
   try {
+    const adminApiKey = process.env.ADMIN_API_KEY;
+    if (!adminApiKey) {
+      console.error('❌ ADMIN_API_KEY is not configured');
+      return;
+    }
+
     const typeParam = period === 'yearly' ? 'yearly' : 'monthly';
     console.log(`🔗 サーバーAPI呼び出し: http://localhost:${API_PORT}/admin/ranking-awards?type=${typeParam}`);
     // サーバー側のAPIを呼び出してランキング集計と報酬付与を実行
-    const response = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=${typeParam}`);
+    const response = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=${typeParam}`, {}, {
+      headers: {
+        'x-admin-api-key': adminApiKey
+      }
+    });
     console.log(`📡 API応答: ${response.status} ${response.statusText}`);
     if (response.status === 200) {
       console.log(`✅ ${period}ランキング称号付与が完了しました`);
@@ -294,18 +316,32 @@ async function awardRankingTitles(
 }
 
 // シード処理完了後に称号を付与する関数（サーバーAPI呼び出し）
-async function awardTitlesAfterSeed(prisma: PrismaClient) {
+async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
   console.log('🏆 シード後の称号付与処理を開始...');
 
   try {
+    const adminApiKey = process.env.ADMIN_API_KEY;
+    if (!adminApiKey) {
+      console.error('❌ ADMIN_API_KEY is not configured');
+      return;
+    }
+
     // 月間ランキング称号付与
     console.log('月間ランキング称号付与中...');
-    const monthlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=monthly`);
+    const monthlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=monthly`, {}, {
+      headers: {
+        'x-admin-api-key': adminApiKey
+      }
+    });
     console.log(`📡 月間称号付与API応答: ${monthlyResponse.status} ${monthlyResponse.statusText}`);
 
     // 年間ランキング称号付与
     console.log('年間ランキング称号付与中...');
-    const yearlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=yearly`);
+    const yearlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=yearly`, {}, {
+      headers: {
+        'x-admin-api-key': adminApiKey
+      }
+    });
     console.log(`📡 年間称号付与API応答: ${yearlyResponse.status} ${yearlyResponse.statusText}`);
 
     console.log('✅ 称号付与処理が完了しました');
@@ -321,6 +357,18 @@ async function awardTitlesAfterSeed(prisma: PrismaClient) {
 
 export async function seedRealisticTransactions(prisma: PrismaClient) {
   console.log(`🚀 リアルなトランザクションデータの生成を開始... (${DAYS_TO_SIMULATE}日間)`);
+
+  // 管理者ユーザーを取得
+  const adminUser = await prisma.user.findFirst({
+    where: { name: 'admin' }
+  });
+
+  if (!adminUser) {
+    console.error('❌ 管理者ユーザーが見つかりません。先にuser.tsのseedを実行してください。');
+    return;
+  }
+
+  console.log(`✅ 管理者ユーザーが存在します: ID=${adminUser.id}`);
 
   // シミュレーション開始（DAYS_TO_SIMULATE日前から開始）
   const simulationStartDate = new Date(getCurrentDate().getTime() - DAYS_TO_SIMULATE * 24 * 60 * 60 * 1000);
@@ -384,7 +432,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
     if (currentYear !== prevYear) {
       console.log(`\n🗓 年度切り替え検出: ${prevYear}→${currentYear}`);
       // 年間ランキング1位に称号を付与
-      await awardRankingTitles(prisma, 'yearly', new Date(prevYear, 11, 31));
+      await awardRankingTitles(prisma, 'yearly', new Date(prevYear, 11, 31), adminUser.id);
       prevYear = currentYear;
     }
     // 月切り替え判定
@@ -392,7 +440,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
     if (currentMonth !== prevMonth) {
       console.log(`\n🗓 月度切り替え検出: ${prevMonth + 1}→${currentMonth + 1}`);
       // 月間ランキング1位に称号を付与
-      await awardRankingTitles(prisma, 'monthly', new Date(currentDate.getFullYear(), prevMonth, 0));
+      await awardRankingTitles(prisma, 'monthly', new Date(currentDate.getFullYear(), prevMonth, 0), adminUser.id);
       prevMonth = currentMonth;
     }
     // 週切り替え判定
@@ -400,7 +448,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
     if (currentWeek !== prevWeek) {
       console.log(`\n🗓 週切り替え検出: ${prevWeek}→${currentWeek}`);
       // 週間ランキング1位に経験値・能力値のみ付与（称号なし）
-      await awardWeeklyRewards(prisma, new Date(currentDate.getTime() - 24 * 60 * 60 * 1000));
+      await awardWeeklyRewards(prisma, new Date(currentDate.getTime() - 24 * 60 * 60 * 1000), adminUser.id);
       prevWeek = currentWeek;
     }
     console.log(`📅 ${currentDate.toISOString().split('T')[0]} の参拝をシミュレート中...`);
@@ -483,7 +531,7 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
 
   // シード処理完了後に称号を付与
   console.log('🏆 称号付与処理を開始...');
-  await awardTitlesAfterSeed(prisma);
+  await awardTitlesAfterSeed(prisma, adminUser.id);
   console.log('🏆 称号付与処理が完了しました！');
 
   // シミュレーション終了（日付をクリア）
