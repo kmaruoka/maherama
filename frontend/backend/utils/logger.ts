@@ -1,4 +1,11 @@
+import * as fs from 'fs';
 import { createLogger, format, transports } from 'winston';
+
+// ログディレクトリを作成
+const logDir = 'logs';
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
 
 // ログレベルを定義
 const logLevels = {
