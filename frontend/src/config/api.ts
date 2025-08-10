@@ -119,16 +119,39 @@ export async function apiCall(url: string, options: RequestInit = {}): Promise<R
 
   // 2. 開発環境ではx-user-idヘッダーを追加
   if (import.meta.env.DEV) {
-    const userId = localStorage.getItem('userId');
-    if (userId) {
+    const userData = SecureTokenManager.getUserData();
+    const localStorageUserId = localStorage.getItem('userId');
+
+    // 現在のユーザーデータとlocalStorageのuserIdが一致するかチェック
+    if (userData?.id && localStorageUserId) {
       try {
-        const parsedUserId = JSON.parse(userId);
+        const parsedLocalStorageUserId = JSON.parse(localStorageUserId);
+        if (parsedLocalStorageUserId !== userData.id) {
+          // 一致しない場合はlocalStorageをクリア
+          console.warn('localStorageのuserIdが現在のユーザーと一致しません。クリアします。', {
+            localStorageUserId: parsedLocalStorageUserId,
+            currentUserId: userData.id
+          });
+          localStorage.removeItem('userId');
+        }
+      } catch {
+        // JSONパースエラーの場合もクリア
+        localStorage.removeItem('userId');
+      }
+    }
+
+    // 現在のユーザーデータを優先してヘッダーに設定
+    if (userData?.id) {
+      headers['x-user-id'] = userData.id.toString();
+    } else if (localStorageUserId) {
+      try {
+        const parsedUserId = JSON.parse(localStorageUserId);
         if (parsedUserId !== null && parsedUserId !== undefined) {
           headers['x-user-id'] = parsedUserId.toString();
         }
       } catch {
-        if (userId !== 'null' && userId !== 'undefined') {
-          headers['x-user-id'] = userId;
+        if (localStorageUserId !== 'null' && localStorageUserId !== 'undefined') {
+          headers['x-user-id'] = localStorageUserId;
         }
       }
     }

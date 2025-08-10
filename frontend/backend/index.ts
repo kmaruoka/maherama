@@ -1102,12 +1102,9 @@ async function prayAtShrine({
 // 参拝API
 app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const userId = parseInt(req.headers['x-user-id']) || 1;
+  const userId = req.user.id;
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
-  }
-  if (!userId || isNaN(userId) || userId <= 0) {
-    return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
   }
   // 距離チェック
   const shrine = await prisma.shrine.findUnique({ where: { id }, select: { lat: true, lng: true } });
@@ -1161,13 +1158,10 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
 // 遥拝API
 app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const userId = parseInt(req.headers['x-user-id']) || 1;
+  const userId = req.user.id;
 
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
-  }
-  if (!userId || isNaN(userId) || userId <= 0) {
-    return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
   }
   // 遥拝回数チェック
   const maxWorshipCount = await getUserWorshipCount(userId);
@@ -1192,11 +1186,7 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
 
 // ミッション一覧取得API
 app.get('/missions', authenticateJWT, async (req, res) => {
-  const userId = parseInt(req.headers['x-user-id']) || 1;
-
-  if (!userId || isNaN(userId) || userId <= 0) {
-    return res.status(400).json({ error: 'Invalid or missing x-user-id header' });
-  }
+  const userId = req.user.id;
 
   try {
     const currentDate = getCurrentDate();
@@ -1713,7 +1703,13 @@ function authenticateJWT(req: AuthedRequest, res, next) {
   // 明示的に development だけバイパス（test/staging は必ず認証）
   if (env === 'development') {
     const userIdFromHeader = req.headers['x-user-id'];
-    const userId = userIdFromHeader ? parseInt(userIdFromHeader as string, 10) : 3;
+    if (!userIdFromHeader) {
+      return res.status(401).json({ error: '開発環境ではx-user-idヘッダーが必要です' });
+    }
+    const userId = parseInt(userIdFromHeader as string, 10);
+    if (isNaN(userId) || userId <= 0) {
+      return res.status(401).json({ error: '有効なユーザーIDが必要です' });
+    }
     req.user = { id: userId, role: 'dev' };
     // 開発環境の認証バイパスログは削除（大量ログ防止）
     return next();
@@ -2242,7 +2238,7 @@ app.get('/users/me/subscription', authenticateJWT, async (req, res) => {
 // 課金ランク変更API（Stripe秒割り対応）
 app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res) => {
   try {
-    const userId = parseInt(req.headers['x-user-id']) || 1;
+    const userId = req.user.id;
     const { newSlots, stripeSubscriptionId } = req.body;
 
     if (newSlots === undefined) {
@@ -2312,7 +2308,7 @@ app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res)
 // Stripe Checkoutセッション作成API
 app.post('/subscription/create-checkout-session', authenticateJWT, async (req, res) => {
   try {
-    const userId = parseInt(req.headers['x-user-id']) || 1;
+    const userId = req.user.id;
     const { planId, platform } = req.body;
 
     // プラン定義（slots数値のみ）
@@ -3653,7 +3649,7 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
 // 神社マーカーの状態を取得するAPI
 app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
-  const userId = parseInt(req.headers['x-user-id']) || 1;
+  const userId = req.user.id;
 
   if (isNaN(shrineId) || shrineId <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
