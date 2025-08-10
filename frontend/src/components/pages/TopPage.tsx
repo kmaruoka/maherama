@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { API_BASE, useSecureAuth } from '../../config/api';
+import { API_BASE, apiCall, useSecureAuth } from '../../config/api';
 import useAllUsers from '../../hooks/useAllUsers';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import './TopPage.css';
@@ -65,30 +65,34 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     setRegisterErrors({});
 
     try {
-      const response = await fetch(`${API_BASE}/auth/register`, {
+      const response = await apiCall(`${API_BASE}/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registerForm),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        // エラーレスポンスの詳細を確認
-        if (data.errors) {
-          setRegisterErrors(data.errors);
-        } else if (data.error) {
-          setRegisterErrors({ general: data.error });
-        } else {
-          setRegisterErrors({ general: `登録に失敗しました (${response.status})` });
+      setRegisterSuccess(true);
+      setRegisterForm({ username: '', email: '' });
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      // エラーレスポンスの詳細を確認
+      if (error.message && error.message.includes('API Error')) {
+        try {
+          const errorData = JSON.parse(error.message.split(': ')[2]);
+          if (errorData.errors) {
+            setRegisterErrors(errorData.errors);
+          } else if (errorData.error) {
+            setRegisterErrors({ general: errorData.error });
+          } else {
+            setRegisterErrors({ general: '登録に失敗しました' });
+          }
+        } catch {
+          setRegisterErrors({ general: '登録に失敗しました' });
         }
       } else {
-        setRegisterSuccess(true);
-        setRegisterForm({ username: '', email: '' });
+        setRegisterErrors({ general: 'ネットワークエラーが発生しました。サーバーに接続できません。' });
       }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setRegisterErrors({ general: 'ネットワークエラーが発生しました。サーバーに接続できません。' });
     } finally {
       setIsRegistering(false);
     }
@@ -104,27 +108,22 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     setLoginErrors({});
 
     try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
+      const response = await apiCall(`${API_BASE}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginForm),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        setLoginErrors({ general: data.error || 'ログインに失敗しました' });
-      } else {
-        // セキュアな認証システムを使用
-        login(data.token, {
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email
-        });
-        onLogin();
-      }
+      // セキュアな認証システムを使用
+      login(data.token, {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email
+      });
+      onLogin();
     } catch (error) {
-      setLoginErrors({ general: 'ネットワークエラーが発生しました' });
+      setLoginErrors({ general: 'ログインに失敗しました' });
     } finally {
       setIsLoggingIn(false);
     }
@@ -137,22 +136,17 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     setResetErrors({});
 
     try {
-      const response = await fetch(`${API_BASE}/auth/password-reset`, {
+      const response = await apiCall(`${API_BASE}/auth/password-reset`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetForm.email }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        setResetErrors({ general: data.error || 'パスワードリセットに失敗しました' });
-      } else {
-        setResetSuccess(true);
-        setResetForm({ email: '' });
-      }
+      setResetSuccess(true);
+      setResetForm({ email: '' });
     } catch (error) {
-      setResetErrors({ general: 'ネットワークエラーが発生しました' });
+      setResetErrors({ general: 'パスワードリセットに失敗しました' });
     } finally {
       setIsResetting(false);
     }

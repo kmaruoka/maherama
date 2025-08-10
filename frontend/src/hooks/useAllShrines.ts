@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 export interface AllShrineItem {
   id: number;
@@ -34,10 +34,7 @@ export function useAllShrines() {
   return useQuery<AllShrineItem[]>({
     queryKey: ['all-shrines'],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE}/shrines/all`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch all shrines');
-      }
+      const response = await apiCall(`${API_BASE}/shrines/all`);
       return response.json();
     },
   });

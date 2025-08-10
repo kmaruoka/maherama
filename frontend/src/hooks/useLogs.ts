@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import type { LogItem } from '../components/molecules/CustomLogLine';
-import { API_BASE, useSecureAuth } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 export function useClientLogs() {
   const [clientLogs, setClientLogs] = useState<LogItem[]>([]);
@@ -13,13 +13,13 @@ export function useClientLogs() {
 }
 
 export default function useLogs(clientLogs?: LogItem[]) {
-  const { isAuthenticated } = useSecureAuth();
+  // 開発環境では常に認証済みとして扱う
+  const isAuthenticated = import.meta.env.DEV || localStorage.getItem('userId') !== null;
 
   const { data: serverLogs = [] , ...rest } = useQuery<LogItem[]>({
     queryKey: ['logs'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/logs`);
-      if (!res.ok) throw new Error('Failed to fetch logs');
+      const res = await apiCall(`${API_BASE}/logs`);
       return res.json();
     },
     refetchInterval: 5000,

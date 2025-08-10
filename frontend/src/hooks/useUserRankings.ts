@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
 import type { Period, RankingItem } from '../components/organisms/RankingPane';
+import { API_BASE, apiCall } from '../config/api';
 
 const apiMap: Record<Period, string> = {
   all: '/user-rankings',
@@ -13,8 +13,7 @@ export default function useUserRankings(period: Period) {
   return useQuery<RankingItem[]>({
     queryKey: ['user-rankings', period],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}${apiMap[period]}`);
-      if (!res.ok) return [];
+      const res = await apiCall(`${API_BASE}${apiMap[period]}`);
       const arr = await res.json();
       return arr.map((item: any) => ({
         id: item.userId,

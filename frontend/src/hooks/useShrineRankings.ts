@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
 import type { Period } from '../components/organisms/RankingPane';
+import { API_BASE, apiCall } from '../config/api';
 
 export interface ShrineRankingItem {
   rank: number;
@@ -13,8 +13,7 @@ export default function useShrineRankings(id: number, period: Period) {
   return useQuery<ShrineRankingItem[]>({
     queryKey: ['shrine-rankings', id, period],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/shrines/${id}/rankings?period=${period}`);
-      if (!res.ok) throw new Error('ランキング取得に失敗しました');
+      const res = await apiCall(`${API_BASE}/shrines/${id}/rankings?period=${period}`);
       return res.json();
     },
     enabled: !!id,

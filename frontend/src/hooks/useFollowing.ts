@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 export interface Following {
   id: number;
@@ -18,10 +18,7 @@ export function useFollowing(userId: number) {
   return useQuery<Following[]>({
     queryKey: ['following', userId],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE}/users/${userId}/following`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch following');
-      }
+      const response = await apiCall(`${API_BASE}/users/${userId}/following`);
       return response.json();
     },
     enabled: !!userId,

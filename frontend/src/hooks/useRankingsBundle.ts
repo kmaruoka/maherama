@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
 import type { Period, RankingItem } from '../components/organisms/RankingPane';
+import { API_BASE, apiCall } from '../config/api';
 
 export type RankingsBundleAllPeriods = {
   [key in Period]: {
@@ -19,14 +19,14 @@ export default function useRankingsBundleAll(dietyId?: number) {
     queryKey: ['rankings-bundle-all', dietyId],
     queryFn: async () => {
       const [shrineRes, dietyRes, userRes] = await Promise.all([
-        fetch(`${API_BASE}/shrine-rankings-bundle`),
-        fetch(dietyId ? `${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}` : `${API_BASE}/diety-rankings-bundle?dietyId=1`),
-        fetch(`${API_BASE}/user-rankings-bundle`)
+        apiCall(`${API_BASE}/shrine-rankings-bundle`),
+        apiCall(dietyId ? `${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}` : `${API_BASE}/diety-rankings-bundle?dietyId=1`),
+        apiCall(`${API_BASE}/user-rankings-bundle`)
       ]);
       const [shrineData, dietyData, userData]: ApiBundleResponse[] = await Promise.all([
-        shrineRes.ok ? shrineRes.json() : {},
-        dietyRes.ok ? dietyRes.json() : {},
-        userRes.ok ? userRes.json() : {}
+        shrineRes.json(),
+        dietyRes.json(),
+        userRes.json()
       ]);
 
       const periods: Period[] = ['all', 'yearly', 'monthly', 'weekly'];
@@ -51,6 +51,6 @@ export default function useRankingsBundleAll(dietyId?: number) {
 }
 
 export async function fetchDietyRankingsBundle(dietyId: number) {
-  const res = await fetch(`${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}`);
+  const res = await apiCall(`${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}`);
   return res.json();
 }

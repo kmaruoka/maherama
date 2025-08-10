@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/atoms';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 export interface ImageManagementOptions {
   entityType: 'shrine' | 'diety' | 'user';
@@ -90,20 +90,10 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       const formData = new FormData();
       formData.append('image', file);
 
-      const headers: Record<string, string> = {};
-      if (options.userId) {
-        headers['x-user-id'] = String(options.userId);
-      }
-
-      const response = await fetch(`${API_BASE}/${options.entityType}s/${options.entityId}/images/upload`, {
+      const response = await apiCall(`${API_BASE}/${options.entityType}s/${options.entityId}/images/upload`, {
         method: 'POST',
-        headers,
         body: formData
       });
-
-      if (!response.ok) {
-        throw new Error('アップロード失敗');
-      }
 
       const result = await response.json();
 
@@ -136,33 +126,9 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const handleVote = useCallback(async () => {
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (options.userId) {
-        headers['x-user-id'] = String(options.userId);
-      }
-
-      const response = await fetch(`${API_BASE}/${options.entityType}s/${options.entityId}/images/vote`, {
-        method: 'POST',
-        headers
+      const response = await apiCall(`${API_BASE}/${options.entityType}s/${options.entityId}/images/vote`, {
+        method: 'POST'
       });
-
-      if (!response.ok) {
-        let errorMsg = '投票失敗';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {
-          const text = await response.text();
-          if (text.startsWith('<!DOCTYPE')) {
-            errorMsg = 'サーバーエラーまたはAPIが見つかりません';
-          } else {
-            errorMsg = text;
-          }
-        }
-        throw new Error(errorMsg);
-      }
 
       // 成功時はデータ再取得
       await Promise.all(
@@ -177,33 +143,9 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const handleImageVote = useCallback(async (imageId: number) => {
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      if (options.userId) {
-        headers['x-user-id'] = String(options.userId);
-      }
-
-      const response = await fetch(`${API_BASE}/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
-        method: 'POST',
-        headers
+      const response = await apiCall(`${API_BASE}/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
+        method: 'POST'
       });
-
-      if (!response.ok) {
-        let errorMsg = '投票失敗';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {
-          const text = await response.text();
-          if (text.startsWith('<!DOCTYPE')) {
-            errorMsg = 'サーバーエラーまたはAPIが見つかりません';
-          } else {
-            errorMsg = text;
-          }
-        }
-        throw new Error(errorMsg);
-      }
 
       await Promise.all(
         options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))

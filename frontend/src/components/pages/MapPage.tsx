@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, Pane, TileLayer } from 'react-leaflet';
 import { calculateDistance, EARTH_CIRCUMFERENCE_METERS } from "../../../backend/shared/utils/distance";
 import { useBarrier } from '../../barriers/BarrierContext';
-import { API_BASE, MAPBOX_API_KEY } from '../../config/api';
+import { API_BASE, apiCall, MAPBOX_API_KEY } from '../../config/api';
 import { useAllShrines } from '../../hooks/useAllShrines';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
@@ -54,9 +54,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     let isMounted = true;
 
     if (userId) {
-      fetch(`${API_BASE}/users/${userId}/pray-distance`, {
-        headers: { 'x-user-id': String(userId) }
-      })
+      apiCall(`${API_BASE}/users/${userId}/pray-distance`)
         .then(res => res.json())
         .then(data => {
           if (isMounted && typeof data.pray_distance === 'number') {

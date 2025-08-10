@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { API_BASE, apiCall } from '../config/api';
 
 // 能力一覧取得
 export function useAbilities(userId: number | null) {
@@ -18,10 +18,7 @@ export function useAbilities(userId: number | null) {
     queryKey: ['abilities', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await fetch(`${API_BASE}/users/${userId}/abilities`, {
-        headers: { 'x-user-id': String(userId) },
-      });
-      if (!res.ok) throw new Error('能力情報の取得に失敗しました');
+      const res = await apiCall(`${API_BASE}/users/${userId}/abilities`);
       return res.json();
     },
     enabled: !!userId,
@@ -34,17 +31,9 @@ export function usePurchaseAbility() {
 
   return useMutation({
     mutationFn: async ({ userId, abilityId }: { userId: number; abilityId: number }) => {
-      const res = await fetch(`${API_BASE}/abilities/${abilityId}/purchase`, {
-        method: 'POST',
-        headers: {
-          'x-user-id': String(userId),
-          'Content-Type': 'application/json'
-        },
+      const res = await apiCall(`${API_BASE}/abilities/${abilityId}/purchase`, {
+        method: 'POST'
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || '能力購入に失敗しました');
-      }
       return res.json();
     },
     onSuccess: (data, { userId }) => {
@@ -63,17 +52,9 @@ export function useResetAbilities() {
 
   return useMutation({
     mutationFn: async (userId: number) => {
-      const res = await fetch(`${API_BASE}/user/reset-abilities`, {
-        method: 'POST',
-        headers: {
-          'x-user-id': String(userId),
-          'Content-Type': 'application/json'
-        },
+      const res = await apiCall(`${API_BASE}/user/reset-abilities`, {
+        method: 'POST'
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || '能力リセットに失敗しました');
-      }
       return res.json();
     },
     onSuccess: (data, userId) => {

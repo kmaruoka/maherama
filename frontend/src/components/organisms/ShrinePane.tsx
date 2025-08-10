@@ -3,7 +3,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { formatDistance } from '../../../backend/shared/utils/distance';
-import { API_BASE } from '../../config/api';
+import { API_BASE, apiCall } from '../../config/api';
 import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
@@ -28,7 +28,7 @@ function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: n
   useEffect(() => {
     if (!shrineId) return;
     setLoading(true);
-    fetch(`${API_BASE}/shrines/${shrineId}/rankings-bundle`)
+    apiCall(`${API_BASE}/shrines/${shrineId}/rankings-bundle`)
       .then(res => res.json())
       .then(json => setData(json))
       .finally(() => setLoading(false));
@@ -121,7 +121,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const yyyymm = `${prevMonth.getFullYear()}${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
 
-    fetch(`${API_BASE}/shrines/${id}/images?votingMonth=${yyyymm}`)
+    apiCall(`${API_BASE}/shrines/${id}/images?votingMonth=${yyyymm}`)
       .then(res => res.json())
       .then(json => {
         if (isMounted) {
@@ -272,19 +272,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       if (currentPosition) {
         body = JSON.stringify({ lat: currentPosition[0], lng: currentPosition[1] });
       }
-      const res = await fetch(`${API_BASE}/shrines/${id}/pray`, {
+      const res = await apiCall(`${API_BASE}/shrines/${id}/pray`, {
         method: 'POST',
-        headers: {
-          ...(body ? { 'Content-Type': 'application/json' } : {}),
-          'x-user-id': String(userId || 1)
-        },
         body,
       });
-      if (!res.ok) {
-        const error = await res.json();
-        debugLog(`[ERROR] 参拝失敗: ${error.error || '不明なエラー'}`);
-        throw new Error(error.error || t('prayError'));
-      }
       return res.json();
     },
     onSuccess: () => {
@@ -309,27 +300,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   const remotePrayMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`${API_BASE}/shrines/${id}/remote-pray`, {
+      const response = await apiCall(`${API_BASE}/shrines/${id}/remote-pray`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': String(userId || 1)
-        },
       });
-      let error;
-      try {
-        error = await response.json();
-      } catch (e) {
-        error = {};
-      }
-      if (!response.ok) {
-        if (response.status >= 500) {
-          throw new Error(t('serverError'));
-        } else {
-          throw new Error(error.error || t('remotePrayError'));
-        }
-      }
-      return error;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
@@ -359,28 +333,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   // 画像ごとの投票
   const handleImageVote = async (imageId: number) => {
     try {
-      const response = await fetch(`${API_BASE}/shrines/${id}/images/${imageId}/vote`, {
+      const response = await apiCall(`${API_BASE}/shrines/${id}/images/${imageId}/vote`, {
         method: 'POST',
-        headers: {
-          'x-user-id': String(userId || 1),
-          'Content-Type': 'application/json'
-        }
       });
-      if (!response.ok) {
-        let errorMsg = '投票失敗';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {
-          const text = await response.text();
-          if (text.startsWith('<!DOCTYPE')) {
-            errorMsg = 'サーバーエラーまたはAPIが見つかりません';
-          } else {
-            errorMsg = text;
-          }
-        }
-        throw new Error(errorMsg);
-      }
+      const result = await response.json();
       setRankRefreshKey(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['shrine', id] });
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });

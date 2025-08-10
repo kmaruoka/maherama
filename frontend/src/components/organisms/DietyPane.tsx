@@ -3,7 +3,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { useParams } from 'react-router-dom';
-import { API_BASE } from '../../config/api';
+import { API_BASE, apiCall } from '../../config/api';
 import { NOIMAGE_DIETY_URL } from '../../constants';
 import { useDietyDetail } from '../../hooks/useDietyDetail';
 import { useImageManagement } from '../../hooks/useImageManagement';
@@ -107,29 +107,9 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
 
   const handleVote = async () => {
     try {
-      const response = await fetch(`${API_BASE}/dieties/${idFromParams}/images/vote`, {
+      const response = await apiCall(`${API_BASE}/dieties/${idFromParams}/images/vote`, {
         method: 'POST',
-        headers: {
-          'x-user-id': '1', // 開発用
-          'Content-Type': 'application/json'
-        }
       });
-
-      if (!response.ok) {
-        let errorMsg = '投票失敗';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {
-          const text = await response.text();
-          if (text.startsWith('<!DOCTYPE')) {
-            errorMsg = 'サーバーエラーまたはAPIが見つかりません';
-          } else {
-            errorMsg = text;
-          }
-        }
-        throw new Error(errorMsg);
-      }
 
       // 成功時はデータ再取得
       // setRefreshKey(prev => prev + 1); // This line was removed as per the new_code

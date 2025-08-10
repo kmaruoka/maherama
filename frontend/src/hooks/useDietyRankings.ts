@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
 import type { Period } from '../components/organisms/RankingPane';
+import { API_BASE, apiCall } from '../config/api';
 
 export interface DietyRankingItem {
   rank: number;
@@ -13,8 +13,7 @@ export default function useDietyRankings(id: number | string, period: Period) {
   return useQuery<DietyRankingItem[]>({
     queryKey: ['diety-rankings', id, period],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/dieties/${id}/rankings?period=${period}`);
-      if (!res.ok) throw new Error('ランキング取得に失敗しました');
+      const res = await apiCall(`${API_BASE}/dieties/${id}/rankings?period=${period}`);
       return res.json();
     },
     enabled: !!id && id !== 'undefined' && id !== '',

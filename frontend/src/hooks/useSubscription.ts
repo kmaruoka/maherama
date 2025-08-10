@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 // 新しいレベルシステムのサブスクリプション情報
 export function useSubscription(userId: number | null) {
@@ -14,10 +14,7 @@ export function useSubscription(userId: number | null) {
     queryKey: ['subscription', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await fetch(`${API_BASE}/users/${userId}/subscription`, {
-        headers: { 'x-user-id': String(userId) },
-      });
-      if (!res.ok) throw new Error('課金情報の取得に失敗しました');
+      const res = await apiCall(`${API_BASE}/users/${userId}/subscription`);
       return res.json();
     },
     enabled: !!userId,
@@ -30,10 +27,7 @@ export function useSubscriptionOld(userId: number | null) {
     queryKey: ['subscription-old', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await fetch(`${API_BASE}/users/me/subscription`, {
-        headers: { 'x-user-id': String(userId) },
-      });
-      if (!res.ok) throw new Error('課金情報の取得に失敗しました');
+      const res = await apiCall(`${API_BASE}/users/me/subscription`);
       return res.json();
     },
     enabled: !!userId,

@@ -1,7 +1,7 @@
-import { useMemo, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
-import { EARTH_RADIUS_METERS, calculateDistance } from "../../backend/shared/utils/distance";
+import { useEffect, useMemo, useState } from 'react';
+import { calculateDistance } from "../../backend/shared/utils/distance";
+import { API_BASE, apiCall } from '../config/api';
 
 // 2点間の距離計算はcalculateDistanceを使う
 export function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -26,9 +26,7 @@ export function usePrayDistance(userId: number | null): { prayDistance: number |
     }
 
     setIsLoading(true);
-    fetch(`${API_BASE}/users/${userId}/pray-distance`, {
-      headers: { 'x-user-id': String(userId) }
-    })
+    apiCall(`${API_BASE}/users/${userId}/pray-distance`)
       .then(res => res.json())
       .then(data => {
         if (typeof data.pray_distance === 'number') {
@@ -58,10 +56,7 @@ export function useWorshipLimit(userId: number | null) {
     queryKey: ['worship-limit', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await fetch(`${API_BASE}/users/${userId}/worship-limit`, {
-        headers: { 'x-user-id': String(userId) },
-      });
-      if (!res.ok) throw new Error('遥拝回数制限の取得に失敗しました');
+      const res = await apiCall(`${API_BASE}/users/${userId}/worship-limit`);
       return res.json();
     },
     enabled: !!userId,
@@ -101,10 +96,7 @@ export function useLevelInfo(userId: number | null) {
     queryKey: ['level-info', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await fetch(`${API_BASE}/users/${userId}/level-info`, {
-        headers: { 'x-user-id': String(userId) },
-      });
-      if (!res.ok) throw new Error('レベル情報の取得に失敗しました');
+      const res = await apiCall(`${API_BASE}/users/${userId}/level-info`);
       return res.json();
     },
     enabled: !!userId,

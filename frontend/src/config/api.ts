@@ -107,9 +107,35 @@ export async function apiCall(url: string, options: RequestInit = {}): Promise<R
     ...(options.headers as Record<string, string>),
   };
 
-  // JWTトークンをAuthorizationヘッダーに追加
+  // 認証情報を自動的に追加
+  // 1. JWTトークンをAuthorizationヘッダーに追加
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // 2. 開発環境ではx-user-idヘッダーを追加
+  if (import.meta.env.DEV) {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      try {
+        const parsedUserId = JSON.parse(userId);
+        if (parsedUserId !== null && parsedUserId !== undefined) {
+          headers['x-user-id'] = parsedUserId.toString();
+        }
+      } catch {
+        if (userId !== 'null' && userId !== 'undefined') {
+          headers['x-user-id'] = userId;
+        }
+      }
+    }
+  }
+
+  // 3. 本番環境ではセッションストレージからユーザーIDを取得
+  if (!import.meta.env.DEV) {
+    const userData = SecureTokenManager.getUserData();
+    if (userData?.id) {
+      headers['x-user-id'] = userData.id.toString();
+    }
   }
 
   const response = await fetch(url, {

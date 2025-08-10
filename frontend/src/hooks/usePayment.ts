@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { API_BASE } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 // プラットフォーム判定
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -38,13 +38,11 @@ export function useStripeCheckout() {
       const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
       if (!plan) throw new Error('プランが見つかりません');
 
-      const res = await fetch(`${API_BASE}/subscription/create-checkout-session`, {
+      const res = await apiCall(`${API_BASE}/subscription/create-checkout-session`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planId, platform: 'web' }),
       });
 
-      if (!res.ok) throw new Error('決済セッションの作成に失敗しました');
       const { sessionId } = await res.json();
 
       // Stripe Checkoutにリダイレクト（実装は後で追加）

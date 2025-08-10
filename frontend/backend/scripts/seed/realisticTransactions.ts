@@ -391,7 +391,8 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   await prisma.follow.deleteMany();
   await prisma.shrineCatalog.deleteMany();
   await prisma.dietyCatalog.deleteMany();
-  await prisma.log.deleteMany();
+  // ログは削除しない（既存のログを保持）
+  // await prisma.log.deleteMany();
   await prisma.abilityLog.deleteMany();
 
   // 神社の位置情報とIDを取得
@@ -537,4 +538,22 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   // シミュレーション終了（日付をクリア）
   await setSimulateDate(null);
   console.log('📅 シミュレーション終了: 日付をクリアしました');
+
+  // ログデータを作成
+  console.log('📝 ログデータを作成中...');
+  await prisma.log.createMany({
+    data: [
+      { message: 'システム: サーバーを起動しました', type: 'system' },
+      { message: 'システム: データベースの初期化が完了しました', type: 'system' },
+      { message: 'システム: リアルなトランザクションデータの生成が完了しました', type: 'system' },
+      { message: '<user:1:らりらり>が<shrine:1:天村雲神社>を参拝しました', type: 'normal' },
+      { message: '<user:2:カプウヤ>が<shrine:2:蜂須神社>を参拝しました', type: 'normal' },
+      { message: '<user:3:ダイナマイト古川>が<shrine:3:葛木男神社>を参拝しました', type: 'normal' },
+      { message: '<user:1:らりらり>が<shrine:2:蜂須神社>を遥拝しました', type: 'normal' },
+      { message: '<user:2:カプウヤ>が<shrine:3:葛木男神社>を遥拝しました', type: 'normal' },
+      { message: '<user:3:ダイナマイト古川>が<shrine:1:天村雲神社>を参拝しました', type: 'normal' },
+      { message: 'システム: ログデータの初期化が完了しました', type: 'system' }
+    ]
+  });
+  console.log('✅ ログデータの作成が完了しました！');
 }
