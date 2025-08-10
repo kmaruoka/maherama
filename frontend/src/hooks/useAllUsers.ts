@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { API_BASE } from '../config/api';
 
 interface User {
   id: number;
@@ -13,7 +13,11 @@ export default function useAllUsers() {
   return useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await apiCall(`${API_BASE}/users`);
+      // テストユーザー取得時は認証不要のエンドポイントを使用
+      const response = await fetch(`${API_BASE}/test/users`);
+      if (!response.ok) {
+        throw new Error(`API Error ${response.status}`);
+      }
       return response.json();
     },
   });

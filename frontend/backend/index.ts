@@ -1676,27 +1676,34 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
+// テストユーザー取得エンドポイント（認証不要、ID:1-10のみ）
+app.get('/test/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        id: {
+          gte: 1,
+          lte: 10
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        level: true,
+        exp: true,
+        ability_points: true
+      },
+      orderBy: { id: 'asc' }
+    });
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching test users:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 // 開発環境用のテストエンドポイント
 if (process.env.NODE_ENV === 'development') {
-  // テストユーザー取得エンドポイント（認証不要）
-  app.get('/test/users', async (req, res) => {
-    try {
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          name: true,
-          level: true,
-          exp: true,
-          ability_points: true
-        },
-        orderBy: { id: 'asc' }
-      });
-      res.json(users);
-    } catch (err) {
-      console.error('Error fetching test users:', err);
-      res.status(500).json({ error: 'DB error' });
-    }
-  });
 
   // メール送信テスト用HTMLページ
   app.get('/test/email', (req, res) => {
@@ -1922,7 +1929,7 @@ app.post('/auth/reset-password/confirm', async (req, res) => {
   }
 });
 
-// 全ユーザー取得API
+// 全ユーザー取得API（認証必要）
 app.get('/users', authenticateJWT, async (req, res) => {
   try {
     const users = await prisma.user.findMany({
