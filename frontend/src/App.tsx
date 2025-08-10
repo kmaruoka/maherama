@@ -18,6 +18,7 @@ import SubmenuPage from './components/pages/SubmenuPage';
 import TermsPage from './components/pages/TermsPage';
 import TopPage from './components/pages/TopPage';
 import UserPage from './components/pages/UserPage';
+import { useSecureAuth } from './config/api';
 import { useDietyDetail } from './hooks/useDietyDetail';
 import useLocalStorageState from './hooks/useLocalStorageState';
 import useLogs, { useClientLogs } from './hooks/useLogs';
@@ -111,6 +112,7 @@ function App() {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction'>('map');
   const [modal, setModal] = useState<ModalType>(null);
   const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
+  const { logout, isAuthenticated } = useSecureAuth();
   useSkin();
 
   // デバッグ用: ユーザーIDの確認
@@ -146,23 +148,10 @@ function App() {
 
   // ログイン処理
   const handleLogin = () => {
-    // ユーザーIDが設定されているか確認
-    const userId = localStorage.getItem('userId');
-    if (userId) {
-      try {
-        // JSON.parseでパースを試行
-        const parsedUserId = JSON.parse(userId);
-        if (parsedUserId !== null && parsedUserId !== undefined) {
-          // ログイン後にアプリページにリダイレクト
-          setPage('map');
-        }
-      } catch {
-        // JSON.parseに失敗した場合は、そのまま使用
-        if (userId !== 'null' && userId !== 'undefined') {
-          // ログイン後にアプリページにリダイレクト
-          setPage('map');
-        }
-      }
+    // SecureTokenManagerで認証状態を確認
+    if (isAuthenticated) {
+      // ログイン後にアプリページにリダイレクト
+      setPage('map');
     }
   };
 
@@ -173,9 +162,10 @@ function App() {
     setNavigationHistory([]);
     setHistoryIndex(-1);
 
-    // localStorageを完全にクリア
-    localStorage.removeItem('userId');
-    localStorage.removeItem('authToken');
+    // SecureTokenManagerでログアウト処理
+    logout();
+
+    // その他のlocalStorageをクリア
     localStorage.removeItem('debugMode');
     localStorage.removeItem('maxShrineDisplay');
     localStorage.removeItem('skinName');
