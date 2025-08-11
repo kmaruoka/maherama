@@ -76,6 +76,20 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   const { data: travelLogCanPost } = useDietyTravelLogCanPost(idFromParams);
   const postTravelLog = usePostDietyTravelLog();
 
+  // 投稿成功時のToast表示
+  useEffect(() => {
+    if (postTravelLog.isSuccess) {
+      showToast(t('travelLogPosted'), 'success');
+    }
+  }, [postTravelLog.isSuccess, showToast, t]);
+
+  // 投稿失敗時のToast表示
+  useEffect(() => {
+    if (postTravelLog.isError) {
+      showToast(t('travelLogPostError'), 'error');
+    }
+  }, [postTravelLog.isError, showToast, t]);
+
   // 画像管理フックを使用
   const [imageState, imageActions] = useImageManagement({
     entityType: 'diety',

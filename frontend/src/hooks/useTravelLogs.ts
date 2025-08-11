@@ -107,6 +107,9 @@ export function usePostShrineTravelLog() {
       queryClient.invalidateQueries({ queryKey: ['shrine-travel-logs', shrineId] });
       queryClient.invalidateQueries({ queryKey: ['shrine-travel-logs-can-post', shrineId] });
     },
+    onError: (error) => {
+      console.error('旅の記録投稿エラー:', error);
+    },
   });
 }
 
@@ -129,6 +132,9 @@ export function usePostDietyTravelLog() {
       // 関連するクエリを無効化して再取得
       queryClient.invalidateQueries({ queryKey: ['diety-travel-logs', dietyId] });
       queryClient.invalidateQueries({ queryKey: ['diety-travel-logs-can-post', dietyId] });
+    },
+    onError: (error) => {
+      console.error('旅の記録投稿エラー:', error);
     },
   });
 }

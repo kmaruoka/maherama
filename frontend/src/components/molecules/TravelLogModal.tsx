@@ -34,10 +34,9 @@ export function TravelLogModal({ isOpen, onClose, onSubmit, title, isLoading = f
       await onSubmit(content);
       setContent('');
       onClose();
-      showToast(t('travelLogPosted'), 'success');
     } catch (error) {
       console.error('旅の記録投稿エラー:', error);
-      showToast(t('travelLogPostError'), 'error');
+      // エラー時のToast表示は親コンポーネントで行うため、ここでは表示しない
     } finally {
       setIsSubmitting(false);
     }

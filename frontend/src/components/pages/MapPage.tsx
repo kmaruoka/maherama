@@ -12,6 +12,7 @@ import useDebugLog from '../../hooks/useDebugLog';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useSubscription } from '../../hooks/useSubscription';
 import '../../setupLeaflet';
+import { useToast } from '../atoms';
 import CustomCircle from '../atoms/CustomCircle';
 import ShrineMarker from '../atoms/ShrineMarker';
 import BarrierAnimationOverlay from '../molecules/BarrierAnimationOverlay';
@@ -34,6 +35,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const [zoom] = useState<number>(defaultZoom);
   const [mapReady, setMapReady] = useState(false);
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
 
   const { data: shrines = [] } = useAllShrines();
@@ -286,6 +288,73 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
 
   return (
     <div className="map-page">
+      {/* トーストテスト用ボタン */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        zIndex: 10000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
+      }}>
+        <button
+          onClick={() => showToast('成功メッセージ\n改行を含む\n長いメッセージ\nあいうえおおおおおおおおおおおおおおおお\nかきくけこ', 'success')}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Success Toast
+        </button>
+        <button
+          onClick={() => showToast('警告メッセージ', 'warning')}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#ffc107',
+            color: 'black',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Warning Toast
+        </button>
+        <button
+          onClick={() => showToast('エラーメッセージ', 'error')}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Error Toast
+        </button>
+        <button
+          onClick={() => showToast('情報メッセージ', 'info')}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#17a2b8',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Info Toast
+        </button>
+      </div>
       <MapContainer
         key={`map-${debugMode ? 'debug' : 'normal'}`}  // ← 再マウント用
         center={debugMode ? center : (position || defaultCenter)}

@@ -1,4 +1,5 @@
 import js from '@eslint/js'
+import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import { globalIgnores } from 'eslint/config'
@@ -15,12 +16,16 @@ export default tseslint.config([
       reactHooks.configs['recommended-latest'],
       reactRefresh.configs.vite,
     ],
+    plugins: {
+      react,
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
     },
     rules: {
       'linebreak-style': ['error', 'unix'],
+      'react/no-inline-styles': 'error',
     },
   },
 ])

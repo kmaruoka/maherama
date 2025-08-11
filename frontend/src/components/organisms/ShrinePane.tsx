@@ -97,6 +97,20 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const { data: travelLogCanPost } = useShrineTravelLogCanPost(id);
   const postTravelLog = usePostShrineTravelLog();
 
+  // 投稿成功時のToast表示
+  useEffect(() => {
+    if (postTravelLog.isSuccess) {
+      showToast(t('travelLogPosted'), 'success');
+    }
+  }, [postTravelLog.isSuccess, showToast, t]);
+
+  // 投稿失敗時のToast表示
+  useEffect(() => {
+    if (postTravelLog.isError) {
+      showToast(t('travelLogPostError'), 'error');
+    }
+  }, [postTravelLog.isError, showToast, t]);
+
   // 画像管理フックを使用
   const [imageState, imageActions] = useImageManagement({
     entityType: 'shrine',

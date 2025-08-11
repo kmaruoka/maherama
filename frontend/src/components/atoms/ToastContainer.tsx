@@ -1,13 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Toast } from './Toast';
-import type { ToastType } from './Toast';
+import React, { createContext, useCallback, useContext } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
-interface ToastItem {
-  id: string;
-  message: string;
-  type: ToastType;
-  duration?: number;
-}
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface ToastContextType {
   showToast: (message: string, type: ToastType, duration?: number) => void;
@@ -28,32 +22,55 @@ interface ToastContainerProps {
 }
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({ children }) => {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-
   const showToast = useCallback((message: string, type: ToastType, duration?: number) => {
-    const id = Date.now().toString();
-    const newToast: ToastItem = { id, message, type, duration };
-    setToasts(prev => [...prev, newToast]);
-  }, []);
+    const toastOptions = {
+      duration: duration || 3000,
+      style: {
+        fontSize: '0.85rem',
+        padding: '12px 16px',
+        minWidth: '200px',
+        maxWidth: '400px',
+      },
+    };
 
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    switch (type) {
+      case 'success':
+        toast.success(message, toastOptions);
+        break;
+      case 'error':
+        toast.error(message, toastOptions);
+        break;
+      case 'warning':
+        toast(message, { ...toastOptions, icon: '⚠' });
+        break;
+      case 'info':
+        toast(message, { ...toastOptions, icon: 'ℹ' });
+        break;
+      default:
+        toast(message, toastOptions);
+    }
   }, []);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="toast-container">
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            duration={toast.duration}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            fontSize: '24px',
+            padding: '16px 20px',
+            minWidth: '300px',
+            maxWidth: '400px',
+          },
+        }}
+        gutter={8}
+        containerStyle={{
+          top: 20,
+        }}
+        reverseOrder={false}
+      />
     </ToastContext.Provider>
   );
 };
