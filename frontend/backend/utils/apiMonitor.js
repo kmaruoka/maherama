@@ -29,9 +29,18 @@ const apiMonitoring = {
 };
 
 // レート制限チェック
-const checkRateLimit = (ip) => {
+const checkRateLimit = (ip, headers = {}) => {
   // localhostからのアクセスはレート制限を無効化
-  if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown') {
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost' || ip === 'unknown') {
+    return {
+      isRateLimited: false,
+      requestCount: 0,
+      remainingRequests: Infinity
+    };
+  }
+
+  // シードモードの場合はレート制限をスキップ
+  if (process.env.SEED_MODE === 'true' || headers['x-seed-mode'] === 'true') {
     return {
       isRateLimited: false,
       requestCount: 0,

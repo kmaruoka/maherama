@@ -465,16 +465,21 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
 
   // サーバー側のシードモードも有効化
   try {
-    await axios.post(`http://localhost:${API_PORT}/api/seed-mode`, {
+    console.log('🌱 サーバー側のシードモードを有効化中...');
+    const response = await axios.post(`http://localhost:${API_PORT}/api/seed-mode`, {
       enabled: true
     }, {
       headers: {
         'x-seed-mode': 'true'
       }
     });
-    console.log('🌱 サーバー側のシードモードを有効化しました');
-  } catch (error) {
-    console.warn('⚠️ サーバー側のシードモード有効化に失敗しましたが、続行します:', error.message);
+    console.log('🌱 サーバー側のシードモードを有効化しました:', response.status);
+  } catch (error: any) {
+    console.error('❌ サーバー側のシードモード有効化に失敗:', error.message);
+    if (error.response) {
+      console.error('📡 エラー詳細:', error.response.status, error.response.data);
+    }
+    console.warn('⚠️ シードモード有効化に失敗しましたが、続行します');
   }
 
   console.log(`🚀 リアルなトランザクションデータの生成を開始... (${DAYS_TO_SIMULATE}日間)`);

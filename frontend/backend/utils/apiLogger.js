@@ -92,94 +92,10 @@ const safeLogResponse = (body, maxSize = 1000) => {
   return maskSensitiveData(body);
 };
 
-// APIログ用のミドルウェア
+// 基本的なAPIログ用のミドルウェア（現在は使用されていない）
+// createApiLoggerを使用することを推奨
 const apiLogger = (req, res, next) => {
-  const startTime = Date.now();
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const ip = req.ip || req.connection.remoteAddress || 'unknown';
-
-      // seedモードの場合はレート制限を緩和
-    if (!isSeedMode) {
-      const rateLimitResult = checkRateLimit(ip);
-
-      // レート制限に達した場合は429エラーを返す
-      if (rateLimitResult.isRateLimited) {
-        return res.status(429).json({
-          success: false,
-          type: 'error',
-          message: 'Too many requests. Please try again later.',
-          error: 'Rate limit exceeded'
-        });
-      }
-    }
-
-  // リクエスト情報をログ出力
-  const requestLog = {
-    requestId,
-    method: req.method,
-    url: req.url,
-    path: req.path,
-    query: req.query,
-    headers: maskSensitiveData(req.headers),
-    body: safeLogBody(req.body),
-    ip: req.ip || req.connection.remoteAddress,
-    userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
-  };
-
-  logger.info(apiLogFormat('INFO', `API Request: ${req.method} ${req.path}`, {
-    type: 'request',
-    ...requestLog
-  }));
-
-  // レスポンスをインターセプト
-  const originalSend = res.send;
-  const originalJson = res.json;
-
-  res.send = function(body) {
-    const responseTime = Date.now() - startTime;
-    const responseLog = {
-      requestId,
-      statusCode: res.statusCode,
-      responseTime: `${responseTime}ms`,
-      headers: maskSensitiveData(res.getHeaders()),
-      timestamp: new Date().toISOString()
-    };
-
-    // レスポンスボディの処理を改善
-    responseLog.body = safeLogResponse(body, 2000);
-
-    const logLevel = res.statusCode >= 400 ? 'ERROR' : 'INFO';
-    logger[logLevel.toLowerCase()](apiLogFormat(logLevel, `API Response: ${req.method} ${req.path} - ${res.statusCode}`, {
-      type: 'response',
-      ...responseLog
-    }));
-
-    return originalSend.call(this, body);
-  };
-
-  res.json = function(body) {
-    const responseTime = Date.now() - startTime;
-    const responseLog = {
-      requestId,
-      statusCode: res.statusCode,
-      responseTime: `${responseTime}ms`,
-      headers: maskSensitiveData(res.getHeaders()),
-      timestamp: new Date().toISOString()
-    };
-
-    // レスポンスボディの処理を改善
-    responseLog.body = safeLogResponse(body, 2000);
-
-    const logLevel = res.statusCode >= 400 ? 'ERROR' : 'INFO';
-    logger[logLevel.toLowerCase()](apiLogFormat(logLevel, `API Response: ${req.method} ${req.path} - ${res.statusCode}`, {
-      type: 'response',
-      ...responseLog
-    }));
-
-    return originalJson.call(this, body);
-  };
-
+  console.warn('⚠️ apiLogger is deprecated. Use createApiLogger instead.');
   next();
 };
 
@@ -257,9 +173,14 @@ const createApiLogger = (options = {}) => {
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
 
+    // シードモードのチェック（環境変数、ヘッダー、オプション設定を確認）
+    const isSeedMode = process.env.SEED_MODE === 'true' ||
+                      req.headers['x-seed-mode'] === 'true' ||
+                      options.isSeedMode === true;
+
     // seedモードの場合はレート制限を緩和
     if (!isSeedMode) {
-      const rateLimitResult = checkRateLimit(ip);
+      const rateLimitResult = checkRateLimit(ip, req.headers);
 
       // レート制限に達した場合は429エラーを返す
       if (rateLimitResult.isRateLimited) {

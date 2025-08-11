@@ -100,10 +100,15 @@ const authLimiter = rateLimit({
     // シードモードヘッダーがある場合は、すべてのAPIをスキップ
     const isSeedModeRequest = req.headers['x-seed-mode'] === 'true';
 
+    // /api/seed-modeへのリクエストは、localhostからのアクセスか、x-seed-modeヘッダーがあれば常にスキップ
+    if (isSeedModeApi && (isLocalhost || hasSeedModeHeader)) {
+      return true;
+    }
+
     const shouldSkip = isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi || isSeedApi || isSeedModeRequest;
 
     // デバッグログ（一時的）
-    if (req.path.includes('/simulate-date') || req.path.includes('/ranking-awards')) {
+    if (req.path.includes('/simulate-date') || req.path.includes('/ranking-awards') || req.path.includes('/seed-mode')) {
       console.log(`🔍 Rate limit check for ${req.method} ${req.path}:`, {
         ip,
         isLocalhost,
