@@ -84,7 +84,13 @@ const authLimiter = rateLimit({
   skip: (req) => {
     // localhostからのアクセスはレート制限をスキップ
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    return ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown';
+    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown';
+
+    // シード処理中のAPIコールもスキップ
+    const isSeedMode = process.env.NODE_ENV === 'development' && process.env.SEED_MODE === 'true';
+    const isAdminApiCall = req.path.startsWith('/admin/') && req.headers['x-admin-api-key'];
+
+    return isLocalhost || isSeedMode || isAdminApiCall;
   }
 });
 

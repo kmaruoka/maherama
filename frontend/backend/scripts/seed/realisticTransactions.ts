@@ -361,6 +361,14 @@ async function awardRankingTitles(
 
 // シード処理完了後に称号を付与する関数（サーバーAPI呼び出し）
 async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
+  // 元の環境変数を保存
+  const originalNodeEnv = process.env.NODE_ENV;
+  const originalSeedMode = process.env.SEED_MODE;
+
+  // シードモードを有効化（レート制限をスキップするため）
+  process.env.SEED_MODE = 'true';
+  process.env.NODE_ENV = 'development';
+
   console.log('🏆 シード後の称号付与処理を開始...');
 
   try {
@@ -396,12 +404,34 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
       console.error(`📡 エラー詳細: ${error.response.status} ${error.response.statusText}`);
       console.error(`📡 レスポンス:`, error.response.data);
     }
+  } finally {
+    // 環境変数を元に戻す
+    if (originalNodeEnv) {
+      process.env.NODE_ENV = originalNodeEnv;
+    } else {
+      delete process.env.NODE_ENV;
+    }
+
+    if (originalSeedMode) {
+      process.env.SEED_MODE = originalSeedMode;
+    } else {
+      delete process.env.SEED_MODE;
+    }
   }
 }
 
 export async function seedRealisticTransactions(prisma: PrismaClient) {
+  // 元の環境変数を保存
+  const originalNodeEnv = process.env.NODE_ENV;
+  const originalSeedMode = process.env.SEED_MODE;
+
+  // シードモードを有効化（レート制限をスキップするため）
+  process.env.SEED_MODE = 'true';
+  process.env.NODE_ENV = 'development';
+
   console.log(`🚀 リアルなトランザクションデータの生成を開始... (${DAYS_TO_SIMULATE}日間)`);
   console.log('📝 注: 「既に参拝済み」などの400エラーは正常な動作です（重複参拝を防ぐため）');
+  console.log('🌱 シードモード有効 - レート制限をスキップします');
 
   // サーバーの状態を確認
   try {
@@ -619,6 +649,21 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
       { message: 'システム: ログデータの初期化が完了しました', type: 'system' }
     ]
   });
-  console.log('✅ ログデータの作成が完了しました！');
+    console.log('✅ ログデータの作成が完了しました！');
+
+  // 環境変数を元に戻す
+  if (originalNodeEnv) {
+    process.env.NODE_ENV = originalNodeEnv;
+  } else {
+    delete process.env.NODE_ENV;
+  }
+
+  if (originalSeedMode) {
+    process.env.SEED_MODE = originalSeedMode;
+  } else {
+    delete process.env.SEED_MODE;
+  }
+
+  console.log(`🌱 シードモードをクリアしました (NODE_ENV: ${process.env.NODE_ENV || 'undefined'})`);
 }
 
