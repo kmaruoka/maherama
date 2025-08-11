@@ -379,6 +379,20 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
   process.env.SEED_MODE = 'true';
   process.env.NODE_ENV = 'development';
 
+  // サーバー側のシードモードも有効化
+  try {
+    await axios.post(`http://localhost:${API_PORT}/api/seed-mode`, {
+      enabled: true
+    }, {
+      headers: {
+        'x-seed-mode': 'true'
+      }
+    });
+    console.log('🌱 サーバー側のシードモードを有効化しました');
+  } catch (error) {
+    console.warn('⚠️ サーバー側のシードモード有効化に失敗しましたが、続行します:', error.message);
+  }
+
   console.log('🏆 シード後の称号付与処理を開始...');
 
   try {
@@ -414,7 +428,21 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
       console.error(`📡 エラー詳細: ${error.response.status} ${error.response.statusText}`);
       console.error(`📡 レスポンス:`, error.response.data);
     }
-  } finally {
+    } finally {
+    // サーバー側のシードモードを無効化
+    try {
+      await axios.post(`http://localhost:${API_PORT}/api/seed-mode`, {
+        enabled: false
+      }, {
+        headers: {
+          'x-seed-mode': 'true'
+        }
+      });
+      console.log('🌱 サーバー側のシードモードを無効化しました');
+    } catch (error) {
+      console.warn('⚠️ サーバー側のシードモード無効化に失敗しましたが、続行します:', error.message);
+    }
+
     // 環境変数を元に戻す
     if (originalNodeEnv) {
       process.env.NODE_ENV = originalNodeEnv;
@@ -438,6 +466,20 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
   // シードモードを有効化（レート制限をスキップするため）
   process.env.SEED_MODE = 'true';
   process.env.NODE_ENV = 'development';
+
+  // サーバー側のシードモードも有効化
+  try {
+    await axios.post(`http://localhost:${API_PORT}/api/seed-mode`, {
+      enabled: true
+    }, {
+      headers: {
+        'x-seed-mode': 'true'
+      }
+    });
+    console.log('🌱 サーバー側のシードモードを有効化しました');
+  } catch (error) {
+    console.warn('⚠️ サーバー側のシードモード有効化に失敗しましたが、続行します:', error.message);
+  }
 
   console.log(`🚀 リアルなトランザクションデータの生成を開始... (${DAYS_TO_SIMULATE}日間)`);
   console.log('📝 注: 「既に参拝済み」などの400エラーは正常な動作です（重複参拝を防ぐため）');
@@ -660,6 +702,20 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
     ]
   });
     console.log('✅ ログデータの作成が完了しました！');
+
+    // サーバー側のシードモードを無効化
+  try {
+    await axios.post(`http://localhost:${API_PORT}/api/seed-mode`, {
+      enabled: false
+    }, {
+      headers: {
+        'x-seed-mode': 'true'
+      }
+    });
+    console.log('🌱 サーバー側のシードモードを無効化しました');
+  } catch (error) {
+    console.warn('⚠️ サーバー側のシードモード無効化に失敗しましたが、続行します:', error.message);
+  }
 
   // 環境変数を元に戻す
   if (originalNodeEnv) {

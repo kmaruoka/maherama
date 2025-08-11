@@ -86,14 +86,24 @@ const authLimiter = rateLimit({
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown';
 
-        // シード処理中のAPIコールもスキップ
+    // シード処理中のAPIコールもスキップ
     const isSeedMode = process.env.NODE_ENV === 'development' && process.env.SEED_MODE === 'true';
     const isAdminApiCall = req.path.startsWith('/admin/') && req.headers['x-admin-api-key'];
     const isSimulationApi = req.path.startsWith('/api/simulate-date') || req.path.startsWith('/api/simulation/');
     const hasSeedModeHeader = req.headers['x-seed-mode'] === 'true';
     const isSeedApiCall = req.headers['x-user-id'] && req.headers['x-seed-mode'] === 'true';
+    const isSeedUserApi = req.headers['x-user-id'] && (req.path.includes('/pray') || req.path.includes('/remote-pray'));
 
-    return isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || hasSeedModeHeader || isSeedApiCall;
+    // デバッグ用ログ
+    if (req.headers['x-seed-mode'] || req.headers['x-user-id']) {
+      console.log(`🌱 Seed API call detected: ${req.method} ${req.path}, headers:`, {
+        'x-seed-mode': req.headers['x-seed-mode'],
+        'x-user-id': req.headers['x-user-id'],
+        'x-admin-api-key': req.headers['x-admin-api-key'] ? 'present' : 'absent'
+      });
+    }
+
+    return isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi;
   }
 });
 
@@ -5518,6 +5528,40 @@ app.get('/api/simulate-date', (req, res) => {
     });
   } catch (error) {
     console.error('シミュレート日付取得エラー:', error);
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
+// シードモード設定（開発環境のみ）
+app.post('/api/seed-mode', (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    if (process.env.NODE_ENV !== 'development') {
+      return res.status(403).json({
+        success: false,
+        message: 'シードモードは開発環境でのみ使用可能です'
+      });
+    }
+
+    if (enabled) {
+      process.env.SEED_MODE = 'true';
+      console.log('🌱 シードモードを有効化しました');
+    } else {
+      delete process.env.SEED_MODE;
+      console.log('🌱 シードモードを無効化しました');
+    }
+
+    res.json({
+      success: true,
+      message: `シードモードを${enabled ? '有効化' : '無効化'}しました`,
+      seedMode: process.env.SEED_MODE || 'disabled'
+    });
+  } catch (error) {
+    console.error('シードモード設定エラー:', error);
     res.status(500).json({
       success: false,
       message: 'サーバーエラーが発生しました'
