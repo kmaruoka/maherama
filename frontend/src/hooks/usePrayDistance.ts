@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { calculateDistance } from "../../backend/shared/utils/distance";
 import { API_BASE, apiCall } from '../config/api';
 
@@ -16,34 +16,25 @@ export function getRadiusFromSlots(slots: number): number {
 
 // APIから参拝可能距離を取得するフック
 export function usePrayDistance(userId: number | null): { prayDistance: number | null; isLoading: boolean } {
-  const [prayDistance, setPrayDistance] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { data, isLoading } = useQuery<{ pray_distance: number }>({
+    queryKey: ['pray-distance', userId],
+    queryFn: async () => {
+      if (!userId) throw new Error('ユーザーIDが未設定です');
+      const res = await apiCall(`${API_BASE}/users/${userId}/pray-distance`);
+      return res.json();
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュを使用
+    retry: 2, // エラー時に2回リトライ
+    retryDelay: 1000, // リトライ間隔1秒
+    refetchOnWindowFocus: false, // ウィンドウフォーカス時の再取得を無効化
+    refetchOnReconnect: false, // 再接続時の再取得を無効化
+  });
 
-  useEffect(() => {
-    if (!userId) {
-      setPrayDistance(null);
-      return;
-    }
-
-    setIsLoading(true);
-    apiCall(`${API_BASE}/users/${userId}/pray-distance`)
-      .then(res => res.json())
-      .then(data => {
-        if (typeof data.pray_distance === 'number') {
-          setPrayDistance(data.pray_distance);
-        } else {
-          setPrayDistance(100); // デフォルト値
-        }
-      })
-      .catch(() => {
-        setPrayDistance(100); // エラー時のデフォルト値
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [userId]);
-
-  return { prayDistance, isLoading };
+  return {
+    prayDistance: data?.pray_distance ?? 100, // デフォルト値
+    isLoading
+  };
 }
 
 export function useWorshipLimit(userId: number | null) {
@@ -60,6 +51,9 @@ export function useWorshipLimit(userId: number | null) {
       return res.json();
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュを使用
+    retry: 2, // エラー時に2回リトライ
+    retryDelay: 1000, // リトライ間隔1秒
   });
 }
 
@@ -100,6 +94,9 @@ export function useLevelInfo(userId: number | null) {
       return res.json();
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュを使用
+    retry: 2, // エラー時に2回リトライ
+    retryDelay: 1000, // リトライ間隔1秒
   });
 }
 

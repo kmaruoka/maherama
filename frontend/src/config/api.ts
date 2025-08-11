@@ -1,3 +1,16 @@
+// Toast表示用のフック
+import { useToast } from '../components/atoms/ToastContainer';
+
+// 統一されたAPIレスポンス形式
+export interface ApiResponse<T = any> {
+  success: boolean;
+  type: 'success' | 'error' | 'info' | 'warn' | 'fatal';
+  message: string;
+  data?: T;
+  error?: string;
+  statusCode?: number;
+}
+
 // API_BASEの設定
 const getApiBase = () => {
   // 開発環境またはローカル環境
@@ -55,19 +68,6 @@ class SecureTokenManager {
   }
 }
 
-// 統一されたAPIレスポンス形式
-export interface ApiResponse<T = any> {
-  success: boolean;
-  type: 'success' | 'error' | 'info' | 'warn' | 'fatal';
-  message: string;
-  data?: T;
-  error?: string;
-  statusCode?: number;
-}
-
-// Toast表示用のフック
-import { useToast } from '../components/atoms/ToastContainer';
-
 // API呼び出し結果をToast表示する関数
 export const showApiResult = (result: ApiResponse, showToast: ReturnType<typeof useToast>['showToast']) => {
   const { type, message } = result;
@@ -103,7 +103,7 @@ export const showApiResult = (result: ApiResponse, showToast: ReturnType<typeof 
 // セキュアなAPI呼び出し関数（Toast統合版）
 export async function apiCallWithToast<T = any>(
   url: string,
-  options: RequestInit = {},
+  options: ApiCallOptions = {},
   showToast: ReturnType<typeof useToast>['showToast']
 ): Promise<ApiResponse<T>> {
   try {
@@ -152,97 +152,154 @@ export async function apiCallWithToast<T = any>(
   }
 }
 
+// API呼び出しオプション
+interface ApiCallOptions extends RequestInit {
+  requireAuth?: boolean; // 認証が必要かどうか（デフォルト: true）
+  retryCount?: number;   // リトライ回数（デフォルト: 0）
+}
+
 // セキュアなAPI呼び出し関数
-export async function apiCall(url: string, options: RequestInit = {}): Promise<Response> {
+export async function apiCall(url: string, options: ApiCallOptions = {}): Promise<Response> {
+  const { requireAuth = true, retryCount = 0, ...fetchOptions } = options;
+
+  // 認証が必要で、かつ認証されていない場合はエラーを投げる
+  if (requireAuth && !isAuthenticated()) {
+    console.error('[apiCall] 認証エラー:', url, '認証状態:', isAuthenticated());
+    const error = new Error('認証が必要です');
+    (error as any).status = 401;
+    throw error;
+  }
+
   const token = SecureTokenManager.getToken();
   const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string>),
+    ...(fetchOptions.headers as Record<string, string>),
+    'Content-Type': 'application/json',
   };
 
-  // FormDataの場合はContent-Typeを自動設定に任せる
-  if (!(options.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
-  }
-
-  // 認証情報を自動的に追加
-  // 1. JWTトークンをAuthorizationヘッダーに追加（優先）
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  } else if (requireAuth) {
+    console.warn('[apiCall] トークンなし:', url);
   }
 
-  // 2. x-user-idヘッダーをフォールバックとして追加（両環境共通）
-  const userData = SecureTokenManager.getUserData();
-  const localStorageUserId = localStorage.getItem('userId');
+  // 認証が必要な場合のみユーザーIDをヘッダーに追加（バックエンドで使用）
+  if (requireAuth) {
+    const userData = SecureTokenManager.getUserData();
+    const localStorageUserId = localStorage.getItem('user_id');
 
-  // 現在のユーザーデータとlocalStorageのuserIdが一致するかチェック
-  if (userData?.id && localStorageUserId) {
-    try {
-      const parsedLocalStorageUserId = JSON.parse(localStorageUserId);
-      if (parsedLocalStorageUserId !== userData.id) {
-        // 一致しない場合はlocalStorageをクリア
-        console.warn('localStorageのuserIdが現在のユーザーと一致しません。クリアします。', {
-          localStorageUserId: parsedLocalStorageUserId,
-          currentUserId: userData.id
-        });
-        localStorage.removeItem('userId');
-      }
-    } catch {
-      // JSONパースエラーの場合もクリア
-      localStorage.removeItem('userId');
-    }
-  }
-
-  // 現在のユーザーデータを優先してヘッダーに設定
-  if (userData?.id) {
-    headers['x-user-id'] = userData.id.toString();
-  } else if (localStorageUserId) {
-    try {
-      const parsedUserId = JSON.parse(localStorageUserId);
-      if (parsedUserId !== null && parsedUserId !== undefined) {
-        headers['x-user-id'] = parsedUserId.toString();
-      }
-    } catch {
-      if (localStorageUserId !== 'null' && localStorageUserId !== 'undefined') {
-        headers['x-user-id'] = localStorageUserId;
+    // 現在のユーザーデータを優先してヘッダーに設定
+    if (userData?.id) {
+      headers['x-user-id'] = userData.id.toString();
+    } else if (localStorageUserId) {
+      try {
+        const parsedUserId = JSON.parse(localStorageUserId);
+        if (parsedUserId !== null && parsedUserId !== undefined) {
+          headers['x-user-id'] = parsedUserId.toString();
+        }
+      } catch {
+        if (localStorageUserId !== 'null' && localStorageUserId !== 'undefined') {
+          headers['x-user-id'] = localStorageUserId;
+        }
       }
     }
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+    });
 
-  // 401エラーの場合は自動ログアウト
-  if (response.status === 401) {
-    SecureTokenManager.logout();
-    window.location.href = '/'; // ログインページにリダイレクト
+    // エラーレスポンスの場合は詳細をログに出力
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error ${response.status}:`, errorText);
+
+      // 401エラーの場合は自動ログアウト（無限ループを防ぐため条件付き）
+      if (response.status === 401 && !window.location.pathname.includes('/login')) {
+        SecureTokenManager.logout();
+        // 現在のページがログインページでない場合のみリダイレクト
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
+      }
+
+      // 403エラー（Invalid token）の場合も自動ログアウト
+      if (response.status === 403 && !window.location.pathname.includes('/login')) {
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.error === 'Invalid token') {
+            SecureTokenManager.logout();
+            // 現在のページがログインページでない場合のみリダイレクト
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            }
+          }
+        } catch (parseError) {
+          // JSONパースに失敗した場合は、エラーテキストに"Invalid token"が含まれているかチェック
+          if (errorText.includes('Invalid token')) {
+            SecureTokenManager.logout();
+            // 現在のページがログインページでない場合のみリダイレクト
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            }
+          }
+        }
+      }
+
+      // 429エラー（レート制限）の場合は特別な処理
+      if (response.status === 429) {
+        console.warn('[apiCall] レート制限に達しました:', url);
+      }
+
+      const error = new Error(`API Error ${response.status}: ${errorText}`);
+      (error as any).status = response.status;
+      throw error;
+    }
+
+    return response;
+  } catch (error: any) {
+    // 401エラーまたはネットワークエラーの場合はリトライしない
+    if (error.status === 401 || error.status === 403 || error.name === 'TypeError') {
+      throw error;
+    }
+
+    // リトライ回数が残っている場合は再試行
+    if (retryCount > 0) {
+      console.log(`API呼び出しをリトライします: ${url} (残り${retryCount}回)`);
+      return apiCall(url, { ...options, retryCount: retryCount - 1 });
+    }
+
+    throw error;
   }
-
-  // エラーレスポンスの場合は詳細をログに出力
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`API Error ${response.status}:`, errorText);
-    throw new Error(`API Error ${response.status}: ${errorText}`);
-  }
-
-  return response;
 }
 
 // 認証関連の関数
 export const login = (token: string, userData: any) => {
   SecureTokenManager.setToken(token);
   SecureTokenManager.setUserData(userData);
-  localStorage.setItem('userId', JSON.stringify(userData.id));
 };
 
 export const logout = () => {
   SecureTokenManager.logout();
-  localStorage.removeItem('userId');
 };
 
 export const isAuthenticated = (): boolean => {
-  return !!SecureTokenManager.getToken();
+  const token = SecureTokenManager.getToken();
+  const userData = SecureTokenManager.getUserData();
+
+  // トークンが存在しない場合は認証されていない
+  if (!token) {
+    return false;
+  }
+
+  // ユーザーデータが存在しない場合も認証されていない
+  if (!userData || !userData.id) {
+    return false;
+  }
+
+  // トークンが存在し、ユーザーデータも存在する場合は認証されている
+  return true;
 };
 
 export const getCurrentUser = () => {
@@ -251,9 +308,6 @@ export const getCurrentUser = () => {
 
 // セキュアな認証フック
 export const useSecureAuth = () => {
-  const isAuthenticated = SecureTokenManager.getToken() !== null;
-  const userData = SecureTokenManager.getUserData();
-
   const login = (token: string, user: { id: number; name: string; email: string }) => {
     SecureTokenManager.setToken(token);
     SecureTokenManager.setUserData(user);
@@ -263,10 +317,23 @@ export const useSecureAuth = () => {
     SecureTokenManager.logout();
   };
 
-  return {
-    isAuthenticated,
-    userData,
-    login,
-    logout,
+  const isAuthenticated = () => {
+    const token = SecureTokenManager.getToken();
+    const userData = SecureTokenManager.getUserData();
+
+    // トークンが存在しない場合は認証されていない
+    if (!token) {
+      return false;
+    }
+
+    // ユーザーデータが存在しない場合も認証されていない
+    if (!userData || !userData.id) {
+      return false;
+    }
+
+    // トークンが存在し、ユーザーデータも存在する場合は認証されている
+    return true;
   };
+
+  return { login, logout, isAuthenticated };
 };

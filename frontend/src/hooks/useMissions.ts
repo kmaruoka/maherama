@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall, useSecureAuth } from '../config/api';
+import { API_BASE, apiCall } from '../config/api';
 
 export interface Mission {
   id: number;
@@ -37,16 +37,15 @@ export interface Mission {
 }
 
 export function useMissions() {
-  const { isAuthenticated } = useSecureAuth();
-
   return useQuery({
     queryKey: ['missions'],
     queryFn: async (): Promise<Mission[]> => {
       const response = await apiCall(`${API_BASE}/missions`);
       return response.json();
     },
-    staleTime: 0, // 常に最新データを取得
-    refetchOnWindowFocus: true, // ウィンドウフォーカス時に再取得
-    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュを使用（0から変更）
+    refetchOnWindowFocus: false, // ウィンドウフォーカス時の再取得を無効化
+    retry: 2, // エラー時に2回リトライ
+    retryDelay: 1000, // リトライ間隔1秒
   });
 }

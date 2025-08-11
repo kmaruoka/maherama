@@ -1,4 +1,5 @@
 const logger = require('./logger').default;
+const { checkRateLimit, detectAnomaly, sendAlert } = require('./apiMonitor');
 
 // APIログ用のカスタムフォーマット
 const apiLogFormat = (level, message, meta) => {
@@ -95,6 +96,22 @@ const safeLogResponse = (body, maxSize = 1000) => {
 const apiLogger = (req, res, next) => {
   const startTime = Date.now();
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+
+      // seedモードの場合はレート制限を緩和
+    if (!isSeedMode) {
+      const rateLimitResult = checkRateLimit(ip);
+
+      // レート制限に達した場合は429エラーを返す
+      if (rateLimitResult.isRateLimited) {
+        return res.status(429).json({
+          success: false,
+          type: 'error',
+          message: 'Too many requests. Please try again later.',
+          error: 'Rate limit exceeded'
+        });
+      }
+    }
 
   // リクエスト情報をログ出力
   const requestLog = {
@@ -220,7 +237,10 @@ const createApiLogger = (options = {}) => {
     excludeMethods = [],
     logRequestBody = true,
     logResponseBody = true,
-    maxResponseSize = 1000
+    maxResponseSize = 1000,
+    // seedスクリプト用の特別設定
+    isSeedMode = false,
+    seedUserIds = [] // seedスクリプトで使用するユーザーID
   } = options;
 
   return (req, res, next) => {
@@ -235,6 +255,22 @@ const createApiLogger = (options = {}) => {
 
     const startTime = Date.now();
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+
+    // seedモードの場合はレート制限を緩和
+    if (!isSeedMode) {
+      const rateLimitResult = checkRateLimit(ip);
+
+      // レート制限に達した場合は429エラーを返す
+      if (rateLimitResult.isRateLimited) {
+        return res.status(429).json({
+          success: false,
+          type: 'error',
+          message: 'Too many requests. Please try again later.',
+          error: 'Rate limit exceeded'
+        });
+      }
+    }
 
     // リクエスト情報をログ出力
     const requestLog = {
@@ -264,6 +300,21 @@ const createApiLogger = (options = {}) => {
 
     res.send = function(body) {
       const responseTime = Date.now() - startTime;
+
+      // seedモードでない場合のみ異常パターン検出を実行
+      if (!isSeedMode) {
+        const anomalies = detectAnomaly(ip, req.path, res.statusCode, req.method);
+        if (anomalies.length > 0) {
+          sendAlert(ip, req.path, anomalies, {
+            requestId,
+            method: req.method,
+            statusCode: res.statusCode,
+            responseTime,
+            userAgent: req.get('User-Agent')
+          });
+        }
+      }
+
       const responseLog = {
         requestId,
         statusCode: res.statusCode,

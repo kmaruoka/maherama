@@ -1,15 +1,12 @@
 import { useRef, useEffect, useState } from 'react';
 import CustomLogLine, { type LogItem } from '../molecules/CustomLogLine';
 import { useSkin } from '../../skins/SkinContext';
+import useLogs, { useClientLogs } from '../../hooks/useLogs';
 
 interface LogPaneProps {
-  logs: LogItem[];
-  loading: boolean;
-  error: boolean;
   onShowShrine?: (id: number) => void;
   onShowDiety?: (id: number) => void;
   onShowUser?: (id: number) => void;
-  debugLogs?: string[];
 }
 
 // 16進カラーをrgbaに変換するユーティリティ
@@ -22,7 +19,11 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export default function LogPane({ logs, loading, error, onShowShrine, onShowDiety, onShowUser, debugLogs }: LogPaneProps) {
+export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPaneProps) {
+  // ログデータを内部で取得
+  const { clientLogs } = useClientLogs();
+  const { data: logs = [], isLoading: loading, error } = useLogs(clientLogs);
+  const debugLogs = clientLogs.map(log => log.message);
   const [isExpanded, setIsExpanded] = useState(false);
   const { skin } = useSkin();
   const expandedRef = useRef<HTMLDivElement>(null);

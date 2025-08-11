@@ -1,185 +1,166 @@
-# APIロギングシステム
+# API監視・ログ機能
 
-このシステムは、APIゲートウェイのような包括的なロギング機能を提供し、すべてのAPI呼び出しのエンドポイント、パラメータ、戻り値を自動的にログ出力します。
+## 概要
 
-## 機能
+このシステムは、APIログ機能とAPI監視機能を分離した設計になっており、それぞれ独立した責任を持っています：
 
-### 1. 包括的なAPIログ
-- **リクエストログ**: メソッド、URL、パス、クエリパラメータ、ヘッダー、ボディ、IPアドレス、User-Agent
-- **レスポンスログ**: ステータスコード、レスポンス時間、レスポンスボディ、ヘッダー
-- **エラーログ**: エラー詳細、スタックトレース
-- **統計情報**: レスポンス時間、API使用統計
+- **APIログ機能** (`apiLogger.js`): API呼び出しの記録とログ出力
+- **API監視機能** (`apiMonitor.js`): 異常パターン検出とセキュリティ監視
 
-### 2. セキュリティ機能
-- **機密情報マスキング**: パスワード、トークン、APIキーなどの機密情報を自動的にマスク
-- **レスポンスサイズ制限**: 大きなレスポンスボディの自動切り詰め
-- **除外設定**: 特定のエンドポイントやメソッドのログ除外
+## 監視機能
 
-### 3. 環境変数による制御
-- `ENABLE_API_LOGGING`: APIログの有効/無効（デフォルト: 有効）
-- `ENABLE_API_STATS`: API統計の有効/無効（デフォルト: 有効）
-- `LOG_REQUEST_BODY`: リクエストボディのログ出力（デフォルト: 有効）
-- `LOG_RESPONSE_BODY`: レスポンスボディのログ出力（デフォルト: 有効）
-- `MAX_RESPONSE_LOG_SIZE`: レスポンスログの最大サイズ（デフォルト: 2000文字）
+### 1. レート制限
+- **設定**: 1分間に最大100リクエスト
+- **バースト制限**: 1分間に最大20リクエスト
+- **超過時**: 429エラーを返す
 
-## 設定例
+### 2. 異常パターン検出
+以下の異常パターンを自動検出します：
 
-### 環境変数設定
+- **連続エラー**: 5分間に5回以上の連続エラー
+- **高エラー率**: 5分間で30%以上のエラー率
+- **異常なリクエスト頻度**: 1分間に20回以上のリクエスト
+- **異常なHTTPメソッド**: DELETE/PUT/PATCHメソッドの異常な使用
+
+### 3. アラート機能
+異常パターンが検出された場合：
+- エラーログに詳細を記録
+- アラート履歴を管理（重複アラートを防止）
+- クールダウン期間: 5分間
+
+## 環境変数設定
+
+### 基本設定
 ```bash
-# APIログを無効にする
-ENABLE_API_LOGGING=false
+# APIログ機能の有効/無効
+ENABLE_API_LOGGING=true  # デフォルト: true
 
-# リクエストボディのログを無効にする
-LOG_REQUEST_BODY=false
+# API統計情報の有効/無効
+ENABLE_API_STATS=true    # デフォルト: true
 
-# レスポンスボディのログを無効にする
-LOG_RESPONSE_BODY=false
+# リクエスト/レスポンスボディのログ出力
+LOG_REQUEST_BODY=true    # デフォルト: true
+LOG_RESPONSE_BODY=true   # デフォルト: true
 
-# レスポンスログの最大サイズを設定
-MAX_RESPONSE_LOG_SIZE=5000
+# レスポンスログの最大サイズ
+MAX_RESPONSE_LOG_SIZE=1000  # デフォルト: 1000文字
 ```
 
-### 除外設定
-現在、以下のエンドポイントは自動的に除外されています：
-- `/health` - ヘルスチェック
-- `/images` - 画像ファイル
-- `OPTIONS` メソッド - CORSプリフライトリクエスト
+### Seedスクリプト実行時の設定
+seedスクリプト実行時は、正常な動作でも大量のAPI呼び出しが発生するため、監視を緩和します：
 
-## ログ出力例
+```bash
+# Seedモードを有効化（開発環境のみ）
+NODE_ENV=development
+SEED_MODE=true
 
-### リクエストログ
+# 例: seedスクリプト実行時
+SEED_MODE=true npm run seed
 ```
-[2024-01-15T10:30:45.123Z] API_INFO: API Request: POST /api/pray {
-  "type": "request",
-  "requestId": "req_1705315845123_abc123def",
-  "method": "POST",
-  "url": "/api/pray?shrineId=123",
-  "path": "/api/pray",
-  "query": { "shrineId": "123" },
-  "headers": {
-    "authorization": "***MASKED***",
-    "content-type": "application/json",
-    "user-agent": "Mozilla/5.0..."
-  },
-  "body": { "shrineId": 123, "type": "参拝" },
-  "ip": "192.168.1.100",
-  "userAgent": "Mozilla/5.0...",
-  "timestamp": "2024-01-15T10:30:45.123Z"
+
+## ログファイル
+
+### 出力先
+- **エラーログ**: `logs/error.log`
+- **全ログ**: `logs/combined.log`
+- **コンソール**: 開発環境では詳細ログを出力
+
+### ログ形式
+```
+[2024-01-15 10:30:45.123] API_INFO: API Request: POST /shrines/1/pray
+[2024-01-15 10:30:45.456] API_ERROR: 🚨 API ANOMALY DETECTED: IP=127.0.0.1, Path=/shrines/1/pray, Anomalies=High error rate: 45.2% errors
+```
+
+## 監視設定のカスタマイズ
+
+### レート制限の調整
+```javascript
+// apiMonitor.js の config セクションで調整可能
+rateLimit: {
+  windowMs: 60000,        // 時間窓（ミリ秒）
+  maxRequests: 100,       // 最大リクエスト数
+  burstLimit: 20          // バースト制限
 }
 ```
 
-### レスポンスログ
-```
-[2024-01-15T10:30:45.456Z] API_INFO: API Response: POST /api/pray - 200 {
-  "type": "response",
-  "requestId": "req_1705315845123_abc123def",
-  "statusCode": 200,
-  "responseTime": "333ms",
-  "body": {
-    "success": true,
-    "message": "参拝が完了しました",
-    "expGained": 10
-  },
-  "headers": {
-    "content-type": "application/json"
-  },
-  "timestamp": "2024-01-15T10:30:45.456Z"
+### 異常検出の閾値調整
+```javascript
+anomalyDetection: {
+  consecutiveErrors: 5,           // 連続エラー数
+  errorRateThreshold: 0.3,        // エラー率（30%）
+  unusualPatternThreshold: 10     // 異常パターン閾値
 }
 ```
 
-### エラーログ
-```
-[2024-01-15T10:30:45.789Z] API_ERROR: API Error: POST /api/pray {
-  "type": "error",
-  "requestId": "req_1705315845123_abc123def",
-  "method": "POST",
-  "url": "/api/pray",
-  "path": "/api/pray",
-  "error": {
-    "name": "ValidationError",
-    "message": "Invalid shrine ID",
-    "stack": "ValidationError: Invalid shrine ID..."
-  },
-  "timestamp": "2024-01-15T10:30:45.789Z"
-}
-```
+## 監視統計の取得
 
-## 管理エンドポイント
-
-### APIログ設定取得
+### API監視統計エンドポイント
+```bash
+GET /admin/api-monitoring/stats
 ```
-GET /api/logs/config
-```
-
-管理者権限が必要です。現在のログ設定を取得できます。
 
 **レスポンス例:**
 ```json
 {
   "success": true,
+  "data": {
+    "rateLimitCounters": 5,
+    "patternHistory": 12,
+    "alertHistory": 3,
+    "config": {
+      "rateLimit": { ... },
+      "anomalyDetection": { ... }
+    }
+  },
+  "timestamp": "2024-01-15T10:30:45.123Z"
+}
+```
+
+### 監視設定更新エンドポイント
+```bash
+POST /admin/api-monitoring/config
+Content-Type: application/json
+
+{
   "config": {
-    "enableApiLogging": true,
-    "enableApiStats": true,
-    "logRequestBody": true,
-    "logResponseBody": true,
-    "maxResponseSize": 2000,
-    "excludePaths": ["/health", "/images"],
-    "excludeMethods": ["OPTIONS"]
+    "rateLimit": {
+      "maxRequests": 150
+    },
+    "anomalyDetection": {
+      "consecutiveErrors": 3
+    }
   }
 }
 ```
 
-## ログファイル
+## 運用時の注意点
 
-ログは以下のファイルに出力されます：
-- `logs/combined.log` - すべてのログ
-- `logs/error.log` - エラーログのみ
+### 1. 本番環境での設定
+- `ENABLE_API_LOGGING=true` を維持
+- ログローテーションの設定を推奨
+- アラート通知の設定（Slack、メール等）
 
-## パフォーマンスへの影響
+### 2. 開発環境での設定
+- seedスクリプト実行時は `SEED_MODE=true` を設定
+- デバッグ時は `LOG_REQUEST_BODY=true` を活用
 
-- **最小限の影響**: ログ出力は非同期で行われ、APIレスポンス時間への影響は最小限です
-- **メモリ使用量**: 大きなレスポンスボディは自動的に切り詰められ、メモリ使用量を抑制します
-- **ディスク容量**: ログローテーション機能により、ディスク容量を管理できます
+### 3. パフォーマンス考慮
+- 大量のログ出力によるディスク容量の監視
+- ログファイルの定期的なクリーンアップ
 
 ## トラブルシューティング
 
-### ログが出力されない場合
-1. 環境変数 `ENABLE_API_LOGGING` が `false` に設定されていないか確認
-2. ログディレクトリ `logs/` が存在し、書き込み権限があるか確認
-3. 除外設定で対象エンドポイントが除外されていないか確認
+### レート制限エラーが頻発する場合
+1. クライアント側のリクエスト頻度を確認
+2. レート制限設定を一時的に緩和
+3. 異常なアクセスパターンの調査
 
-### ログファイルが大きくなりすぎる場合
-1. `MAX_RESPONSE_LOG_SIZE` を小さく設定
-2. `LOG_REQUEST_BODY` または `LOG_RESPONSE_BODY` を `false` に設定
-3. ログローテーション機能を有効化
+### アラートが頻発する場合
+1. アラート履歴の確認
+2. 閾値設定の見直し
+3. 正常な動作パターンの除外設定
 
-### 機密情報がログに出力される場合
-1. `maskSensitiveData` 関数の `sensitiveFields` 配列に該当フィールドを追加
-2. カスタムマスキングルールを実装
-
-## カスタマイズ
-
-### 除外パスの追加
-```javascript
-const customApiLogger = createApiLogger({
-  excludePaths: ['/health', '/images', '/api/health', '/metrics'],
-  // ... その他の設定
-});
-```
-
-### 機密フィールドの追加
-```javascript
-const sensitiveFields = [
-  'password', 'token', 'jwt', 'secret', 'key', 'authorization',
-  'cookie', 'session', 'api_key', 'apikey', 'private_key',
-  'credit_card', 'ssn', 'personal_id' // 追加
-];
-```
-
-### カスタムログフォーマット
-```javascript
-const apiLogFormat = (level, message, meta) => {
-  // カスタムフォーマットを実装
-  return `[${new Date().toISOString()}] CUSTOM_${level}: ${message}`;
-};
-```
+### Seedスクリプトでエラーが発生する場合
+1. `SEED_MODE=true` の設定確認
+2. 開発環境での実行確認
+3. ログ出力の詳細確認

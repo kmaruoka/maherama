@@ -36,6 +36,7 @@ type DetailViewType = 'overview' | 'thumbnail' | 'shrines' | 'ranking' | 'descri
 
 export interface DietyPaneRef {
   backToOverview: () => void;
+  getTitle: () => string;
 }
 
 const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void }>(
@@ -111,7 +112,8 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
-    backToOverview: () => setDetailView('overview')
+    backToOverview: () => setDetailView('overview'),
+    getTitle: () => diety?.name || '神様'
   }));
 
   if (!idFromParams) {

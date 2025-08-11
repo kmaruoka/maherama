@@ -5,11 +5,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, Pane, TileLayer } from 'react-leaflet';
 import { calculateDistance, EARTH_CIRCUMFERENCE_METERS } from "../../../backend/shared/utils/distance";
 import { useBarrier } from '../../barriers/BarrierContext';
-import { API_BASE, apiCall, MAPBOX_API_KEY } from '../../config/api';
+import { MAPBOX_API_KEY } from '../../config/api';
 import { useAllShrines } from '../../hooks/useAllShrines';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { usePrayDistance } from '../../hooks/usePrayDistance';
 import { useSubscription } from '../../hooks/useSubscription';
 import '../../setupLeaflet';
 import { useToast } from '../atoms';
@@ -48,32 +49,12 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   const [userId] = useLocalStorageState<number | null>('userId', null);
   const { data: subscription } = useSubscription(userId);
 
-  const [prayDistance, setPrayDistance] = useState<number>(100);
+  // 参拝距離を取得（usePrayDistanceフックを使用）
+  const { prayDistance: apiPrayDistance, isLoading: isPrayDistanceLoading } = usePrayDistance(userId);
+  const prayDistance = apiPrayDistance ?? 100; // デフォルト値
 
   // 神社表示上限数の設定（デフォルト100、設定可能範囲: 10-500）
   const [maxShrineDisplay] = useLocalStorageState<number>('maxShrineDisplay', 100);
-  useEffect(() => {
-    let isMounted = true;
-
-    if (userId) {
-      apiCall(`${API_BASE}/users/${userId}/pray-distance`)
-        .then(res => res.json())
-        .then(data => {
-          if (isMounted && typeof data.pray_distance === 'number') {
-            setPrayDistance(data.pray_distance);
-          }
-        })
-        .catch(error => {
-          if (isMounted) {
-            console.error('[MapPage] pray-distance取得エラー:', error);
-          }
-        });
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
 
   // 参拝後にマーカー状態を更新する関数
   const handleShrineClick = (shrineId: number) => {

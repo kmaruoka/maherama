@@ -17,6 +17,7 @@ type FormType = 'register' | 'login' | 'test-user';
 const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigateToCommercialTransaction }) => {
   const { t } = useTranslation();
   const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
+  // テストユーザー選択機能がアクティブな場合のみuseAllUsersを呼び出す
   const { data: users = [], isLoading: isLoadingUsers } = useAllUsers();
 
   // フォーム状態管理
@@ -159,18 +160,54 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     }
   };
 
-  // テストユーザーログイン処理
-  const handleTestUserLogin = () => {
+          // テストユーザーログイン処理
+  const handleTestUserLogin = async () => {
     if (!selectedTestUserId) return;
 
     const user = users.find(u => u.id.toString() === selectedTestUserId);
     if (user) {
-      // localStorageを直接更新
-      localStorage.setItem('userId', JSON.stringify(user.id));
-      localStorage.setItem('authToken', 'test-token');
+      console.log('[TopPage] テストユーザーログイン開始:', user);
 
-      // ページをリロードして状態を確実に反映
-      window.location.reload();
+      try {
+        // テストユーザー用のログインAPIを呼び出してJWTトークンを取得
+        const result = await apiCallWithToast(`${API_BASE}/auth/test-login`, {
+          method: 'POST',
+          body: JSON.stringify({ userId: user.id }),
+          requireAuth: false, // テストログインは認証不要
+        }, () => {}); // Toastは手動で制御
+
+        if (result.success && result.data) {
+          // レスポンス構造に応じて適切なプロパティにアクセス
+          const userData = result.data.data?.user || result.data.user || result.data;
+          const token = result.data.data?.token || result.data.token;
+
+          if (!userData || !token) {
+            console.error('[TopPage] レスポンスに必要なデータが含まれていません:', result);
+            return;
+          }
+
+          // セキュアな認証システムを使用
+          login(token, {
+            id: userData.id,
+            name: userData.name,
+            email: userData.email
+          });
+
+          // currentUserIdも更新
+          setCurrentUserId(userData.id);
+
+          console.log('[TopPage] テストユーザーログイン完了:', userData.id);
+
+          // 少し遅延してからページ遷移を実行（状態更新を待つ）
+          setTimeout(() => {
+            onLogin();
+          }, 50);
+        } else {
+          console.error('[TopPage] テストログイン失敗:', result.message);
+        }
+      } catch (error) {
+        console.error('[TopPage] テストユーザーログインエラー:', error);
+      }
     }
   };
 
@@ -316,7 +353,6 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                         </>
                       ) : (
                         <>
-                          <h4>パスワードリセット</h4>
                           {resetSuccess && (
                             <Alert variant="success">
                               パスワードリセット用のメールをお送りしました。メール内のリンクをクリックしてパスワードをリセットしてください。
@@ -361,7 +397,6 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                   <Tab.Pane eventKey="test-user" active={activeForm === 'test-user'}>
                     <div className="top-page__form-section">
                       <Form.Group className="mb-3">
-                        <Form.Label>テストユーザーを選択</Form.Label>
                         {isLoadingUsers ? (
                           <div>読み込み中...</div>
                         ) : (
@@ -380,7 +415,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                       </Form.Group>
                       <Button
                         variant="primary"
-                        onClick={handleTestUserLogin}
+                        onClick={async () => await handleTestUserLogin()}
                         disabled={!selectedTestUserId}
                         className="w-100 mb-2"
                       >
@@ -388,6 +423,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                       </Button>
                     </div>
                   </Tab.Pane>
+
                 </Card.Body>
               </Card>
             </Col>

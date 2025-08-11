@@ -29,6 +29,7 @@ interface MyPageProps {
 
 export interface MyPageRef {
   backToOverview: () => void;
+  getTitle: () => string;
 }
 
 const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, onShowUser, onClose }, ref) => {
@@ -66,7 +67,8 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(({ onShowShrine, onShowDiety, 
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
-    backToOverview: () => {} // MyPageでは詳細表示がないため空実装
+    backToOverview: () => {}, // MyPageでは詳細表示がないため空実装
+    getTitle: () => userInfo?.name || 'マイページ'
   }));
 
   const acquireAbility = async (abilityId: number) => {

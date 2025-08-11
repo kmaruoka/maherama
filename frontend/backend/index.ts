@@ -17,6 +17,9 @@ const expRewardsModule = require('./shared/constants/expRewards');
 // APIロガーのインポート
 const { apiLogger, errorLogger, apiStats, createApiLogger } = require('./utils/apiLogger.js');
 
+// API監視のインポート
+const { getMonitoringStats, updateConfig } = require('./utils/apiMonitor.js');
+
 // Stripe初期化（APIキーが設定されている場合のみ）
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
@@ -90,15 +93,65 @@ if (enableApiLogging) {
     excludeMethods: ['OPTIONS'], // OPTIONSリクエストは除外
     logRequestBody: process.env.LOG_REQUEST_BODY !== 'false', // デフォルトで有効
     logResponseBody: process.env.LOG_RESPONSE_BODY !== 'false', // デフォルトで有効
-    maxResponseSize: parseInt(process.env.MAX_RESPONSE_LOG_SIZE || '1000') // レスポンスボディの最大サイズを1000に制限
+    maxResponseSize: parseInt(process.env.MAX_RESPONSE_LOG_SIZE || '1000'), // レスポンスボディの最大サイズを1000に制限
+    // seedスクリプト用の設定
+    isSeedMode: process.env.NODE_ENV === 'development' && process.env.SEED_MODE === 'true',
+    seedUserIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] // seedスクリプトで使用するユーザーID
   });
 
   app.use(customApiLogger);
   console.log('✅ API Logging enabled');
   console.log(`📊 Max response size: ${process.env.MAX_RESPONSE_LOG_SIZE || '1000'} characters`);
+  if (process.env.SEED_MODE === 'true') {
+    console.log('🌱 Seed mode enabled - API monitoring relaxed for seed operations');
+  }
 } else {
   console.log('⚠️ API Logging disabled');
 }
+
+// API監視統計エンドポイント（管理者のみ）
+app.get('/admin/api-monitoring/stats', requireAdmin, async (req, res) => {
+  try {
+    const stats = getMonitoringStats();
+    res.json({
+      success: true,
+      data: stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('API monitoring stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get monitoring stats'
+    });
+  }
+});
+
+// API監視設定更新エンドポイント（管理者のみ）
+app.post('/admin/api-monitoring/config', requireAdmin, async (req, res) => {
+  try {
+    const { config } = req.body;
+    if (!config || typeof config !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid config object'
+      });
+    }
+
+    updateConfig(config);
+    res.json({
+      success: true,
+      message: 'Monitoring configuration updated',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('API monitoring config update error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update monitoring config'
+    });
+  }
+});
 
 if (enableApiStats) {
   app.use(apiStats); // API統計情報の収集
@@ -311,18 +364,23 @@ function getCurrentDate() {
 
 // シミュレート日付を設定
 function setSimulateDate(dateString) {
-  if (dateString === null) {
-    simulateDate = null;
-    return { success: true, message: 'シミュレート日付をクリアしました' };
-  }
+  try {
+    if (dateString === null) {
+      simulateDate = null;
+      return { success: true, message: 'シミュレート日付をクリアしました' };
+    }
 
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    return { success: false, message: '無効な日付形式です' };
-  }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return { success: false, message: '無効な日付形式です' };
+    }
 
-  simulateDate = date;
-  return { success: true, message: `シミュレート日付を設定しました: ${date.toISOString()}` };
+    simulateDate = date;
+    return { success: true, message: `シミュレート日付を設定しました: ${date.toISOString()}` };
+  } catch (error) {
+    console.error('setSimulateDate error:', error);
+    return { success: false, message: '日付設定中にエラーが発生しました' };
+  }
 }
 
 // シミュレート日付を取得
@@ -760,14 +818,8 @@ async function purchaseAbility(userId, abilityId) {
   return { success: true };
 }
 
-// 古い関数（後方互換性のため残す）
-function getRadiusFromSlots(slots) {
-  if (slots === 0) return 100;
-  return 100 * Math.pow(2, slots);
-}
-
 async function getUserSubscription(userId) {
-  const subscription = await prisma.userSubscription.findFirst({
+  const subscriptions = await prisma.userSubscription.findMany({
     where: {
       user_id: userId,
       is_active: true,
@@ -775,7 +827,7 @@ async function getUserSubscription(userId) {
     },
     orderBy: { created_at: 'desc' }
   });
-  return subscription || { slots: 0 };
+  return { subscriptions };
 }
 
 async function addLog(message, type = 'normal') {
@@ -1779,12 +1831,7 @@ function authenticateJWT(req: AuthedRequest, res, next) {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
-    const secret = process.env.JWT_SECRET;
-
-    if (!secret) {
-      console.error('JWT_SECRET is not configured');
-      return res.status(500).json({ error: 'Server misconfigured' });
-    }
+    const secret = process.env.JWT_SECRET || 'dev-secret-key';
 
     jwt.verify(token, secret, (err, payload) => {
       if (err) return res.status(403).json({ error: 'Invalid token' });
@@ -2129,6 +2176,79 @@ app.post('/auth/login', authLimiter, async (req, res) => {
   }
 });
 
+// テストユーザーログイン（開発環境のみ）
+app.post('/auth/test-login', authLimiter, async (req, res) => {
+  try {
+    // 本番環境では無効化
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({
+        success: false,
+        type: 'error',
+        message: 'テストログインは本番環境では利用できません',
+        error: 'Test login not available in production'
+      });
+    }
+
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        type: 'error',
+        message: 'ユーザーIDは必須です',
+        error: 'User ID is required'
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId, 10) }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        type: 'error',
+        message: '指定されたユーザーが見つかりません',
+        error: 'User not found'
+      });
+    }
+
+    // JWTトークン生成
+    const secret = process.env.JWT_SECRET || 'dev-secret-key';
+    const token = jwt.sign(
+      { id: user.id, email: user.email, is_admin: user.is_admin },
+      secret,
+      { expiresIn: '24h', issuer: 'maherama-app' }
+    );
+
+    res.json({
+      success: true,
+      type: 'success',
+      message: 'テストログインが完了しました',
+      data: {
+        token: token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          level: user.level,
+          exp: user.exp,
+          ability_points: user.ability_points
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Test login error:', error);
+    res.status(500).json({
+      success: false,
+      type: 'fatal',
+      message: 'テストログイン処理中にエラーが発生しました',
+      error: 'Test login failed'
+    });
+  }
+});
+
 // パスワードリセット要求
 app.post('/auth/reset-password', authLimiter, async (req, res) => {
   try {
@@ -2339,9 +2459,11 @@ app.get('/users/:id/diety-rankings-bundle', authenticateJWT, async (req, res) =>
 
 app.get('/users/me/subscription', authenticateJWT, async (req, res) => {
   try {
-    const userId = parseInt(req.headers['x-user-id']) || 1;
+    const userId = req.user.id;
     const subscription = await getUserSubscription(userId);
-    res.json({ slots: subscription.slots });
+    // 後方互換性のため、最初のサブスクリプションのslotsを返す（デフォルト0）
+    const slots = subscription.subscriptions.length > 0 ? 1 : 0; // 簡易的なslots計算
+    res.json({ slots });
   } catch (err) {
     res.status(500).json({ error: 'DB error' });
   }
@@ -2386,7 +2508,7 @@ app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res)
       await prisma.userSubscription.create({
         data: {
           user_id: userId,
-          slots: slots,
+          subscription_type: 'range_multiplier',
           expires_at: newExpiresAt,
           stripe_subscription_id: stripeSubscriptionId,
           billing_cycle_start: billingCycleStart,
@@ -2400,7 +2522,7 @@ app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res)
       await prisma.userSubscription.create({
         data: {
           user_id: userId,
-          slots: slots,
+          subscription_type: 'range_multiplier',
           expires_at: oneMonthLater,
           stripe_subscription_id: stripeSubscriptionId,
           billing_cycle_start: now,
@@ -3967,10 +4089,25 @@ app.post('/shrines/:id/images/upload', authenticateJWT, (req, res, next) => {
       });
     }
 
-    res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
+    const message = !currentThumbnail
+    ? '画像がアップロードされ、サムネイルとして採用されました。'
+    : '画像がアップロードされ、翌月の投票対象としてエントリーされました。';
+
+    res.json({
+      success: true,
+      type: 'success',
+      message: message,
+      image: { ...newImage, ...image },
+      isCurrentThumbnail: !currentThumbnail
+    });
   } catch (err) {
     console.error('Shrine画像アップロード失敗:', err);
-    res.status(500).json({ error: '画像アップロード失敗' });
+    res.status(500).json({
+      success: false,
+      type: 'error',
+      message: '画像アップロード失敗',
+      error: '画像アップロード失敗'
+    });
   }
 });
 
@@ -4046,10 +4183,25 @@ app.post('/dietys/:id/images/upload', authenticateJWT, (req, res, next) => {
       });
     }
 
-    res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
+    const message = !currentThumbnail
+    ? '画像がアップロードされ、サムネイルとして採用されました。'
+    : '画像がアップロードされ、翌月の投票対象としてエントリーされました。';
+
+    res.json({
+      success: true,
+      type: 'success',
+      message: message,
+      image: { ...newImage, ...image },
+      isCurrentThumbnail: !currentThumbnail
+    });
   } catch (err) {
     console.error('Diety画像アップロード失敗:', err);
-    res.status(500).json({ error: '画像アップロード失敗' });
+    res.status(500).json({
+      success: false,
+      type: 'error',
+      message: '画像アップロード失敗',
+      error: '画像アップロード失敗'
+    });
   }
 });
 
@@ -4125,10 +4277,25 @@ app.post('/dieties/:id/images/upload', authenticateJWT, (req, res, next) => {
       });
     }
 
-    res.json({ success: true, image: { ...newImage, ...image }, isCurrentThumbnail: !currentThumbnail });
+    const message = !currentThumbnail
+      ? '画像がアップロードされ、サムネイルとして採用されました。'
+      : '画像がアップロードされ、翌月の投票対象としてエントリーされました。';
+
+    res.json({
+      success: true,
+      type: 'success',
+      message: message,
+      image: { ...newImage, ...image },
+      isCurrentThumbnail: !currentThumbnail
+    });
   } catch (err) {
     console.error('Diety画像アップロード失敗:', err);
-    res.status(500).json({ error: '画像アップロード失敗' });
+    res.status(500).json({
+      success: false,
+      type: 'error',
+      message: '画像アップロード失敗',
+      error: '画像アップロード失敗'
+    });
   }
 });
 
@@ -4225,10 +4392,21 @@ app.post('/users/:id/images/upload', authenticateJWT, (req, res, next) => {
       }
     });
 
-    res.json({ success: true, image: image, isCurrentThumbnail: true });
+    res.json({
+      success: true,
+      type: 'success',
+      message: 'プロフィール画像が更新されました。',
+      image: image,
+      isCurrentThumbnail: true
+    });
   } catch (err) {
     console.error('ユーザー画像アップロード失敗:', err);
-    res.status(500).json({ error: '画像アップロード失敗' });
+    res.status(500).json({
+      success: false,
+      type: 'error',
+      message: '画像アップロード失敗',
+      error: '画像アップロード失敗'
+    });
   }
 });
 

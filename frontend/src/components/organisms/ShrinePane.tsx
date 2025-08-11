@@ -9,7 +9,7 @@ import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
 import { useImageManagement } from '../../hooks/useImageManagement';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import { getDistanceMeters, useWorshipLimit } from '../../hooks/usePrayDistance';
+import { getDistanceMeters, usePrayDistance, useWorshipLimit } from '../../hooks/usePrayDistance';
 import { useShrineDetail } from '../../hooks/useShrineDetail';
 import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
 import { useSubscription } from '../../hooks/useSubscription';
@@ -56,6 +56,7 @@ type DetailViewType = 'overview' | 'thumbnail' | 'deities' | 'ranking' | 'travel
 
 export interface ShrinePaneRef {
   backToOverview: () => void;
+  getTitle: () => string;
 }
 
 const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void }>(
@@ -72,7 +73,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const position = useCurrentPosition();
   const [debugMode] = useLocalStorageState('debugMode', false);
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
-  const [prayDistance, setPrayDistance] = useState<number | null>(null);
   const [detailView, setDetailView] = useState<DetailViewType>('overview');
 
   // detailViewが変更されたときに親コンポーネントに通知
@@ -122,7 +122,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
-    backToOverview: () => setDetailView('overview')
+    backToOverview: () => setDetailView('overview'),
+    getTitle: () => data?.name || '神社'
   }));
 
   useEffect(() => {
@@ -183,31 +184,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     setRankRefreshKey(prev => prev + 1);
   };
 
-  // 追加: 参拝距離をAPIから取得
-  useEffect(() => {
-    let isMounted = true;
-
-    if (userId) {
-      fetch(`${API_BASE}/users/${userId}/pray-distance`, {
-        headers: { 'x-user-id': String(userId) }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (isMounted && typeof data.pray_distance === 'number') {
-            setPrayDistance(data.pray_distance);
-          }
-        })
-        .catch(error => {
-          if (isMounted) {
-            console.error('[ShrinePane] pray-distance取得エラー:', error);
-          }
-        });
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
+  // 参拝距離を取得（usePrayDistanceフックを使用）
+  const { prayDistance: apiPrayDistance } = usePrayDistance(userId);
+  const prayDistance = apiPrayDistance ?? 100; // デフォルト値
 
   // デバッグモード時の地図中心位置を取得
   useEffect(() => {

@@ -28,17 +28,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
   };
 
   const handleLogout = () => {
-    // localStorageを完全にクリア
-    localStorage.removeItem('userId');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('debugMode');
-    localStorage.removeItem('maxShrineDisplay');
-    localStorage.removeItem('skinName');
-    localStorage.removeItem('barrierName');
-    localStorage.removeItem('debugMapCenter');
-
-    setUserId(null);
-
+    // セキュアな認証システムでログアウト
     if (onLogout) {
       onLogout();
     }

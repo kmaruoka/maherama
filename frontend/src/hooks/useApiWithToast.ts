@@ -1,6 +1,16 @@
 import { useCallback } from 'react';
 import { useToast } from '../components/atoms/ToastContainer';
-import { apiCallWithToast, ApiResponse } from '../config/api';
+import { apiCallWithToast } from '../config/api';
+
+// ApiResponse型を直接定義（importエラーを回避）
+interface ApiResponse<T = any> {
+  success: boolean;
+  type: 'success' | 'error' | 'info' | 'warn' | 'fatal';
+  message: string;
+  data?: T;
+  error?: string;
+  statusCode?: number;
+}
 
 export function useApiWithToast() {
   const { showToast } = useToast();

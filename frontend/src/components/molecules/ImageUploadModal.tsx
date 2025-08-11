@@ -1,8 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { FaCamera, FaFolder, FaCheck, FaTimes } from 'react-icons/fa';
-import { useToast } from '../atoms';
-import ReactCrop from 'react-image-crop';
+import React, { useCallback, useRef, useState } from 'react';
+import { FaCamera, FaCheck, FaFolder, FaTimes } from 'react-icons/fa';
 import type { Crop } from 'react-image-crop';
+import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 interface ImageUploadModalProps {
@@ -18,7 +17,6 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
   onUpload,
   title
 }) => {
-  const { showToast } = useToast();
   const [step, setStep] = useState<'select' | 'crop'>('select');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageSrc, setImageSrc] = useState<string>('');
@@ -57,9 +55,9 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       }
     } catch (error) {
       console.error('カメラアクセス失敗:', error);
-      showToast('カメラが利用できません。ストレージから選択してください。', 'warning');
+      // カメラアクセスエラーは静かに処理（ユーザーは手動でストレージから選択可能）
     }
-  }, [showToast]);
+  }, []);
 
   const captureFromCamera = () => {
     if (videoRef.current && canvasRef.current) {
@@ -154,7 +152,7 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       onClose();
     } catch (error) {
       console.error('アップロード失敗:', error);
-      showToast('アップロードに失敗しました。', 'error');
+      // エラーはapi-toast連携システムで自動的に処理される
     } finally {
       setIsUploading(false);
     }

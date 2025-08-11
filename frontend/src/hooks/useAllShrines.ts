@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { API_BASE, apiCall } from '../config/api';
 
 export interface AllShrineItem {
@@ -31,11 +32,21 @@ export interface AllShrineItem {
 }
 
 export function useAllShrines() {
-  return useQuery<AllShrineItem[]>({
-    queryKey: ['all-shrines'],
+  // クエリオプションをメモ化して不要な再レンダリングを防ぐ
+  const queryOptions = useMemo(() => ({
+    queryKey: ['all-shrines'] as const,
     queryFn: async () => {
       const response = await apiCall(`${API_BASE}/shrines/all`);
       return response.json();
     },
-  });
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュを使用
+    gcTime: 10 * 60 * 1000, // ガベージコレクション時間を10分に設定
+    retry: 2, // エラー時に2回リトライ
+    retryDelay: 1000, // リトライ間隔1秒
+    refetchOnWindowFocus: false, // ウィンドウフォーカス時の再取得を無効化
+    refetchOnReconnect: false, // 再接続時の再取得を無効化
+    refetchOnMount: false, // マウント時の再取得を無効化（キャッシュがあれば使用）
+  }), []);
+
+  return useQuery<AllShrineItem[]>(queryOptions);
 }

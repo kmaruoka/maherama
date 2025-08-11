@@ -19,9 +19,9 @@ export default function useRankingsBundleAll(dietyId?: number) {
     queryKey: ['rankings-bundle-all', dietyId],
     queryFn: async () => {
       const [shrineRes, dietyRes, userRes] = await Promise.all([
-        apiCall(`${API_BASE}/shrine-rankings-bundle`),
-        apiCall(dietyId ? `${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}` : `${API_BASE}/diety-rankings-bundle?dietyId=1`),
-        apiCall(`${API_BASE}/user-rankings-bundle`)
+            apiCall(`${API_BASE}/shrine-rankings-bundle`),
+    apiCall(dietyId ? `${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}` : `${API_BASE}/diety-rankings-bundle?dietyId=1`),
+    apiCall(`${API_BASE}/user-rankings-bundle`)
       ]);
       const [shrineData, dietyData, userData]: ApiBundleResponse[] = await Promise.all([
         shrineRes.json(),
@@ -51,6 +51,6 @@ export default function useRankingsBundleAll(dietyId?: number) {
 }
 
 export async function fetchDietyRankingsBundle(dietyId: number) {
-  const res = await apiCall(`${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}`);
+        const res = await apiCall(`${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}`);
   return res.json();
 }

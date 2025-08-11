@@ -1,22 +1,22 @@
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
-import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
 import { API_BASE, apiCall } from '../../config/api';
-import RankingPane from './RankingPane';
+import { NOIMAGE_USER_URL } from '../../constants';
+import { useFollowers } from '../../hooks/useFollowers';
+import { useFollowing } from '../../hooks/useFollowing';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
+import { useLevelInfo } from '../../hooks/usePrayDistance';
+import useUserDietyRankings from '../../hooks/useUserDietyRankings';
 import { useUserInfo } from '../../hooks/useUserInfo';
 import useUserShrineRankings from '../../hooks/useUserShrineRankings';
-import useUserDietyRankings from '../../hooks/useUserDietyRankings';
 import { useUserTitles } from '../../hooks/useUserTitles';
-import { useFollowing } from '../../hooks/useFollowing';
-import { useFollowers } from '../../hooks/useFollowers';
-import FollowModal from '../molecules/FollowModal';
 import { useSkin } from '../../skins/SkinContext';
-import { NOIMAGE_USER_URL } from '../../constants';
 import { CustomButton } from '../atoms/CustomButton';
-import { useLevelInfo } from '../../hooks/usePrayDistance';
 import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
-import { useTranslation } from 'react-i18next';
-import { FaExpandAlt, FaCompressAlt } from 'react-icons/fa';
+import FollowModal from '../molecules/FollowModal';
+import RankingPane from './RankingPane';
 
 interface UserPageProps {
   id: number; // 必須に変更（他人用なので必ずIDが必要）
@@ -30,6 +30,7 @@ type DetailViewType = 'overview' | 'shrine-ranking' | 'diety-ranking';
 
 export interface UserPaneRef {
   backToOverview: () => void;
+  getTitle: () => string;
 }
 
 const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: (detailView: DetailViewType) => void }>(({ id, onShowShrine, onShowDiety, onShowUser, onClose, onDetailViewChange }, ref) => {
@@ -65,7 +66,8 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
 
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
-    backToOverview: () => setDetailView('overview')
+    backToOverview: () => setDetailView('overview'),
+    getTitle: () => userInfo?.name || 'ユーザー'
   }));
 
   const handleFollow = async () => {

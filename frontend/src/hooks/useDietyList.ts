@@ -22,8 +22,13 @@ export function useDietyList() {
   return useQuery<DietyListItem[]>({
     queryKey: ['dieties-visited'],
     queryFn: async () => {
+      console.log('[useDietyList] 神様一覧取得開始');
       const response = await apiCall(`${API_BASE}/users/me/dieties-visited`);
-      return response.json();
+      const data = await response.json();
+      console.log('[useDietyList] 神様一覧取得成功:', data.length, '件');
+      return data;
     },
+    retry: 1,
+    retryDelay: 1000,
   });
 }

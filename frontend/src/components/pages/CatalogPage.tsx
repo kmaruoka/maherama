@@ -37,9 +37,9 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   const [sort, setSort] = useLocalStorageState('catalogSort', 'catalogedAt-desc');
   const [style, setStyle] = useLocalStorageState<'card' | 'list'>('catalogStyle', 'card');
 
-  const { data: shrines = [] } = useShrineList();
+  const { data: shrines = [], isLoading: isShrinesLoading, error: shrinesError } = useShrineList();
 
-  const { data: dieties = [] } = useDietyList();
+  const { data: dieties = [], isLoading: isDietiesLoading, error: dietiesError } = useDietyList();
 
 
 
@@ -160,6 +160,21 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
           <option value="list">{t('list')}</option>
         </select>
       </div>
+      {/* エラー表示 */}
+      {(shrinesError || dietiesError) && (
+        <div className="text-danger text-center p-3">
+          {shrinesError && <div>神社データの読み込みに失敗しました</div>}
+          {dietiesError && <div>神様データの読み込みに失敗しました</div>}
+        </div>
+      )}
+
+      {/* ローディング表示 */}
+      {(isShrinesLoading || isDietiesLoading) && (
+        <div className="text-center p-3">
+          <div>データを読み込み中...</div>
+        </div>
+      )}
+
       {style === 'card' ? (
         <div style={{ flex: 1, minHeight: 0, height: 'calc(100vh - 200px)' }}>
           <CardGrid

@@ -1,8 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useToast } from '../components/atoms';
-import { API_BASE, apiCall } from '../config/api';
+import { API_BASE } from '../config/api';
+import { useApiWithToast } from './useApiWithToast';
 
 export interface ImageManagementOptions {
   entityType: 'shrine' | 'diety' | 'user';
@@ -31,9 +30,8 @@ export interface ImageManagementActions {
 }
 
 export function useImageManagement(options: ImageManagementOptions): [ImageManagementState, ImageManagementActions] {
-  const { t } = useTranslation();
-  const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { callApi } = useApiWithToast();
 
   const [thumbCache, setThumbCache] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
@@ -90,72 +88,68 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await apiCall(`${API_BASE}/${options.entityType}s/${options.entityId}/images/upload`, {
+      const result = await callApi(`${API_BASE}/${options.entityType}s/${options.entityId}/images/upload`, {
         method: 'POST',
         body: formData
       });
 
-      const result = await response.json();
+      if (result.success) {
+        // クエリを無効化して再取得
+        await Promise.all(
+          options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
+        );
 
-      // クエリを無効化して再取得
-      await Promise.all(
-        options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
+        // データの再取得を確実に待つ
+        await queryClient.refetchQueries({ queryKey: [options.queryKeys[0]] });
 
-      // データの再取得を確実に待つ
-      await queryClient.refetchQueries({ queryKey: [options.queryKeys[0]] });
+        // リトライカウントとエラーフラグをリセット
+        setRetryCount(0);
+        setImageLoadError(false);
+        setIsImageLoading(false);
 
-      // リトライカウントとエラーフラグをリセット
-      setRetryCount(0);
-      setImageLoadError(false);
-      setIsImageLoading(false);
-
-      // アップロード成功時のみキャッシュを更新
-      setThumbCache(prev => prev + 1);
-
-      if (result.isCurrentThumbnail) {
-        showToast(t('uploadSuccess'), 'success');
-      } else {
-        showToast(t('uploadPending'), 'info');
+        // アップロード成功時のみキャッシュを更新
+        setThumbCache(prev => prev + 1);
       }
     } catch (error) {
       console.error('アップロードエラー:', error);
-      showToast(t('uploadError'), 'error');
+      // エラーはapi-toast連携システムで自動的に処理される
     }
-  }, [options.entityType, options.entityId, options.userId, options.queryKeys, queryClient, showToast, t]);
+  }, [options.entityType, options.entityId, options.userId, options.queryKeys, queryClient, callApi]);
 
   const handleVote = useCallback(async () => {
     try {
-      const response = await apiCall(`${API_BASE}/${options.entityType}s/${options.entityId}/images/vote`, {
+      const result = await callApi(`${API_BASE}/${options.entityType}s/${options.entityId}/images/vote`, {
         method: 'POST'
       });
 
-      // 成功時はデータ再取得
-      await Promise.all(
-        options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
-      showToast(t('voteSuccess'), 'success');
+      if (result.success) {
+        // 成功時はデータ再取得
+        await Promise.all(
+          options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
+        );
+      }
     } catch (error) {
       console.error('投票エラー:', error);
-      showToast(error instanceof Error ? error.message : t('voteError'), 'error');
+      // エラーはapi-toast連携システムで自動的に処理される
     }
-  }, [options.entityType, options.entityId, options.userId, options.queryKeys, queryClient, showToast, t]);
+  }, [options.entityType, options.entityId, options.userId, options.queryKeys, queryClient, callApi]);
 
   const handleImageVote = useCallback(async (imageId: number) => {
     try {
-      const response = await apiCall(`${API_BASE}/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
+      const result = await callApi(`${API_BASE}/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
         method: 'POST'
       });
 
-      await Promise.all(
-        options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-      );
-      showToast(t('voteSuccess'), 'success');
+      if (result.success) {
+        await Promise.all(
+          options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
+        );
+      }
     } catch (error) {
       console.error('投票エラー:', error);
-      showToast(error instanceof Error ? error.message : t('voteError'), 'error');
+      // エラーはapi-toast連携システムで自動的に処理される
     }
-  }, [options.entityType, options.entityId, options.userId, options.queryKeys, queryClient, showToast, t]);
+  }, [options.entityType, options.entityId, options.userId, options.queryKeys, queryClient, callApi]);
 
   const state: ImageManagementState = {
     thumbCache,
