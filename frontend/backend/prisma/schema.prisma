@@ -112,7 +112,7 @@ model User {
   name                      String
   ability_points            Int                      @default(0)
   exp                       Int                      @default(0)
-  level                     Int                      @default(0)
+  level                     Int                      @default(1)
   created_at                DateTime                 @default(now())
   updated_at                DateTime                 @updatedAt
   image_by                  String?
