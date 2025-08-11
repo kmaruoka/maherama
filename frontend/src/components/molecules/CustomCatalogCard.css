@@ -16,14 +16,7 @@
   transition: box-shadow 0.15s;
 }
 
-/* モバイル対応 */
-@media (max-width: 768px) {
-  .catalog-card {
-    width: var(--card-width);
-    height: var(--card-height);
-    min-width: var(--card-width);
-  }
-}
+
 .catalog-card:hover {
   box-shadow: 0 4px 16px rgba(80,60,10,0.16);
 }

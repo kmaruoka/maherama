@@ -107,6 +107,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
         catalogedAt={item.catalogedAt || ''}
         lastPrayedAt={item.lastPrayedAt}
         onClick={() => handleItemClick(item)}
+        type={tab}
         image_url={item.image_url}
         image_url_s={item.image_url_s}
         image_url_m={item.image_url_m}

@@ -1,11 +1,14 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
+import { API_BASE, apiCall } from '../../config/api';
 import { NOIMAGE_DIETY_URL } from '../../constants';
 import { useModal } from '../../contexts/ModalContext';
 import { useDietyDetail } from '../../hooks/useDietyDetail';
 import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
+import type { Period } from './RankingPane';
+import RankingPane from './RankingPane';
 
 interface DietyPaneProps {
   id?: number;
@@ -22,10 +25,43 @@ export interface DietyPaneRef {
   getTitle: () => string;
 }
 
+// 神様のユーザーランキング用フック
+function useDietyUserRankingsBundle(dietyId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
+  const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (!dietyId) return;
+    setLoading(true);
+    apiCall(`${API_BASE}/dieties/${dietyId}/rankings-bundle`)
+      .then(res => res.json())
+      .then(json => setData(json))
+      .finally(() => setLoading(false));
+  }, [dietyId, refreshKey]);
+  return { data, isLoading: loading };
+}
+
+// ランキングデータの変換関数
+function convertUserRankingsByPeriod(userRankingsByPeriod: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }) {
+  const periods: Period[] = ['all', 'yearly', 'monthly', 'weekly'];
+  const result: { [key in Period]: { id: number; name: string; count: number; rank: number; }[] } = { all: [], yearly: [], monthly: [], weekly: [] };
+
+  for (const period of periods) {
+    result[period] = userRankingsByPeriod[period].map(item => ({
+      id: item.userId,
+      name: item.userName,
+      count: item.count,
+      rank: item.rank
+    }));
+  }
+
+  return result;
+}
+
 const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
   ({ id, onShowShrine, onShowUser, onClose, onDetailViewChange }, ref) => {
     const { t } = useTranslation();
     const [detailView, setDetailView] = useState<DetailViewType>('overview');
+    const [rankRefreshKey, setRankRefreshKey] = useState(0);
     const { updateCurrentModalName } = useModal();
 
     // detailViewが変更されたときに親コンポーネントに通知
@@ -39,6 +75,9 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
       error,
       refetch
     } = useDietyDetail(id);
+
+    // ランキングデータを取得
+    const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useDietyUserRankingsBundle(id, rankRefreshKey);
 
     const { skin } = useSkin();
 
@@ -100,6 +139,9 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
           <>
             <div className="modal-subtitle">
               {t('enshrinedShrines')}
+              {diety.shrines && diety.shrines.length > 0 && (
+                <span style={{ marginLeft: '8px', opacity: 0.7 }}>({diety.shrines.length})</span>
+              )}
               <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
             </div>
             <div className="d-flex flex-wrap gap-2">
@@ -152,6 +194,9 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
               alt="神様サムネイル"
               className="pane__thumbnail-img"
             />
+            {diety.image_by && dietyImageUrl !== NOIMAGE_DIETY_URL && (
+              <div className="pane__thumbnail-by">{t('by')} {diety.image_by}</div>
+            )}
           </div>
           <div className="pane__info">
             <div className="pane__title">{diety.name}</div>
@@ -172,11 +217,14 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         <div className="modal-section">
           <div className="modal-subtitle" onClick={() => setDetailView('shrine-ranking')} style={{ cursor: 'pointer' }}>
             {t('enshrinedShrines')}
+            {diety.shrines && diety.shrines.length > 0 && (
+              <span style={{ marginLeft: '8px', opacity: 0.7 }}>({diety.shrines.length})</span>
+            )}
             <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
           </div>
           <div className="d-flex flex-wrap gap-2">
             {diety.shrines && diety.shrines.length > 0 ? (
-              diety.shrines.slice(0, 3).map(shrine => (
+              diety.shrines.slice(0, 10).map(shrine => (
                 <CustomLink
                   key={shrine.id}
                   onClick={() => onShowShrine && onShowShrine(shrine.id)}
@@ -202,6 +250,15 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
             </div>
           </div>
         )}
+
+        <RankingPane
+          itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
+          type="user"
+          rankingType="diety"
+          isLoading={isRankingLoading}
+          onItemClick={onShowUser}
+          maxItems={3}
+        />
       </div>
     );
   }

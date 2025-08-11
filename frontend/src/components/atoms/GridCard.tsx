@@ -7,7 +7,6 @@ export interface GridCardProps {
   imageUrl?: string;
   onClick?: () => void;
   children?: React.ReactNode; // カスタム内容用
-  size?: 'small' | 'medium' | 'large';
   variant?: 'default' | 'elevated';
   disabled?: boolean;
   className?: string;
@@ -20,7 +19,6 @@ const GridCard: React.FC<GridCardProps> = ({
   imageUrl,
   onClick,
   children,
-  size = 'medium',
   variant = 'default',
   disabled = false,
   className = '',
@@ -28,7 +26,6 @@ const GridCard: React.FC<GridCardProps> = ({
 }) => {
   const cardClasses = [
     'grid-card',
-    `grid-card--${size}`,
     `grid-card--${variant}`,
     onClick && !disabled ? 'grid-card--clickable' : '',
     disabled ? 'grid-card--disabled' : '',

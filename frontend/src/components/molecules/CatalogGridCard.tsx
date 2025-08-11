@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
+import { NOIMAGE_DIETY_URL, NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
 import GridCard from '../atoms/GridCard';
 
 interface CatalogGridCardProps {
@@ -9,6 +9,7 @@ interface CatalogGridCardProps {
   catalogedAt: string;
   lastPrayedAt?: string;
   onClick?: () => void;
+  type?: 'shrine' | 'diety';
   image_url?: string;
   image_url_s?: string;
   image_url_m?: string;
@@ -21,6 +22,7 @@ const CatalogGridCard: React.FC<CatalogGridCardProps> = ({
   catalogedAt,
   lastPrayedAt,
   onClick,
+  type = 'shrine',
   image_url,
   image_url_s,
   image_url_m,
@@ -29,7 +31,8 @@ const CatalogGridCard: React.FC<CatalogGridCardProps> = ({
   const { t } = useTranslation();
 
   // 画像URLの優先順位: l > m > s > デフォルト
-  const imageUrl = image_url_l || image_url_m || image_url_s || image_url || NOIMAGE_SHRINE_DISPLAY_URL;
+  const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_DISPLAY_URL;
+  const imageUrl = image_url_l || image_url_m || image_url_s || image_url || noImage;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -42,12 +45,11 @@ const CatalogGridCard: React.FC<CatalogGridCardProps> = ({
       title={name}
       imageUrl={imageUrl}
       onClick={onClick}
-      size="small"
       variant="default"
     >
       <div className="catalog-grid-card__content">
         <div className="catalog-grid-card__field">
-          <span className="catalog-grid-card__label">{t('prayCount')}:</span>
+          <span className="catalog-grid-card__label">{t('count')}:</span>
           <span className="catalog-grid-card__value">{count}</span>
         </div>
         <div className="catalog-grid-card__field">

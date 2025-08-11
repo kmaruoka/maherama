@@ -624,7 +624,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
           type="user"
           rankingType="shrine"
-          isLoading={false}
+          isLoading={isRankingLoading}
           onItemClick={onShowUser}
           maxItems={3}
         />
