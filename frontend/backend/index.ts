@@ -16,6 +16,7 @@ const expRewardsModule = require('./shared/constants/expRewards');
 
 // APIロガーのインポート
 const { apiLogger, errorLogger, apiStats, createApiLogger } = require('./utils/apiLogger.js');
+const { createRateLimiter } = require('./utils/rateLimiter');
 
 // API監視のインポート
 const { getMonitoringStats, updateConfig } = require('./utils/apiMonitor.js');
@@ -75,65 +76,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// レート制限（認証系API）
-const rateLimit = require('express-rate-limit');
-const authLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10分
-  max: 50, // 最大50回
-  message: { error: 'Too many requests from this IP, please try again later.' },
-  skip: (req) => {
-    // localhostからのアクセスはレート制限をスキップ
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost' || ip === 'unknown';
-
-        // シード処理中のAPIコールもスキップ
-    const isSeedMode = process.env.SEED_MODE === 'true';
-    const isAdminApiCall = req.path.startsWith('/admin/') && req.headers['x-admin-api-key'];
-    const isSimulationApi = req.path.startsWith('/api/simulate-date') || req.path.startsWith('/api/simulation/');
-    const isSeedModeApi = req.path === '/api/seed-mode';
-    const hasSeedModeHeader = req.headers['x-seed-mode'] === 'true';
-    const isSeedApiCall = req.headers['x-user-id'] && req.headers['x-seed-mode'] === 'true';
-    const isSeedUserApi = req.headers['x-user-id'] && (req.path.includes('/pray') || req.path.includes('/remote-pray'));
-    const isSeedAdminApi = req.path.startsWith('/admin/') && req.headers['x-seed-mode'] === 'true';
-    const isSeedApi = req.path.startsWith('/admin/') && (req.headers['x-seed-mode'] === 'true' || req.headers['x-user-id']);
-
-    // シードモードヘッダーがある場合は、すべてのAPIをスキップ
-    const isSeedModeRequest = req.headers['x-seed-mode'] === 'true';
-
-    // /api/seed-modeへのリクエストは、localhostからのアクセスか、x-seed-modeヘッダーがあれば常にスキップ
-    if (isSeedModeApi && (isLocalhost || hasSeedModeHeader)) {
-      return true;
-    }
-
-    const shouldSkip = isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi || isSeedApi || isSeedModeRequest;
-
-    // デバッグログ（一時的）
-    if (req.path.includes('/simulate-date') || req.path.includes('/ranking-awards') || req.path.includes('/seed-mode')) {
-      console.log(`🔍 Rate limit check for ${req.method} ${req.path}:`, {
-        ip,
-        isLocalhost,
-        isSeedMode,
-        isAdminApiCall,
-        isSimulationApi,
-        isSeedModeApi,
-        hasSeedModeHeader,
-        isSeedApiCall,
-        isSeedUserApi,
-        isSeedAdminApi,
-        isSeedApi,
-        isSeedModeRequest,
-        shouldSkip,
-        headers: {
-          'x-seed-mode': req.headers['x-seed-mode'],
-          'x-user-id': req.headers['x-user-id'],
-          'x-admin-api-key': req.headers['x-admin-api-key'] ? 'present' : 'absent'
-        }
-      });
-    }
-
-    return shouldSkip;
-  }
-});
+// レート制限は createRateLimiter に統一済み
 
 // APIロギングミドルウェアを追加（環境変数で制御）
 const enableApiLogging = process.env.ENABLE_API_LOGGING !== 'false'; // デフォルトで有効
@@ -151,6 +94,15 @@ if (enableApiLogging) {
     seedUserIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] // seedスクリプトで使用するユーザーID
   });
 
+  // レート制限ミドルウェアを設定
+  const rateLimiter = createRateLimiter({
+    enabled: true,
+    skipPaths: ['/health', '/images', '/api/seed-mode'], // ヘルスチェック、画像、シードモードAPIは除外
+    skipMethods: ['OPTIONS'], // OPTIONSリクエストは除外
+    skipSeedMode: true // シードモードの場合はレート制限をスキップ
+  });
+
+  app.use(rateLimiter);
   app.use(customApiLogger);
   console.log('✅ API Logging enabled');
   console.log(`📊 Max response size: ${process.env.MAX_RESPONSE_LOG_SIZE || '1000'} characters`);
@@ -1893,7 +1845,7 @@ function authenticateJWT(req: AuthedRequest, res, next) {
 // 認証関連API
 
 // ユーザー登録
-app.post('/auth/register', authLimiter, async (req, res) => {
+app.post('/auth/register', async (req, res) => {
   try {
     const { username, email } = req.body;
 
@@ -2103,7 +2055,7 @@ app.post('/auth/activate', async (req, res) => {
 });
 
 // ログイン
-app.post('/auth/login', authLimiter, async (req, res) => {
+app.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -2207,7 +2159,7 @@ app.post('/auth/login', authLimiter, async (req, res) => {
 });
 
 // テストユーザーログイン（開発環境のみ）
-app.post('/auth/test-login', authLimiter, async (req, res) => {
+app.post('/auth/test-login', async (req, res) => {
   try {
     // 本番環境では無効化
     if (process.env.NODE_ENV === 'production') {
@@ -2280,7 +2232,7 @@ app.post('/auth/test-login', authLimiter, async (req, res) => {
 });
 
 // パスワードリセット要求
-app.post('/auth/reset-password', authLimiter, async (req, res) => {
+app.post('/auth/reset-password', async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -2377,7 +2329,7 @@ app.post('/auth/reset-password-confirm', async (req, res) => {
 });
 
 // アクティベーション後のパスワード設定
-app.post('/auth/set-password', authLimiter, async (req, res) => {
+app.post('/auth/set-password', async (req, res) => {
   try {
     const { token, password } = req.body;
 

@@ -173,25 +173,10 @@ const createApiLogger = (options = {}) => {
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
 
-    // シードモードのチェック（環境変数、ヘッダー、オプション設定を確認）
+    // シードモードのチェック（ログ出力用）
     const isSeedMode = process.env.SEED_MODE === 'true' ||
                       req.headers['x-seed-mode'] === 'true' ||
                       options.isSeedMode === true;
-
-    // seedモードの場合はレート制限を緩和
-    if (!isSeedMode) {
-      const rateLimitResult = checkRateLimit(ip, req.headers);
-
-      // レート制限に達した場合は429エラーを返す
-      if (rateLimitResult.isRateLimited) {
-        return res.status(429).json({
-          success: false,
-          type: 'error',
-          message: 'Too many requests. Please try again later.',
-          error: 'Rate limit exceeded'
-        });
-      }
-    }
 
     // リクエスト情報をログ出力
     const requestLog = {
