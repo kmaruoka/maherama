@@ -312,7 +312,8 @@ async function awardWeeklyRewards(
     // サーバー側のAPIを呼び出してランキング集計と報酬付与を実行
     const response = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards`, {}, {
       headers: {
-        'x-admin-api-key': adminApiKey
+        'x-admin-api-key': adminApiKey,
+        'x-seed-mode': 'true'
       }
     });
     console.log(`📡 API応答: ${response.status} ${response.statusText}`);
@@ -351,7 +352,8 @@ async function awardRankingTitles(
     // サーバー側のAPIを呼び出してランキング集計と報酬付与を実行
     const response = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=${typeParam}`, {}, {
       headers: {
-        'x-admin-api-key': adminApiKey
+        'x-admin-api-key': adminApiKey,
+        'x-seed-mode': 'true'
       }
     });
     console.log(`📡 API応答: ${response.status} ${response.statusText}`);
@@ -406,7 +408,8 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
     console.log('月間ランキング称号付与中...');
     const monthlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=monthly`, {}, {
       headers: {
-        'x-admin-api-key': adminApiKey
+        'x-admin-api-key': adminApiKey,
+        'x-seed-mode': 'true'
       }
     });
     console.log(`📡 月間称号付与API応答: ${monthlyResponse.status} ${monthlyResponse.statusText}`);
@@ -415,7 +418,8 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
     console.log('年間ランキング称号付与中...');
     const yearlyResponse = await axios.post(`http://localhost:${API_PORT}/admin/ranking-awards?type=yearly`, {}, {
       headers: {
-        'x-admin-api-key': adminApiKey
+        'x-admin-api-key': adminApiKey,
+        'x-seed-mode': 'true'
       }
     });
     console.log(`📡 年間称号付与API応答: ${yearlyResponse.status} ${yearlyResponse.statusText}`);

@@ -90,9 +90,11 @@ const authLimiter = rateLimit({
     const isSeedMode = process.env.NODE_ENV === 'development' && process.env.SEED_MODE === 'true';
     const isAdminApiCall = req.path.startsWith('/admin/') && req.headers['x-admin-api-key'];
     const isSimulationApi = req.path.startsWith('/api/simulate-date') || req.path.startsWith('/api/simulation/');
+    const isSeedModeApi = req.path === '/api/seed-mode';
     const hasSeedModeHeader = req.headers['x-seed-mode'] === 'true';
     const isSeedApiCall = req.headers['x-user-id'] && req.headers['x-seed-mode'] === 'true';
     const isSeedUserApi = req.headers['x-user-id'] && (req.path.includes('/pray') || req.path.includes('/remote-pray'));
+    const isSeedAdminApi = req.path.startsWith('/admin/') && req.headers['x-seed-mode'] === 'true';
 
     // デバッグ用ログ
     if (req.headers['x-seed-mode'] || req.headers['x-user-id']) {
@@ -103,7 +105,7 @@ const authLimiter = rateLimit({
       });
     }
 
-    return isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi;
+    return isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi;
   }
 });
 
