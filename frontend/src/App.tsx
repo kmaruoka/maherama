@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import AppMain from './components/AppMain';
+import ActivatePage from './components/pages/ActivatePage';
 import CommercialTransactionPage from './components/pages/CommercialTransactionPage';
+import ResetPasswordPage from './components/pages/ResetPasswordPage';
+import SetPasswordPage from './components/pages/SetPasswordPage';
 import TermsPage from './components/pages/TermsPage';
 import TopPage from './components/pages/TopPage';
 import { useSecureAuth } from './config/api';
@@ -40,8 +44,8 @@ function App() {
     setPage('map');
   };
 
-  // 認証されていない場合はTopPageまたは利用規約・特定商取引法ページを表示
-  if (!authStatus) {
+  // 認証されていない場合のコンポーネント
+  const UnauthenticatedApp = () => {
     if (page === 'terms') {
       return <TermsPage onBack={() => setPage('map')} />;
     }
@@ -55,10 +59,33 @@ function App() {
         onNavigateToCommercialTransaction={() => setPage('commercial-transaction')}
       />
     );
-  }
+  };
 
-  // 認証されている場合はAppMainを表示
-  return <AppMain onLogout={handleLogout} />;
+  return (
+    <Router>
+      <Routes>
+        {/* 認証不要なルート */}
+        <Route path="/activate" element={<ActivatePage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/* 認証が必要なルート */}
+        <Route
+          path="/"
+          element={
+            authStatus ? (
+              <AppMain onLogout={handleLogout} />
+            ) : (
+              <UnauthenticatedApp />
+            )
+          }
+        />
+
+        {/* その他のルートはリダイレクト */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

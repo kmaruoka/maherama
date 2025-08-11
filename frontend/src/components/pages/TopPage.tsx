@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { API_BASE, apiCall, apiCallWithToast, useSecureAuth } from '../../config/api';
 import useAllUsers from '../../hooks/useAllUsers';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
@@ -16,6 +17,7 @@ type FormType = 'register' | 'login' | 'test-user';
 
 const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigateToCommercialTransaction }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
   // テストユーザー選択機能がアクティブな場合のみuseAllUsersを呼び出す
   const { data: users = [], isLoading: isLoadingUsers } = useAllUsers();
@@ -69,6 +71,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
       const response = await apiCall(`${API_BASE}/auth/register`, {
         method: 'POST',
         body: JSON.stringify(registerForm),
+        requireAuth: false, // 新規登録は認証不要
       });
 
       const data = await response.json();
@@ -114,6 +117,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
       const result = await apiCallWithToast(`${API_BASE}/auth/login`, {
         method: 'POST',
         body: JSON.stringify(loginForm),
+        requireAuth: false, // ログインは認証不要
       }, () => {}); // Toastは手動で制御
 
       if (result.success && result.data) {
@@ -144,9 +148,10 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     setResetErrors({});
 
     try {
-      const response = await apiCall(`${API_BASE}/auth/password-reset`, {
+      const response = await apiCall(`${API_BASE}/auth/reset-password`, {
         method: 'POST',
         body: JSON.stringify({ email: resetForm.email }),
+        requireAuth: false, // パスワードリセットは認証不要
       });
 
       const data = await response.json();
@@ -160,7 +165,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     }
   };
 
-          // テストユーザーログイン処理
+  // テストユーザーログイン処理
   const handleTestUserLogin = async () => {
     if (!selectedTestUserId) return;
 
@@ -177,6 +182,8 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
         }, () => {}); // Toastは手動で制御
 
         if (result.success && result.data) {
+          console.log('テストログイン成功:', result.data);
+
           // レスポンス構造に応じて適切なプロパティにアクセス
           const userData = result.data.data?.user || result.data.user || result.data;
           const token = result.data.data?.token || result.data.token;
@@ -211,7 +218,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     }
   };
 
-  // 画像エラーハンドリング
+  // 画像読み込みエラー時の処理
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.style.display = 'none';
   };
@@ -377,7 +384,7 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                               disabled={isResetting || !resetForm.email}
                               className="w-100 mb-2"
                             >
-                              {isResetting ? '送信中...' : 'パスワードリセット'}
+                              {isResetting ? '送信中...' : 'パスワードリセットメールを送信'}
                             </Button>
                             <Button
                               type="button"
@@ -405,11 +412,11 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                             onChange={(e) => setSelectedTestUserId(e.target.value)}
                           >
                             <option value="">テストユーザーを選択してください</option>
-                            {users.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                ID: {user.id} - {user.name} (Lv.{user.level})
-                              </option>
-                            ))}
+                                                          {users.map((user: any) => (
+                                <option key={user.id} value={user.id}>
+                                  ID: {user.id} - {user.name} (Lv.{user.level})
+                                </option>
+                              ))}
                           </Form.Select>
                         )}
                       </Form.Group>
@@ -423,39 +430,38 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
                       </Button>
                     </div>
                   </Tab.Pane>
-
                 </Card.Body>
               </Card>
             </Col>
           </Row>
         </Container>
-
-        {/* フッターリンク */}
-        <div className="top-page__footer">
-          <Container>
-            <div className="top-page__footer-links">
-              {onNavigateToTerms && (
-                <Button
-                  variant="link"
-                  onClick={onNavigateToTerms}
-                  className="top-page__footer-link"
-                >
-                  利用規約
-                </Button>
-              )}
-              {onNavigateToCommercialTransaction && (
-                <Button
-                  variant="link"
-                  onClick={onNavigateToCommercialTransaction}
-                  className="top-page__footer-link"
-                >
-                  特定商取引に基づく表記
-                </Button>
-              )}
-            </div>
-          </Container>
-        </div>
       </div>
+
+         {/* フッターリンク */}
+         <div className="top-page__footer">
+           <Container>
+             <div className="top-page__footer-links">
+               {onNavigateToTerms && (
+                 <Button
+                   variant="link"
+                   onClick={onNavigateToTerms}
+                   className="top-page__footer-link"
+                 >
+                   利用規約
+                 </Button>
+               )}
+               {onNavigateToCommercialTransaction && (
+                 <Button
+                   variant="link"
+                   onClick={onNavigateToCommercialTransaction}
+                   className="top-page__footer-link"
+                 >
+                   特定商取引に基づく表記
+                 </Button>
+               )}
+             </div>
+           </Container>
+         </div>
     </div>
   );
 };

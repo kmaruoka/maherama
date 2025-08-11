@@ -4,13 +4,13 @@ const logger = require('./logger').default;
 const apiMonitoring = {
   // レート制限用のカウンター（IPアドレス別）
   rateLimitCounters: new Map(),
-  
+
   // 異常パターン検出用の履歴（IPアドレス別）
   patternHistory: new Map(),
-  
+
   // アラート履歴（重複アラートを防ぐため）
   alertHistory: new Map(),
-  
+
   // 設定
   config: {
     rateLimit: {
@@ -30,6 +30,15 @@ const apiMonitoring = {
 
 // レート制限チェック
 const checkRateLimit = (ip) => {
+  // localhostからのアクセスはレート制限を無効化
+  if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown') {
+    return {
+      isRateLimited: false,
+      requestCount: 0,
+      remainingRequests: Infinity
+    };
+  }
+
   const now = Date.now();
   const windowMs = apiMonitoring.config.rateLimit.windowMs;
 
@@ -198,7 +207,7 @@ const clearOldData = () => {
   for (const [key, pattern] of apiMonitoring.patternHistory.entries()) {
     pattern.requests = pattern.requests.filter(req => req.timestamp > oneHourAgo);
     pattern.errors = pattern.errors.filter(err => err.timestamp > oneHourAgo);
-    
+
     if (pattern.requests.length === 0 && pattern.errors.length === 0) {
       apiMonitoring.patternHistory.delete(key);
     }

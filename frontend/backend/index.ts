@@ -80,7 +80,12 @@ const rateLimit = require('express-rate-limit');
 const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10分
   max: 50, // 最大50回
-  message: { error: 'Too many requests from this IP, please try again later.' }
+  message: { error: 'Too many requests from this IP, please try again later.' },
+  skip: (req) => {
+    // localhostからのアクセスはレート制限をスキップ
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    return ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown';
+  }
 });
 
 // APIロギングミドルウェアを追加（環境変数で制御）
@@ -245,41 +250,26 @@ app.post('/api/logs/test', (req, res) => {
 // メール送信設定
 let transporter;
 
-if (process.env.NODE_ENV === 'development') {
-  // 開発環境ではメール送信をシミュレート
+// 開発・本番環境共通のSMTP設定
+if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  console.warn('警告: SMTP設定が不完全です。メール送信機能が無効になります。');
   transporter = {
-    sendMail: async (mailOptions) => {
-      console.log('=== 開発環境: メール送信シミュレーション ===');
-      console.log('送信者:', mailOptions.from);
-      console.log('宛先:', mailOptions.to);
-      console.log('件名:', mailOptions.subject);
-      console.log('本文:', mailOptions.html);
-      console.log('==========================================');
-      return { messageId: 'dev-' + Date.now() };
+    sendMail: async () => {
+      console.warn('メール送信がスキップされました（SMTP設定なし）');
+      return { messageId: 'skipped-' + Date.now() };
     }
   };
 } else {
-  // 本番環境ではSMTP設定が必須
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('警告: SMTP設定が不完全です。メール送信機能が無効になります。');
-    transporter = {
-      sendMail: async () => {
-        console.warn('メール送信がスキップされました（SMTP設定なし）');
-        return { messageId: 'skipped-' + Date.now() };
-      }
-    };
-  } else {
-    // 設定されたSMTPサーバーを使用
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-  }
+  // 設定されたSMTPサーバーを使用
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 }
 
 // 認証関連のユーティリティ関数
@@ -291,24 +281,21 @@ function generateVerificationToken() {
   return nodeCrypto.randomBytes(32).toString('hex');
 }
 
-async function sendVerificationEmail(email, token) {
-  // 開発環境の場合は常にメール送信を試行
-  if (process.env.NODE_ENV !== 'development' && (!process.env.SMTP_USER || !process.env.SMTP_PASS)) {
-    console.log('SMTP settings not configured, skipping email sending');
-    return;
-  }
+async function sendVerificationEmail(email, token, username) {
 
   const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/activate?token=${token}`;
 
   const mailOptions = {
-    from: process.env.NODE_ENV === 'development' ? 'test@localhost' : process.env.SMTP_USER,
+    from: process.env.MAIL_FROM,
     to: email,
-    subject: 'アカウント有効化 - 神社参拝アプリ',
+    subject: '会員登録確認のご案内 - JINJOURNEY',
     html: `
-      <h2>アカウント有効化</h2>
-      <p>以下のリンクをクリックしてアカウントを有効化してください：</p>
-      <a href="${verificationUrl}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">アカウントを有効化</a>
-      <p>このリンクは24時間有効です。</p>
+      <p>${username} 様</p>
+      <p>このたびは【JINJOURNEY】にご登録いただきありがとうございます。<br>
+      24時間以内に下記リンクをクリックして、会員登録を完了してください。</p>
+      <p><a href="${verificationUrl}">${verificationUrl}</a></p>
+      <p>もしこのメールにお心当たりがない場合は、このメールを破棄してください。</p>
+      <p>JINJOURNEY 運営チーム</p>
     `
   };
 
@@ -331,7 +318,7 @@ async function sendPasswordResetEmail(email, token) {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
   const mailOptions = {
-    from: process.env.NODE_ENV === 'development' ? 'test@localhost' : process.env.SMTP_USER,
+    from: process.env.MAIL_FROM || 'noreply@maherama.local',
     to: email,
     subject: 'パスワードリセット - 神社参拝アプリ',
     html: `
@@ -1918,14 +1905,10 @@ app.post('/auth/register', authLimiter, async (req, res) => {
     let emailError = null;
 
     try {
-      if (process.env.NODE_ENV === 'development' || (process.env.SMTP_USER && process.env.SMTP_PASS)) {
-        console.log('Sending verification email...');
-        await sendVerificationEmail(email, verificationToken);
-        emailSent = true;
-        console.log('Verification email sent successfully');
-      } else {
-        console.log('SMTP settings not configured, skipping email sending');
-      }
+      console.log('Sending verification email...');
+      await sendVerificationEmail(email, verificationToken, user.name);
+      emailSent = true;
+      console.log('Verification email sent successfully');
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
       // メール送信エラーは記録するが、ユーザー作成は成功とする
@@ -1936,11 +1919,12 @@ app.post('/auth/register', authLimiter, async (req, res) => {
       success: true,
       message: emailSent
         ? 'ユーザー登録が完了しました。確認メールをお送りしましたので、メール内のリンクをクリックしてアカウントを有効化してください。'
-        : 'ユーザー登録が完了しました。',
+        : 'ユーザー登録は完了しましたが、確認メールの送信に失敗しました。管理者にお問い合わせください。',
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        emailSent: emailSent
       }
     });
 
@@ -2055,15 +2039,14 @@ app.post('/auth/activate', async (req, res) => {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        is_verified: true,
-        verification_token: null,
-        verification_token_expires: null
+        is_verified: true
+        // verification_tokenは保持して、パスワード設定時に使用
       }
     });
 
     res.json({
       success: true,
-      message: 'アカウントが正常に有効化されました。ログインしてください。'
+      message: 'アカウントが正常に有効化されました。パスワードを設定してください。'
     });
 
   } catch (error) {
@@ -2299,28 +2282,31 @@ app.post('/auth/reset-password', authLimiter, async (req, res) => {
   }
 });
 
-// パスワードリセット実行
-app.post('/auth/reset-password/confirm', async (req, res) => {
+// パスワードリセット確認
+app.post('/auth/reset-password-confirm', async (req, res) => {
   try {
     const { token, password } = req.body;
 
     if (!token || !password) {
-      return res.status(400).json({ error: 'トークンと新しいパスワードは必須です' });
+      return res.status(400).json({ error: 'トークンとパスワードは必須です' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'パスワードは6文字以上で入力してください' });
     }
 
     const user = await prisma.user.findFirst({
       where: {
         reset_token: token,
-        reset_token_expires: {
-          gt: new Date()
-        }
-      }
+        reset_token_expires: { gt: new Date() },
+      },
     });
 
     if (!user) {
-      return res.status(400).json({ error: '無効または期限切れのリセットトークンです' });
+      return res.status(400).json({ error: '無効または期限切れのトークンです' });
     }
 
+    // パスワードハッシュ化
     const passwordHash = await bcrypt.hash(password, 10);
 
     await prisma.user.update({
@@ -2334,12 +2320,60 @@ app.post('/auth/reset-password/confirm', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'パスワードが正常にリセットされました。新しいパスワードでログインしてください。'
+      message: 'パスワードが正常に更新されました。新しいパスワードでログインしてください。'
     });
 
   } catch (error) {
-    console.error('Password reset confirmation error:', error);
-    res.status(500).json({ error: 'パスワードリセットに失敗しました' });
+    console.error('Password reset confirm error:', error);
+    res.status(500).json({ error: 'パスワード更新に失敗しました' });
+  }
+});
+
+// アクティベーション後のパスワード設定
+app.post('/auth/set-password', authLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ error: 'トークンとパスワードは必須です' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'パスワードは6文字以上で入力してください' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        verification_token: token,
+        verification_token_expires: { gt: new Date() },
+        is_verified: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: '無効なトークンです' });
+    }
+
+    // パスワードハッシュ化
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password_hash: passwordHash,
+        verification_token: null,
+        verification_token_expires: null
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'パスワードが正常に設定されました。ログインしてください。'
+    });
+
+  } catch (error) {
+    console.error('Set password error:', error);
+    res.status(500).json({ error: 'パスワード設定に失敗しました' });
   }
 });
 

@@ -56,14 +56,64 @@ Verification email sent successfully
 3. 「メールを送信」ボタンをクリック
 4. バックエンドのコンソールで送信内容を確認
 
-### 5. トラブルシューティング
+### 5. MailHogを使用したメールサーバー（推奨）
+
+開発環境でより実際のメール送信に近い環境を構築するには、MailHogを使用します。
+
+#### MailHogのインストール
+
+```bash
+# Windows (Chocolatey)
+choco install mailhog
+
+# macOS (Homebrew)
+brew install mailhog
+
+# Linux
+# 公式サイトからダウンロード: https://github.com/mailhog/MailHog/releases
+```
+
+#### MailHogの起動
+
+```bash
+# MailHogを起動
+mailhog
+
+# または、バックエンドディレクトリで
+npm run mailhog
+```
+
+#### 環境変数の設定
+
+```bash
+# .envファイルに追加
+NODE_ENV=development
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASS=
+```
+
+#### メールの確認
+
+1. MailHog Web UI: http://localhost:8025
+2. 送信されたメールを確認
+3. メール内のリンクをクリックしてアカウント有効化をテスト
+
+### 6. トラブルシューティング
 
 #### メールが送信されない場合
 1. 環境変数 `NODE_ENV=development` が設定されているか確認
 2. アプリケーションのログでエラーを確認
 3. バックエンドサーバーが正常に起動しているか確認
+4. MailHogを使用している場合、MailHogが起動しているか確認
 
-### 6. 本番環境での設定
+#### MailHogが起動しない場合
+1. ポート1025が他のアプリケーションで使用されていないか確認
+2. ファイアウォールの設定を確認
+3. 管理者権限で実行してみる
+
+### 7. 本番環境での設定
 
 本番環境では、実際のSMTPサーバー（Gmail、SendGrid等）を使用します：
 
@@ -76,8 +126,27 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 ```
 
-### 7. メールテンプレートの確認
+### 8. メールテンプレートの確認
 
 送信されるメールの内容は以下のファイルで確認できます：
 - `index.ts` の `sendVerificationEmail` 関数
 - `index.ts` の `sendPasswordResetEmail` 関数
+
+### 9. 開発環境での推奨設定
+
+```bash
+# 開発環境用の.envファイル
+NODE_ENV=development
+PORT=3000
+JWT_SECRET=your-dev-jwt-secret
+DATABASE_URL="postgresql://username:password@localhost:5432/database"
+
+# MailHog用のSMTP設定
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASS=
+
+# フロントエンドURL
+FRONTEND_URL=http://localhost:5173
+```

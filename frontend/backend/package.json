@@ -10,7 +10,8 @@
     "dev": "nodemon --exec ts-node index.ts",
     "db-reset": "npx ts-node scripts/reset-db.ts",
     "seed": "npx tsx scripts/seed/main.ts",
-    "fix-line-endings": "node ../../scripts/fix-line-endings.js"
+    "fix-line-endings": "node ../../scripts/fix-line-endings.js",
+    "mailhog": "mailhog"
   },
   "keywords": [],
   "author": "",
