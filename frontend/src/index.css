@@ -1761,3 +1761,149 @@ nav.d-flex.position-fixed {
   border: 1px solid rgba(139,69,19,0.6);
   background-blend-mode: multiply;
 }
+
+/* 旅の記録関連スタイル */
+.travel-logs-container {
+  width: 100%;
+}
+
+.travel-logs-header {
+  margin-bottom: 12px;
+  text-align: right;
+}
+
+.travel-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.travel-log-item {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  background-color: #fafafa;
+}
+
+.travel-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+}
+
+.travel-log-date {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.travel-log-content {
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.travel-logs-footer,
+.travel-logs-expanded-footer {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.travel-logs-empty {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* モーダル関連スタイル */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+}
+
+.modal-close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  resize: vertical;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-text {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 4px;
+}

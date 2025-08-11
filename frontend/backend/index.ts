@@ -4214,6 +4214,168 @@ app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, 
   }
 });
 
+// 旅の記録取得API（神社）
+app.get('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const offset = (page - 1) * limit;
+
+  if (isNaN(shrineId)) return res.status(400).json({ error: 'Invalid shrine ID' });
+
+  try {
+    const logs = await prisma.shrineTravelLog.findMany({
+      where: { shrine_id: shrineId },
+      include: {
+        user: { select: { id: true, name: true } }
+      },
+      orderBy: { created_at: 'desc' },
+      skip: offset,
+      take: limit
+    });
+
+    const total = await prisma.shrineTravelLog.count({
+      where: { shrine_id: shrineId }
+    });
+
+    res.json({
+      logs,
+      pagination: {
+        page,
+        limit,
+        total,
+        hasMore: offset + limit < total
+      }
+    });
+  } catch (err) {
+    console.error('神社旅の記録取得失敗:', err);
+    res.status(500).json({ error: '旅の記録取得失敗' });
+  }
+});
+
+// 旅の記録投稿API（神社）
+app.post('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  const { content } = req.body;
+
+  if (isNaN(shrineId)) return res.status(400).json({ error: 'Invalid shrine ID' });
+  if (!content || typeof content !== 'string') return res.status(400).json({ error: 'Content is required' });
+  if (content.length > 1000) return res.status(400).json({ error: 'Content must be 1000 characters or less' });
+
+  try {
+    // 図鑑登録チェック
+    const hasCatalog = await prisma.shrineCatalog.findUnique({
+      where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } }
+    });
+    if (!hasCatalog) return res.status(403).json({ error: '図鑑に登録されていません' });
+
+    // 既存の記録チェック
+    const existingLog = await prisma.shrineTravelLog.findUnique({
+      where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } }
+    });
+    if (existingLog) return res.status(409).json({ error: '既に旅の記録を投稿済みです' });
+
+    // 旅の記録作成
+    const log = await prisma.shrineTravelLog.create({
+      data: {
+        user_id: userId,
+        shrine_id: shrineId,
+        content
+      },
+      include: {
+        user: { select: { id: true, name: true } }
+      }
+    });
+
+    res.json(log);
+  } catch (err) {
+    console.error('神社旅の記録投稿失敗:', err);
+    res.status(500).json({ error: '旅の記録投稿失敗' });
+  }
+});
+
+// 旅の記録取得API（神様）
+app.get('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
+  const dietyId = parseInt(req.params.id, 10);
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const offset = (page - 1) * limit;
+
+  if (isNaN(dietyId)) return res.status(400).json({ error: 'Invalid diety ID' });
+
+  try {
+    const logs = await prisma.dietyTravelLog.findMany({
+      where: { diety_id: dietyId },
+      include: {
+        user: { select: { id: true, name: true } }
+      },
+      orderBy: { created_at: 'desc' },
+      skip: offset,
+      take: limit
+    });
+
+    const total = await prisma.dietyTravelLog.count({
+      where: { diety_id: dietyId }
+    });
+
+    res.json({
+      logs,
+      pagination: {
+        page,
+        limit,
+        total,
+        hasMore: offset + limit < total
+      }
+    });
+  } catch (err) {
+    console.error('神様旅の記録取得失敗:', err);
+    res.status(500).json({ error: '旅の記録取得失敗' });
+  }
+});
+
+// 旅の記録投稿API（神様）
+app.post('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
+  const dietyId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+  const { content } = req.body;
+
+  if (isNaN(dietyId)) return res.status(400).json({ error: 'Invalid diety ID' });
+  if (!content || typeof content !== 'string') return res.status(400).json({ error: 'Content is required' });
+  if (content.length > 1000) return res.status(400).json({ error: 'Content must be 1000 characters or less' });
+
+  try {
+    // 図鑑登録チェック
+    const hasCatalog = await prisma.dietyCatalog.findUnique({
+      where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } }
+    });
+    if (!hasCatalog) return res.status(403).json({ error: '図鑑に登録されていません' });
+
+    // 既存の記録チェック
+    const existingLog = await prisma.dietyTravelLog.findUnique({
+      where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } }
+    });
+    if (existingLog) return res.status(409).json({ error: '既に旅の記録を投稿済みです' });
+
+    // 旅の記録作成
+    const log = await prisma.dietyTravelLog.create({
+      data: {
+        user_id: userId,
+        diety_id: dietyId,
+        content
+      },
+      include: {
+        user: { select: { id: true, name: true } }
+      }
+    });
+
+    res.json(log);
+  } catch (err) {
+    console.error('神様旅の記録投稿失敗:', err);
+    res.status(500).json({ error: '旅の記録投稿失敗' });
+  }
+});
+
 // 投票・審査期間設定取得API
 app.get('/voting/settings', async (req, res) => {
   try {

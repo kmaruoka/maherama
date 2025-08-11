@@ -13,12 +13,15 @@ import { getDistanceMeters, useWorshipLimit } from '../../hooks/usePrayDistance'
 import { useShrineDetail } from '../../hooks/useShrineDetail';
 import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
 import { useSubscription } from '../../hooks/useSubscription';
+import { usePostShrineTravelLog, useShrineTravelLogs } from '../../hooks/useTravelLogs';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
 import { CustomButton } from '../atoms/CustomButton';
 import CustomLink from '../atoms/CustomLink';
 import { ManagedImage } from '../atoms/ManagedImage';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
+import { TravelLogModal } from '../molecules/TravelLogModal';
+import { TravelLogsDisplay } from '../molecules/TravelLogsDisplay';
 import type { Period, RankingItemData } from './RankingPane';
 import RankingPane from './RankingPane';
 
@@ -49,7 +52,7 @@ function convertUserRankingsByPeriod(data: { [key in Period]: { userId: number; 
   return result;
 }
 
-type DetailViewType = 'overview' | 'thumbnail' | 'deities' | 'ranking';
+type DetailViewType = 'overview' | 'thumbnail' | 'deities' | 'ranking' | 'travelLogs';
 
 export interface ShrinePaneRef {
   backToOverview: () => void;
@@ -81,6 +84,17 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageListLoading, setImageListLoading] = useState(false);
   const [imageListError, setImageListError] = useState<string | null>(null);
+
+  // 旅の記録関連
+  const [travelLogsPage, setTravelLogsPage] = useState(1);
+  const [isTravelLogsExpanded, setIsTravelLogsExpanded] = useState(false);
+  const [isTravelLogModalOpen, setIsTravelLogModalOpen] = useState(false);
+  const { data: travelLogsData, isLoading: isTravelLogsLoading } = useShrineTravelLogs(
+    id,
+    isTravelLogsExpanded ? travelLogsPage : 1,
+    isTravelLogsExpanded ? 50 : 3
+  );
+  const postTravelLog = usePostShrineTravelLog();
 
   // 画像管理フックを使用
   const [imageState, imageActions] = useImageManagement({
@@ -347,6 +361,21 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     }
   };
 
+  const handlePostTravelLog = async (content: string) => {
+    await postTravelLog.mutateAsync({ shrineId: id, data: { content } });
+  };
+
+  const handleLoadMoreTravelLogs = () => {
+    setTravelLogsPage(prev => prev + 1);
+  };
+
+  const handleToggleTravelLogsExpand = () => {
+    setIsTravelLogsExpanded(!isTravelLogsExpanded);
+    if (!isTravelLogsExpanded) {
+      setTravelLogsPage(1);
+    }
+  };
+
   // 詳細表示のレンダリング関数
   const renderDetailContent = () => {
     if (detailView === 'thumbnail') {
@@ -398,6 +427,27 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
             isLoading={false}
             onItemClick={onShowUser}
             maxItems={100}
+          />
+        </>
+      );
+    } else if (detailView === 'travelLogs') {
+      return (
+        <>
+          <div className="modal-subtitle">
+            {t('travelLogs')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
+          <TravelLogsDisplay
+            logs={travelLogsData?.logs || []}
+            pagination={travelLogsData?.pagination}
+            isLoading={isTravelLogsLoading}
+            isExpanded={true}
+            onToggleExpand={handleToggleTravelLogsExpand}
+            onLoadMore={handleLoadMoreTravelLogs}
+            onShowUser={onShowUser}
+            canPost={data.catalogedAt !== null}
+            onPostClick={() => setIsTravelLogModalOpen(true)}
+            maxPreviewItems={50}
           />
         </>
       );
@@ -569,12 +619,41 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         />
       </div>
 
+      {/* 旅の記録表示 */}
+      <div className="modal-section">
+        <div className="modal-subtitle" onClick={() => setDetailView('travelLogs')} style={{ cursor: 'pointer' }}>
+          {t('travelLogs')}
+          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+        </div>
+        <TravelLogsDisplay
+          logs={travelLogsData?.logs || []}
+          pagination={travelLogsData?.pagination}
+          isLoading={isTravelLogsLoading}
+          isExpanded={false}
+          onToggleExpand={handleToggleTravelLogsExpand}
+          onLoadMore={handleLoadMoreTravelLogs}
+          onShowUser={onShowUser}
+          canPost={data.catalogedAt !== null}
+          onPostClick={() => setIsTravelLogModalOpen(true)}
+          maxPreviewItems={3}
+        />
+      </div>
+
       {/* アップロードモーダル */}
       <ImageUploadModal
         isOpen={imageState.isUploadModalOpen}
         onClose={() => imageActions.setIsUploadModalOpen(false)}
         onUpload={handleUpload}
         title={`${data?.name || '神社'}の画像をアップロード`}
+      />
+
+      {/* 旅の記録投稿モーダル */}
+      <TravelLogModal
+        isOpen={isTravelLogModalOpen}
+        onClose={() => setIsTravelLogModalOpen(false)}
+        onSubmit={handlePostTravelLog}
+        title={`${data?.name || '神社'}の旅の記録を投稿`}
+        isLoading={postTravelLog.isPending}
       />
 
       {/* サムネイル投票候補 */}

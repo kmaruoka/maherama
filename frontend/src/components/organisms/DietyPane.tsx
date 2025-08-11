@@ -9,12 +9,15 @@ import { useDietyDetail } from '../../hooks/useDietyDetail';
 import { useImageManagement } from '../../hooks/useImageManagement';
 import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
+import { useDietyTravelLogs, usePostDietyTravelLog } from '../../hooks/useTravelLogs';
 import useUserRankings from '../../hooks/useUserRankings';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
 import CustomLink from '../atoms/CustomLink';
 import { ManagedImage } from '../atoms/ManagedImage';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
+import { TravelLogModal } from '../molecules/TravelLogModal';
+import { TravelLogsDisplay } from '../molecules/TravelLogsDisplay';
 import type { Period, RankingItemData } from './RankingPane';
 import RankingPane from './RankingPane';
 
@@ -29,7 +32,7 @@ function getItemsByPeriod(allRankings: RankingsBundleAllPeriods | undefined, key
   };
 }
 
-type DetailViewType = 'overview' | 'thumbnail' | 'shrines' | 'ranking' | 'description';
+type DetailViewType = 'overview' | 'thumbnail' | 'shrines' | 'ranking' | 'description' | 'travelLogs';
 
 export interface DietyPaneRef {
   backToOverview: () => void;
@@ -60,6 +63,17 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
   const { data: diety, error: dietyError } = useDietyDetail(idFromParams || 0);
   const { data: allRankings, isLoading: isRankingLoading } = useRankingsBundleAll(idFromParams);
   const { data: userRankings, isLoading: isUserRankingLoading } = useUserRankings('all');
+
+  // 旅の記録関連
+  const [travelLogsPage, setTravelLogsPage] = useState(1);
+  const [isTravelLogsExpanded, setIsTravelLogsExpanded] = useState(false);
+  const [isTravelLogModalOpen, setIsTravelLogModalOpen] = useState(false);
+  const { data: travelLogsData, isLoading: isTravelLogsLoading } = useDietyTravelLogs(
+    idFromParams,
+    isTravelLogsExpanded ? travelLogsPage : 1,
+    isTravelLogsExpanded ? 50 : 3
+  );
+  const postTravelLog = usePostDietyTravelLog();
 
   // 画像管理フックを使用
   const [imageState, imageActions] = useImageManagement({
@@ -120,6 +134,22 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     }
   };
 
+  const handlePostTravelLog = async (content: string) => {
+    if (!idFromParams) return;
+    await postTravelLog.mutateAsync({ dietyId: idFromParams, data: { content } });
+  };
+
+  const handleLoadMoreTravelLogs = () => {
+    setTravelLogsPage(prev => prev + 1);
+  };
+
+  const handleToggleTravelLogsExpand = () => {
+    setIsTravelLogsExpanded(!isTravelLogsExpanded);
+    if (!isTravelLogsExpanded) {
+      setTravelLogsPage(1);
+    }
+  };
+
   // 詳細表示のレンダリング関数
   const renderDetailContent = () => {
     if (detailView === 'thumbnail') {
@@ -137,7 +167,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
       return (
         <>
           <div className="modal-subtitle">
-            {t('enshrinedShrines')}
+            {t('enshrinedShrines')} ({diety.shrines.length})
             <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
           </div>
           <div className="d-flex flex-wrap gap-2">
@@ -180,6 +210,27 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           <div className="description-full">
             <p className="text-body-secondary">{diety.description}</p>
           </div>
+        </>
+      );
+    } else if (detailView === 'travelLogs') {
+      return (
+        <>
+          <div className="modal-subtitle">
+            {t('travelLogs')}
+            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          </div>
+          <TravelLogsDisplay
+            logs={travelLogsData?.logs || []}
+            pagination={travelLogsData?.pagination}
+            isLoading={isTravelLogsLoading}
+            isExpanded={true}
+            onToggleExpand={handleToggleTravelLogsExpand}
+            onLoadMore={handleLoadMoreTravelLogs}
+            onShowUser={onShowUser}
+            canPost={diety.catalogedAt !== null}
+            onPostClick={() => setIsTravelLogModalOpen(true)}
+            maxPreviewItems={50}
+          />
         </>
       );
     }
@@ -256,10 +307,11 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         </div>
       )}
 
+      {/* 歴史・伝承セクション */}
       {diety.shrines.length > 0 && (
         <div className="modal-section">
           <div className="modal-subtitle" onClick={() => setDetailView('shrines')} style={{ cursor: 'pointer' }}>
-            {t('enshrinedShrines')}
+            {t('enshrinedShrines')} ({diety.shrines.length})
             <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
           </div>
           <div className="d-flex flex-wrap gap-2">
@@ -272,12 +324,29 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
                 {shrine.name}
               </CustomLink>
             ))}
-            {diety.shrines.length > 3 && (
-              <span className="text-muted">...{diety.shrines.length - 3}件</span>
-            )}
           </div>
         </div>
       )}
+
+      {/* 旅の記録表示 */}
+      <div className="modal-section">
+        <div className="modal-subtitle" onClick={() => setDetailView('travelLogs')} style={{ cursor: 'pointer' }}>
+          {t('travelLogs')}
+          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+        </div>
+        <TravelLogsDisplay
+          logs={travelLogsData?.logs || []}
+          pagination={travelLogsData?.pagination}
+          isLoading={isTravelLogsLoading}
+          isExpanded={false}
+          onToggleExpand={handleToggleTravelLogsExpand}
+          onLoadMore={handleLoadMoreTravelLogs}
+          onShowUser={onShowUser}
+          canPost={diety.catalogedAt !== null}
+          onPostClick={() => setIsTravelLogModalOpen(true)}
+          maxPreviewItems={3}
+        />
+      </div>
 
       {/* ランキング表示 */}
       <div className="modal-section">
@@ -313,6 +382,15 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
         onClose={() => imageActions.setIsUploadModalOpen(false)}
         onUpload={handleImageUpload}
         title={`${diety?.name || '神様'}の画像をアップロード`}
+      />
+
+      {/* 旅の記録投稿モーダル */}
+      <TravelLogModal
+        isOpen={isTravelLogModalOpen}
+        onClose={() => setIsTravelLogModalOpen(false)}
+        onSubmit={handlePostTravelLog}
+        title={`${diety?.name || '神様'}の旅の記録を投稿`}
+        isLoading={postTravelLog.isPending}
       />
     </div>
   );

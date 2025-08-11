@@ -53,6 +53,7 @@ model Shrine {
   shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
   shrine_pray_stats_weekly  ShrinePrayStatsWeekly[]
   shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
+  shrine_travel_logs        ShrineTravelLog[]
 
   @@unique([name, location])
 }
@@ -83,6 +84,7 @@ model Diety {
   diety_pray_stats_yearly  DietyPrayStatsYearly[]
   mission_dieties          MissionDiety[]
   shrine_dieties           ShrineDiety[]
+  diety_travel_logs        DietyTravelLog[]
 }
 
 model ShrineDiety {
@@ -149,6 +151,8 @@ model User {
   shrine_pray_stats_monthly ShrinePrayStatsMonthly[]
   shrine_pray_stats_weekly  ShrinePrayStatsWeekly[]
   shrine_pray_stats_yearly  ShrinePrayStatsYearly[]
+  shrine_travel_logs        ShrineTravelLog[]
+  diety_travel_logs         DietyTravelLog[]
   image                     Image?                   @relation(fields: [image_id], references: [id])
   userAbilities             UserAbility[]
   user_missions             UserMission[]
@@ -662,4 +666,30 @@ model UserMission {
   user         User          @relation(fields: [user_id], references: [id])
 
   @@unique([user_id, mission_id])
+}
+
+model ShrineTravelLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  shrine_id  Int
+  content    String   @db.VarChar(1000)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user       User     @relation(fields: [user_id], references: [id])
+  shrine     Shrine   @relation(fields: [shrine_id], references: [id])
+
+  @@unique([user_id, shrine_id])
+}
+
+model DietyTravelLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  diety_id   Int
+  content    String   @db.VarChar(1000)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user       User     @relation(fields: [user_id], references: [id])
+  diety      Diety    @relation(fields: [diety_id], references: [id])
+
+  @@unique([user_id, diety_id])
 }
