@@ -97,7 +97,10 @@ const authLimiter = rateLimit({
     const isSeedAdminApi = req.path.startsWith('/admin/') && req.headers['x-seed-mode'] === 'true';
     const isSeedApi = req.path.startsWith('/admin/') && (req.headers['x-seed-mode'] === 'true' || req.headers['x-user-id']);
 
-    const shouldSkip = isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi || isSeedApi;
+    // シードモードヘッダーがある場合は、すべてのAPIをスキップ
+    const isSeedModeRequest = req.headers['x-seed-mode'] === 'true';
+
+    const shouldSkip = isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi || isSeedApi || isSeedModeRequest;
 
     // デバッグログ（一時的）
     if (req.path.includes('/simulate-date') || req.path.includes('/ranking-awards')) {
@@ -113,6 +116,7 @@ const authLimiter = rateLimit({
         isSeedUserApi,
         isSeedAdminApi,
         isSeedApi,
+        isSeedModeRequest,
         shouldSkip,
         headers: {
           'x-seed-mode': req.headers['x-seed-mode'],
