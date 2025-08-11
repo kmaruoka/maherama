@@ -17,6 +17,8 @@ export default function ActivatePage() {
   useEffect(() => {
     const activateAccount = async () => {
       const token = searchParams.get('token');
+      console.log('[ActivatePage] Token:', token);
+      console.log('[ActivatePage] API_BASE:', API_BASE);
 
       if (!token) {
         setStatus('error');
@@ -25,12 +27,16 @@ export default function ActivatePage() {
       }
 
       try {
+        console.log('[ActivatePage] Sending activation request...');
         const response = await apiCall(`${API_BASE}/auth/activate`, {
           method: 'POST',
           body: JSON.stringify({ token }),
+          requireAuth: false, // アカウント有効化は認証不要
         });
 
+        console.log('[ActivatePage] Response status:', response.status);
         const data = await response.json();
+        console.log('[ActivatePage] Response data:', data);
 
         if (data.success) {
           setStatus('success');
@@ -49,7 +55,7 @@ export default function ActivatePage() {
           setMessage(data.error || 'アカウント有効化に失敗しました。');
         }
       } catch (error) {
-        console.error('Activation error:', error);
+        console.error('[ActivatePage] Activation error:', error);
         setStatus('error');
         setMessage('ネットワークエラーが発生しました。');
       }
