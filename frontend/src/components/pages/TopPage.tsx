@@ -123,13 +123,19 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
       if (result.success && result.data) {
         console.log('ログイン成功:', result.data);
 
-        // セキュアな認証システムを使用
-        login(result.data.token, {
-          id: result.data.user.id,
-          name: result.data.user.name,
-          email: result.data.user.email
-        });
-        onLogin();
+        // apiCallWithToastの戻り値構造に合わせて修正
+        const apiData = result.data;
+        if (apiData.success && apiData.data) {
+          // セキュアな認証システムを使用
+          login(apiData.data.token, {
+            id: apiData.data.user.id,
+            name: apiData.data.user.name,
+            email: apiData.data.user.email
+          });
+          onLogin();
+        } else {
+          setLoginErrors({ general: apiData.message || 'ログインに失敗しました' });
+        }
       } else {
         setLoginErrors({ general: result.message || 'ログインに失敗しました' });
       }
