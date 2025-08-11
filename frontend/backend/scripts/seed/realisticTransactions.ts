@@ -374,12 +374,10 @@ async function awardRankingTitles(
 // シード処理完了後に称号を付与する関数（サーバーAPI呼び出し）
 async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
   // 元の環境変数を保存
-  const originalNodeEnv = process.env.NODE_ENV;
   const originalSeedMode = process.env.SEED_MODE;
 
   // シードモードを有効化（レート制限をスキップするため）
   process.env.SEED_MODE = 'true';
-  process.env.NODE_ENV = 'development';
 
   // サーバー側のシードモードも有効化
   try {
@@ -433,7 +431,7 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
       console.error(`📡 レスポンス:`, error.response.data);
     }
     } finally {
-    // サーバー側のシードモードを無効化
+        // サーバー側のシードモードを無効化
     try {
       await axios.post(`http://localhost:${API_PORT}/api/seed-mode`, {
         enabled: false
@@ -448,12 +446,6 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
     }
 
     // 環境変数を元に戻す
-    if (originalNodeEnv) {
-      process.env.NODE_ENV = originalNodeEnv;
-    } else {
-      delete process.env.NODE_ENV;
-    }
-
     if (originalSeedMode) {
       process.env.SEED_MODE = originalSeedMode;
     } else {
@@ -464,12 +456,12 @@ async function awardTitlesAfterSeed(prisma: PrismaClient, adminUserId: number) {
 
 export async function seedRealisticTransactions(prisma: PrismaClient) {
   // 元の環境変数を保存
-  const originalNodeEnv = process.env.NODE_ENV;
   const originalSeedMode = process.env.SEED_MODE;
 
-  // シードモードを有効化（レート制限をスキップするため）
+    // シードモードを有効化（レート制限をスキップするため）
   process.env.SEED_MODE = 'true';
-  process.env.NODE_ENV = 'development';
+
+  console.log(`🌱 シード処理開始 - SEED_MODE: ${process.env.SEED_MODE}`);
 
   // サーバー側のシードモードも有効化
   try {
@@ -721,19 +713,13 @@ export async function seedRealisticTransactions(prisma: PrismaClient) {
     console.warn('⚠️ サーバー側のシードモード無効化に失敗しましたが、続行します:', error.message);
   }
 
-  // 環境変数を元に戻す
-  if (originalNodeEnv) {
-    process.env.NODE_ENV = originalNodeEnv;
-  } else {
-    delete process.env.NODE_ENV;
-  }
-
+    // 環境変数を元に戻す
   if (originalSeedMode) {
     process.env.SEED_MODE = originalSeedMode;
   } else {
     delete process.env.SEED_MODE;
   }
 
-  console.log(`🌱 シードモードをクリアしました (NODE_ENV: ${process.env.NODE_ENV || 'undefined'})`);
+  console.log('🌱 シードモードをクリアしました');
 }
 

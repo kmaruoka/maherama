@@ -86,8 +86,8 @@ const authLimiter = rateLimit({
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown';
 
-    // シード処理中のAPIコールもスキップ
-    const isSeedMode = process.env.NODE_ENV === 'development' && process.env.SEED_MODE === 'true';
+        // シード処理中のAPIコールもスキップ
+    const isSeedMode = process.env.SEED_MODE === 'true';
     const isAdminApiCall = req.path.startsWith('/admin/') && req.headers['x-admin-api-key'];
     const isSimulationApi = req.path.startsWith('/api/simulate-date') || req.path.startsWith('/api/simulation/');
     const isSeedModeApi = req.path === '/api/seed-mode';
@@ -95,17 +95,11 @@ const authLimiter = rateLimit({
     const isSeedApiCall = req.headers['x-user-id'] && req.headers['x-seed-mode'] === 'true';
     const isSeedUserApi = req.headers['x-user-id'] && (req.path.includes('/pray') || req.path.includes('/remote-pray'));
     const isSeedAdminApi = req.path.startsWith('/admin/') && req.headers['x-seed-mode'] === 'true';
+    const isSeedApi = req.path.startsWith('/admin/') && (req.headers['x-seed-mode'] === 'true' || req.headers['x-user-id']);
 
-    // デバッグ用ログ
-    if (req.headers['x-seed-mode'] || req.headers['x-user-id']) {
-      console.log(`🌱 Seed API call detected: ${req.method} ${req.path}, headers:`, {
-        'x-seed-mode': req.headers['x-seed-mode'],
-        'x-user-id': req.headers['x-user-id'],
-        'x-admin-api-key': req.headers['x-admin-api-key'] ? 'present' : 'absent'
-      });
-    }
+    const shouldSkip = isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi || isSeedApi;
 
-    return isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi;
+    return shouldSkip;
   }
 });
 
