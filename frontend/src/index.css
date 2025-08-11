@@ -1186,7 +1186,7 @@ nav.d-flex.position-fixed {
 /* ===== CATALOG PAGE ===== */
 .catalog-page__card-container {
   width: 100%;
-  height: calc(100vh - 220px);
+  height: calc(100vh - 206px);
   overflow: hidden;
   box-sizing: border-box;
   overflow-x: auto;

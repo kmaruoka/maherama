@@ -8,6 +8,7 @@ import SetPasswordPage from './components/pages/SetPasswordPage';
 import TermsPage from './components/pages/TermsPage';
 import TopPage from './components/pages/TopPage';
 import { useSecureAuth } from './config/api';
+import { ModalProvider } from './contexts/ModalContext';
 import { useSkin } from './skins/SkinContext';
 
 function App() {
@@ -63,27 +64,29 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        {/* 認証不要なルート */}
-        <Route path="/activate" element={<ActivatePage />} />
-        <Route path="/set-password" element={<SetPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <ModalProvider>
+        <Routes>
+          {/* 認証不要なルート */}
+          <Route path="/activate" element={<ActivatePage />} />
+          <Route path="/set-password" element={<SetPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-        {/* 認証が必要なルート */}
-        <Route
-          path="/"
-          element={
-            authStatus ? (
-              <AppMain onLogout={handleLogout} />
-            ) : (
-              <UnauthenticatedApp />
-            )
-          }
-        />
+          {/* 認証が必要なルート */}
+          <Route
+            path="/"
+            element={
+              authStatus ? (
+                <AppMain onLogout={handleLogout} />
+              ) : (
+                <UnauthenticatedApp />
+              )
+            }
+          />
 
-        {/* その他のルートはリダイレクト */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* その他のルートはリダイレクト */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ModalProvider>
     </Router>
   );
 }

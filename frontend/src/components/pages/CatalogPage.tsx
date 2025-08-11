@@ -7,9 +7,9 @@ import { FixedSizeList as List } from 'react-window';
 import { useDietyList } from '../../hooks/useDietyList';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useShrineList } from '../../hooks/useShrineList';
-import CardGrid from '../atoms/CardGrid';
+import GridCardContainer from '../atoms/GridCardContainer';
 import PageLayout from '../atoms/PageLayout';
-import CustomCatalogCard from '../molecules/CustomCatalogCard';
+import CatalogGridCard from '../molecules/CatalogGridCard';
 import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
 
 interface Item {
@@ -89,34 +89,24 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
     const cardGrid = document.querySelector('.card-grid');
     const listContainer = document.querySelector('.catalog-page__list-container');
 
-
-
     if (cardGrid) {
       const computedStyle = getComputedStyle(cardGrid);
-
     }
 
     if (listContainer) {
       const computedStyle = getComputedStyle(listContainer);
-
     }
-
-
   }, [sorted.length, style]);
 
   const renderItem = useCallback((item: Item & { image_url?: string }) => {
-
-
     return (
-      <CustomCatalogCard
+      <CatalogGridCard
         key={item.id}
         name={item.name}
         count={item.count}
         catalogedAt={item.catalogedAt || ''}
         lastPrayedAt={item.lastPrayedAt}
         onClick={() => handleItemClick(item)}
-        countLabel={t('prayCount')}
-        type={tab === 'diety' ? 'diety' : 'shrine'}
         image_url={item.image_url}
         image_url_s={item.image_url_s}
         image_url_m={item.image_url_m}
@@ -176,14 +166,14 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
       )}
 
       {style === 'card' ? (
-        <div style={{ flex: 1, minHeight: 0, height: 'calc(100vh - 200px)' }}>
-          <CardGrid
-            items={sorted}
-            renderItem={renderItem}
-            emptyMessage="アイテムがありません"
-            style={{ height: '100%', width: '100%' }}
-          />
-        </div>
+        <GridCardContainer
+          items={sorted}
+          renderItem={renderItem}
+          cardWidth={114}
+          cardHeight={200}
+          gap={4}
+          emptyMessage="アイテムがありません"
+        />
       ) : (
         <>
           {/* ヘッダ行 */}

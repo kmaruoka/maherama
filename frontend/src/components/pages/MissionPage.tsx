@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react';
-import { useMissions } from '../../hooks/useMissions';
-import { useEvents } from '../../hooks/useEvents';
-import { useSkin } from '../../skins/SkinContext';
-import Tabs from 'react-bootstrap/Tabs';
+import React, { useCallback } from 'react';
 import Tab from 'react-bootstrap/Tab';
+import Tabs from 'react-bootstrap/Tabs';
+import { useEvents } from '../../hooks/useEvents';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
-import MissionCard from '../molecules/MissionCard';
-import CardGrid from '../atoms/CardGrid';
+import { useMissions } from '../../hooks/useMissions';
+import { useSkin } from '../../skins/SkinContext';
+import GridCardContainer from '../atoms/GridCardContainer';
 import PageLayout from '../atoms/PageLayout';
+import MissionGridCard from '../molecules/MissionGridCard';
 import './MissionPage.css';
 
 interface MissionPageProps {
@@ -62,10 +62,10 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
       </Tabs>
 
         {tab === 'permanent' && (
-          <CardGrid
+          <GridCardContainer
             items={permanentMissions}
             renderItem={(mission) => (
-              <MissionCard
+              <MissionGridCard
                 key={mission.id}
                 mission={mission}
                 onClick={() => handleMissionClick(mission)}
@@ -75,15 +75,14 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
             cardHeight={200}
             gap={4}
             emptyMessage="常設ミッションがありません"
-            style={{ flex: 1, minHeight: 0 }}
           />
         )}
 
         {tab === 'event' && (
-          <CardGrid
+          <GridCardContainer
             items={eventMissions}
             renderItem={(mission) => (
-              <MissionCard
+              <MissionGridCard
                 key={mission.id}
                 mission={mission}
                 onClick={() => handleMissionClick(mission)}
@@ -93,7 +92,6 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
             cardHeight={200}
             gap={4}
             emptyMessage="限定ミッションがありません"
-            style={{ flex: 1, minHeight: 0 }}
           />
         )}
     </PageLayout>

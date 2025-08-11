@@ -1,0 +1,152 @@
+/* グリッドカードベーススタイル */
+.grid-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.5rem;
+  background: var(--color-card, #fffde7);
+  border: 1px solid var(--color-border, #bfa14a);
+  overflow: hidden;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+/* サイズバリアント */
+.grid-card--small {
+  width: 114px;
+  height: 180px;
+  min-width: 114px;
+  max-width: 114px;
+  font-size: 0.75rem;
+}
+
+.grid-card--medium {
+  width: 162px;
+  height: 252px;
+  min-width: 162px;
+  max-width: 162px;
+  font-size: 0.8rem;
+}
+
+.grid-card--large {
+  width: 240px;
+  height: 320px;
+  min-width: 240px;
+  max-width: 240px;
+  font-size: 0.9rem;
+}
+
+/* バリアント */
+.grid-card--default {
+  box-shadow: 0 2px 8px rgba(80,60,10,0.08);
+}
+
+.grid-card--elevated {
+  box-shadow: 0 4px 16px rgba(80,60,10,0.16);
+}
+
+/* クリック可能状態 */
+.grid-card--clickable {
+  cursor: pointer;
+}
+
+.grid-card--clickable:hover {
+  box-shadow: 0 4px 16px rgba(80,60,10,0.16);
+  transform: translateY(-1px);
+}
+
+.grid-card--clickable:focus {
+  outline: 2px solid var(--color-primary, #bfa14a);
+  outline-offset: 2px;
+}
+
+/* 無効状態 */
+.grid-card--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.grid-card--disabled:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(80,60,10,0.08);
+}
+
+/* サムネイル */
+.grid-card__thumbnail {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.grid-card__thumbnail img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ボディ */
+.grid-card__body {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 6px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  background: transparent;
+}
+
+/* タイトル */
+.grid-card__title {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 0.1rem;
+  min-height: 1.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 説明 */
+.grid-card__description {
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .grid-card--small {
+    width: 100px;
+    height: 150px;
+    min-width: 100px;
+    font-size: 0.7rem;
+  }
+
+  .grid-card--medium {
+    width: 140px;
+    height: 220px;
+    min-width: 140px;
+    font-size: 0.75rem;
+  }
+
+  .grid-card--large {
+    width: 200px;
+    height: 280px;
+    min-width: 200px;
+    font-size: 0.85rem;
+  }
+}

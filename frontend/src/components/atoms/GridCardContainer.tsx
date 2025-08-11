@@ -1,7 +1,7 @@
 import React from 'react';
-import './CardGrid.css';
+import './GridCardContainer.css';
 
-export interface CardGridProps<T> {
+export interface GridCardContainerProps<T> {
   items: T[];
   renderItem: (item: T, index: number) => React.ReactNode;
   cardWidth?: number;
@@ -16,7 +16,7 @@ export interface CardGridProps<T> {
   errorMessage?: string;
 }
 
-const CardGrid = <T extends any>({
+const GridCardContainer = <T extends any>({
   items,
   renderItem,
   cardWidth,
@@ -29,12 +29,12 @@ const CardGrid = <T extends any>({
   loadingMessage = '読み込み中...',
   error = null,
   errorMessage = 'エラーが発生しました'
-}: CardGridProps<T>) => {
+}: GridCardContainerProps<T>) => {
   // ローディング状態
   if (loading) {
     return (
-      <div className={`card-grid card-grid--loading ${className}`}>
-        <div className="card-grid__loading">{loadingMessage}</div>
+      <div className={`grid-card-container grid-card-container--loading ${className}`}>
+        <div className="grid-card-container__loading">{loadingMessage}</div>
       </div>
     );
   }
@@ -42,8 +42,8 @@ const CardGrid = <T extends any>({
   // エラー状態
   if (error) {
     return (
-      <div className={`card-grid card-grid--error ${className}`}>
-        <div className="card-grid__error">{errorMessage}</div>
+      <div className={`grid-card-container grid-card-container--error ${className}`}>
+        <div className="grid-card-container__error">{errorMessage}</div>
       </div>
     );
   }
@@ -51,8 +51,8 @@ const CardGrid = <T extends any>({
   // 空の状態
   if (items.length === 0) {
     return (
-      <div className={`card-grid card-grid--empty ${className}`}>
-        <div className="card-grid__empty">{emptyMessage}</div>
+      <div className={`grid-card-container grid-card-container--empty ${className}`}>
+        <div className="grid-card-container__empty">{emptyMessage}</div>
       </div>
     );
   }
@@ -71,9 +71,9 @@ const CardGrid = <T extends any>({
 
   // 通常のグリッド表示
   return (
-    <div className={`card-grid ${className}`} style={gridStyle}>
+    <div className={`grid-card-container ${className}`} style={gridStyle}>
       {items.map((item, index) => (
-        <div key={index} className="card-grid__cell">
+        <div key={index} className="grid-card-container__cell">
           {renderItem(item, index)}
         </div>
       ))}
@@ -81,4 +81,4 @@ const CardGrid = <T extends any>({
   );
 };
 
-export default CardGrid;
+export default GridCardContainer;

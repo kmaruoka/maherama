@@ -1,8 +1,8 @@
 /* ミッションカード固有のスタイル */
 .mission-card {
-  width: var(--mission-card-width, 114px);
-  height: var(--mission-card-height, 200px);
-  min-width: var(--mission-card-width, 114px);
+  width: 100%;
+  height: 200px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

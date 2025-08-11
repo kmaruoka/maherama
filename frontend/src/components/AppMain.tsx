@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Modal } from 'react-bootstrap';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { useSecureAuth } from '../config/api';
-import useLocalStorageState from '../hooks/useLocalStorageState';
+import { useModal } from '../contexts/ModalContext';
 import { useSkin } from '../skins/SkinContext';
 import CustomLink from './atoms/CustomLink';
 import DietyPage from './organisms/DietyPane';
@@ -19,15 +19,6 @@ import SettingsPage from './pages/SettingsPage';
 import SubmenuPage from './pages/SubmenuPage';
 import TermsPage from './pages/TermsPage';
 import UserPage from './pages/UserPage';
-
-type ModalType = { type: 'shrine' | 'diety' | 'user' | 'mission', id: number } | null;
-
-// ナビゲーション履歴の型
-interface NavigationHistoryItem {
-  type: 'shrine' | 'diety' | 'user' | 'mission';
-  id: number;
-  name: string;
-}
 
 // モーダルヘッダーコンポーネント
 function ModalHeader({
@@ -106,21 +97,34 @@ interface AppMainProps {
 }
 
 const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
-  const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction'>('map');
-  const [modal, setModal] = useState<ModalType>(null);
-  const [currentUserId, setCurrentUserId] = useLocalStorageState<number | null>('userId', null);
+  const [page, setPage] = React.useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction'>('map');
   const { logout, isAuthenticated } = useSecureAuth();
+  const {
+    modal,
+    currentUserId,
+    openModal,
+    closeModal,
+    goBack,
+    goForward,
+    canGoBack,
+    canGoForward,
+    getPreviousItemName,
+    getNextItemName,
+    getPreviousItemType,
+    getNextItemType,
+    updateCurrentModalName,
+    setCurrentUserId
+  } = useModal();
   useSkin();
 
   // 認証状態の初期化
   useEffect(() => {
-    // リロード時に認証トークンが存在する場合は認証状態を復元
     if (isAuthenticated()) {
       const userData = localStorage.getItem('user_data');
       if (userData) {
         try {
           const parsedUserData = JSON.parse(userData);
-          if (parsedUserData && parsedUserData.id && !currentUserId) {
+          if (parsedUserData && parsedUserData.id) {
             setCurrentUserId(parsedUserData.id);
           }
         } catch (error) {
@@ -128,16 +132,9 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
         }
       }
     } else {
-      // 認証されていない場合はユーザーIDもクリア
-      if (currentUserId) {
-        setCurrentUserId(null);
-      }
+      setCurrentUserId(null);
     }
-  }, [isAuthenticated]);
-
-  // ナビゲーション履歴の管理
-  const [navigationHistory, setNavigationHistory] = useState<NavigationHistoryItem[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  }, [isAuthenticated, setCurrentUserId]);
 
   // 各ペインコンポーネントへのref
   const shrinePaneRef = useRef<{ backToOverview: () => void; getTitle: () => string }>(null);
@@ -148,130 +145,16 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
 
   // ログアウト処理
   const handleLogout = () => {
-    // モーダルとナビゲーション履歴をクリア
-    setModal(null);
-    setNavigationHistory([]);
-    setHistoryIndex(-1);
-
-    // SecureTokenManagerでログアウト処理
+    closeModal();
     logout();
-
-    // その他のlocalStorageをクリア
     localStorage.removeItem('debugMode');
     localStorage.removeItem('maxShrineDisplay');
     localStorage.removeItem('skinName');
     localStorage.removeItem('barrierName');
     localStorage.removeItem('debugMapCenter');
-    localStorage.removeItem('userId'); // 古いユーザーIDもクリア
-
-    // ユーザーIDをクリア
+    localStorage.removeItem('userId');
     setCurrentUserId(null);
-
-    // 親コンポーネントにログアウトを通知
     onLogout();
-  };
-
-  // ナビゲーション履歴の管理関数
-  const addToHistory = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, name: string) => {
-    const newItem: NavigationHistoryItem = { type, id, name };
-
-    // 現在の位置より後の履歴を削除し、新しい項目を追加
-    const newHistory = navigationHistory.slice(0, historyIndex + 1);
-    newHistory.push(newItem);
-
-    setNavigationHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const goBack = () => {
-    if (historyIndex > 0) {
-      const prevItem = navigationHistory[historyIndex - 1];
-      setHistoryIndex(historyIndex - 1);
-      setModal({ type: prevItem.type, id: prevItem.id });
-    }
-  };
-
-  const goForward = () => {
-    if (historyIndex < navigationHistory.length - 1) {
-      const nextItem = navigationHistory[historyIndex + 1];
-      setHistoryIndex(historyIndex + 1);
-      setModal({ type: nextItem.type, id: nextItem.id });
-    }
-  };
-
-  // モーダルが閉じられた時に履歴をクリア
-  const closeModal = () => {
-    setModal(null);
-    setNavigationHistory([]);
-    setHistoryIndex(-1);
-  };
-
-  // 前のアイテム名を取得
-  const getPreviousItemName = () => {
-    if (historyIndex > 0) {
-      return navigationHistory[historyIndex - 1].name;
-    }
-    return '';
-  };
-
-  // 次のアイテム名を取得
-  const getNextItemName = () => {
-    if (historyIndex < navigationHistory.length - 1) {
-      return navigationHistory[historyIndex + 1].name;
-    }
-    return '';
-  };
-
-  // 前のアイテムタイプを取得
-  const getPreviousItemType = (): 'shrine' | 'diety' | 'user' | 'mission' => {
-    if (historyIndex > 0) {
-      return navigationHistory[historyIndex - 1].type;
-    }
-    return 'shrine'; // デフォルト値
-  };
-
-  // 次のアイテムタイプを取得
-  const getNextItemType = (): 'shrine' | 'diety' | 'user' | 'mission' => {
-    if (historyIndex < navigationHistory.length - 1) {
-      return navigationHistory[historyIndex + 1].type;
-    }
-    return 'shrine'; // デフォルト値
-  };
-
-  // 履歴追加機能付きモーダル遷移
-  const navigateToModal = (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, clearHistory: boolean = false) => {
-    let name = '';
-
-    // 現在のデータから名前を取得
-    if (type === 'shrine') {
-      name = '神社';
-    } else if (type === 'diety') {
-      name = '神様';
-    } else if (type === 'user') {
-      name = 'ユーザー';
-    } else if (type === 'mission') {
-      name = `ミッション #${id}`;
-    } else {
-      // データが未取得の場合は一時的な名前を設定
-      name = type === 'shrine' ? '神社' : type === 'diety' ? '神様' : type === 'user' ? 'ユーザー' : 'ミッション';
-    }
-
-    if (clearHistory) {
-      // 履歴をクリアして新しい項目を追加
-      setNavigationHistory([{ type, id, name }]);
-      setHistoryIndex(0);
-    } else {
-      // 同じアイテムが既に現在の位置にある場合は履歴を追加しない
-      const currentItem = navigationHistory[historyIndex];
-      if (currentItem && currentItem.type === type && currentItem.id === id) {
-        setModal({ type, id });
-        return;
-      }
-
-      addToHistory(type, id, name);
-    }
-
-    setModal({ type, id });
   };
 
   // モーダルタイトルを取得
@@ -280,14 +163,14 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
 
     switch (modal.type) {
       case 'shrine':
-        return shrinePaneRef.current?.getTitle() || '神社';
+        return shrinePaneRef.current?.getTitle() || '';
       case 'diety':
-        return dietyPaneRef.current?.getTitle() || '神様';
+        return dietyPaneRef.current?.getTitle() || '';
       case 'user':
         if (modal.id === currentUserId) {
-          return myPageRef.current?.getTitle() || 'マイページ';
+          return myPageRef.current?.getTitle() || '';
         } else {
-          return userPaneRef.current?.getTitle() || 'ユーザー';
+          return userPaneRef.current?.getTitle() || '';
         }
       case 'mission':
         return `ミッション #${modal.id}`;
@@ -306,7 +189,6 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
         dietyPaneRef.current?.backToOverview();
         break;
       case 'user':
-        // 自分かどうかで分岐
         if (modal.id === currentUserId) {
           myPageRef.current?.backToOverview();
         } else {
@@ -323,11 +205,11 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
   const renderPage = () => {
     switch (page) {
       case 'map':
-        return <MapPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowUser={(id: number) => navigateToModal('user', id)} />;
+        return <MapPage onShowShrine={(id: number) => openModal('shrine', id)} onShowUser={(id: number) => openModal('user', id)} />;
       case 'catalog':
-        return <CatalogPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowDiety={(id: number) => navigateToModal('diety', id)} onShowUser={(id: number) => navigateToModal('user', id)} />;
+        return <CatalogPage onShowShrine={(id: number) => openModal('shrine', id)} onShowDiety={(id: number) => openModal('diety', id)} onShowUser={(id: number) => openModal('user', id)} />;
       case 'user':
-        return <UserPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowDiety={(id: number) => navigateToModal('diety', id)} onShowUser={(id: number) => navigateToModal('user', id)} />;
+        return <UserPage onShowShrine={(id: number) => openModal('shrine', id)} onShowDiety={(id: number) => openModal('diety', id)} onShowUser={(id: number) => openModal('user', id)} />;
       case 'settings':
         return <SettingsPage onLogout={handleLogout} />;
       case 'submenu':
@@ -338,7 +220,7 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
           />
         );
       case 'mission':
-        return <MissionPage onShowShrine={(id: number) => navigateToModal('shrine', id)} onShowDiety={(id: number) => navigateToModal('diety', id)} onShowMission={(id: number) => navigateToModal('mission', id)} />;
+        return <MissionPage onShowShrine={(id: number) => openModal('shrine', id)} onShowDiety={(id: number) => openModal('diety', id)} onShowMission={(id: number) => openModal('mission', id)} />;
       case 'terms':
         return <TermsPage />;
       case 'commercial-transaction':
@@ -347,33 +229,6 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
         return null;
     }
   };
-
-  // データ取得後に履歴の名前を更新
-  React.useEffect(() => {
-    if (modal && navigationHistory.length > 0 && historyIndex >= 0) {
-      let updatedName = '';
-
-      if (modal.type === 'shrine') {
-        updatedName = shrinePaneRef.current?.getTitle() || '神社';
-      } else if (modal.type === 'diety') {
-        updatedName = dietyPaneRef.current?.getTitle() || '神様';
-      } else if (modal.type === 'user') {
-        if (modal.id === currentUserId) {
-          updatedName = myPageRef.current?.getTitle() || 'マイページ';
-        } else {
-          updatedName = userPaneRef.current?.getTitle() || 'ユーザー';
-        }
-      } else if (modal.type === 'mission') {
-        updatedName = `ミッション #${modal.id}`;
-      }
-
-      if (updatedName && navigationHistory[historyIndex]?.name !== updatedName) {
-        const updatedHistory = [...navigationHistory];
-        updatedHistory[historyIndex] = { ...updatedHistory[historyIndex], name: updatedName };
-        setNavigationHistory(updatedHistory);
-      }
-    }
-  }, [modal, navigationHistory, historyIndex, currentUserId]);
 
   return (
     <div className="app">
@@ -393,8 +248,8 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     title={getModalTitle()}
                     onBack={closeModal}
                     onTitleClick={handleBackToOverview}
-                    canGoBack={historyIndex > 0}
-                    canGoForward={historyIndex < navigationHistory.length - 1}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
                     onGoBack={goBack}
                     onGoForward={goForward}
                     getPreviousItemName={getPreviousItemName}
@@ -406,8 +261,9 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     <ShrinePane
                       ref={shrinePaneRef}
                       id={modal.id}
-                      onShowDiety={id => navigateToModal('diety', id)}
-                      onShowUser={id => navigateToModal('user', id)}
+                      onShowDiety={(id: number) => openModal('diety', id)}
+                      onShowUser={(id: number) => openModal('user', id)}
+                      onDataLoaded={updateCurrentModalName}
                       onDetailViewChange={(detailView) => {
                         const contentElement = document.querySelector('.modal__content');
                         if (contentElement) {
@@ -428,8 +284,8 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     title={getModalTitle()}
                     onBack={closeModal}
                     onTitleClick={handleBackToOverview}
-                    canGoBack={historyIndex > 0}
-                    canGoForward={historyIndex < navigationHistory.length - 1}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
                     onGoBack={goBack}
                     onGoForward={goForward}
                     getPreviousItemName={getPreviousItemName}
@@ -441,8 +297,9 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     <DietyPage
                       ref={dietyPaneRef}
                       id={modal.id}
-                      onShowShrine={id => navigateToModal('shrine', id)}
-                      onShowUser={id => navigateToModal('user', id)}
+                      onShowShrine={(id: number) => openModal('shrine', id)}
+                      onShowUser={(id: number) => openModal('user', id)}
+                      onDataLoaded={updateCurrentModalName}
                       onDetailViewChange={(detailView) => {
                         const contentElement = document.querySelector('.modal__content');
                         if (contentElement) {
@@ -463,8 +320,8 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     title={getModalTitle()}
                     onBack={closeModal}
                     onTitleClick={handleBackToOverview}
-                    canGoBack={historyIndex > 0}
-                    canGoForward={historyIndex < navigationHistory.length - 1}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
                     onGoBack={goBack}
                     onGoForward={goForward}
                     getPreviousItemName={getPreviousItemName}
@@ -476,17 +333,19 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     {modal.id === currentUserId ? (
                       <MyPage
                         ref={myPageRef}
-                        onShowShrine={id => navigateToModal('shrine', id)}
-                        onShowDiety={id => navigateToModal('diety', id)}
-                        onShowUser={id => navigateToModal('user', id)}
+                        onShowShrine={(id: number) => openModal('shrine', id)}
+                        onShowDiety={(id: number) => openModal('diety', id)}
+                        onShowUser={(id: number) => openModal('user', id)}
+                        onDataLoaded={updateCurrentModalName}
                       />
                     ) : (
                       <UserPane
                         ref={userPaneRef}
                         id={modal.id}
-                        onShowShrine={id => navigateToModal('shrine', id)}
-                        onShowDiety={id => navigateToModal('diety', id)}
-                        onShowUser={id => navigateToModal('user', id)}
+                        onShowShrine={(id: number) => openModal('shrine', id)}
+                        onShowDiety={(id: number) => openModal('diety', id)}
+                        onShowUser={(id: number) => openModal('user', id)}
+                        onDataLoaded={updateCurrentModalName}
                       />
                     )}
                   </div>
@@ -498,8 +357,8 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     title={getModalTitle()}
                     onBack={closeModal}
                     onTitleClick={handleBackToOverview}
-                    canGoBack={historyIndex > 0}
-                    canGoForward={historyIndex < navigationHistory.length - 1}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
                     onGoBack={goBack}
                     onGoForward={goForward}
                     getPreviousItemName={getPreviousItemName}
@@ -519,9 +378,9 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
         )}
       </div>
       <LogPane
-        onShowShrine={(id: number) => navigateToModal('shrine', id)}
-        onShowDiety={(id: number) => navigateToModal('diety', id)}
-        onShowUser={(id: number) => navigateToModal('user', id)}
+        onShowShrine={(id: number) => openModal('shrine', id)}
+        onShowDiety={(id: number) => openModal('diety', id)}
+        onShowUser={(id: number) => openModal('user', id)}
       />
       <MenuPane setPage={setPage} page={page} isDialogOpen={modal !== null} />
     </div>

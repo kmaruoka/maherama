@@ -5,6 +5,7 @@ import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-i
 import { formatDistance } from '../../../backend/shared/utils/distance';
 import { API_BASE, apiCall, apiCallWithToast } from '../../config/api';
 import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
+import { useModal } from '../../contexts/ModalContext';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
 import { useImageManagement } from '../../hooks/useImageManagement';
@@ -59,8 +60,8 @@ export interface ShrinePaneRef {
   getTitle: () => string;
 }
 
-const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void }>(
-  ({ id, onShowDiety, onShowUser, onClose, onDetailViewChange }, ref) => {
+const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: number) => void; onShowUser?: (id: number) => void; onClose?: () => void; onDetailViewChange?: (detailView: DetailViewType) => void; onDataLoaded?: (name: string) => void }>(
+  ({ id, onShowDiety, onShowUser, onClose, onDetailViewChange, onDataLoaded }, ref) => {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { data } = useShrineDetail(id);
@@ -74,6 +75,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const [debugMode] = useLocalStorageState('debugMode', false);
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
   const [detailView, setDetailView] = useState<DetailViewType>('overview');
+  const { updateCurrentModalName } = useModal();
 
   // detailViewが変更されたときに親コンポーネントに通知
   useEffect(() => {
@@ -120,10 +122,22 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     queryKeys: ['shrine', String(id), 'shrines-all']
   });
 
+  // データ取得後にgetTitleメソッドを更新
+  useEffect(() => {
+    if (data?.name) {
+      // データが取得されたら、親コンポーネントに通知してナビゲーション履歴を更新
+      const title = data.kana ? `${data.name}(${data.kana})` : data.name;
+      updateCurrentModalName(title);
+    }
+  }, [data?.name, data?.kana, updateCurrentModalName]);
+
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
     backToOverview: () => setDetailView('overview'),
-    getTitle: () => data?.name || '神社'
+    getTitle: () => {
+      if (!data?.name) return '';
+      return data.kana ? `${data.name}(${data.kana})` : data.name;
+    }
   }));
 
   useEffect(() => {
