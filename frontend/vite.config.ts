@@ -1,5 +1,5 @@
-import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,13 +17,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-hot-toast'],
+          vendor: ['react', 'react-dom'],
           ui: ['react-bootstrap', 'bootstrap'],
         },
       },
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-bootstrap', 'bootstrap', 'react-hot-toast'],
+    include: ['react', 'react-dom', 'react-bootstrap', 'bootstrap'],
   },
 })
