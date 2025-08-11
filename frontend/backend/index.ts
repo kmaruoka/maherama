@@ -84,7 +84,7 @@ const authLimiter = rateLimit({
   skip: (req) => {
     // localhostからのアクセスはレート制限をスキップ
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown';
+    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost' || ip === 'unknown';
 
         // シード処理中のAPIコールもスキップ
     const isSeedMode = process.env.SEED_MODE === 'true';
@@ -102,6 +102,7 @@ const authLimiter = rateLimit({
     // デバッグログ（一時的）
     if (req.path.includes('/simulate-date') || req.path.includes('/ranking-awards')) {
       console.log(`🔍 Rate limit check for ${req.method} ${req.path}:`, {
+        ip,
         isLocalhost,
         isSeedMode,
         isAdminApiCall,
