@@ -3,7 +3,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { formatDistance } from '../../../backend/shared/utils/distance';
-import { API_BASE, apiCall } from '../../config/api';
+import { API_BASE, apiCall, apiCallWithToast } from '../../config/api';
 import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
@@ -301,19 +301,21 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       if (currentPosition) {
         body = JSON.stringify({ lat: currentPosition[0], lng: currentPosition[1] });
       }
-      const res = await apiCall(`${API_BASE}/shrines/${id}/pray`, {
+      const result = await apiCallWithToast(`${API_BASE}/shrines/${id}/pray`, {
         method: 'POST',
         body,
-      });
-      return res.json();
+      }, showToast);
+      return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-      queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
-      queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
-      queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
-      setRankRefreshKey(k => k + 1); // ランキングも再取得
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
+        queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+        queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
+        queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
+        queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
+        setRankRefreshKey(k => k + 1); // ランキングも再取得
+      }
     },
     onSettled: async () => {
       // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
@@ -329,18 +331,20 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   const remotePrayMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiCall(`${API_BASE}/shrines/${id}/remote-pray`, {
+      const result = await apiCallWithToast(`${API_BASE}/shrines/${id}/remote-pray`, {
         method: 'POST',
-      });
-      return response.json();
+      }, showToast);
+      return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-      queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
-      queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
-      queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
-      setRankRefreshKey(k => k + 1); // ランキングも再取得
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
+        queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+        queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
+        queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
+        queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
+        setRankRefreshKey(k => k + 1); // ランキングも再取得
+      }
     },
     onSettled: async () => {
       // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
@@ -361,18 +365,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   // 画像ごとの投票
   const handleImageVote = async (imageId: number) => {
-    try {
-      const response = await apiCall(`${API_BASE}/shrines/${id}/images/${imageId}/vote`, {
-        method: 'POST',
-      });
-      const result = await response.json();
+    const result = await apiCallWithToast(`${API_BASE}/shrines/${id}/images/${imageId}/vote`, {
+      method: 'POST',
+    }, showToast);
+
+    if (result.success) {
       setRankRefreshKey(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['shrine', id] });
       queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-      showToast(t('voteSuccess'), 'success');
-    } catch (error) {
-      console.error('投票エラー:', error);
-      showToast(error instanceof Error ? error.message : t('voteError'), 'error');
     }
   };
 

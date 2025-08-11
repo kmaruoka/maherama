@@ -1104,15 +1104,30 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const userId = req.user.id;
   if (isNaN(id) || id <= 0) {
-    return res.status(400).json({ error: 'Invalid shrine ID' });
+    return res.status(400).json({
+      success: false,
+      type: 'error',
+      message: '無効な神社IDです',
+      error: 'Invalid shrine ID'
+    });
   }
   // 距離チェック
-  const shrine = await prisma.shrine.findUnique({ where: { id }, select: { lat: true, lng: true } });
+  const shrine = await prisma.shrine.findUnique({ where: { id }, select: { lat: true, lng: true, name: true } });
   if (!shrine) {
-    return res.status(404).json({ error: 'Not found' });
+    return res.status(404).json({
+      success: false,
+      type: 'error',
+      message: '神社が見つかりません',
+      error: 'Not found'
+    });
   }
   if (req.body.lat == null || req.body.lng == null) {
-    return res.status(400).json({ error: '緯度・経度がリクエストボディに含まれていません' });
+    return res.status(400).json({
+      success: false,
+      type: 'error',
+      message: '緯度・経度がリクエストボディに含まれていません',
+      error: 'Latitude and longitude are required'
+    });
   }
   const toRad = (x) => x * Math.PI / 180;
   const R = 6371000;
@@ -1123,7 +1138,13 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   const dist = R * c;
   const prayDistance = await getUserPrayDistance(userId);
   if (dist > prayDistance) {
-    return res.status(400).json({ error: '現在地が神社から離れすぎています', dist, radius: prayDistance });
+    return res.status(400).json({
+      success: false,
+      type: 'error',
+      message: `距離が離れすぎているため参拝できません（距離: ${Math.round(dist)}m、参拝可能距離: ${prayDistance}m）`,
+      error: 'Distance too far',
+      data: { dist, radius: prayDistance }
+    });
   }
 
   // 参拝制限チェック: 1ユーザー1日1神社につき1回のみ
@@ -1138,7 +1159,12 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   });
 
   if (todaysPrayStats && todaysPrayStats.count > 0) {
-    return res.status(400).json({ error: 'この神社は今日既に参拝済みです' });
+    return res.status(400).json({
+      success: false,
+      type: 'warn',
+      message: 'この神社は今日既に参拝済みです',
+      error: 'Already prayed today'
+    });
   }
 
   try {
@@ -1148,10 +1174,22 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
       userId,
       logType: '参拝',
     });
-    res.json(result);
+
+    // 成功レスポンス
+    res.json({
+      success: true,
+      type: 'success',
+      message: `${shrine.name}に参拝しました`,
+      data: result
+    });
   } catch (err) {
     console.error('Error praying at shrine:', err);
-    res.status(500).json({ error: 'DB error' });
+    res.status(500).json({
+      success: false,
+      type: 'fatal',
+      message: '参拝処理中にエラーが発生しました',
+      error: 'DB error'
+    });
   }
 });
 
@@ -1161,15 +1199,42 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
 
   if (isNaN(id) || id <= 0) {
-    return res.status(400).json({ error: 'Invalid shrine ID' });
+    return res.status(400).json({
+      success: false,
+      type: 'error',
+      message: '無効な神社IDです',
+      error: 'Invalid shrine ID'
+    });
   }
+
+  // 神社名を取得
+  const shrine = await prisma.shrine.findUnique({
+    where: { id },
+    select: { name: true }
+  });
+
+  if (!shrine) {
+    return res.status(404).json({
+      success: false,
+      type: 'error',
+      message: '神社が見つかりません',
+      error: 'Not found'
+    });
+  }
+
   // 遥拝回数チェック
   const maxWorshipCount = await getUserWorshipCount(userId);
   const todayWorshipCount = await getTodayWorshipCount(userId);
 
   if (todayWorshipCount >= maxWorshipCount) {
-    return res.status(400).json({ error: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）` });
+    return res.status(400).json({
+      success: false,
+      type: 'warn',
+      message: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）`,
+      error: 'Remote pray limit exceeded'
+    });
   }
+
   try {
     const result = await prayAtShrine({
       prisma,
@@ -1177,10 +1242,22 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
       userId,
       logType: '遥拝',
     });
-    res.json(result);
+
+    // 成功レスポンス
+    res.json({
+      success: true,
+      type: 'success',
+      message: `${shrine.name}を遥拝しました`,
+      data: result
+    });
   } catch (err) {
     console.error('Error remote praying at shrine:', err);
-    res.status(500).json({ error: 'DB error' });
+    res.status(500).json({
+      success: false,
+      type: 'fatal',
+      message: '遥拝処理中にエラーが発生しました',
+      error: 'DB error'
+    });
   }
 });
 
@@ -1954,7 +2031,12 @@ app.post('/auth/login', authLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'メールアドレスとパスワードは必須です' });
+      return res.status(400).json({
+        success: false,
+        type: 'error',
+        message: 'メールアドレスとパスワードは必須です',
+        error: 'Email and password are required'
+      });
     }
 
     const user = await prisma.user.findUnique({
@@ -1962,22 +2044,42 @@ app.post('/auth/login', authLimiter, async (req, res) => {
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません' });
+      return res.status(401).json({
+        success: false,
+        type: 'error',
+        message: 'メールアドレスまたはパスワードが正しくありません',
+        error: 'Invalid credentials'
+      });
     }
 
     if (!user.is_verified) {
-      return res.status(401).json({ error: 'アカウントが有効化されていません。確認メールをチェックしてください。' });
+      return res.status(401).json({
+        success: false,
+        type: 'warn',
+        message: 'アカウントが有効化されていません。確認メールをチェックしてください。',
+        error: 'Account not verified'
+      });
     }
 
     // パスワードチェック（開発環境では簡易チェック）
     if (process.env.NODE_ENV === 'production') {
       if (!user.password_hash || !(await bcrypt.compare(password, user.password_hash))) {
-        return res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません' });
+        return res.status(401).json({
+          success: false,
+          type: 'error',
+          message: 'メールアドレスまたはパスワードが正しくありません',
+          error: 'Invalid credentials'
+        });
       }
     } else {
       // 開発環境では任意のパスワードでログイン可能
       if (!password) {
-        return res.status(401).json({ error: 'パスワードは必須です' });
+        return res.status(401).json({
+          success: false,
+          type: 'error',
+          message: 'パスワードは必須です',
+          error: 'Password is required'
+        });
       }
     }
 
@@ -1985,7 +2087,12 @@ app.post('/auth/login', authLimiter, async (req, res) => {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       console.error('JWT_SECRET is not configured');
-      return res.status(500).json({ error: 'Server misconfigured' });
+      return res.status(500).json({
+        success: false,
+        type: 'fatal',
+        message: 'サーバー設定エラーが発生しました',
+        error: 'Server misconfigured'
+      });
     }
 
     const token = jwt.sign(
@@ -1996,21 +2103,29 @@ app.post('/auth/login', authLimiter, async (req, res) => {
 
     res.json({
       success: true,
+      type: 'success',
       message: 'ログインが完了しました',
-      token: token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        level: user.level,
-        exp: user.exp,
-        ability_points: user.ability_points
+      data: {
+        token: token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          level: user.level,
+          exp: user.exp,
+          ability_points: user.ability_points
+        }
       }
     });
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'ログインに失敗しました' });
+    res.status(500).json({
+      success: false,
+      type: 'fatal',
+      message: 'ログイン処理中にエラーが発生しました',
+      error: 'Login failed'
+    });
   }
 });
 
@@ -4169,11 +4284,27 @@ app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req,
   const shrineId = parseInt(req.params.shrineId, 10);
   const imageId = parseInt(req.params.imageId, 10);
   const userId = req.user.id;
-  if (isNaN(shrineId) || isNaN(imageId)) return res.status(400).json({ error: 'Invalid ID' });
+  if (isNaN(shrineId) || isNaN(imageId)) {
+    return res.status(400).json({
+      success: false,
+      type: 'error',
+      message: '無効なIDです',
+      error: 'Invalid ID'
+    });
+  }
+
   try {
     // 投票権チェック（図鑑登録済みユーザーのみ）
     const hasCatalog = await prisma.shrineCatalog.findUnique({ where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } } });
-    if (!hasCatalog) return res.status(403).json({ error: '投票権がありません（参拝履歴なし）' });
+    if (!hasCatalog) {
+      return res.status(403).json({
+        success: false,
+        type: 'warn',
+        message: '投票権がありません（参拝履歴なし）',
+        error: 'No voting rights'
+      });
+    }
+
     // 既存投票削除（1ユーザー1票）
     await prisma.imageVote.deleteMany({ where: { user_id: userId, shrine_image_id: imageId } });
     // 投票
@@ -4182,10 +4313,20 @@ app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req,
     // 投票結果に基づいてサムネイル更新をチェック
     await updateShrineThumbnailFromVotes(shrineId);
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      type: 'success',
+      message: '投票が完了しました',
+      data: { success: true }
+    });
   } catch (err) {
     console.error('神社画像投票失敗:', err);
-    res.status(500).json({ error: '投票失敗' });
+    res.status(500).json({
+      success: false,
+      type: 'fatal',
+      message: '投票処理中にエラーが発生しました',
+      error: '投票失敗'
+    });
   }
 });
 

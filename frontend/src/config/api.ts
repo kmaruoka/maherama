@@ -22,83 +22,133 @@ export const MAPBOX_API_KEY = import.meta.env.VITE_MAPBOX_API_KEY;
 // セキュアなトークン管理
 class SecureTokenManager {
   private static readonly TOKEN_KEY = 'auth_token';
-  private static readonly USER_KEY = 'user_data';
+  private static readonly USER_DATA_KEY = 'user_data';
 
-  // トークンを安全に保存（HttpOnly Cookieの代替として）
   static setToken(token: string): void {
-    try {
-      // トークンを暗号化して保存（簡易的な実装）
-      const encryptedToken = btoa(token); // Base64エンコード（本番ではより強力な暗号化を使用）
-      sessionStorage.setItem(this.TOKEN_KEY, encryptedToken);
-    } catch (error) {
-      console.error('Token storage failed:', error);
-    }
+    localStorage.setItem(this.TOKEN_KEY, token);
   }
 
-  // トークンを安全に取得
   static getToken(): string | null {
-    try {
-      const encryptedToken = sessionStorage.getItem(this.TOKEN_KEY);
-      if (!encryptedToken) return null;
-      return atob(encryptedToken); // Base64デコード
-    } catch (error) {
-      console.error('Token retrieval failed:', error);
-      return null;
-    }
+    return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  // トークンを削除
   static removeToken(): void {
-    try {
-      sessionStorage.removeItem(this.TOKEN_KEY);
-    } catch (error) {
-      console.error('Token removal failed:', error);
-    }
+    localStorage.removeItem(this.TOKEN_KEY);
   }
 
-  // ユーザー情報を安全に保存
-  static setUserData(userData: { id: number; name: string; email: string }): void {
-    try {
-      const encryptedData = btoa(JSON.stringify(userData));
-      sessionStorage.setItem(this.USER_KEY, encryptedData);
-    } catch (error) {
-      console.error('User data storage failed:', error);
-    }
+  static setUserData(userData: any): void {
+    localStorage.setItem(this.USER_DATA_KEY, JSON.stringify(userData));
   }
 
-  // ユーザー情報を安全に取得
-  static getUserData(): { id: number; name: string; email: string } | null {
-    try {
-      const encryptedData = sessionStorage.getItem(this.USER_KEY);
-      if (!encryptedData) return null;
-      return JSON.parse(atob(encryptedData));
-    } catch (error) {
-      console.error('User data retrieval failed:', error);
-      return null;
-    }
+  static getUserData(): any | null {
+    const data = localStorage.getItem(this.USER_DATA_KEY);
+    return data ? JSON.parse(data) : null;
   }
 
-  // ユーザー情報を削除
   static removeUserData(): void {
-    try {
-      sessionStorage.removeItem(this.USER_KEY);
-    } catch (error) {
-      console.error('User data removal failed:', error);
-    }
+    localStorage.removeItem(this.USER_DATA_KEY);
   }
 
-  // 認証状態をチェック
-  static isAuthenticated(): boolean {
-    return this.getToken() !== null;
-  }
-
-  // 完全なログアウト
   static logout(): void {
     this.removeToken();
     this.removeUserData();
-    // 古いlocalStorageデータも削除
-    localStorage.removeItem('userId');
-    localStorage.removeItem('authToken');
+  }
+}
+
+// 統一されたAPIレスポンス形式
+export interface ApiResponse<T = any> {
+  success: boolean;
+  type: 'success' | 'error' | 'info' | 'warn' | 'fatal';
+  message: string;
+  data?: T;
+  error?: string;
+  statusCode?: number;
+}
+
+// Toast表示用のフック
+import { useToast } from '../components/atoms/ToastContainer';
+
+// API呼び出し結果をToast表示する関数
+export const showApiResult = (result: ApiResponse, showToast: ReturnType<typeof useToast>['showToast']) => {
+  const { type, message } = result;
+
+  // メッセージが空の場合は表示しない
+  if (!message || message.trim() === '') {
+    return;
+  }
+
+  // ToastTypeに変換
+  let toastType: 'success' | 'error' | 'warning' | 'info';
+  switch (type) {
+    case 'success':
+      toastType = 'success';
+      break;
+    case 'error':
+    case 'fatal':
+      toastType = 'error';
+      break;
+    case 'warn':
+      toastType = 'warning';
+      break;
+    case 'info':
+      toastType = 'info';
+      break;
+    default:
+      toastType = 'info';
+  }
+
+  showToast(message, toastType);
+};
+
+// セキュアなAPI呼び出し関数（Toast統合版）
+export async function apiCallWithToast<T = any>(
+  url: string,
+  options: RequestInit = {},
+  showToast: ReturnType<typeof useToast>['showToast']
+): Promise<ApiResponse<T>> {
+  try {
+    const response = await apiCall(url, options);
+    const data = await response.json();
+
+    // 成功レスポンスの場合
+    if (response.ok) {
+      const result: ApiResponse<T> = {
+        success: true,
+        type: 'success',
+        message: data.message || '処理が完了しました',
+        data: data,
+        statusCode: response.status
+      };
+
+      showApiResult(result, showToast);
+      return result;
+    }
+
+    // エラーレスポンスの場合
+    const result: ApiResponse<T> = {
+      success: false,
+      type: 'error',
+      message: data.error || data.message || 'エラーが発生しました',
+      error: data.error || data.message,
+      statusCode: response.status
+    };
+
+    showApiResult(result, showToast);
+    return result;
+
+  } catch (error: any) {
+    console.error(`API Error:`, error);
+
+    const result: ApiResponse<T> = {
+      success: false,
+      type: 'fatal',
+      message: 'ネットワークエラーが発生しました',
+      error: error.message,
+      statusCode: 0
+    };
+
+    showApiResult(result, showToast);
+    return result;
   }
 }
 
@@ -179,15 +229,29 @@ export async function apiCall(url: string, options: RequestInit = {}): Promise<R
   return response;
 }
 
-// 後方互換性のための関数（段階的に移行するため）
-export function getUserId(): number | null {
-  const userData = SecureTokenManager.getUserData();
-  return userData?.id || null;
-}
+// 認証関連の関数
+export const login = (token: string, userData: any) => {
+  SecureTokenManager.setToken(token);
+  SecureTokenManager.setUserData(userData);
+  localStorage.setItem('userId', JSON.stringify(userData.id));
+};
+
+export const logout = () => {
+  SecureTokenManager.logout();
+  localStorage.removeItem('userId');
+};
+
+export const isAuthenticated = (): boolean => {
+  return !!SecureTokenManager.getToken();
+};
+
+export const getCurrentUser = () => {
+  return SecureTokenManager.getUserData();
+};
 
 // セキュアな認証フック
 export const useSecureAuth = () => {
-  const isAuthenticated = SecureTokenManager.isAuthenticated();
+  const isAuthenticated = SecureTokenManager.getToken() !== null;
   const userData = SecureTokenManager.getUserData();
 
   const login = (token: string, user: { id: number; name: string; email: string }) => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { API_BASE, apiCall, useSecureAuth } from '../../config/api';
+import { API_BASE, apiCall, apiCallWithToast, useSecureAuth } from '../../config/api';
 import useAllUsers from '../../hooks/useAllUsers';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import './TopPage.css';
@@ -110,39 +110,27 @@ const TopPage: React.FC<TopPageProps> = ({ onLogin, onNavigateToTerms, onNavigat
     try {
       console.log('ログイン試行:', { email: loginForm.email, apiBase: API_BASE });
 
-      const response = await apiCall(`${API_BASE}/auth/login`, {
+      const result = await apiCallWithToast(`${API_BASE}/auth/login`, {
         method: 'POST',
         body: JSON.stringify(loginForm),
-      });
+      }, () => {}); // Toastは手動で制御
 
-      const data = await response.json();
-      console.log('ログイン成功:', data);
+      if (result.success && result.data) {
+        console.log('ログイン成功:', result.data);
 
-      // セキュアな認証システムを使用
-      login(data.token, {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email
-      });
-      onLogin();
+        // セキュアな認証システムを使用
+        login(result.data.token, {
+          id: result.data.user.id,
+          name: result.data.user.name,
+          email: result.data.user.email
+        });
+        onLogin();
+      } else {
+        setLoginErrors({ general: result.message || 'ログインに失敗しました' });
+      }
     } catch (error: any) {
       console.error('ログインエラー:', error);
-
-      // エラーレスポンスの詳細を確認
-      if (error.message && error.message.includes('API Error')) {
-        try {
-          const errorData = JSON.parse(error.message.split(': ')[2]);
-          if (errorData.error) {
-            setLoginErrors({ general: errorData.error });
-          } else {
-            setLoginErrors({ general: 'ログインに失敗しました' });
-          }
-        } catch {
-          setLoginErrors({ general: 'ログインに失敗しました' });
-        }
-      } else {
-        setLoginErrors({ general: 'ネットワークエラーが発生しました。サーバーに接続できません。' });
-      }
+      setLoginErrors({ general: 'ネットワークエラーが発生しました。サーバーに接続できません。' });
     } finally {
       setIsLoggingIn(false);
     }
