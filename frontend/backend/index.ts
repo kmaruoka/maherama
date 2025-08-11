@@ -99,6 +99,28 @@ const authLimiter = rateLimit({
 
     const shouldSkip = isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || isSeedModeApi || hasSeedModeHeader || isSeedApiCall || isSeedUserApi || isSeedAdminApi || isSeedApi;
 
+    // デバッグログ（一時的）
+    if (req.path.includes('/simulate-date') || req.path.includes('/ranking-awards')) {
+      console.log(`🔍 Rate limit check for ${req.method} ${req.path}:`, {
+        isLocalhost,
+        isSeedMode,
+        isAdminApiCall,
+        isSimulationApi,
+        isSeedModeApi,
+        hasSeedModeHeader,
+        isSeedApiCall,
+        isSeedUserApi,
+        isSeedAdminApi,
+        isSeedApi,
+        shouldSkip,
+        headers: {
+          'x-seed-mode': req.headers['x-seed-mode'],
+          'x-user-id': req.headers['x-user-id'],
+          'x-admin-api-key': req.headers['x-admin-api-key'] ? 'present' : 'absent'
+        }
+      });
+    }
+
     return shouldSkip;
   }
 });
