@@ -86,11 +86,14 @@ const authLimiter = rateLimit({
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === 'unknown';
 
-    // シード処理中のAPIコールもスキップ
+        // シード処理中のAPIコールもスキップ
     const isSeedMode = process.env.NODE_ENV === 'development' && process.env.SEED_MODE === 'true';
     const isAdminApiCall = req.path.startsWith('/admin/') && req.headers['x-admin-api-key'];
+    const isSimulationApi = req.path.startsWith('/api/simulate-date') || req.path.startsWith('/api/simulation/');
+    const hasSeedModeHeader = req.headers['x-seed-mode'] === 'true';
+    const isSeedApiCall = req.headers['x-user-id'] && req.headers['x-seed-mode'] === 'true';
 
-    return isLocalhost || isSeedMode || isAdminApiCall;
+    return isLocalhost || isSeedMode || isAdminApiCall || isSimulationApi || hasSeedModeHeader || isSeedApiCall;
   }
 });
 

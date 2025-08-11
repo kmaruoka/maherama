@@ -17,7 +17,11 @@ async function setSimulateDate(dateString: string | null): Promise<{ success: bo
     simulateDate = null;
     // サーバーのシミュレート日付もクリア
     try {
-      const response = await axios.delete(`http://localhost:${API_PORT}/api/simulate-date`);
+      const response = await axios.delete(`http://localhost:${API_PORT}/api/simulate-date`, {
+        headers: {
+          'x-seed-mode': 'true'
+        }
+      });
 
       if (response.status !== 200) {
         console.error('サーバーのシミュレート日付クリアに失敗:', response.status, response.data);
@@ -45,6 +49,10 @@ async function setSimulateDate(dateString: string | null): Promise<{ success: bo
   try {
     const response = await axios.post(`http://localhost:${API_PORT}/api/simulate-date`, {
       date: dateString
+    }, {
+      headers: {
+        'x-seed-mode': 'true'
+      }
     });
 
     if (response.status !== 200) {
@@ -137,7 +145,8 @@ async function simulatePray(userId: number, shrineId: number, shrinePositions: {
       ...(timeMs !== undefined ? { timeMs } : {})
     }, {
       headers: {
-        'x-user-id': userId.toString()
+        'x-user-id': userId.toString(),
+        'x-seed-mode': 'true'
       }
     });
     if (response.status === 200) {
@@ -183,7 +192,8 @@ async function simulateRemotePray(prisma: PrismaClient, userId: number, shrineId
     // 実際の遥拝APIを呼び出し
     const response = await axios.post(`http://localhost:${API_PORT}/shrines/${shrineId}/remote-pray`, {}, {
       headers: {
-        'x-user-id': userId.toString()
+        'x-user-id': userId.toString(),
+        'x-seed-mode': 'true'
       }
     });
     if (response.status === 200) {
