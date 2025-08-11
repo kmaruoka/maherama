@@ -46,6 +46,7 @@ export default function SetPasswordPage() {
       const response = await apiCall(`${API_BASE}/auth/set-password`, {
         method: 'POST',
         body: JSON.stringify({ token, password }),
+        requireAuth: false, // パスワード設定は認証不要
       });
 
       const data = await response.json();

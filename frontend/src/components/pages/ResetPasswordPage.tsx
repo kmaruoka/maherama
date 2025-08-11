@@ -56,6 +56,7 @@ export default function ResetPasswordPage() {
           token,
           password: formData.password
         }),
+        requireAuth: false, // パスワードリセットは認証不要
       });
 
       const data = await response.json();
