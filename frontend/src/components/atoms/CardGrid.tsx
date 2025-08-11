@@ -65,7 +65,7 @@ const CardGrid = <T extends any>({
     padding: `${gap || 4}px`,
     height: '100%',
     overflow: 'auto',
-    justifyContent: 'start',
+    justifyContent: 'center',
     ...style
   };
 

@@ -14,7 +14,7 @@
   padding: var(--card-gap);
   height: 100%;
   overflow: auto;
-  justify-content: start;
+  justify-content: center;
 }
 
 /* セルスタイル */

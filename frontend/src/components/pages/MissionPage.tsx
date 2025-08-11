@@ -50,7 +50,7 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
   const eventMissions = missions.filter(m => m.mission_type === 'event');
 
   return (
-    <PageLayout style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <PageLayout>
       <Tabs
         id="mission-tabs"
         activeKey={tab}
@@ -61,39 +61,39 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
         <Tab eventKey="event" title="限定ミッション" />
       </Tabs>
 
-        {tab === 'permanent' && (
-          <GridCardContainer
-            items={permanentMissions}
-            renderItem={(mission) => (
-              <MissionGridCard
-                key={mission.id}
-                mission={mission}
-                onClick={() => handleMissionClick(mission)}
-              />
-            )}
-            cardWidth={114}
-            cardHeight={200}
-            gap={4}
-            emptyMessage="常設ミッションがありません"
-          />
-        )}
+      {tab === 'permanent' && (
+        <GridCardContainer
+          items={permanentMissions}
+          renderItem={(mission) => (
+            <MissionGridCard
+              key={mission.id}
+              mission={mission}
+              onClick={() => handleMissionClick(mission)}
+            />
+          )}
+          cardWidth={114}
+          cardHeight={200}
+          gap={4}
+          emptyMessage="常設ミッションがありません"
+        />
+      )}
 
-        {tab === 'event' && (
-          <GridCardContainer
-            items={eventMissions}
-            renderItem={(mission) => (
-              <MissionGridCard
-                key={mission.id}
-                mission={mission}
-                onClick={() => handleMissionClick(mission)}
-              />
-            )}
-            cardWidth={114}
-            cardHeight={200}
-            gap={4}
-            emptyMessage="限定ミッションがありません"
-          />
-        )}
+      {tab === 'event' && (
+        <GridCardContainer
+          items={eventMissions}
+          renderItem={(mission) => (
+            <MissionGridCard
+              key={mission.id}
+              mission={mission}
+              onClick={() => handleMissionClick(mission)}
+            />
+          )}
+          cardWidth={114}
+          cardHeight={200}
+          gap={4}
+          emptyMessage="限定ミッションがありません"
+        />
+      )}
     </PageLayout>
   );
 };
