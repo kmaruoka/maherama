@@ -8,6 +8,7 @@ import CustomLink from './atoms/CustomLink';
 import DietyPage from './organisms/DietyPane';
 import LogPane from './organisms/LogPane';
 import MenuPane from './organisms/MenuPane';
+import MissionPane from './organisms/MissionPane';
 import MyPage from './organisms/MyPage';
 import ShrinePane from './organisms/ShrinePane';
 import UserPane from './organisms/UserPane';
@@ -173,7 +174,7 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
           return userPaneRef.current?.getTitle() || '';
         }
       case 'mission':
-        return `ミッション #${modal.id}`;
+        return missionPaneRef.current?.getTitle() || `ミッション #${modal.id}`;
       default:
         return '';
     }
@@ -366,11 +367,13 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     getPreviousItemType={getPreviousItemType}
                     getNextItemType={getNextItemType}
                   />
-                  <div className="modal__content">
-                    <div style={{ padding: '20px', textAlign: 'center' }}>
-                      ミッション情報はMissionPageで確認してください
-                    </div>
-                  </div>
+                  <MissionPane
+                    ref={missionPaneRef}
+                    id={modal.id}
+                    onShowShrine={(id: number) => openModal('shrine', id)}
+                    onShowDiety={(id: number) => openModal('diety', id)}
+                    onDataLoaded={updateCurrentModalName}
+                  />
                 </>
               )}
             </Modal.Body>

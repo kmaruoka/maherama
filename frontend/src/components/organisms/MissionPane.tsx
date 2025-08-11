@@ -1,160 +1,227 @@
-import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { API_BASE, apiCall } from '../../config/api';
+import type { Mission } from '../../hooks/useMissions';
 import { CompletionBadge, RewardIcon } from '../atoms';
 import CustomLink from '../atoms/CustomLink';
 
 interface MissionPaneProps {
-  mission: any;
+  id: number;
   onShowShrine?: (id: number) => void;
   onShowDiety?: (id: number) => void;
+  onDataLoaded?: (name: string) => void;
 }
 
-const MissionPane: React.FC<MissionPaneProps> = ({
-  mission,
+export interface MissionPaneRef {
+  backToOverview: () => void;
+  getTitle: () => string;
+}
+
+const MissionPane = React.forwardRef<MissionPaneRef, MissionPaneProps>(({
+  id,
   onShowShrine,
-  onShowDiety
-}) => {
+  onShowDiety,
+  onDataLoaded
+}, ref) => {
   const { t } = useTranslation();
+  const overviewRef = useRef<HTMLDivElement>(null);
+
+  // ミッションデータを取得
+  const { data: missions = [], isLoading, error } = useQuery({
+    queryKey: ['missions'],
+    queryFn: async (): Promise<Mission[]> => {
+      const response = await apiCall(`${API_BASE}/missions`);
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
+    retryDelay: 1000,
+  });
+
+  const mission = missions.find(m => m.id === id);
+
+  // データ読み込み完了時にタイトルを通知
+  useEffect(() => {
+    if (mission && onDataLoaded) {
+      onDataLoaded(mission.name);
+    }
+  }, [mission, onDataLoaded]);
+
+  // ref の実装
+  React.useImperativeHandle(ref, () => ({
+    backToOverview: () => {
+      if (overviewRef.current) {
+        overviewRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+    getTitle: () => mission?.name || 'ミッション'
+  }));
+
+  if (isLoading) {
+    return (
+      <div className="modal__content">
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          読み込み中...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !mission) {
+    return (
+      <div className="modal__content">
+        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-error)' }}>
+          ミッションが見つかりません
+        </div>
+      </div>
+    );
+  }
 
   const progressPercentage = mission.total_required > 0
     ? Math.min((mission.progress / mission.total_required) * 100, 100)
     : 0;
 
   return (
-    <>
-      {/* 進行状況 */}
-      <div className="modal-section">
-        <div className="modal-subtitle">{t('missionProgress')}</div>
-        <div className="progress-container">
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-          <div className="progress-text">
-            {mission.progress} / {mission.total_required}
+    <div className="modal__content">
+      <div ref={overviewRef}>
+        {/* 進行状況 */}
+        <div className="modal-section">
+          <div className="modal-subtitle">{t('missionProgress')}</div>
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            <div className="progress-text">
+              {mission.progress} / {mission.total_required}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 対象 */}
-      {((mission.shrines && mission.shrines.length > 0) || (mission.dieties && mission.dieties.length > 0)) && (
+        {/* 対象 */}
+        {((mission.shrines && mission.shrines.length > 0) || (mission.dieties && mission.dieties.length > 0)) && (
+          <div className="modal-section">
+            <div className="modal-subtitle">{t('missionTarget')}</div>
+            <div>
+              {mission.shrines && mission.shrines.length > 0 && (
+                <div>
+                  <div className="small" style={{ marginBottom: '5px', color: 'var(--color-text)', opacity: 0.7 }}>神社</div>
+                  <div className="d-flex flex-wrap gap-2">
+                    {mission.shrines.map((shrine: any) => (
+                      <div
+                        key={`shrine-${shrine.id}`}
+                        style={{
+                          position: 'relative',
+                          opacity: shrine.is_completed ? 0.6 : 1
+                        }}
+                      >
+                        <CustomLink
+                          onClick={onShowShrine ? () => onShowShrine(shrine.id) : undefined}
+                          type="shrine"
+                        >
+                          {shrine.name} ×{shrine.achieved}/{shrine.count}
+                        </CustomLink>
+                        {shrine.is_completed && (
+                          <CompletionBadge
+                            size={20}
+                            className="position-absolute"
+                            style={{
+                              top: '-8px',
+                              right: '-8px'
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {mission.dieties && mission.dieties.length > 0 && (
+                <div>
+                  <div className="small" style={{ marginBottom: '5px', color: 'var(--color-text)', opacity: 0.7 }}>神様</div>
+                  <div className="d-flex flex-wrap gap-2">
+                    {mission.dieties.map((diety: any) => (
+                      <div
+                        key={`diety-${diety.id}`}
+                        style={{
+                          position: 'relative',
+                          opacity: diety.is_completed ? 0.6 : 1
+                        }}
+                      >
+                        <CustomLink
+                          onClick={onShowDiety ? () => onShowDiety(diety.id) : undefined}
+                          type="diety"
+                        >
+                          {diety.name} ×{diety.achieved}/{diety.count}
+                        </CustomLink>
+                        {diety.is_completed && (
+                          <CompletionBadge
+                            size={20}
+                            className="position-absolute"
+                            style={{
+                              top: '-8px',
+                              right: '-8px'
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 報酬 */}
         <div className="modal-section">
-          <div className="modal-subtitle">{t('missionTarget')}</div>
+          <div className="modal-subtitle">{t('missionRewards')}</div>
           <div>
-            {mission.shrines && mission.shrines.length > 0 && (
-              <div>
-                <div className="small" style={{ marginBottom: '5px', color: 'var(--color-text)', opacity: 0.7 }}>神社</div>
-                <div className="d-flex flex-wrap gap-2">
-                  {mission.shrines.map((shrine: any) => (
-                    <div
-                      key={`shrine-${shrine.id}`}
-                      style={{
-                        position: 'relative',
-                        opacity: shrine.is_completed ? 0.6 : 1
-                      }}
-                    >
-                      <CustomLink
-                        onClick={onShowShrine ? () => onShowShrine(shrine.id) : undefined}
-                        type="shrine"
-                      >
-                        {shrine.name} ×{shrine.achieved}/{shrine.count}
-                      </CustomLink>
-                      {shrine.is_completed && (
-                        <CompletionBadge
-                          size={20}
-                          className="position-absolute"
-                          style={{
-                            top: '-8px',
-                            right: '-8px'
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
+            {mission.exp_reward > 0 && (
+              <div className="modal-item">
+                <RewardIcon type="exp" />
+                <span style={{ fontWeight: '500' }}>{t('experience')} +{mission.exp_reward}</span>
               </div>
             )}
-            {mission.dieties && mission.dieties.length > 0 && (
-              <div>
-                <div className="small" style={{ marginBottom: '5px', color: 'var(--color-text)', opacity: 0.7 }}>神様</div>
-                <div className="d-flex flex-wrap gap-2">
-                  {mission.dieties.map((diety: any) => (
-                    <div
-                      key={`diety-${diety.id}`}
-                      style={{
-                        position: 'relative',
-                        opacity: diety.is_completed ? 0.6 : 1
-                      }}
-                    >
-                      <CustomLink
-                        onClick={onShowDiety ? () => onShowDiety(diety.id) : undefined}
-                        type="diety"
-                      >
-                        {diety.name} ×{diety.achieved}/{diety.count}
-                      </CustomLink>
-                      {diety.is_completed && (
-                        <CompletionBadge
-                          size={20}
-                          className="position-absolute"
-                          style={{
-                            top: '-8px',
-                            right: '-8px'
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
+            {mission.ability_reward && typeof mission.ability_reward === 'object' && Object.keys(mission.ability_reward).length > 0 && (
+              <div className="modal-item">
+                <RewardIcon type="ability" />
+                <span style={{ fontWeight: '500' }}>{t('abilityPoints')} +{Object.values(mission.ability_reward as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
               </div>
             )}
+            {mission.titles && mission.titles.map((title: any) => (
+              <div key={title.id} className="modal-item">
+                <RewardIcon type="title" />
+                <span style={{ fontWeight: '500' }}>{title.name}</span>
+              </div>
+            ))}
           </div>
         </div>
-      )}
 
-      {/* 報酬 */}
-      <div className="modal-section">
-        <div className="modal-subtitle">{t('missionRewards')}</div>
-        <div>
-          {mission.exp_reward > 0 && (
-            <div className="modal-item">
-              <RewardIcon type="exp" />
-              <span style={{ fontWeight: '500' }}>{t('experience')} +{mission.exp_reward}</span>
+        {/* 期間（イベントミッションのみ） */}
+        {mission.mission_type === 'event' && mission.start_at && mission.end_at && (
+          <div className="modal-section">
+            <div style={{
+              fontSize: '0.9rem',
+              opacity: 0.7,
+              textAlign: 'center',
+              padding: '10px',
+              background: 'rgba(0, 0, 0, 0.05)',
+              borderRadius: '6px'
+            }}>
+              {t('missionPeriod')}: {new Date(mission.start_at).toLocaleDateString()} - {new Date(mission.end_at).toLocaleDateString()}
             </div>
-          )}
-          {mission.ability_reward && typeof mission.ability_reward === 'object' && Object.keys(mission.ability_reward).length > 0 && (
-            <div className="modal-item">
-              <RewardIcon type="ability" />
-              <span style={{ fontWeight: '500' }}>{t('abilityPoints')} +{Object.values(mission.ability_reward as Record<string, number>).reduce((a, b) => a + b, 0)}</span>
-            </div>
-          )}
-          {mission.titles && mission.titles.map((title: any) => (
-            <div key={title.id} className="modal-item">
-              <RewardIcon type="title" />
-              <span style={{ fontWeight: '500' }}>{title.name}</span>
-            </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
-
-      {/* 期間（イベントミッションのみ） */}
-      {mission.mission_type === 'event' && mission.start_at && mission.end_at && (
-        <div className="modal-section">
-          <div style={{
-            fontSize: '0.9rem',
-            opacity: 0.7,
-            textAlign: 'center',
-            padding: '10px',
-            background: 'rgba(0, 0, 0, 0.05)',
-            borderRadius: '6px'
-          }}>
-            {t('missionPeriod')}: {new Date(mission.start_at).toLocaleDateString()} - {new Date(mission.end_at).toLocaleDateString()}
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
-};
+});
+
+MissionPane.displayName = 'MissionPane';
 
 export default MissionPane;
