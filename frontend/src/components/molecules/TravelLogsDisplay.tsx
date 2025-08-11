@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCompressAlt, FaExpandAlt, FaPlus } from 'react-icons/fa';
+import { FaExpandAlt, FaPlusCircle } from 'react-icons/fa';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { CustomButton } from '../atoms/CustomButton';
 import CustomLink from '../atoms/CustomLink';
@@ -68,59 +68,46 @@ export function TravelLogsDisplay({
     return <div className="text-muted">{t('loading')}</div>;
   }
 
-  if (logs.length === 0) {
-    return (
-      <div className="travel-logs-empty">
-        <div className="text-muted">{t('noData')}</div>
-        {canPost && (
-          <CustomButton
-            onClick={onPostClick}
-            color="#28a745"
-            hoverColor="#218838"
-            style={{ marginTop: '8px' }}
-          >
-            <FaPlus /> {t('postTravelLog')}
-          </CustomButton>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="travel-logs-container">
-      {!isExpanded && canPost && (
+      {canPost && (
         <div className="travel-logs-header">
-          <CustomButton
+          <button
+            className="travel-logs-add-btn"
             onClick={onPostClick}
-            color="#28a745"
-            hoverColor="#218838"
-            size="small"
+            title={t('postTravelLog')}
           >
-            <FaPlus /> {t('postTravelLog')}
-          </CustomButton>
+            <FaPlusCircle size={24} />
+          </button>
         </div>
       )}
 
-      <div className="travel-logs-list">
-        {displayLogs.map((log) => (
-          <div key={log.id} className="travel-log-item">
-            <div className="travel-log-header">
-              <CustomLink
-                onClick={() => onShowUser?.(log.user.id)}
-                type="user"
-              >
-                {log.user.name}
-              </CustomLink>
-              <span className="travel-log-date">
-                {formatDisplayDate(log.created_at)}
-              </span>
+      {logs.length === 0 ? (
+        <div className="travel-logs-empty">
+          <div className="text-muted">{t('noData')}</div>
+        </div>
+      ) : (
+        <div className="travel-logs-list">
+          {displayLogs.map((log) => (
+            <div key={log.id} className="travel-log-item">
+              <div className="travel-log-header">
+                <CustomLink
+                  onClick={() => onShowUser?.(log.user.id)}
+                  type="user"
+                >
+                  {log.user.name}
+                </CustomLink>
+                <span className="travel-log-date">
+                  {formatDisplayDate(log.created_at)}
+                </span>
+              </div>
+              <div className="travel-log-content">
+                {isExpanded ? log.content : truncateContent(log.content)}
+              </div>
             </div>
-            <div className="travel-log-content">
-              {isExpanded ? log.content : truncateContent(log.content)}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {!isExpanded && logs.length > maxPreviewItems && (
         <div className="travel-logs-footer">
@@ -136,20 +123,11 @@ export function TravelLogsDisplay({
 
       {isExpanded && (
         <div className="travel-logs-expanded-footer">
-          <button
-            className="btn btn-link btn-sm"
-            onClick={onToggleExpand}
-          >
-            <FaCompressAlt size={12} style={{ marginRight: '4px' }} />
-            {t('collapse')}
-          </button>
-
           {pagination?.hasMore && (
             <CustomButton
               onClick={onLoadMore}
               disabled={isLoading}
-              size="small"
-              style={{ marginLeft: '8px' }}
+              style={{ marginLeft: '8px', fontSize: '0.875rem', padding: '4px 8px' }}
             >
               {isLoading ? t('loading') : t('loadMore')}
             </CustomButton>

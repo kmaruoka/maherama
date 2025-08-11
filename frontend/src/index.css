@@ -1772,6 +1772,29 @@ nav.d-flex.position-fixed {
   text-align: right;
 }
 
+.travel-logs-add-btn {
+  background: transparent;
+  border: none;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #28a745;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-left: auto;
+  padding: 4px;
+}
+
+.travel-logs-add-btn:hover {
+  color: #218838;
+}
+
+.travel-logs-add-btn:active {
+  color: #1e7e34;
+}
+
 .travel-logs-list {
   display: flex;
   flex-direction: column;
