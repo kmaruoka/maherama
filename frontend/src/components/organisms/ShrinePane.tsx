@@ -13,7 +13,7 @@ import { getDistanceMeters, useWorshipLimit } from '../../hooks/usePrayDistance'
 import { useShrineDetail } from '../../hooks/useShrineDetail';
 import { useShrineMarkerStatus } from '../../hooks/useShrineMarkerStatus';
 import { useSubscription } from '../../hooks/useSubscription';
-import { usePostShrineTravelLog, useShrineTravelLogs } from '../../hooks/useTravelLogs';
+import { usePostShrineTravelLog, useShrineTravelLogCanPost, useShrineTravelLogs } from '../../hooks/useTravelLogs';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
 import { CustomButton } from '../atoms/CustomButton';
@@ -94,6 +94,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     isTravelLogsExpanded ? travelLogsPage : 1,
     isTravelLogsExpanded ? 50 : 3
   );
+  const { data: travelLogCanPost } = useShrineTravelLogCanPost(id);
   const postTravelLog = usePostShrineTravelLog();
 
   // 画像管理フックを使用
@@ -445,9 +446,12 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
             onToggleExpand={handleToggleTravelLogsExpand}
             onLoadMore={handleLoadMoreTravelLogs}
             onShowUser={onShowUser}
-            canPost={data.catalogedAt !== null}
+            canPost={travelLogCanPost?.canPost ?? false}
             onPostClick={() => setIsTravelLogModalOpen(true)}
             maxPreviewItems={50}
+            remainingPosts={travelLogCanPost?.remainingPosts}
+            prayCount={travelLogCanPost?.prayCount}
+            postedLogCount={travelLogCanPost?.postedLogCount}
           />
         </>
       );
@@ -633,9 +637,12 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           onToggleExpand={handleToggleTravelLogsExpand}
           onLoadMore={handleLoadMoreTravelLogs}
           onShowUser={onShowUser}
-          canPost={data.catalogedAt !== null}
+          canPost={travelLogCanPost?.canPost ?? false}
           onPostClick={() => setIsTravelLogModalOpen(true)}
           maxPreviewItems={3}
+          remainingPosts={travelLogCanPost?.remainingPosts}
+          prayCount={travelLogCanPost?.prayCount}
+          postedLogCount={travelLogCanPost?.postedLogCount}
         />
       </div>
 

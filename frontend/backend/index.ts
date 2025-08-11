@@ -4253,6 +4253,52 @@ app.get('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
   }
 });
 
+// 神社の旅の記録投稿可能状況取得API
+app.get('/shrines/:id/travel-logs/can-post', authenticateJWT, async (req, res) => {
+  const shrineId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(shrineId)) return res.status(400).json({ error: 'Invalid shrine ID' });
+
+  try {
+    // 図鑑登録チェック
+    const hasCatalog = await prisma.shrineCatalog.findUnique({
+      where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } }
+    });
+
+    if (!hasCatalog) {
+      return res.json({
+        canPost: false,
+        reason: '図鑑に登録されていません'
+      });
+    }
+
+    // 参拝数を取得
+    const prayCount = await prisma.shrinePray.count({
+      where: { user_id: userId, shrine_id: shrineId }
+    });
+
+    // 既に投稿した旅の記録数を取得
+    const postedLogCount = await prisma.shrineTravelLog.count({
+      where: { user_id: userId, shrine_id: shrineId }
+    });
+
+    const canPost = postedLogCount < prayCount;
+    const remainingPosts = Math.max(0, prayCount - postedLogCount);
+
+    res.json({
+      canPost,
+      prayCount,
+      postedLogCount,
+      remainingPosts,
+      reason: canPost ? null : `参拝数(${prayCount}回)までしか旅の記録を投稿できません。既に${postedLogCount}回投稿済みです。`
+    });
+  } catch (err) {
+    console.error('神社旅の記録投稿可能状況取得失敗:', err);
+    res.status(500).json({ error: '投稿可能状況取得失敗' });
+  }
+});
+
 // 旅の記録投稿API（神社）
 app.post('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
@@ -4270,11 +4316,22 @@ app.post('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
     });
     if (!hasCatalog) return res.status(403).json({ error: '図鑑に登録されていません' });
 
-    // 既存の記録チェック
-    const existingLog = await prisma.shrineTravelLog.findUnique({
-      where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } }
+    // 参拝数を取得
+    const prayCount = await prisma.shrinePray.count({
+      where: { user_id: userId, shrine_id: shrineId }
     });
-    if (existingLog) return res.status(409).json({ error: '既に旅の記録を投稿済みです' });
+
+    // 既に投稿した旅の記録数を取得
+    const postedLogCount = await prisma.shrineTravelLog.count({
+      where: { user_id: userId, shrine_id: shrineId }
+    });
+
+    // 参拝数までしか投稿できない
+    if (postedLogCount >= prayCount) {
+      return res.status(409).json({
+        error: `参拝数(${prayCount}回)までしか旅の記録を投稿できません。既に${postedLogCount}回投稿済みです。`
+      });
+    }
 
     // 旅の記録作成
     const log = await prisma.shrineTravelLog.create({
@@ -4334,6 +4391,52 @@ app.get('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
   }
 });
 
+// 神様の旅の記録投稿可能状況取得API
+app.get('/dieties/:id/travel-logs/can-post', authenticateJWT, async (req, res) => {
+  const dietyId = parseInt(req.params.id, 10);
+  const userId = req.user.id;
+
+  if (isNaN(dietyId)) return res.status(400).json({ error: 'Invalid diety ID' });
+
+  try {
+    // 図鑑登録チェック
+    const hasCatalog = await prisma.dietyCatalog.findUnique({
+      where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } }
+    });
+
+    if (!hasCatalog) {
+      return res.json({
+        canPost: false,
+        reason: '図鑑に登録されていません'
+      });
+    }
+
+    // 参拝数を取得
+    const prayCount = await prisma.dietyPray.count({
+      where: { user_id: userId, diety_id: dietyId }
+    });
+
+    // 既に投稿した旅の記録数を取得
+    const postedLogCount = await prisma.dietyTravelLog.count({
+      where: { user_id: userId, diety_id: dietyId }
+    });
+
+    const canPost = postedLogCount < prayCount;
+    const remainingPosts = Math.max(0, prayCount - postedLogCount);
+
+    res.json({
+      canPost,
+      prayCount,
+      postedLogCount,
+      remainingPosts,
+      reason: canPost ? null : `参拝数(${prayCount}回)までしか旅の記録を投稿できません。既に${postedLogCount}回投稿済みです。`
+    });
+  } catch (err) {
+    console.error('神様旅の記録投稿可能状況取得失敗:', err);
+    res.status(500).json({ error: '投稿可能状況取得失敗' });
+  }
+});
+
 // 旅の記録投稿API（神様）
 app.post('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
@@ -4351,11 +4454,22 @@ app.post('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
     });
     if (!hasCatalog) return res.status(403).json({ error: '図鑑に登録されていません' });
 
-    // 既存の記録チェック
-    const existingLog = await prisma.dietyTravelLog.findUnique({
-      where: { user_id_diety_id: { user_id: userId, diety_id: dietyId } }
+    // 参拝数を取得
+    const prayCount = await prisma.dietyPray.count({
+      where: { user_id: userId, diety_id: dietyId }
     });
-    if (existingLog) return res.status(409).json({ error: '既に旅の記録を投稿済みです' });
+
+    // 既に投稿した旅の記録数を取得
+    const postedLogCount = await prisma.dietyTravelLog.count({
+      where: { user_id: userId, diety_id: dietyId }
+    });
+
+    // 参拝数までしか投稿できない
+    if (postedLogCount >= prayCount) {
+      return res.status(409).json({
+        error: `参拝数(${prayCount}回)までしか旅の記録を投稿できません。既に${postedLogCount}回投稿済みです。`
+      });
+    }
 
     // 旅の記録作成
     const log = await prisma.dietyTravelLog.create({

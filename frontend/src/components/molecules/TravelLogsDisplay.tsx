@@ -34,6 +34,9 @@ interface TravelLogsDisplayProps {
   canPost?: boolean;
   onPostClick?: () => void;
   maxPreviewItems?: number;
+  remainingPosts?: number;
+  prayCount?: number;
+  postedLogCount?: number;
 }
 
 export function TravelLogsDisplay({
@@ -46,7 +49,10 @@ export function TravelLogsDisplay({
   onShowUser,
   canPost = false,
   onPostClick,
-  maxPreviewItems = 3
+  maxPreviewItems = 3,
+  remainingPosts,
+  prayCount,
+  postedLogCount
 }: TravelLogsDisplayProps) {
   const { t } = useTranslation();
   const [displayLogs, setDisplayLogs] = useState<TravelLog[]>([]);
@@ -79,6 +85,13 @@ export function TravelLogsDisplay({
           >
             <FaPlusCircle size={24} />
           </button>
+          {remainingPosts !== undefined && prayCount !== undefined && postedLogCount !== undefined && (
+            <div className="travel-logs-stats">
+              <small className="text-muted">
+                参拝数: {prayCount}回 / 投稿済み: {postedLogCount}回 / 残り: {remainingPosts}回
+              </small>
+            </div>
+          )}
         </div>
       )}
 

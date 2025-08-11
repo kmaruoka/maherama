@@ -1770,6 +1770,10 @@ nav.d-flex.position-fixed {
 .travel-logs-header {
   margin-bottom: 12px;
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
 }
 
 .travel-logs-add-btn {
@@ -1783,7 +1787,6 @@ nav.d-flex.position-fixed {
   color: #28a745;
   cursor: pointer;
   transition: color 0.2s;
-  margin-left: auto;
   padding: 4px;
 }
 
@@ -1837,6 +1840,12 @@ nav.d-flex.position-fixed {
   text-align: center;
   padding: 20px;
   color: #666;
+}
+
+.travel-logs-stats {
+  font-size: 0.75rem;
+  color: #666;
+  text-align: center;
 }
 
 /* モーダル関連スタイル */

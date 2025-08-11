@@ -9,7 +9,7 @@ import { useDietyDetail } from '../../hooks/useDietyDetail';
 import { useImageManagement } from '../../hooks/useImageManagement';
 import type { RankingsBundleAllPeriods } from '../../hooks/useRankingsBundle';
 import useRankingsBundleAll from '../../hooks/useRankingsBundle';
-import { useDietyTravelLogs, usePostDietyTravelLog } from '../../hooks/useTravelLogs';
+import { useDietyTravelLogCanPost, useDietyTravelLogs, usePostDietyTravelLog } from '../../hooks/useTravelLogs';
 import useUserRankings from '../../hooks/useUserRankings';
 import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
@@ -73,6 +73,7 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
     isTravelLogsExpanded ? travelLogsPage : 1,
     isTravelLogsExpanded ? 50 : 3
   );
+  const { data: travelLogCanPost } = useDietyTravelLogCanPost(idFromParams);
   const postTravelLog = usePostDietyTravelLog();
 
   // 画像管理フックを使用
@@ -227,9 +228,12 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
             onToggleExpand={handleToggleTravelLogsExpand}
             onLoadMore={handleLoadMoreTravelLogs}
             onShowUser={onShowUser}
-            canPost={diety.catalogedAt !== null}
+            canPost={travelLogCanPost?.canPost ?? false}
             onPostClick={() => setIsTravelLogModalOpen(true)}
             maxPreviewItems={50}
+            remainingPosts={travelLogCanPost?.remainingPosts}
+            prayCount={travelLogCanPost?.prayCount}
+            postedLogCount={travelLogCanPost?.postedLogCount}
           />
         </>
       );
@@ -342,9 +346,12 @@ const DietyPane = forwardRef<DietyPaneRef, { id?: number; onShowShrine?: (id: nu
           onToggleExpand={handleToggleTravelLogsExpand}
           onLoadMore={handleLoadMoreTravelLogs}
           onShowUser={onShowUser}
-          canPost={diety.catalogedAt !== null}
+          canPost={travelLogCanPost?.canPost ?? false}
           onPostClick={() => setIsTravelLogModalOpen(true)}
           maxPreviewItems={3}
+          remainingPosts={travelLogCanPost?.remainingPosts}
+          prayCount={travelLogCanPost?.prayCount}
+          postedLogCount={travelLogCanPost?.postedLogCount}
         />
       </div>
 
