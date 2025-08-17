@@ -324,8 +324,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   const remotePrayMutation = useMutation({
     mutationFn: async () => {
+      let body = undefined;
+      if (currentPosition) {
+        body = JSON.stringify({ lat: currentPosition[0], lng: currentPosition[1] });
+      }
       const result = await apiCallWithToast(`${API_BASE}/shrines/${id}/remote-pray`, {
         method: 'POST',
+        body,
       }, showToast);
       return result;
     },

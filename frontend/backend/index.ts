@@ -1162,9 +1162,9 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
   if (req.body.lat == null || req.body.lng == null) {
     return res.status(400).json({
       success: false,
-      type: 'error',
-      message: '緯度・経度がリクエストボディに含まれていません',
-      error: 'Latitude and longitude are required'
+      type: 'warn',
+      message: '位置情報が取得できません。GPSの設定を確認してください。',
+      error: 'Location information required'
     });
   }
   const toRad = (x) => x * Math.PI / 180;
@@ -1245,10 +1245,10 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
     });
   }
 
-  // 神社名を取得
+  // 神社情報を取得
   const shrine = await prisma.shrine.findUnique({
     where: { id },
-    select: { name: true }
+    select: { name: true, lat: true, lng: true }
   });
 
   if (!shrine) {
@@ -1260,42 +1260,142 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
     });
   }
 
-  // 遥拝回数チェック
-  const maxWorshipCount = await getUserWorshipCount(userId);
-  const todayWorshipCount = await getTodayWorshipCount(userId);
+  // 距離チェック（リクエストボディに位置情報がある場合）
+  let canPray = false;
+  let hasLocationInfo = false;
+  if (req.body.lat != null && req.body.lng != null) {
+    hasLocationInfo = true;
+    const { calculateDistance } = require('./shared/utils/distance');
+    const dist = calculateDistance(
+      { lat: req.body.lat, lng: req.body.lng },
+      { lat: shrine.lat, lng: shrine.lng }
+    );
+    const prayDistance = await getUserPrayDistance(userId);
+    canPray = dist <= prayDistance;
 
-  if (todayWorshipCount >= maxWorshipCount) {
-    return res.status(400).json({
-      success: false,
-      type: 'warn',
-      message: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）`,
-      error: 'Remote pray limit exceeded'
-    });
+    // デバッグログ
+    console.log(`[遥拝API] 距離チェック: 距離=${dist}m, 参拝可能距離=${prayDistance}m, 参拝可能=${canPray}`);
+  } else {
+    console.log(`[遥拝API] 位置情報なし: lat=${req.body.lat}, lng=${req.body.lng}`);
   }
 
-  try {
-    const result = await prayAtShrine({
-      prisma,
-      shrineId: id,
-      userId,
-      logType: '遥拝',
+  // 参拝可能な距離内であれば参拝として処理
+  if (canPray) {
+    // 参拝制限チェック: 1ユーザー1日1神社につき1回のみ
+    const todaysPrayStats = await prisma.shrinePrayStatsDaily.findUnique({
+      where: {
+        shrine_id_user_id: {
+          shrine_id: id,
+          user_id: userId
+        }
+      }
     });
 
-    // 成功レスポンス
-    res.json({
-      success: true,
-      type: 'success',
-      message: `${shrine.name}を遥拝しました`,
-      data: result
-    });
-  } catch (err) {
-    console.error('Error remote praying at shrine:', err);
-    res.status(500).json({
-      success: false,
-      type: 'fatal',
-      message: '遥拝処理中にエラーが発生しました',
-      error: 'DB error'
-    });
+    if (todaysPrayStats && todaysPrayStats.count > 0) {
+      // 当日参拝済みの場合は遥拝として処理
+      // 遥拝回数チェック
+      const maxWorshipCount = await getUserWorshipCount(userId);
+      const todayWorshipCount = await getTodayWorshipCount(userId);
+
+      if (todayWorshipCount >= maxWorshipCount) {
+        return res.status(400).json({
+          success: false,
+          type: 'warn',
+          message: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）`,
+          error: 'Remote pray limit exceeded'
+        });
+      }
+
+      try {
+        const result = await prayAtShrine({
+          prisma,
+          shrineId: id,
+          userId,
+          logType: '遥拝',
+        });
+
+        // 成功レスポンス（遥拝メッセージ）
+        res.json({
+          success: true,
+          type: 'success',
+          message: `${shrine.name}を遥拝しました`,
+          data: result
+        });
+      } catch (err) {
+        console.error('Error remote praying at shrine:', err);
+        res.status(500).json({
+          success: false,
+          type: 'fatal',
+          message: '遥拝処理中にエラーが発生しました',
+          error: 'DB error'
+        });
+      }
+      return;
+    }
+
+    try {
+      const result = await prayAtShrine({
+        prisma,
+        shrineId: id,
+        userId,
+        logType: '参拝',
+      });
+
+      // 成功レスポンス（参拝メッセージ）
+      res.json({
+        success: true,
+        type: 'success',
+        message: `${shrine.name}に参拝しました`,
+        data: result
+      });
+    } catch (err) {
+      console.error('Error praying at shrine:', err);
+      res.status(500).json({
+        success: false,
+        type: 'fatal',
+        message: '参拝処理中にエラーが発生しました',
+        error: 'DB error'
+      });
+    }
+  } else {
+    // 参拝可能な距離外または位置情報がない場合は遥拝として処理
+    // 遥拝回数チェック
+    const maxWorshipCount = await getUserWorshipCount(userId);
+    const todayWorshipCount = await getTodayWorshipCount(userId);
+
+    if (todayWorshipCount >= maxWorshipCount) {
+      return res.status(400).json({
+        success: false,
+        type: 'warn',
+        message: `遥拝は1日に${maxWorshipCount}回までです（今日の使用回数: ${todayWorshipCount}回）`,
+        error: 'Remote pray limit exceeded'
+      });
+    }
+
+    try {
+      const result = await prayAtShrine({
+        prisma,
+        shrineId: id,
+        userId,
+        logType: '遥拝',
+      });
+
+      // 成功レスポンス（遥拝メッセージ）
+      res.json({
+        success: true,
+        type: 'success',
+        message: `${shrine.name}を遥拝しました`,
+        data: result
+      });
+    } catch (err) {
+      console.error('Error remote praying at shrine:', err);
+      res.status(500).json({
+        success: false,
+        type: 'fatal',
+        message: '遥拝処理中にエラーが発生しました',
+        error: 'DB error'
+      });
+    }
   }
 });
 
