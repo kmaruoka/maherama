@@ -828,7 +828,7 @@ async function addLog(message, type = 'normal') {
 // 古い経験値システムは削除（shared/utils/expSystem.tsに統一）
 
 // 全神社（参拝数0も含む）を返すAPI
-app.get('/shrines/all', async (req, res) => {
+app.get('/api/shrines/all', async (req, res) => {
   try {
     const shrines = await prisma.shrine.findMany({
       select: {
@@ -885,7 +885,7 @@ app.get('/shrines/all', async (req, res) => {
   }
 });
 
-app.get('/shrines', async (req, res) => {
+app.get('/api/shrines', async (req, res) => {
   try {
     const shrines = await prisma.shrine.findMany({
                 select: {
@@ -941,7 +941,7 @@ app.get('/shrines', async (req, res) => {
   }
 });
 
-app.get('/shrines/:id', authenticateJWT, async (req, res) => {
+app.get('/api/shrines/:id', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid ID parameter' });
@@ -1138,7 +1138,7 @@ async function prayAtShrine({
 }
 
 // 参拝API
-app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
+app.post('/api/shrines/:id/pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const userId = req.user.id;
   if (isNaN(id) || id <= 0) {
@@ -1232,7 +1232,7 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
 });
 
 // 遥拝API
-app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
+app.post('/api/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const userId = req.user.id;
 
@@ -1400,7 +1400,7 @@ app.post('/shrines/:id/remote-pray', authenticateJWT, async (req, res) => {
 });
 
 // ミッション一覧取得API
-app.get('/missions', authenticateJWT, async (req, res) => {
+app.get('/api/missions', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
 
   try {
@@ -1560,7 +1560,7 @@ app.get('/missions', authenticateJWT, async (req, res) => {
 });
 
 // イベント一覧取得API
-app.get('/events', async (req, res) => {
+app.get('/api/events', async (req, res) => {
   try {
     const currentDate = getCurrentDate();
 
@@ -1600,7 +1600,7 @@ app.get('/events', async (req, res) => {
   }
 });
 
-app.get('/dieties', async (req, res) => {
+app.get('/api/dieties', async (req, res) => {
   try {
     const dieties = await prisma.diety.findMany({
       select: {
@@ -1654,7 +1654,7 @@ app.get('/dieties', async (req, res) => {
   }
 });
 
-app.get('/dieties/:id', authenticateJWT, async (req, res) => {
+app.get('/api/dieties/:id', authenticateJWT, async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
   // デバッグ用ログ
@@ -1740,7 +1740,7 @@ app.get('/dieties/:id', authenticateJWT, async (req, res) => {
 });
 
 // 神様画像アップロード（古いAPI - 非推奨）
-app.post('/dieties/:id/images', authenticateJWT, async (req, res) => {
+app.post('/api/dieties/:id/images', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   if (isNaN(dietyId) || dietyId <= 0) {
@@ -1776,7 +1776,7 @@ app.post('/dieties/:id/images', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
+app.get('/api/dieties/:id/images', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   if (isNaN(dietyId) || dietyId <= 0) {
     return res.status(400).json({ error: 'Invalid diety ID' });
@@ -1804,7 +1804,7 @@ app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
   }
 });
 
-app.post('/diety-images/:id/vote', authenticateJWT, async (req, res) => {
+app.post('/api/diety-images/:id/vote', authenticateJWT, async (req, res) => {
   const imageId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   if (isNaN(imageId) || imageId <= 0) {
@@ -1822,7 +1822,7 @@ app.post('/diety-images/:id/vote', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/logs', authenticateJWT, async (req, res) => {
+app.get('/api/logs', authenticateJWT, async (req, res) => {
   try {
     const logs = await prisma.log.findMany({
       select: {
@@ -2053,7 +2053,7 @@ app.post('/auth/register', async (req, res) => {
 });
 
 // テストユーザー取得エンドポイント（認証不要、ID:1-10のみ）
-app.get('/test/users', async (req, res) => {
+app.get('/api/test/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       where: {
@@ -2082,12 +2082,12 @@ app.get('/test/users', async (req, res) => {
 if (process.env.NODE_ENV === 'development') {
 
   // メール送信テスト用HTMLページ
-  app.get('/test/email', (req, res) => {
+  app.get('/api/test/email', (req, res) => {
     res.sendFile(path.join(__dirname, 'test-email.html'));
   });
 
   // メール送信テスト用エンドポイント
-  app.post('/test/send-email', async (req, res) => {
+  app.post('/api/test/send-email', async (req, res) => {
     try {
       const { email, subject, message } = req.body;
 
@@ -2477,7 +2477,7 @@ app.post('/auth/set-password', async (req, res) => {
 });
 
 // 全ユーザー取得API（認証必要）
-app.get('/users', authenticateJWT, async (req, res) => {
+app.get('/api/users', authenticateJWT, async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -2497,7 +2497,7 @@ app.get('/users', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーごとの「よく参拝する神社」ランキング
-app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   const period = req.query.period || 'all';
   if (isNaN(userId) || userId <= 0) {
@@ -2552,7 +2552,7 @@ app.get('/users/:id/shrine-rankings', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーごとの神様参拝ランキング一括取得API
-app.get('/users/:id/diety-rankings-bundle', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/diety-rankings-bundle', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -2590,7 +2590,7 @@ app.get('/users/:id/diety-rankings-bundle', authenticateJWT, async (req, res) =>
   res.json(result);
 });
 
-app.get('/users/me/subscription', authenticateJWT, async (req, res) => {
+app.get('/api/users/me/subscription', authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.id;
     const subscription = await getUserSubscription(userId);
@@ -2603,7 +2603,7 @@ app.get('/users/me/subscription', authenticateJWT, async (req, res) => {
 });
 
 // 課金ランク変更API（Stripe秒割り対応）
-app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res) => {
+app.post('/api/users/me/subscription/change-plan', authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.id;
     const { newSlots, stripeSubscriptionId } = req.body;
@@ -2673,7 +2673,7 @@ app.post('/users/me/subscription/change-plan', authenticateJWT, async (req, res)
 });
 
 // Stripe Checkoutセッション作成API
-app.post('/subscription/create-checkout-session', authenticateJWT, async (req, res) => {
+app.post('/api/subscription/create-checkout-session', authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.id;
     const { planId, platform } = req.body;
@@ -2720,7 +2720,7 @@ app.post('/subscription/create-checkout-session', authenticateJWT, async (req, r
 });
 
 // ユーザーごとの神社・神様ランキング一括取得API
-app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/rankings', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   const period = req.query.period || 'all';
   if (isNaN(userId) || userId <= 0) {
@@ -2819,7 +2819,7 @@ app.get('/users/:id/rankings', authenticateJWT, async (req, res) => {
 });
 
 // ランキング一括取得API
-app.get('/shrine-rankings-bundle', authenticateJWT, async (req, res) => {
+app.get('/api/shrine-rankings-bundle', authenticateJWT, async (req, res) => {
   const periods = ['all', 'yearly', 'monthly', 'weekly'];
   const result = {};
   for (const period of periods) {
@@ -2829,7 +2829,7 @@ app.get('/shrine-rankings-bundle', authenticateJWT, async (req, res) => {
   res.json(result);
 });
 
-app.get('/diety-rankings-bundle', authenticateJWT, async (req, res) => {
+app.get('/api/diety-rankings-bundle', authenticateJWT, async (req, res) => {
   const periods = ['all', 'yearly', 'monthly', 'weekly'];
   const dietyId = parseInt(req.query.dietyId, 10);
   if (isNaN(dietyId) || dietyId <= 0) {
@@ -2844,7 +2844,7 @@ app.get('/diety-rankings-bundle', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーランキング取得API（単一期間）
-app.get('/user-rankings', authenticateJWT, async (req, res) => {
+app.get('/api/user-rankings', authenticateJWT, async (req, res) => {
   const period = req.query.period || 'all';
   try {
     const rankings = await getUserRankings(period);
@@ -2856,7 +2856,7 @@ app.get('/user-rankings', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーランキング取得API（年次）
-app.get('/user-rankings-yearly', authenticateJWT, async (req, res) => {
+app.get('/api/user-rankings-yearly', authenticateJWT, async (req, res) => {
   try {
     const rankings = await getUserRankings('yearly');
     res.json(rankings);
@@ -2867,7 +2867,7 @@ app.get('/user-rankings-yearly', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーランキング取得API（月次）
-app.get('/user-rankings-monthly', authenticateJWT, async (req, res) => {
+app.get('/api/user-rankings-monthly', authenticateJWT, async (req, res) => {
   try {
     const rankings = await getUserRankings('monthly');
     res.json(rankings);
@@ -2878,7 +2878,7 @@ app.get('/user-rankings-monthly', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーランキング取得API（週次）
-app.get('/user-rankings-weekly', authenticateJWT, async (req, res) => {
+app.get('/api/user-rankings-weekly', authenticateJWT, async (req, res) => {
   try {
     const rankings = await getUserRankings('weekly');
     res.json(rankings);
@@ -2888,7 +2888,7 @@ app.get('/user-rankings-weekly', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/user-rankings-bundle', authenticateJWT, async (req, res) => {
+app.get('/api/user-rankings-bundle', authenticateJWT, async (req, res) => {
   const periods = ['all', 'yearly', 'monthly', 'weekly'];
   const result = {};
   for (const period of periods) {
@@ -2998,7 +2998,7 @@ async function getUserRankings(period) {
 }
 
 // 神社ごとのユーザー参拝ランキング一括取得API
-app.get('/shrines/:id/rankings-bundle', authenticateJWT, async (req, res) => {
+app.get('/api/shrines/:id/rankings-bundle', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   if (isNaN(shrineId) || shrineId <= 0) {
     return res.status(400).json({ error: 'Invalid shrine ID' });
@@ -3051,7 +3051,7 @@ app.get('/shrines/:id/rankings-bundle', authenticateJWT, async (req, res) => {
 });
 
 // 現在のユーザーの参拝した神社一覧
-app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
+app.get('/api/users/me/shrines-visited', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
   try {
     const stats = await prisma.shrinePrayStats.findMany({
@@ -3108,7 +3108,7 @@ app.get('/users/me/shrines-visited', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/users/:id/shrines-visited', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/shrines-visited', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3132,7 +3132,7 @@ app.get('/users/:id/shrines-visited', authenticateJWT, async (req, res) => {
 });
 
 // 現在のユーザーの参拝した神様一覧
-app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
+app.get('/api/users/me/dieties-visited', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
   try {
     // まずDietyPrayStatsからdiety_idとcountを取得
@@ -3201,7 +3201,7 @@ app.get('/users/me/dieties-visited', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3257,7 +3257,7 @@ app.get('/users/:id/dieties-visited', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/users/:id/titles', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/titles', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3293,7 +3293,7 @@ app.get('/users/:id/titles', authenticateJWT, async (req, res) => {
 });
 
 // 能力一覧取得
-app.get('/abilities', authenticateJWT, async (req, res) => {
+app.get('/api/abilities', authenticateJWT, async (req, res) => {
   try {
     const abilities = await prisma.abilityMaster.findMany({
       select: {
@@ -3316,7 +3316,7 @@ app.get('/abilities', authenticateJWT, async (req, res) => {
 });
 
 // 能力獲得
-app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
+app.post('/api/abilities/:id/acquire', authenticateJWT, async (req, res) => {
   const abilityId = parseInt(req.params.id, 10);
   const userId = req.user.id;
 
@@ -3404,7 +3404,7 @@ app.post('/abilities/:id/acquire', authenticateJWT, async (req, res) => {
 });
 
 // 能力初期化（有料リセット）
-app.post('/user/reset-abilities', authenticateJWT, async (req, res) => {
+app.post('/api/user/reset-abilities', authenticateJWT, async (req, res) => {
   const userId = req.user.id;
   try {
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -3464,7 +3464,7 @@ app.post('/user/reset-abilities', authenticateJWT, async (req, res) => {
 // 新しいレベルシステムAPI
 
 // ユーザーのレベル情報取得
-app.get('/users/:id/level-info', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/level-info', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3519,7 +3519,7 @@ app.get('/users/:id/level-info', authenticateJWT, async (req, res) => {
 });
 
 // ユーザーの能力一覧取得
-app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/abilities', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3578,7 +3578,7 @@ app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
 });
 
 // 能力購入API（新しい実装）
-app.post('/abilities/:id/purchase', authenticateJWT, async (req, res) => {
+app.post('/api/abilities/:id/purchase', authenticateJWT, async (req, res) => {
   const abilityId = parseInt(req.params.id, 10);
   const userId = req.user.id;
 
@@ -3610,7 +3610,7 @@ app.post('/abilities/:id/purchase', authenticateJWT, async (req, res) => {
 });
 
 // 遥拝回数制限チェックAPI
-app.get('/users/:id/worship-limit', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/worship-limit', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3632,7 +3632,7 @@ app.get('/users/:id/worship-limit', authenticateJWT, async (req, res) => {
 });
 
 // 参拝距離取得API
-app.get('/users/:id/pray-distance', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/pray-distance', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3650,7 +3650,7 @@ app.get('/users/:id/pray-distance', authenticateJWT, async (req, res) => {
 });
 
 // サブスクリプション取得API（ユーザーID指定）
-app.get('/users/:id/subscription', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/subscription', authenticateJWT, async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
     if (isNaN(userId) || userId <= 0) {
@@ -3668,7 +3668,7 @@ app.get('/users/:id/subscription', authenticateJWT, async (req, res) => {
 });
 
 // 既存のユーザー系APIにも認証を適用（例: /users/:id, /users/:id/abilities など）
-app.get('/users/:id', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   const viewerId = req.query.viewerId ? parseInt(req.query.viewerId, 10) : null;
   try {
@@ -3750,7 +3750,7 @@ app.get('/users/:id', authenticateJWT, async (req, res) => {
   }
 });
 // フォロー一覧取得
-app.get('/users/:id/following', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/following', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3797,7 +3797,7 @@ app.get('/users/:id/following', authenticateJWT, async (req, res) => {
 });
 
 // フォロワー一覧取得
-app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/followers', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3844,7 +3844,7 @@ app.get('/users/:id/followers', authenticateJWT, async (req, res) => {
 });
 
 // フォロー/アンフォロー
-app.post('/follows', authenticateJWT, async (req, res) => {
+app.post('/api/follows', authenticateJWT, async (req, res) => {
   const { followerId, followingId } = req.body;
   if (!followerId || !followingId) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -3883,7 +3883,7 @@ app.post('/follows', authenticateJWT, async (req, res) => {
   }
 });
 
-app.delete('/follows', authenticateJWT, async (req, res) => {
+app.delete('/api/follows', authenticateJWT, async (req, res) => {
   const { followerId, followingId } = req.body;
   if (!followerId || !followingId) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -3904,7 +3904,7 @@ app.delete('/follows', authenticateJWT, async (req, res) => {
   }
 });
 
-app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
+app.get('/api/users/:id/abilities', authenticateJWT, async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (isNaN(userId) || userId <= 0) {
     return res.status(400).json({ error: 'Invalid user ID' });
@@ -3948,7 +3948,7 @@ app.get('/users/:id/abilities', authenticateJWT, async (req, res) => {
 });
 
 // Stripeで能力初期化用Checkoutセッション作成API
-app.post('/subscription/reset-abilities/checkout', authenticateJWT, async (req, res) => {
+app.post('/api/subscription/reset-abilities/checkout', authenticateJWT, async (req, res) => {
   if (!stripe) {
     return res.status(503).json({ error: 'Stripe機能が無効です。STRIPE_SECRET_KEYを設定してください。' });
   }
@@ -3974,7 +3974,7 @@ app.post('/subscription/reset-abilities/checkout', authenticateJWT, async (req, 
 });
 
 // Stripe Webhook受信API
-app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   if (!stripe) {
     return res.status(503).json({ error: 'Stripe機能が無効です。STRIPE_SECRET_KEYを設定してください。' });
   }
@@ -4014,7 +4014,7 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
 });
 
 // 神社マーカーの状態を取得するAPI
-app.get('/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
+app.get('/api/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   const userId = req.user.id;
 
@@ -4151,7 +4151,7 @@ async function handleImageUpload(type, id, userId, fileBuffer) {
 }
 
 // Shrine画像アップロードAPI
-app.post('/shrines/:id/images/upload', authenticateJWT, (req, res, next) => {
+app.post('/api/shrines/:id/images/upload', authenticateJWT, (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -4245,7 +4245,7 @@ app.post('/shrines/:id/images/upload', authenticateJWT, (req, res, next) => {
 });
 
 // Diety画像アップロードAPI（複数形エンドポイント）
-app.post('/dietys/:id/images/upload', authenticateJWT, (req, res, next) => {
+app.post('/api/dietys/:id/images/upload', authenticateJWT, (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -4339,7 +4339,7 @@ app.post('/dietys/:id/images/upload', authenticateJWT, (req, res, next) => {
 });
 
 // Diety画像アップロードAPI（単数形エンドポイント - 後方互換性）
-app.post('/dieties/:id/images/upload', authenticateJWT, (req, res, next) => {
+app.post('/api/dieties/:id/images/upload', authenticateJWT, (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -4433,7 +4433,7 @@ app.post('/dieties/:id/images/upload', authenticateJWT, (req, res, next) => {
 });
 
 // ユーザー画像アップロードAPI
-app.post('/users/:id/images/upload', authenticateJWT, (req, res, next) => {
+app.post('/api/users/:id/images/upload', authenticateJWT, (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -4544,7 +4544,7 @@ app.post('/users/:id/images/upload', authenticateJWT, (req, res, next) => {
 });
 
 // 画像リスト取得API（神社）
-app.get('/shrines/:id/images', authenticateJWT, async (req, res) => {
+app.get('/api/shrines/:id/images', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   if (isNaN(shrineId)) return res.status(400).json({ error: 'Invalid shrine ID' });
   try {
@@ -4570,7 +4570,7 @@ app.get('/shrines/:id/images', authenticateJWT, async (req, res) => {
 });
 
 // 画像リスト取得API（神様）
-app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
+app.get('/api/dieties/:id/images', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   if (isNaN(dietyId)) return res.status(400).json({ error: 'Invalid diety ID' });
   try {
@@ -4591,7 +4591,7 @@ app.get('/dieties/:id/images', authenticateJWT, async (req, res) => {
 });
 
 // 投票API（神社画像）
-app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req, res) => {
+app.post('/api/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.shrineId, 10);
   const imageId = parseInt(req.params.imageId, 10);
   const userId = req.user.id;
@@ -4642,7 +4642,7 @@ app.post('/shrines/:shrineId/images/:imageId/vote', authenticateJWT, async (req,
 });
 
 // 投票API（神様画像）
-app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, res) => {
+app.post('/api/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.dietyId, 10);
   const imageId = parseInt(req.params.imageId, 10);
   const userId = req.user.id;
@@ -4667,7 +4667,7 @@ app.post('/dieties/:dietyId/images/:imageId/vote', authenticateJWT, async (req, 
 });
 
 // 旅の記録取得API（神社）
-app.get('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
+app.get('/api/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 50;
@@ -4706,7 +4706,7 @@ app.get('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
 });
 
 // 神社の旅の記録投稿可能状況取得API
-app.get('/shrines/:id/travel-logs/can-post', authenticateJWT, async (req, res) => {
+app.get('/api/shrines/:id/travel-logs/can-post', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   const userId = req.user.id;
 
@@ -4752,7 +4752,7 @@ app.get('/shrines/:id/travel-logs/can-post', authenticateJWT, async (req, res) =
 });
 
 // 旅の記録投稿API（神社）
-app.post('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
+app.post('/api/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   const { content } = req.body;
@@ -4805,7 +4805,7 @@ app.post('/shrines/:id/travel-logs', authenticateJWT, async (req, res) => {
 });
 
 // 旅の記録取得API（神様）
-app.get('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
+app.get('/api/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 50;
@@ -4844,7 +4844,7 @@ app.get('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
 });
 
 // 神様の旅の記録投稿可能状況取得API
-app.get('/dieties/:id/travel-logs/can-post', authenticateJWT, async (req, res) => {
+app.get('/api/dieties/:id/travel-logs/can-post', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
 
@@ -4890,7 +4890,7 @@ app.get('/dieties/:id/travel-logs/can-post', authenticateJWT, async (req, res) =
 });
 
 // 旅の記録投稿API（神様）
-app.post('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
+app.post('/api/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
   const { content } = req.body;
@@ -4943,7 +4943,7 @@ app.post('/dieties/:id/travel-logs', authenticateJWT, async (req, res) => {
 });
 
 // 投票・審査期間設定取得API
-app.get('/voting/settings', async (req, res) => {
+app.get('/api/voting/settings', async (req, res) => {
   try {
     const settings = await prisma.votingSettings.findFirst({ orderBy: { updated_at: 'desc' } });
     res.json(settings || { voting_period_days: 20, review_period_days: 10 });

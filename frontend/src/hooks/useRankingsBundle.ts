@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Period, RankingItem } from '../components/organisms/RankingPane';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export type RankingsBundleAllPeriods = {
   [key in Period]: {
@@ -19,9 +19,9 @@ export default function useRankingsBundleAll(dietyId?: number) {
     queryKey: ['rankings-bundle-all', dietyId],
     queryFn: async () => {
       const [shrineRes, dietyRes, userRes] = await Promise.all([
-            apiCall(`${API_BASE}/shrine-rankings-bundle`),
-    apiCall(dietyId ? `${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}` : `${API_BASE}/diety-rankings-bundle?dietyId=1`),
-    apiCall(`${API_BASE}/user-rankings-bundle`)
+            apiCall(`/shrine-rankings-bundle`),
+    apiCall(dietyId ? `/diety-rankings-bundle?dietyId=${dietyId}` : `/diety-rankings-bundle?dietyId=1`),
+    apiCall(`/user-rankings-bundle`)
       ]);
       const [shrineData, dietyData, userData]: ApiBundleResponse[] = await Promise.all([
         shrineRes.json(),
@@ -51,6 +51,6 @@ export default function useRankingsBundleAll(dietyId?: number) {
 }
 
 export async function fetchDietyRankingsBundle(dietyId: number) {
-        const res = await apiCall(`${API_BASE}/diety-rankings-bundle?dietyId=${dietyId}`);
+        const res = await apiCall(`/diety-rankings-bundle?dietyId=${dietyId}`);
   return res.json();
 }

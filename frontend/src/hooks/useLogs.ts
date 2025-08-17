@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import type { LogItem } from '../components/molecules/CustomLogLine';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export function useClientLogs() {
   const [clientLogs, setClientLogs] = useState<LogItem[]>([]);
@@ -16,7 +16,7 @@ export default function useLogs(clientLogs?: LogItem[]) {
   const { data: serverLogs = [] , ...rest } = useQuery<LogItem[]>({
     queryKey: ['logs'],
     queryFn: async () => {
-      const res = await apiCall(`${API_BASE}/logs`);
+      const res = await apiCall(`/logs`);
       return res.json();
     },
     refetchInterval: 30000, // 30秒に変更（5秒から）

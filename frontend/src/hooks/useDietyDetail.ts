@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface DietyDetail {
   id: number;
@@ -29,7 +29,7 @@ export function useDietyDetail(id: number | undefined) {
     queryKey: ['diety', id],
     queryFn: async () => {
       if (!id) throw new Error('Diety ID is required');
-      const response = await apiCall(`${API_BASE}/dieties/${id}`);
+      const response = await apiCall(`/dieties/${id}`);
       return response.json();
     },
     enabled: !!id,

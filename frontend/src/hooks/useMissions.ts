@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface Mission {
   id: number;
@@ -40,7 +40,7 @@ export function useMissions() {
   return useQuery({
     queryKey: ['missions'],
     queryFn: async (): Promise<Mission[]> => {
-      const response = await apiCall(`${API_BASE}/missions`);
+      const response = await apiCall(`/missions`);
       return response.json();
     },
     staleTime: 5 * 60 * 1000, // 5分間キャッシュを使用（0から変更）

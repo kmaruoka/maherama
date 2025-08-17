@@ -32,7 +32,7 @@ function useShrineUserRankingsBundle(shrineId: number | undefined, refreshKey: n
   useEffect(() => {
     if (!shrineId) return;
     setLoading(true);
-    apiCall(`${API_BASE}/shrines/${shrineId}/rankings-bundle`)
+            apiCall(`/shrines/${shrineId}/rankings-bundle`)
       .then(res => res.json())
       .then(json => setData(json))
       .finally(() => setLoading(false));
@@ -76,6 +76,10 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const [debugCenter, setDebugCenter] = useState<[number, number] | null>(null);
   const [detailView, setDetailView] = useState<DetailViewType>('overview');
   const { updateCurrentModalName } = useModal();
+
+  // 参拝成功時のローカル状態管理
+  const [localPrayedToday, setLocalPrayedToday] = useState(false);
+  const [localRemotePrayedToday, setLocalRemotePrayedToday] = useState(false);
 
   // detailViewが変更されたときに親コンポーネントに通知
   useEffect(() => {
@@ -131,6 +135,16 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     }
   }, [data?.name, data?.kana, updateCurrentModalName]);
 
+  // marker-statusが更新された時にローカル状態をリセット
+  useEffect(() => {
+    if (markerStatus?.has_prayed_today) {
+      setLocalPrayedToday(false);
+    }
+    if (markerStatus?.can_remote_pray === false) {
+      setLocalRemotePrayedToday(false);
+    }
+  }, [markerStatus?.has_prayed_today, markerStatus?.can_remote_pray]);
+
   // refで外部から呼び出せるメソッドを定義
   useImperativeHandle(ref, () => ({
     backToOverview: () => setDetailView('overview'),
@@ -165,7 +179,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const yyyymm = `${prevMonth.getFullYear()}${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
 
-    apiCall(`${API_BASE}/shrines/${id}/images?votingMonth=${yyyymm}`)
+            apiCall(`${API_BASE}/api/shrines/${id}/images?votingMonth=${yyyymm}`)
       .then(res => res.json())
       .then(json => {
         if (isMounted) {
@@ -294,7 +308,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       if (currentPosition) {
         body = JSON.stringify({ lat: currentPosition[0], lng: currentPosition[1] });
       }
-      const result = await apiCallWithToast(`${API_BASE}/shrines/${id}/pray`, {
+      const result = await apiCallWithToast(`/shrines/${id}/pray`, {
         method: 'POST',
         body,
       }, showToast);
@@ -302,6 +316,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     },
     onSuccess: (result) => {
       if (result.success) {
+        // ローカル状態を即座に更新して「本日参拝済み」に変更
+        setLocalPrayedToday(true);
         queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
         queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
@@ -310,15 +326,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         setRankRefreshKey(k => k + 1); // ランキングも再取得
       }
     },
-    onSettled: async () => {
-      // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
-      try {
-        // 即座にキャッシュをクリアして再取得
-        queryClient.removeQueries({ queryKey: ['shrine-marker-status', id, userId] });
-        await queryClient.refetchQueries({ queryKey: ['shrine-marker-status', id, userId] });
-      } catch (error) {
-        console.error('Failed to refetch marker status:', error);
-      }
+    onError: () => {
+      // エラー時はローカル状態をリセット
+      setLocalPrayedToday(false);
     },
   });
 
@@ -328,7 +338,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       if (currentPosition) {
         body = JSON.stringify({ lat: currentPosition[0], lng: currentPosition[1] });
       }
-      const result = await apiCallWithToast(`${API_BASE}/shrines/${id}/remote-pray`, {
+      const result = await apiCallWithToast(`/shrines/${id}/remote-pray`, {
         method: 'POST',
         body,
       }, showToast);
@@ -336,6 +346,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     },
     onSuccess: (result) => {
       if (result.success) {
+        // ローカル状態を即座に更新
+        setLocalRemotePrayedToday(true);
         queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
         queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
@@ -344,15 +356,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         setRankRefreshKey(k => k + 1); // ランキングも再取得
       }
     },
-    onSettled: async () => {
-      // 成功・失敗にかかわらずmarker-statusを再取得してボタン状態を更新
-      try {
-        // 即座にキャッシュをクリアして再取得
-        queryClient.removeQueries({ queryKey: ['shrine-marker-status', id, userId] });
-        await queryClient.refetchQueries({ queryKey: ['shrine-marker-status', id, userId] });
-      } catch (error) {
-        console.error('Failed to refetch marker status:', error);
-      }
+    onError: () => {
+      // エラー時はローカル状態をリセット
+      setLocalRemotePrayedToday(false);
     },
   });
 
@@ -363,7 +369,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   // 画像ごとの投票
   const handleImageVote = async (imageId: number) => {
-    const result = await apiCallWithToast(`${API_BASE}/shrines/${id}/images/${imageId}/vote`, {
+          const result = await apiCallWithToast(`/shrines/${id}/images/${imageId}/vote`, {
       method: 'POST',
     }, showToast);
 
@@ -554,15 +560,15 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           <CustomButton
             className="btn-pray"
             onClick={() => prayMutation.mutate(id)}
-            disabled={!canPray || markerStatus?.has_prayed_today || prayMutation.isPending}
+            disabled={!canPray || markerStatus?.has_prayed_today || localPrayedToday || prayMutation.isPending}
             style={{ width: '100%' }}
           >
-            {markerStatus?.has_prayed_today ? t('prayedToday') : t('pray')}
+            {(markerStatus?.has_prayed_today || localPrayedToday) ? t('prayedToday') : t('pray')}
           </CustomButton>
           <CustomButton
             className="btn-remote-pray"
             onClick={() => remotePrayMutation.mutate()}
-            disabled={!markerStatus?.can_remote_pray || remotePrayMutation.isPending}
+            disabled={!markerStatus?.can_remote_pray || localRemotePrayedToday || remotePrayMutation.isPending}
             style={{ width: '100%' }}
           >
             {markerStatus?.max_worship_count !== undefined && markerStatus?.today_worship_count !== undefined

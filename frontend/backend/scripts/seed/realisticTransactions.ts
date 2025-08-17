@@ -139,7 +139,7 @@ async function simulatePray(userId: number, shrineId: number, shrinePositions: {
     return false;
   }
   try {
-    const response = await axios.post(`http://localhost:${API_PORT}/shrines/${shrineId}/pray`, {
+    const response = await axios.post(`http://localhost:${API_PORT}/api/shrines/${shrineId}/pray`, {
       lat: pos.lat,
       lng: pos.lng,
       ...(timeMs !== undefined ? { timeMs } : {})
@@ -190,7 +190,7 @@ async function simulatePray(userId: number, shrineId: number, shrinePositions: {
 async function simulateRemotePray(prisma: PrismaClient, userId: number, shrineId: number, prayDate: Date) {
   try {
     // 実際の遥拝APIを呼び出し
-    const response = await axios.post(`http://localhost:${API_PORT}/shrines/${shrineId}/remote-pray`, {}, {
+    const response = await axios.post(`http://localhost:${API_PORT}/api/shrines/${shrineId}/remote-pray`, {}, {
       headers: {
         'x-user-id': userId.toString(),
         'x-seed-mode': 'true'

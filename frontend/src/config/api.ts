@@ -162,9 +162,29 @@ interface ApiCallOptions extends RequestInit {
 export async function apiCall(url: string, options: ApiCallOptions = {}): Promise<Response> {
   const { requireAuth = true, retryCount = 0, ...fetchOptions } = options;
 
+  // URLの正規化（API_BASEとプレフィックスの統一）
+  let normalizedUrl = url;
+
+  // 完全なURL（http://で始まる）の場合はそのまま使用
+  if (url.startsWith('http')) {
+    normalizedUrl = url;
+  } else {
+    // 相対パスの場合、API_BASEを追加
+    const baseUrl = url.startsWith('/') ? url : `/${url}`;
+
+    // プレフィックスの統一
+    if (!baseUrl.startsWith('/auth/') && !baseUrl.startsWith('/api/') && !baseUrl.startsWith('/admin/') && !baseUrl.startsWith('/health')) {
+      // /apiプレフィックスが付いていない場合は追加
+      normalizedUrl = `${API_BASE}/api${baseUrl}`;
+    } else {
+      // 既にプレフィックスが付いている場合はAPI_BASEのみ追加
+      normalizedUrl = `${API_BASE}${baseUrl}`;
+    }
+  }
+
   // 認証が必要で、かつ認証されていない場合はエラーを投げる
   if (requireAuth && !isAuthenticated()) {
-    console.error('[apiCall] 認証エラー:', url, '認証状態:', isAuthenticated());
+    console.error('[apiCall] 認証エラー:', normalizedUrl, '認証状態:', isAuthenticated());
     const error = new Error('認証が必要です');
     (error as any).status = 401;
     throw error;
@@ -179,7 +199,7 @@ export async function apiCall(url: string, options: ApiCallOptions = {}): Promis
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   } else if (requireAuth) {
-    console.warn('[apiCall] トークンなし:', url);
+    console.warn('[apiCall] トークンなし:', normalizedUrl);
   }
 
   // 認証が必要な場合のみユーザーIDをヘッダーに追加（バックエンドで使用）
@@ -205,7 +225,7 @@ export async function apiCall(url: string, options: ApiCallOptions = {}): Promis
   }
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(normalizedUrl, {
       ...fetchOptions,
       headers,
     });

@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
-import { API_BASE, apiCall } from '../../config/api';
+import { apiCall } from '../../config/api';
 import { NOIMAGE_USER_URL } from '../../constants';
 import { useModal } from '../../contexts/ModalContext';
 import { useFollowers } from '../../hooks/useFollowers';
@@ -83,7 +83,7 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
 
     const handleFollow = async () => {
       if (!currentUserId || !userInfo) return;
-      await apiCall(`${API_BASE}/follows`, {
+      await apiCall(`/follows`, {
         method: 'POST',
         body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
       });
@@ -94,7 +94,7 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
 
     const handleUnfollow = async () => {
       if (!currentUserId || !userInfo) return;
-      await apiCall(`${API_BASE}/follows`, {
+      await apiCall(`/follows`, {
         method: 'DELETE',
         body: JSON.stringify({ followerId: currentUserId, followingId: userInfo.id }),
       });

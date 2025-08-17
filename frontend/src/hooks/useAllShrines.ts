@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface AllShrineItem {
   id: number;
@@ -36,7 +36,7 @@ export function useAllShrines() {
   const queryOptions = useMemo(() => ({
     queryKey: ['all-shrines'] as const,
     queryFn: async () => {
-      const response = await apiCall(`${API_BASE}/shrines/all`);
+      const response = await apiCall(`/shrines/all`);
       return response.json();
     },
     staleTime: 5 * 60 * 1000, // 5分間キャッシュを使用

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 // プラットフォーム判定
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -38,7 +38,7 @@ export function useStripeCheckout() {
       const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
       if (!plan) throw new Error('プランが見つかりません');
 
-      const res = await apiCall(`${API_BASE}/subscription/create-checkout-session`, {
+      const res = await apiCall(`/subscription/create-checkout-session`, {
         method: 'POST',
         body: JSON.stringify({ planId, platform: 'web' }),
       });

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface ShrineDetail {
   id: number;
@@ -35,7 +35,7 @@ export function useShrineDetail(id: number | undefined) {
     queryKey: ['shrine', id],
     queryFn: async () => {
       if (!id) throw new Error('Shrine ID is required');
-      const response = await apiCall(`${API_BASE}/shrines/${id}`);
+      const response = await apiCall(`/shrines/${id}`);
       return response.json();
     },
     enabled: !!id,

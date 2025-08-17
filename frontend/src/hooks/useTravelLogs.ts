@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface TravelLog {
   id: number;
@@ -41,7 +41,7 @@ export function useShrineTravelLogs(shrineId: number | undefined, page: number =
     queryKey: ['shrine-travel-logs', shrineId, page, limit],
     queryFn: async (): Promise<TravelLogsResponse> => {
       if (!shrineId) throw new Error('Shrine ID is required');
-      const response = await apiCall(`${API_BASE}/shrines/${shrineId}/travel-logs?page=${page}&limit=${limit}`);
+      const response = await apiCall(`/shrines/${shrineId}/travel-logs?page=${page}&limit=${limit}`);
       return response.json();
     },
     enabled: !!shrineId,
@@ -54,7 +54,7 @@ export function useDietyTravelLogs(dietyId: number | undefined, page: number = 1
     queryKey: ['diety-travel-logs', dietyId, page, limit],
     queryFn: async (): Promise<TravelLogsResponse> => {
       if (!dietyId) throw new Error('Diety ID is required');
-      const response = await apiCall(`${API_BASE}/dieties/${dietyId}/travel-logs?page=${page}&limit=${limit}`);
+      const response = await apiCall(`/dieties/${dietyId}/travel-logs?page=${page}&limit=${limit}`);
       return response.json();
     },
     enabled: !!dietyId,
@@ -67,7 +67,7 @@ export function useShrineTravelLogCanPost(shrineId: number | undefined) {
     queryKey: ['shrine-travel-logs-can-post', shrineId],
     queryFn: async (): Promise<TravelLogCanPostResponse> => {
       if (!shrineId) throw new Error('Shrine ID is required');
-      const response = await apiCall(`${API_BASE}/shrines/${shrineId}/travel-logs/can-post`);
+      const response = await apiCall(`/shrines/${shrineId}/travel-logs/can-post`);
       return response.json();
     },
     enabled: !!shrineId,
@@ -80,7 +80,7 @@ export function useDietyTravelLogCanPost(dietyId: number | undefined) {
     queryKey: ['diety-travel-logs-can-post', dietyId],
     queryFn: async (): Promise<TravelLogCanPostResponse> => {
       if (!dietyId) throw new Error('Diety ID is required');
-      const response = await apiCall(`${API_BASE}/dieties/${dietyId}/travel-logs/can-post`);
+      const response = await apiCall(`/dieties/${dietyId}/travel-logs/can-post`);
       return response.json();
     },
     enabled: !!dietyId,
@@ -93,7 +93,7 @@ export function usePostShrineTravelLog() {
 
   return useMutation({
     mutationFn: async ({ shrineId, data }: { shrineId: number; data: TravelLogPostData }): Promise<TravelLog> => {
-      const response = await apiCall(`${API_BASE}/shrines/${shrineId}/travel-logs`, {
+      const response = await apiCall(`/shrines/${shrineId}/travel-logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export function usePostDietyTravelLog() {
 
   return useMutation({
     mutationFn: async ({ dietyId, data }: { dietyId: number; data: TravelLogPostData }): Promise<TravelLog> => {
-      const response = await apiCall(`${API_BASE}/dieties/${dietyId}/travel-logs`, {
+      const response = await apiCall(`/dieties/${dietyId}/travel-logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

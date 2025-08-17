@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import type { Period, RankingItem } from '../components/organisms/RankingPane';
 import { API_BASE, apiCall } from '../config/api';
 
-const apiMap: Record<Period, string> = {
-  all: '/user-rankings',
-  yearly: '/user-rankings-yearly',
-  monthly: '/user-rankings-monthly',
-  weekly: '/user-rankings-weekly',
-};
+  const apiMap: Record<Period, string> = {
+    all: '/user-rankings',
+    yearly: '/user-rankings-yearly',
+    monthly: '/user-rankings-monthly',
+    weekly: '/user-rankings-weekly',
+  };
 
 export default function useUserRankings(period: Period) {
   return useQuery<RankingItem[]>({

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 // 能力一覧取得
 export function useAbilities(userId: number | null) {
@@ -18,7 +18,7 @@ export function useAbilities(userId: number | null) {
     queryKey: ['abilities', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await apiCall(`${API_BASE}/users/${userId}/abilities`);
+      const res = await apiCall(`/users/${userId}/abilities`);
       return res.json();
     },
     enabled: !!userId,
@@ -31,7 +31,7 @@ export function usePurchaseAbility() {
 
   return useMutation({
     mutationFn: async ({ userId, abilityId }: { userId: number; abilityId: number }) => {
-      const res = await apiCall(`${API_BASE}/abilities/${abilityId}/purchase`, {
+      const res = await apiCall(`/abilities/${abilityId}/purchase`, {
         method: 'POST'
       });
       return res.json();
@@ -52,7 +52,7 @@ export function useResetAbilities() {
 
   return useMutation({
     mutationFn: async (userId: number) => {
-      const res = await apiCall(`${API_BASE}/user/reset-abilities`, {
+      const res = await apiCall(`/user/reset-abilities`, {
         method: 'POST'
       });
       return res.json();

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface AbilityItem {
   id: number;
@@ -22,7 +22,7 @@ export default function useAbilityList(userId?: number | null) {
     queryKey: ['abilities', userId],
     enabled: !!userId,
     queryFn: async () => {
-      const res = await apiCall(`${API_BASE}/users/${userId}/abilities`);
+      const res = await apiCall(`/users/${userId}/abilities`);
       if (!res.ok) throw new Error('能力一覧の取得に失敗しました');
       const data = await res.json();
       return data.abilities || data;

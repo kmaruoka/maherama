@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface ShrineMarkerStatus {
   shrine_id: number;
@@ -17,7 +17,7 @@ export function useShrineMarkerStatus(shrineId: number | null, userId: number | 
     queryKey: ['shrine-marker-status', shrineId, userId],
     queryFn: async () => {
       if (!shrineId || !userId) throw new Error('神社IDまたはユーザーIDが未設定です');
-      const res = await apiCall(`${API_BASE}/shrines/${shrineId}/marker-status`);
+      const res = await apiCall(`/shrines/${shrineId}/marker-status`);
       return res.json();
     },
     enabled: !!shrineId && !!userId,

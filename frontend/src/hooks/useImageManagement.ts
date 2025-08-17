@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { API_BASE } from '../config/api';
 import { useApiWithToast } from './useApiWithToast';
 
 export interface ImageManagementOptions {
@@ -88,7 +87,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
       const formData = new FormData();
       formData.append('image', file);
 
-      const result = await callApi(`${API_BASE}/${options.entityType}s/${options.entityId}/images/upload`, {
+      const result = await callApi(`/${options.entityType}s/${options.entityId}/images/upload`, {
         method: 'POST',
         body: formData
       });
@@ -118,7 +117,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const handleVote = useCallback(async () => {
     try {
-      const result = await callApi(`${API_BASE}/${options.entityType}s/${options.entityId}/images/vote`, {
+      const result = await callApi(`/${options.entityType}s/${options.entityId}/images/vote`, {
         method: 'POST'
       });
 
@@ -136,7 +135,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const handleImageVote = useCallback(async (imageId: number) => {
     try {
-      const result = await callApi(`${API_BASE}/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
+      const result = await callApi(`/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
         method: 'POST'
       });
 

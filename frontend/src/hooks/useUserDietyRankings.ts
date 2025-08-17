@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
 import type { Period, RankingItem } from '../components/organisms/RankingPane';
+import { apiCall } from '../config/api';
 
 export type UserDietyRankingsByPeriod = { [key in Period]: RankingItem[] };
 
@@ -9,7 +9,7 @@ export default function useUserDietyRankings(userId: number | undefined) {
     queryKey: ['user-diety-rankings-bundle', userId],
     queryFn: async () => {
       if (!userId) return { all: [], yearly: [], monthly: [], weekly: [] };
-      const res = await apiCall(`${API_BASE}/users/${userId}/diety-rankings-bundle`);
+      const res = await apiCall(`/users/${userId}/diety-rankings-bundle`);
       if (!res.ok) throw new Error('神様ランキング取得に失敗しました');
       return res.json();
     },

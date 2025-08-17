@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface DietyListItem {
   id: number;
@@ -23,7 +23,7 @@ export function useDietyList() {
     queryKey: ['dieties-visited'],
     queryFn: async () => {
       console.log('[useDietyList] 神様一覧取得開始');
-      const response = await apiCall(`${API_BASE}/users/me/dieties-visited`);
+      const response = await apiCall(`/users/me/dieties-visited`);
       const data = await response.json();
       console.log('[useDietyList] 神様一覧取得成功:', data.length, '件');
       return data;

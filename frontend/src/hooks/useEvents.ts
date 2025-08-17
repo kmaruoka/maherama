@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface Event {
   id: number;
@@ -34,7 +34,7 @@ export function useEvents() {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const response = await apiCall(`${API_BASE}/events`, { requireAuth: false });
+        const response = await apiCall(`/events`, { requireAuth: false });
         const data = await response.json();
         setEvents(data);
         setError(null);

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 export interface Following {
   id: number;
@@ -18,7 +18,7 @@ export function useFollowing(userId: number) {
   return useQuery<Following[]>({
     queryKey: ['following', userId],
     queryFn: async () => {
-      const response = await apiCall(`${API_BASE}/users/${userId}/following`);
+      const response = await apiCall(`/users/${userId}/following`);
       return response.json();
     },
     enabled: !!userId,

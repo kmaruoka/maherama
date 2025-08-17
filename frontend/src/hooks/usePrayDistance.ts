@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { calculateDistance } from "../../backend/shared/utils/distance";
-import { API_BASE, apiCall } from '../config/api';
+import { apiCall } from '../config/api';
 
 // 2点間の距離計算はcalculateDistanceを使う
 export function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -20,7 +20,7 @@ export function usePrayDistance(userId: number | null): { prayDistance: number |
     queryKey: ['pray-distance', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await apiCall(`${API_BASE}/users/${userId}/pray-distance`);
+      const res = await apiCall(`/users/${userId}/pray-distance`);
       return res.json();
     },
     enabled: !!userId,
@@ -47,7 +47,7 @@ export function useWorshipLimit(userId: number | null) {
     queryKey: ['worship-limit', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await apiCall(`${API_BASE}/users/${userId}/worship-limit`);
+      const res = await apiCall(`/users/${userId}/worship-limit`);
       return res.json();
     },
     enabled: !!userId,
@@ -90,7 +90,7 @@ export function useLevelInfo(userId: number | null) {
     queryKey: ['level-info', userId],
     queryFn: async () => {
       if (!userId) throw new Error('ユーザーIDが未設定です');
-      const res = await apiCall(`${API_BASE}/users/${userId}/level-info`);
+      const res = await apiCall(`/users/${userId}/level-info`);
       return res.json();
     },
     enabled: !!userId,
