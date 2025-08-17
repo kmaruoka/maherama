@@ -1,0 +1,59 @@
+.notification-button {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.notification-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.notification-button-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.notification-button-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* アニメーション */
+@keyframes notification-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.notification-button-badge {
+  animation: notification-pulse 2s infinite;
+}

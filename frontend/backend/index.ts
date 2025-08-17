@@ -5737,6 +5737,215 @@ app.get('/api/simulation/status', (req, res) => {
   }
 });
 
+// 通知関連API
+
+// ユーザーの未読通知一覧取得
+app.get('/api/notifications', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user?.id || null;
+    const currentDate = getCurrentDate();
+    console.log('🔍 通知一覧取得リクエスト:', { userId, currentDate });
+
+    const notifications = await prisma.notification.findMany({
+      where: {
+        is_active: true,
+        start_at: { lte: currentDate },
+        OR: [
+          { end_at: null },
+          { end_at: { gte: currentDate } }
+        ]
+      },
+      orderBy: {
+        created_at: 'desc'
+      },
+      include: {
+        user_reads: userId ? {
+          where: {
+            user_id: userId
+          }
+        } : false
+      }
+    });
+
+    const responseData = {
+      success: true,
+      notifications: notifications.map(notification => ({
+        id: notification.id,
+        title: notification.title,
+        type: notification.type,
+        is_read: userId ? (notification.user_reads?.length > 0 ? notification.user_reads[0].is_read : false) : false,
+        created_at: notification.created_at
+      }))
+    };
+    console.log('📡 通知一覧取得レスポンス:', responseData);
+    res.json(responseData);
+  } catch (error) {
+    console.error('通知一覧取得エラー:', error);
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
+// 通知詳細取得
+app.get('/api/notifications/:id', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notificationId = parseInt(req.params.id);
+
+    const notification = await prisma.notification.findUnique({
+      where: { id: notificationId },
+      include: {
+        user_reads: {
+          where: {
+            user_id: userId
+          }
+        }
+      }
+    });
+
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: '通知が見つかりません'
+      });
+    }
+
+    // 既読状態を更新
+    const userRead = notification.user_reads[0];
+    if (!userRead || !userRead.is_read) {
+      await prisma.userNotification.upsert({
+        where: {
+          user_id_notification_id: {
+            user_id: userId,
+            notification_id: notificationId
+          }
+        },
+        update: {
+          is_read: true,
+          read_at: getCurrentDate()
+        },
+        create: {
+          user_id: userId,
+          notification_id: notificationId,
+          is_read: true,
+          read_at: getCurrentDate()
+        }
+      });
+    }
+
+    // 更新後の通知データを再取得
+    const updatedNotification = await prisma.notification.findUnique({
+      where: { id: notificationId },
+      include: {
+        user_reads: {
+          where: {
+            user_id: userId
+          }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      notification: {
+        id: updatedNotification.id,
+        title: updatedNotification.title,
+        content: updatedNotification.content,
+        type: updatedNotification.type,
+        created_at: updatedNotification.created_at,
+        is_read: updatedNotification.user_reads[0]?.is_read || false
+      }
+    });
+  } catch (error) {
+    console.error('通知詳細取得エラー:', error);
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
+// 通知既読状態更新
+app.post('/api/notifications/:id/read', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notificationId = parseInt(req.params.id);
+
+    await prisma.userNotification.upsert({
+      where: {
+        user_id_notification_id: {
+          user_id: userId,
+          notification_id: notificationId
+        }
+      },
+      update: {
+        is_read: true,
+        read_at: getCurrentDate()
+      },
+      create: {
+        user_id: userId,
+        notification_id: notificationId,
+        is_read: true,
+        read_at: getCurrentDate()
+      }
+    });
+
+    res.json({
+      success: true,
+      message: '通知を既読にしました'
+    });
+  } catch (error) {
+    console.error('通知既読更新エラー:', error);
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
+// 未読通知数取得
+app.get('/api/notifications/unread/count', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user?.id || null;
+    const currentDate = getCurrentDate();
+    console.log('🔍 未読数取得リクエスト:', { userId, currentDate });
+
+    const count = await prisma.notification.count({
+      where: {
+        is_active: true,
+        start_at: { lte: currentDate },
+        OR: [
+          { end_at: null },
+          { end_at: { gte: currentDate } }
+        ],
+        ...(userId ? {
+          user_reads: {
+            none: {
+              user_id: userId,
+              is_read: true
+            }
+          }
+        } : {})
+      }
+    });
+
+    const responseData = {
+      success: true,
+      count: count
+    };
+    console.log('📡 未読数取得レスポンス:', responseData);
+    res.json(responseData);
+  } catch (error) {
+    console.error('未読通知数取得エラー:', error);
+    res.status(500).json({
+      success: false,
+      message: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
 // エラーハンドリングミドルウェアを追加
 app.use(errorLogger);
 

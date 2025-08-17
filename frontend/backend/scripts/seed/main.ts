@@ -4,6 +4,7 @@ import { seedDiety } from './diety';
 import { seedDietyImage } from './dietyImage';
 import { seedLevel } from './level';
 import { seedMissions } from './mission';
+import { seedNotifications } from './notification';
 import { seedRealisticTransactions } from './realisticTransactions';
 import { seedShrine, seedShrinesFromTxt } from './shrine';
 import { seedShrineDiety } from './shrineDiety';
@@ -43,6 +44,7 @@ async function main() {
   await seedShrineImage(prisma);
   await seedDietyImage(prisma);
   await seedMissions();
+  await seedNotifications();
   // 全マスターデータが揃った後にトランザクションデータを生成
   await seedRealisticTransactions(prisma);
   console.log("✅ Seeding completed.");

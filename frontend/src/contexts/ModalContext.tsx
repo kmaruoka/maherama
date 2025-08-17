@@ -1,10 +1,10 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
 
-type ModalType = { type: 'shrine' | 'diety' | 'user' | 'mission', id: number } | null;
+type ModalType = { type: 'shrine' | 'diety' | 'user' | 'mission' | 'notification', id: number } | null;
 
 // ナビゲーション履歴の型
 interface NavigationHistoryItem {
-  type: 'shrine' | 'diety' | 'user' | 'mission';
+  type: 'shrine' | 'diety' | 'user' | 'mission' | 'notification';
   id: number;
   name: string;
 }
@@ -19,7 +19,7 @@ interface ModalContextType {
   historyIndex: number;
 
   // モーダル操作
-  openModal: (type: 'shrine' | 'diety' | 'user' | 'mission', id: number, clearHistory?: boolean) => void;
+  openModal: (type: 'shrine' | 'diety' | 'user' | 'mission' | 'notification', id: number, clearHistory?: boolean) => void;
   closeModal: () => void;
 
   // ナビゲーション操作
@@ -71,7 +71,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   }, [navigationHistory, historyIndex]);
 
   // モーダルを開く
-  const openModal = useCallback((type: 'shrine' | 'diety' | 'user' | 'mission', id: number, clearHistory: boolean = false) => {
+  const openModal = useCallback((type: 'shrine' | 'diety' | 'user' | 'mission' | 'notification', id: number, clearHistory: boolean = false) => {
     const initialName = '';
 
     if (clearHistory) {
@@ -144,7 +144,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   }, [historyIndex, navigationHistory]);
 
   // 前のアイテムタイプを取得
-  const getPreviousItemType = useCallback((): 'shrine' | 'diety' | 'user' | 'mission' => {
+  const getPreviousItemType = useCallback((): 'shrine' | 'diety' | 'user' | 'mission' | 'notification' => {
     if (historyIndex > 0) {
       return navigationHistory[historyIndex - 1].type;
     }
@@ -152,7 +152,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   }, [historyIndex, navigationHistory]);
 
   // 次のアイテムタイプを取得
-  const getNextItemType = useCallback((): 'shrine' | 'diety' | 'user' | 'mission' => {
+  const getNextItemType = useCallback((): 'shrine' | 'diety' | 'user' | 'mission' | 'notification' => {
     if (historyIndex < navigationHistory.length - 1) {
       return navigationHistory[historyIndex + 1].type;
     }

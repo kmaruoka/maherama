@@ -5,11 +5,13 @@ import { useSecureAuth } from '../config/api';
 import { useModal } from '../contexts/ModalContext';
 import { useSkin } from '../skins/SkinContext';
 import CustomLink from './atoms/CustomLink';
+
 import DietyPage from './organisms/DietyPane';
 import LogPane from './organisms/LogPane';
 import MenuPane from './organisms/MenuPane';
 import MissionPane from './organisms/MissionPane';
 import MyPage from './organisms/MyPage';
+import { NotificationPane, type NotificationPaneRef } from './organisms/NotificationPane';
 import ShrinePane from './organisms/ShrinePane';
 import UserPane from './organisms/UserPane';
 import CatalogPage from './pages/CatalogPage';
@@ -137,12 +139,25 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
     }
   }, [isAuthenticated, setCurrentUserId]);
 
+  // 通知モーダルを開くイベントリスナー
+  useEffect(() => {
+    const handleOpenNotificationModal = () => {
+      openModal('notification', 0, true);
+    };
+
+    window.addEventListener('openNotificationModal', handleOpenNotificationModal);
+    return () => {
+      window.removeEventListener('openNotificationModal', handleOpenNotificationModal);
+    };
+  }, [openModal]);
+
   // 各ペインコンポーネントへのref
   const shrinePaneRef = useRef<{ backToOverview: () => void; getTitle: () => string }>(null);
   const dietyPaneRef = useRef<{ backToOverview: () => void; getTitle: () => string }>(null);
   const userPaneRef = useRef<{ backToOverview: () => void; getTitle: () => string }>(null);
   const myPageRef = useRef<{ backToOverview: () => void; getTitle: () => string }>(null);
   const missionPaneRef = useRef<{ backToOverview: () => void; getTitle: () => string }>(null);
+  const notificationPaneRef = useRef<NotificationPaneRef>(null);
 
   // ログアウト処理
   const handleLogout = () => {
@@ -175,6 +190,8 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
         }
       case 'mission':
         return missionPaneRef.current?.getTitle() || `ミッション #${modal.id}`;
+      case 'notification':
+        return notificationPaneRef.current?.getTitle() || 'お知らせ';
       default:
         return '';
     }
@@ -198,6 +215,9 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
         break;
       case 'mission':
         missionPaneRef.current?.backToOverview();
+        break;
+      case 'notification':
+        notificationPaneRef.current?.backToOverview();
         break;
     }
   };
@@ -234,6 +254,8 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
   return (
     <div className="app">
       <div className={`app__content ${modal ? 'modal-open' : ''}`}>
+        <div className="app__header">
+        </div>
         {renderPage()}
         {modal && currentUserId && (
           <Modal
@@ -374,6 +396,29 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
                     onShowDiety={(id: number) => openModal('diety', id)}
                     onDataLoaded={updateCurrentModalName}
                   />
+                </>
+              )}
+              {modal.type === 'notification' && (
+                <>
+                  <ModalHeader
+                    title={getModalTitle()}
+                    onBack={closeModal}
+                    onTitleClick={handleBackToOverview}
+                    canGoBack={canGoBack}
+                    canGoForward={canGoForward}
+                    onGoBack={goBack}
+                    onGoForward={goForward}
+                    getPreviousItemName={getPreviousItemName}
+                    getNextItemName={getNextItemName}
+                    getPreviousItemType={getPreviousItemType}
+                    getNextItemType={getNextItemType}
+                  />
+                  <div className="modal__content">
+                    <NotificationPane
+                      ref={notificationPaneRef}
+                      onDataLoaded={updateCurrentModalName}
+                    />
+                  </div>
                 </>
               )}
             </Modal.Body>

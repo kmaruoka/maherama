@@ -158,6 +158,7 @@ model User {
   user_missions             UserMission[]
   user_subscriptions        UserSubscription[]
   userTitles                UserTitle[]
+  user_notifications        UserNotification[]
 }
 
 model Follow {
@@ -688,4 +689,31 @@ model DietyTravelLog {
   updated_at DateTime @updatedAt
   user       User     @relation(fields: [user_id], references: [id])
   diety      Diety    @relation(fields: [diety_id], references: [id])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String   @db.Text
+  type        String   @default("info") // info, event, maintenance, release
+  is_active   Boolean  @default(true)
+  start_at    DateTime @default(now())
+  end_at      DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  user_reads  UserNotification[]
+}
+
+model UserNotification {
+  id             Int          @id @default(autoincrement())
+  user_id        Int
+  notification_id Int
+  is_read        Boolean      @default(false)
+  read_at        DateTime?
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+  user           User         @relation(fields: [user_id], references: [id])
+  notification   Notification @relation(fields: [notification_id], references: [id])
+
+  @@unique([user_id, notification_id])
 }

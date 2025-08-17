@@ -40,6 +40,19 @@ export default function SubmenuPage({ onNavigateToTerms, onNavigateToCommercialT
               </Button>
             </div>
           )}
+          <div className="submenu-page__item">
+            <Button
+              variant="link"
+              onClick={() => {
+                // 通知モーダルを開く処理
+                const event = new CustomEvent('openNotificationModal');
+                window.dispatchEvent(event);
+              }}
+              className="submenu-page__link"
+            >
+              お知らせ
+            </Button>
+          </div>
         </div>
       </div>
     </div>

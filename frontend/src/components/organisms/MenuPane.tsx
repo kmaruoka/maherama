@@ -4,6 +4,7 @@ import { FaBars, FaBook, FaFlag, FaGear, FaMapLocationDot, FaUser } from "react-
 import { useSkin } from '../../skins/SkinContext';
 import CustomMenuItem from '../atoms/CustomMenuItem';
 
+
 export default function MenuPane({ setPage, page, isDialogOpen }: { setPage: (page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction') => void, page: 'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction', isDialogOpen?: boolean }) {
   useSkin();
   const { t } = useTranslation();
