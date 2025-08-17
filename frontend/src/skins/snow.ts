@@ -15,18 +15,6 @@ const snowSkin = {
     tagShrineText: '#1565c0',         // くすみ青（冷たい空気）
     tagDietyText: '#2e7d32',          // 雪に耐える常緑の色
     tagUserText: '#6a1b9a',           // 薄曇りの中の紫（個性）
-    rankingTabBg: '#f1f3f5',
-    rankingTabActiveBg: '#ffffff',
-    rankingRowBg: '#ffffff',
-    rankingRowBorder: '#dfe4ea',
-    rankingSection: '#607d8b',        // 雪の影・木の陰のような色
-    logText: '#2e2e2e',
-    section: '#607d8b',
-
-    scrollbarThumb: '#b0bec5',
-    scrollbarTrack: '#e0e0e0',
-    scrollbarThumbHover: '#90a4ae',
-    tabInactive: 'linear-gradient(to bottom, #cfd8dc 0%, #e0e0e0 100%)',
     disabled: '#bdbdbd',
     textMuted: '#757575',
   },

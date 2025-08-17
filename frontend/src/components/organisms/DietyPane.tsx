@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
-import { API_BASE, apiCall } from '../../config/api';
+import { apiCall } from '../../config/api';
 import { NOIMAGE_DIETY_URL } from '../../constants';
 import { useModal } from '../../contexts/ModalContext';
 import { useDietyDetail } from '../../hooks/useDietyDetail';
@@ -26,13 +26,13 @@ export interface DietyPaneRef {
 }
 
 // 神様のユーザーランキング用フック
-function useDietyUserRankingsBundle(dietyId: number | undefined, refreshKey: number): { data: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }, isLoading: boolean } {
-  const [data, setData] = useState<{ [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
+function useDietyUserRankingsBundle(dietyId: number | undefined, refreshKey: number): { data: { [key in Period]: { id: number; name: string; count: number; rank: number; }[] }, isLoading: boolean } {
+  const [data, setData] = useState<{ [key in Period]: { id: number; name: string; count: number; rank: number; }[] }>({ all: [], yearly: [], monthly: [], weekly: [] });
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (!dietyId) return;
     setLoading(true);
-    apiCall(`${API_BASE}/dieties/${dietyId}/rankings-bundle`)
+    apiCall(`/api/diety-rankings-bundle?dietyId=${dietyId}`)
       .then(res => res.json())
       .then(json => setData(json))
       .finally(() => setLoading(false));
@@ -41,14 +41,14 @@ function useDietyUserRankingsBundle(dietyId: number | undefined, refreshKey: num
 }
 
 // ランキングデータの変換関数
-function convertUserRankingsByPeriod(userRankingsByPeriod: { [key in Period]: { userId: number; userName: string; count: number; rank: number; }[] }) {
+function convertUserRankingsByPeriod(userRankingsByPeriod: { [key in Period]: { id: number; name: string; count: number; rank: number; }[] }) {
   const periods: Period[] = ['all', 'yearly', 'monthly', 'weekly'];
   const result: { [key in Period]: { id: number; name: string; count: number; rank: number; }[] } = { all: [], yearly: [], monthly: [], weekly: [] };
 
   for (const period of periods) {
     result[period] = userRankingsByPeriod[period].map(item => ({
-      id: item.userId,
-      name: item.userName,
+      id: item.id,
+      name: item.name,
       count: item.count,
       rank: item.rank
     }));
@@ -257,7 +257,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
           rankingType="diety"
           isLoading={isRankingLoading}
           onItemClick={onShowUser}
-          maxItems={3}
+          maxItems={100}
         />
       </div>
     );

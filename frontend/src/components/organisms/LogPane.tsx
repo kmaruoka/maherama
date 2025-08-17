@@ -1,7 +1,7 @@
-import { useRef, useEffect, useState } from 'react';
-import CustomLogLine, { type LogItem } from '../molecules/CustomLogLine';
-import { useSkin } from '../../skins/SkinContext';
+import { useEffect, useRef, useState } from 'react';
 import useLogs, { useClientLogs } from '../../hooks/useLogs';
+import { useSkin } from '../../skins/SkinContext';
+import CustomLogLine from '../molecules/CustomLogLine';
 
 interface LogPaneProps {
   onShowShrine?: (id: number) => void;
@@ -58,7 +58,7 @@ export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPa
         onClick={handlePaneClick}
         style={{
           background: getLogPaneBg(),
-          color: skin.colors.logText,
+          color: skin.colors.text,
           cursor: 'pointer',
         }}
       >
@@ -94,7 +94,7 @@ export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPa
         style={{
           cursor: 'pointer',
           background: getLogPaneBg(),
-          color: skin.colors.logText,
+          color: skin.colors.text,
           zIndex: 800,
         }}
         onClick={handlePaneClick}

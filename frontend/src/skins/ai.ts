@@ -15,18 +15,6 @@ const aiSkin = {
       tagShrineText: '#ffb347',       // 穏やかな橙（信仰・灯火のイメージ）
       tagDietyText: '#a7d8c9',        // 淡い緑（神格・優しさ）
       tagUserText: '#add8e6',         // 明るい水色（親しみ）
-      rankingTabBg: '#1b263b',
-      rankingTabActiveBg: '#0d1b2a',
-      rankingRowBg: '#1b263b',
-      rankingRowBorder: '#2c3e50',
-      rankingSection: '#aabac6',
-      logText: '#e0e1dd',
-      section: '#e0e1dd',
-
-      scrollbarThumb: '#415a77',
-      scrollbarTrack: '#1b263b',
-      scrollbarThumbHover: '#778da9',
-      tabInactive: 'linear-gradient(to bottom, #415a77 0%, #778da9 100%)',
       disabled: '#4a5568',
       textMuted: '#a0aec0',
     },

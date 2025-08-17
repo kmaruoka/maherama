@@ -15,18 +15,6 @@ const tsukiSkin = {
       tagShrineText: '#ffffcc',        // 月灯りの淡い黄
       tagDietyText: '#d1c4e9',         // 月に照らされた紫苑（しおん）
       tagUserText: '#b0bec5',          // 月の影のようなグレー
-      rankingTabBg: '#11162a',
-      rankingTabActiveBg: '#0a0f1f',
-      rankingRowBg: '#11162a',
-      rankingRowBorder: '#2c3e50',
-      rankingSection: '#cfd8dc',
-      logText: '#e0e1dd',
-      section: '#f0f4f8',
-
-      scrollbarThumb: '#3a3f5d',
-      scrollbarTrack: '#11162a',
-      scrollbarThumbHover: '#b0c4de',
-      tabInactive: 'linear-gradient(to bottom, #546e7a 0%, #90a4ae 100%)',
       disabled: '#37474f',
       textMuted: '#90a4ae',
     },

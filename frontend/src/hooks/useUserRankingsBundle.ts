@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import type { Period, RankingItem } from '../components/organisms/RankingPane';
+import type { RankingItemProps as RankingItem } from '../components/atoms/RankingItem';
+import type { Period } from '../components/organisms/RankingPane';
 import { apiCall } from '../config/api';
 
 export interface UserRankingsBundle {
@@ -12,7 +13,7 @@ export default function useUserRankingsBundle(id: number | null | undefined, per
     queryKey: ['user-rankings-bundle', id, period],
     queryFn: async () => {
       if (!id) return { shrineRankings: [], dietyRankings: [] };
-      const res = await apiCall(`/users/${id}/rankings?period=${period}`);
+      const res = await apiCall(`/api/users/${id}/rankings?period=${period}`);
       return res.json();
     },
     enabled: !!id,

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import Tabs from 'react-bootstrap/Tabs';
+import { useState } from 'react';
 import Tab from 'react-bootstrap/Tab';
+import Tabs from 'react-bootstrap/Tabs';
 import { useSkin } from '../../skins/SkinContext';
 import RankingItem from '../atoms/RankingItem';
+import './RankingPane.css';
 
 export type Period = 'all' | 'yearly' | 'monthly' | 'weekly';
 
@@ -46,16 +47,16 @@ export default function RankingPane({ itemsByPeriod, type, rankingType, isLoadin
         {(['all', 'yearly', 'monthly', 'weekly'] as Period[]).map(p => (
           <Tab eventKey={p} title={periodLabels[p]} key={p}
             tabClassName={period === p ? 'active-tab' : ''}
-            style={period === p ? { background: skin.colors.rankingTabActiveBg, color: skin.colors.text, borderColor: skin.colors.rankingRowBorder } : { color: skin.colors.text }}
+            style={period === p ? { background: skin.colors.surface, color: skin.colors.text, borderColor: skin.colors.border } : { color: skin.colors.text }}
           />
         ))}
       </Tabs>
 
       <div className="d-grid gap-2 mt-2">
         {isLoading ? (
-          <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>読み込み中...</div>
+          <div className="text-center py-4 ranking-pane__loading">読み込み中...</div>
         ) : items.length === 0 ? (
-          <div className="text-center py-4 small" style={{ color: skin.colors.textMuted }}>データがありません</div>
+          <div className="text-center py-4 ranking-pane__empty">データがありません</div>
         ) : (
           items.slice(0, maxItems).map((item) => (
             <RankingItem

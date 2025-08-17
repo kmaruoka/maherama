@@ -1,10 +1,10 @@
 import React from 'react';
-import CustomLink from './CustomLink';
-import ShrineBadge from './ShrineBadge';
-import DietyBadge from './DietyBadge';
 import { GiLibertyWing, GiShintoShrine } from 'react-icons/gi';
 import { useSkin } from '../../skins/SkinContext';
+import CustomLink from './CustomLink';
+import DietyBadge from './DietyBadge';
 import './RankingItem.css';
+import ShrineBadge from './ShrineBadge';
 
 export interface RankingItemProps {
   rank: number;
@@ -81,8 +81,8 @@ const RankingItem: React.FC<RankingItemProps> = ({
   return (
     <div className="ranking-item"
       style={{
-        background: skin.colors.rankingRowBg,
-        border: `1px solid ${skin.colors.rankingRowBorder}`,
+        background: skin.colors.surface,
+        border: `1px solid ${skin.colors.border}`,
         color: skin.colors.text,
       }}
     >

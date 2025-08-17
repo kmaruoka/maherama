@@ -1,6 +1,6 @@
-import CustomText from '../atoms/CustomText';
-import CustomLink from '../atoms/CustomLink';
 import { useSkin } from '../../skins/SkinContext';
+import CustomLink from '../atoms/CustomLink';
+import CustomText from '../atoms/CustomText';
 
 export interface LogItem {
   message: string;
@@ -84,8 +84,8 @@ export default function CustomLogLine({ log, onShowShrine, onShowDiety, onShowUs
 
   return (
     <div className="px-2 py-1">
-      <span style={{ color: skin.colors.logText }}>{formatTime(log.logged_at)}</span>{' '}
-      <span style={{ color: skin.colors.logText }}>{renderMessage(log.message)}</span>
+      <span style={{ color: skin.colors.text }}>{formatTime(log.logged_at)}</span>{' '}
+      <span style={{ color: skin.colors.text }}>{renderMessage(log.message)}</span>
     </div>
   );
 }

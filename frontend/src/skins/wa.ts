@@ -15,18 +15,6 @@ const waSkin = {
     tagShrineText: '#b05e1e', // 柿茶（穏やかな朱）
     tagDietyText: '#33691e',  // 深緑（自然・森）
     tagUserText: '#1e3a5f',   // 藍色（人情と知性）
-    rankingTabBg: '#fdfaf3',
-    rankingTabActiveBg: '#fbf8ef',
-    rankingRowBg: '#fbf8ef',
-    rankingRowBorder: '#d4bc94',
-    rankingSection: '#5d4037', // 濃い焦茶（引き締め）
-    logText: '#222',
-    section: '#5d4037',
-
-    scrollbarThumb: '#c7a76c',
-    scrollbarTrack: '#eae2cc',
-    scrollbarThumbHover: '#a77f3d',
-    tabInactive: 'linear-gradient(to bottom, #c8bca8 0%, #eae2cc 100%)',
     disabled: '#e0e0e0',
     textMuted: '#aaa',
   },
