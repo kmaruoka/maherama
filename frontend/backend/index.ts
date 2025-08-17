@@ -1167,13 +1167,13 @@ app.post('/shrines/:id/pray', authenticateJWT, async (req, res) => {
       error: 'Location information required'
     });
   }
-  const toRad = (x) => x * Math.PI / 180;
-  const R = 6371000;
-  const dLat = toRad(req.body.lat - shrine.lat);
-  const dLng = toRad(req.body.lng - shrine.lng);
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(shrine.lat)) * Math.cos(toRad(req.body.lat)) * Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const dist = R * c;
+
+  // 共通化された距離計算関数を使用
+  const { calculateDistance } = require('./shared/utils/distance');
+  const dist = calculateDistance(
+    { lat: req.body.lat, lng: req.body.lng },
+    { lat: shrine.lat, lng: shrine.lng }
+  );
   const prayDistance = await getUserPrayDistance(userId);
   if (dist > prayDistance) {
     return res.status(400).json({
