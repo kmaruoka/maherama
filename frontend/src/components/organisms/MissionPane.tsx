@@ -62,7 +62,7 @@ const MissionPane = React.forwardRef<MissionPaneRef, MissionPaneProps>(({
   if (isLoading) {
     return (
       <div className="modal__content">
-        <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div className="padding-20 text-center">
           読み込み中...
         </div>
       </div>
@@ -72,7 +72,7 @@ const MissionPane = React.forwardRef<MissionPaneRef, MissionPaneProps>(({
   if (error || !mission) {
     return (
       <div className="modal__content">
-        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-error)' }}>
+        <div className="padding-20 text-center text-danger">
           ミッションが見つかりません
         </div>
       </div>
@@ -109,13 +109,13 @@ const MissionPane = React.forwardRef<MissionPaneRef, MissionPaneProps>(({
             <div>
               {mission.shrines && mission.shrines.length > 0 && (
                 <div>
-                  <div className="small" style={{ marginBottom: '5px', color: 'var(--color-text)', opacity: 0.7 }}>神社</div>
+                  <div className="small margin-bottom-5 text-white opacity-7">神社</div>
                   <div className="d-flex flex-wrap gap-2">
                     {mission.shrines.map((shrine: any) => (
                       <div
                         key={`shrine-${shrine.id}`}
+                        className="position-relative"
                         style={{
-                          position: 'relative',
                           opacity: shrine.is_completed ? 0.6 : 1
                         }}
                       >
@@ -142,13 +142,13 @@ const MissionPane = React.forwardRef<MissionPaneRef, MissionPaneProps>(({
               )}
               {mission.dieties && mission.dieties.length > 0 && (
                 <div>
-                  <div className="small" style={{ marginBottom: '5px', color: 'var(--color-text)', opacity: 0.7 }}>神様</div>
+                  <div className="small margin-bottom-5 text-white opacity-7">神様</div>
                   <div className="d-flex flex-wrap gap-2">
                     {mission.dieties.map((diety: any) => (
                       <div
                         key={`diety-${diety.id}`}
+                        className="position-relative"
                         style={{
-                          position: 'relative',
                           opacity: diety.is_completed ? 0.6 : 1
                         }}
                       >

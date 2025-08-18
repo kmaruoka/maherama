@@ -34,11 +34,9 @@
 .tag-user {
   background: var(--color-tag-user);
   color: var(--color-tag-user-text);
-  text-decoration: none;
 }
 .tag-user:hover {
   filter: brightness(1.05);
-  text-decoration: underline;
 }
 
 .tag-mission {

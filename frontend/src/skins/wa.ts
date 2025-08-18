@@ -9,14 +9,14 @@ const waSkin = {
     border: '#c7a76c',
     shadow: 'rgba(100, 80, 40, 0.18)',
     card: '#fbf8ef',
-    tagShrine: '#f5ede2', // 彩度を落とした薄生成（社殿）
-    tagDiety: '#eef5ec',  // 淡い緑がかった和紙（自然神）
-    tagUser: '#edf3fa',   // 薄い藍鼠（人とのつながり）
+    tagShrine: '#f5ddd2', // 彩度を落とした薄生成（社殿）
+    tagDiety: '#def5dc',  // 淡い緑がかった和紙（自然神）
+    tagUser: '#ddf3fa',   // 薄い藍鼠（人とのつながり）
     tagShrineText: '#b05e1e', // 柿茶（穏やかな朱）
     tagDietyText: '#33691e',  // 深緑（自然・森）
     tagUserText: '#1e3a5f',   // 藍色（人情と知性）
     disabled: '#e0e0e0',
-    textMuted: '#aaa',
+    textMuted: '#666666', // 可読性向上のため少し濃く
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

@@ -16,7 +16,7 @@ const sakuraSkin = {
     tagDietyText: '#880e4f',
     tagUserText: '#6a1b9a',
     disabled: '#e0e0e0',
-    textMuted: '#aaa',
+    textMuted: '#666666', // 可読性向上のため少し濃く
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

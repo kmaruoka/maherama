@@ -16,7 +16,7 @@ const forestSkin = {
     tagDietyText: '#1b5e20',
     tagUserText: '#33691e',
     disabled: '#9e9e9e',
-    textMuted: '#666666',
+    textMuted: '#666666', // 可読性向上のため少し濃く
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

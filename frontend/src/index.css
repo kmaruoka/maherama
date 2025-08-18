@@ -66,6 +66,309 @@ body, #root, .log-pane, .log-pane-expanded {
   font-family: inherit !important;
 }
 
+/* ===== 共通ユーティリティクラス ===== */
+.text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+.text-primary {
+  color: var(--color-primary) !important;
+}
+
+.text-accent {
+  color: var(--color-accent) !important;
+}
+
+.text-white {
+  color: var(--color-text) !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.bg-surface {
+  background-color: var(--color-surface) !important;
+}
+
+.bg-card {
+  background-color: var(--color-card) !important;
+}
+
+.border-color {
+  border-color: var(--color-border) !important;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.cursor-default {
+  cursor: default !important;
+}
+
+.opacity-7 {
+  opacity: 0.7 !important;
+}
+
+.margin-left-4 {
+  margin-left: 4px !important;
+}
+
+.margin-left-8 {
+  margin-left: 8px !important;
+}
+
+.margin-right-8 {
+  margin-right: 8px !important;
+}
+
+.margin-bottom-5 {
+  margin-bottom: 5px !important;
+}
+
+.padding-20 {
+  padding: 20px !important;
+}
+
+.padding-4 {
+  padding: 4px !important;
+}
+
+.padding-8 {
+  padding: 8px !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.font-weight-500 {
+  font-weight: 500 !important;
+}
+
+.font-size-875 {
+  font-size: 0.875rem !important;
+}
+
+.font-size-75 {
+  font-size: 0.75rem !important;
+}
+
+.white-space-nowrap {
+  white-space: nowrap !important;
+}
+
+.display-inline {
+  display: inline !important;
+}
+
+.display-inline-block {
+  display: inline-block !important;
+}
+
+.display-flex {
+  display: flex !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.justify-content-center {
+  justify-content: center !important;
+}
+
+.gap-4 {
+  gap: 4px !important;
+}
+
+.flex-wrap {
+  flex-wrap: wrap !important;
+}
+
+.width-100 {
+  width: 100% !important;
+}
+
+.width-auto {
+  width: auto !important;
+}
+
+.height-auto {
+  height: auto !important;
+}
+
+.max-width-100 {
+  max-width: 100% !important;
+}
+
+.max-height-100 {
+  max-height: 100% !important;
+}
+
+.object-fit-contain {
+  object-fit: contain !important;
+}
+
+.object-fit-cover {
+  object-fit: cover !important;
+}
+
+.border-radius-4 {
+  border-radius: 4px !important;
+}
+
+.border-radius-8 {
+  border-radius: 8px !important;
+}
+
+.border-1 {
+  border: 1px solid !important;
+}
+
+.position-relative {
+  position: relative !important;
+}
+
+.position-absolute {
+  position: absolute !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.overflow-auto {
+  overflow: auto !important;
+}
+
+.overflow-y-auto {
+  overflow-y: auto !important;
+}
+
+.overflow-x-auto {
+  overflow-x: auto !important;
+}
+
+.z-index-1 {
+  z-index: 1 !important;
+}
+
+.z-index-2 {
+  z-index: 2 !important;
+}
+
+.z-index-10 {
+  z-index: 10 !important;
+}
+
+.z-index-800 {
+  z-index: 800 !important;
+}
+
+.z-index-1000 {
+  z-index: 1000 !important;
+}
+
+.z-index-9999 {
+  z-index: 9999 !important;
+}
+
+.z-index-10000 {
+  z-index: 10000 !important;
+}
+
+/* ===== 可読性向上のための追加スタイル ===== */
+/* スキンに関係なく、常に読みやすい文字色を確保 */
+.modal__content,
+.log-pane,
+.card,
+.pane__info,
+.field-row__value,
+.modal-subtitle,
+.pane__title,
+.pane__kana {
+  color: var(--color-text) !important;
+}
+
+/* テキストのコントラストを向上 */
+.text-muted {
+  color: var(--color-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+/* リンクの可読性向上 */
+.custom-link {
+  color: var(--color-accent) !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+}
+
+.custom-link:hover {
+  text-decoration: underline !important;
+}
+
+/* ボタンの可読性向上 */
+.btn-base,
+.btn-pray,
+.btn-remote-pray {
+  font-weight: 500 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* モーダル内のテキスト可読性向上 */
+.modal__header h3,
+.modal__content h1,
+.modal__content h2,
+.modal__content h3,
+.modal__content h4,
+.modal__content h5,
+.modal__content h6 {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+/* カード内のテキスト可読性向上 */
+.catalog-card__title,
+.catalog-card__body {
+  color: var(--color-text) !important;
+}
+
+/* タグの可読性向上 */
+.tag-link {
+  font-weight: 500 !important;
+  color: var(--color-text) !important;
+}
+
+/* 進行状況バーの可読性向上 */
+.progress-text {
+  color: var(--color-text) !important;
+  font-weight: 500 !important;
+}
+
+/* ログの可読性向上 */
+.log-pane * {
+  color: var(--color-text) !important;
+}
+
+.log-pane__debug-logs {
+  color: var(--color-text) !important;
+  font-weight: 500 !important;
+}
+
 /* ===== APP HEADER ===== */
 .app__header {
   position: absolute;

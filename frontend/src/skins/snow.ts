@@ -16,7 +16,7 @@ const snowSkin = {
     tagDietyText: '#2e7d32',          // 雪に耐える常緑の色
     tagUserText: '#6a1b9a',           // 薄曇りの中の紫（個性）
     disabled: '#bdbdbd',
-    textMuted: '#757575',
+    textMuted: '#666666', // 可読性向上のため少し濃く
   },
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',

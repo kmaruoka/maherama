@@ -119,7 +119,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
           <img
             src={dietyLargeImageUrl}
             alt="神様サムネイル"
-            style={{ width: '100%', height: 'auto', maxHeight: '100%', objectFit: 'contain' }}
+            className="width-100 height-auto max-height-100 object-fit-contain"
           />
         );
       } else if (detailView === 'description') {
@@ -127,7 +127,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
           <>
             <div className="modal-subtitle">
               {t('description')}
-              <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+              <FaCompressAlt size={16} className="margin-left-8 opacity-7" />
             </div>
             <div className="description-full">
               <p className="text-body-secondary">{diety.description}</p>
@@ -140,9 +140,9 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
             <div className="modal-subtitle">
               {t('enshrinedShrines')}
               {diety.shrines && diety.shrines.length > 0 && (
-                <span style={{ marginLeft: '8px', opacity: 0.7 }}>({diety.shrines.length})</span>
+                <span className="margin-left-8 opacity-7">({diety.shrines.length})</span>
               )}
-              <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+              <FaCompressAlt size={16} className="margin-left-8 opacity-7" />
             </div>
             <div className="d-flex flex-wrap gap-2">
               {diety.shrines && diety.shrines.length > 0 ? (
@@ -173,7 +173,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
             return;
           }
           setDetailView('overview');
-        }} style={{ cursor: 'pointer', padding: 0, margin: 0, minHeight: '100%' }}>
+        }} className="cursor-pointer">
           {renderDetailContent()}
         </div>
       );
@@ -182,13 +182,13 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
     return (
       <div>
         <div className="pane__header">
-          <div className="pane__thumbnail" onClick={(e) => {
+          <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
             // ボタンがクリックされた場合は画像表示切り替えを行わない
             if ((e.target as HTMLElement).closest('button')) {
               return;
             }
             setDetailView('thumbnail');
-          }} style={{ cursor: 'pointer' }}>
+          }}>
             <img
               src={dietyImageUrl}
               alt="神様サムネイル"
@@ -215,12 +215,12 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         </div>
 
         <div className="modal-section">
-          <div className="modal-subtitle" onClick={() => setDetailView('shrine-ranking')} style={{ cursor: 'pointer' }}>
+          <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('shrine-ranking')}>
             {t('enshrinedShrines')}
             {diety.shrines && diety.shrines.length > 0 && (
-              <span style={{ marginLeft: '8px', opacity: 0.7 }}>({diety.shrines.length})</span>
+              <span className="margin-left-8 opacity-7">({diety.shrines.length})</span>
             )}
-            <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+            <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
           </div>
           <div className="d-flex flex-wrap gap-2">
             {diety.shrines && diety.shrines.length > 0 ? (
@@ -241,9 +241,9 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
 
         {diety.description && (
           <div className="modal-section">
-            <div className="modal-subtitle" onClick={() => setDetailView('description')} style={{ cursor: 'pointer' }}>
+            <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('description')}>
               {t('description')}
-              <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+              <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
             </div>
             <div className="description-preview">
               <p className="text-body-secondary small">{diety.description}</p>

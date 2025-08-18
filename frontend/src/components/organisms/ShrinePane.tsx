@@ -403,7 +403,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
             src={(data.image_url_l || data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
-          style={{ maxWidth: '100%', height: 'auto' }}
+          className="max-width-100 height-auto"
           loadingText="読み込み中..."
           shouldUseFallback={imageState.shouldUseFallback}
         />
@@ -413,7 +413,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         <>
           <div className="modal-subtitle">
             {t('enshrinedDeities')}
-            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+            <FaCompressAlt size={16} className="margin-left-8 opacity-7" />
           </div>
           <div className="d-flex flex-wrap gap-2">
             {data.dieties && data.dieties.length > 0 ? (
@@ -437,7 +437,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         <>
           <div className="modal-subtitle">
             {t('prayRanking')}
-            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+            <FaCompressAlt size={16} className="margin-left-8 opacity-7" />
           </div>
           <RankingPane
             itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
@@ -454,7 +454,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         <>
           <div className="modal-subtitle">
             {t('travelLogs')}
-            <FaCompressAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+            <FaCompressAlt size={16} className="margin-left-8 opacity-7" />
           </div>
           <TravelLogsDisplay
             logs={travelLogsData?.logs || []}
@@ -485,7 +485,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           return;
         }
         setDetailView('overview');
-      }} style={{ cursor: 'pointer', padding: 0, margin: 0, minHeight: '100%' }}>
+      }} className="cursor-pointer">
         {renderDetailContent()}
       </div>
     );
@@ -494,13 +494,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   return (
     <div>
       <div className="pane__header">
-        <div className="pane__thumbnail" onClick={(e) => {
+        <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
           // ボタンがクリックされた場合は画像表示切り替えを行わない
           if ((e.target as HTMLElement).closest('button')) {
             return;
           }
           setDetailView('thumbnail');
-        }} style={{ cursor: 'pointer' }}>
+        }}>
           <ManagedImage
             src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="サムネイル"
@@ -558,18 +558,16 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       <div className="modal-section">
         <div className="d-flex flex-column gap-2">
           <CustomButton
-            className="btn-pray"
+            className="btn-pray width-100"
             onClick={() => prayMutation.mutate(id)}
             disabled={!canPray || markerStatus?.has_prayed_today || localPrayedToday || prayMutation.isPending}
-            style={{ width: '100%' }}
           >
             {(markerStatus?.has_prayed_today || localPrayedToday) ? t('prayedToday') : t('pray')}
           </CustomButton>
           <CustomButton
-            className="btn-remote-pray"
+            className="btn-remote-pray width-100"
             onClick={() => remotePrayMutation.mutate()}
             disabled={!markerStatus?.can_remote_pray || localRemotePrayedToday || remotePrayMutation.isPending}
-            style={{ width: '100%' }}
           >
             {markerStatus?.max_worship_count !== undefined && markerStatus?.today_worship_count !== undefined
               ? `${t('remotePray')}（${t('remainingToday')}${markerStatus.max_worship_count - markerStatus.today_worship_count}）`
@@ -590,9 +588,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       </div>
 
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('deities')} style={{ cursor: 'pointer' }}>
+        <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('deities')}>
           {t('enshrinedDeities')}
-          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
         </div>
         <div className="d-flex flex-wrap gap-2">
           {data.dieties && data.dieties.length > 0 ? (
@@ -627,9 +625,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
       {/* ランキング表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('ranking')} style={{ cursor: 'pointer' }}>
+        <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('ranking')}>
           {t('prayRanking')}
-          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
         </div>
         <RankingPane
           itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
@@ -643,9 +641,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
       {/* 旅の記録表示 */}
       <div className="modal-section">
-        <div className="modal-subtitle" onClick={() => setDetailView('travelLogs')} style={{ cursor: 'pointer' }}>
+        <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('travelLogs')}>
           {t('travelLogs')}
-          <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+          <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
         </div>
         <TravelLogsDisplay
           logs={travelLogsData?.logs || []}
@@ -691,11 +689,11 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         ) : imageList.length === 0 ? (
           <div>{t('noVoteCandidates')}</div>
         ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+          <div className="display-flex flex-wrap" style={{ gap: 16 }}>
             {imageList.map(img => (
-              <div key={img.id} style={{ border: '1px solid #ccc', borderRadius: 8, padding: 8, width: 120, textAlign: 'center', position: 'relative' }}>
-                <img src={img.thumbnail_url || img.image_url} alt="候補画像" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 4 }} />
-                <div style={{ fontSize: 12, margin: '4px 0' }}>{t('by')} {img.user?.name || t('unknown')}</div>
+              <div key={img.id} className="border-1 border-radius-8 padding-8 text-center position-relative" style={{ width: 120 }}>
+                <img src={img.thumbnail_url || img.image_url} alt="候補画像" className="object-fit-cover border-radius-4" style={{ width: 100, height: 100 }} />
+                <div className="font-size-75" style={{ margin: '4px 0' }}>{t('by')} {img.user?.name || t('unknown')}</div>
                 <CustomButton
                   color="#28a745"
                   hoverColor="#218838"
@@ -705,7 +703,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
                 >
                   <FaVoteYea /> {t('vote')}
                 </CustomButton>
-                <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{t('voteCount')}: {img.votes?.length || 0}</div>
+                <div className="font-size-75 text-muted" style={{ marginTop: 2 }}>{t('voteCount')}: {img.votes?.length || 0}</div>
               </div>
             ))}
           </div>

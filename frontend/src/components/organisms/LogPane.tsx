@@ -1,13 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import useLogs, { useClientLogs } from '../../hooks/useLogs';
 import { useSkin } from '../../skins/SkinContext';
 import CustomLogLine from '../molecules/CustomLogLine';
-
-interface LogPaneProps {
-  onShowShrine?: (id: number) => void;
-  onShowDiety?: (id: number) => void;
-  onShowUser?: (id: number) => void;
-}
 
 // 16進カラーをrgbaに変換するユーティリティ
 function hexToRgba(hex: string, alpha: number) {
@@ -17,6 +11,12 @@ function hexToRgba(hex: string, alpha: number) {
   const g = (bigint >> 8) & 255;
   const b = bigint & 255;
   return `rgba(${r},${g},${b},${alpha})`;
+}
+
+interface LogPaneProps {
+  onShowShrine?: (id: number) => void;
+  onShowDiety?: (id: number) => void;
+  onShowUser?: (id: number) => void;
 }
 
 export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPaneProps) {
@@ -54,12 +54,11 @@ export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPa
   if (!isExpanded) {
     return (
       <div
-        className={`log-pane log-pane-collapsed`}
+        className={`log-pane log-pane-collapsed cursor-pointer`}
         onClick={handlePaneClick}
         style={{
           background: getLogPaneBg(),
           color: skin.colors.text,
-          cursor: 'pointer',
         }}
       >
         {debugLogs && debugLogs.length > 0 && (
@@ -69,10 +68,10 @@ export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPa
             ))}
           </div>
         )}
-        {loading && <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログを読み込み中...</div>}
+        {loading && <div className="px-2 py-1 text-muted">ログを読み込み中...</div>}
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
-          <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログがありません</div>
+          <div className="px-2 py-1 text-muted">ログがありません</div>
         )}
         {logs.length > 0 && (
           <CustomLogLine log={logs[0]} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
@@ -89,13 +88,11 @@ export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPa
         onClick={() => setIsExpanded(false)}
       />
       <div
-        className={`log-pane log-pane-expanded`}
+        className={`log-pane log-pane-expanded cursor-pointer z-index-800`}
         ref={expandedRef}
         style={{
-          cursor: 'pointer',
           background: getLogPaneBg(),
           color: skin.colors.text,
-          zIndex: 800,
         }}
         onClick={handlePaneClick}
       >
@@ -106,10 +103,10 @@ export default function LogPane({ onShowShrine, onShowDiety, onShowUser }: LogPa
             ))}
           </div>
         )}
-        {loading && <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログを読み込み中...</div>}
+        {loading && <div className="px-2 py-1 text-muted">ログを読み込み中...</div>}
         {error && <div className="px-2 py-1 text-danger">ログの読み込みに失敗しました</div>}
         {logs.length === 0 && !loading && !error && (
-          <div className="px-2 py-1" style={{ color: skin.colors.textMuted }}>ログがありません</div>)}
+          <div className="px-2 py-1 text-muted">ログがありません</div>)}
         {logs.slice().reverse().map((l, i) => (
           <CustomLogLine key={i} log={l} onShowShrine={onShowShrine} onShowDiety={onShowDiety} onShowUser={onShowUser} />
         ))}
