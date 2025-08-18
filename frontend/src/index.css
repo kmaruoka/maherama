@@ -27,7 +27,6 @@
   --modal-max-width: 400px;
   --modal-padding: 2rem 1.5rem;
   --modal-background: linear-gradient(135deg, #f8f5e4 0%, #f5e9c6 100%);
-  --color-tab-inactive: #f3eedc;
   --bs-modal-width: calc(100vw - 16px);
   --badge-size: 1.4em;
   --badge-size-px: 14px;
@@ -530,7 +529,7 @@ body, #root, .log-pane, .log-pane-expanded {
 }
 
 .custom-menu-item:not(.active) {
-  background: var(--color-tab-inactive);
+  background: var(--color-border);
   color: var(--color-text);
   border-top: 2.5px solid var(--color-border);
   border-left: 2.5px solid transparent;

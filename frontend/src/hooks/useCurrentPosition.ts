@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 export default function useCurrentPosition(): [number, number] | null {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const isMountedRef = useRef(true);
-  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -14,12 +13,6 @@ export default function useCurrentPosition(): [number, number] | null {
         const newPosition: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         console.log('[GPS] 位置情報取得成功:', newPosition);
         setPosition(newPosition);
-
-        // 初回取得時のみログ出力
-        if (!hasInitializedRef.current) {
-          console.log('[GPS] 初回位置情報取得完了');
-          hasInitializedRef.current = true;
-        }
       }
     };
 
@@ -37,12 +30,6 @@ export default function useCurrentPosition(): [number, number] | null {
             console.error('[GPS] 位置情報の取得がタイムアウトしました');
             break;
         }
-
-        // 初回エラー時のみログ出力
-        if (!hasInitializedRef.current) {
-          console.log('[GPS] 初回位置情報取得失敗');
-          hasInitializedRef.current = true;
-        }
       }
     };
 
@@ -55,14 +42,9 @@ export default function useCurrentPosition(): [number, number] | null {
     let watchId: number | null = null;
 
     try {
-      // まず現在位置を一度取得
-      navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
-
-      // その後、継続的に監視
       watchId = navigator.geolocation.watchPosition(successCallback, errorCallback, options);
     } catch (error) {
       console.error('[GPS] 位置情報の監視開始に失敗:', error);
-      hasInitializedRef.current = true;
     }
 
     return () => {
