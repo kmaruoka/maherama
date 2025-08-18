@@ -38,6 +38,11 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--modal-background', skin.modal.background);
     root.style.setProperty('--color-disabled', colors.disabled);
     root.style.setProperty('--color-text-muted', colors.textMuted);
+
+    // スクロールバーのスタイルを既存の色から自動生成
+    root.style.setProperty('--color-scrollbar-track', colors.background);
+    root.style.setProperty('--color-scrollbar-thumb', colors.primary);
+    root.style.setProperty('--color-scrollbar-thumb-hover', colors.accent);
   }, [skin]);
   return (
     <SkinContext.Provider value={{ skin, skinName, setSkinName }}>
