@@ -71,8 +71,35 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
       // 現在のズームレベルを保持して座標のみ更新
       const currentZoom = mapRef.current.getZoom();
       mapRef.current.setView(position, currentZoom);
+      console.log('[MAP] 現在位置に地図を移動:', position);
     }
   }, [position, debugMode]);
+
+  // 初期化時の現在位置設定（デバッグモードOFF時）
+  useEffect(() => {
+    if (!debugMode && position && mapRef.current && mapReady) {
+      // 地図が準備完了後に現在位置を設定
+      const currentZoom = mapRef.current.getZoom();
+      mapRef.current.setView(position, currentZoom);
+      console.log('[MAP] 初期化時: 現在位置に地図を移動:', position);
+    }
+  }, [position, debugMode, mapReady]);
+
+  // 位置情報初回取得時の処理（デバッグモードOFF時）
+  useEffect(() => {
+    if (!debugMode && position) {
+      // 位置情報が取得された際の処理
+      if (mapRef.current && mapReady) {
+        // 地図が既に初期化されている場合は即座に更新
+        const currentZoom = mapRef.current.getZoom();
+        mapRef.current.setView(position, currentZoom);
+        console.log('[MAP] 位置情報取得後: 地図を現在位置に移動:', position);
+      } else {
+        // 地図が初期化されていない場合は、初期化完了後に更新される
+        console.log('[MAP] 位置情報取得済み、地図初期化待ち:', position);
+      }
+    }
+  }, [position, debugMode, mapReady]);
 
   // デバッグモード切り替え時の処理
   useEffect(() => {
@@ -270,7 +297,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
   return (
     <div className="map-page">
       <MapContainer
-        key={`map-${debugMode ? 'debug' : 'normal'}`}  // ← 再マウント用
+        key={`map-${debugMode ? 'debug' : 'normal'}-${position ? 'with-position' : 'no-position'}`}  // 位置情報の状態も含めて再マウント
         center={debugMode ? center : (position || defaultCenter)}
         zoom={minZoom}
         minZoom={minZoom}
@@ -280,7 +307,11 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
         scrollWheelZoom={true}
         doubleClickZoom={debugMode}
         className={`map-page__container${debugMode ? ' debug-mode' : ''}`}
-        whenReady={((event: { target: L.Map }) => { mapRef.current = event.target; setMapReady(true); }) as unknown as () => void}
+        whenReady={((event: { target: L.Map }) => {
+          mapRef.current = event.target;
+          setMapReady(true);
+          console.log('[MAP] 地図初期化完了');
+        }) as unknown as () => void}
       >
         <TileLayer
           key={`tilelayer-${minZoom}-${maxZoom}`}
