@@ -1178,21 +1178,25 @@ body, #root, .log-pane, .log-pane-expanded {
 }
 
 /* ===== SCROLLBAR ===== */
-.custom-modal-content-force::-webkit-scrollbar {
+.custom-modal-content-force::-webkit-scrollbar,
+.modal__content::-webkit-scrollbar {
   width: 10px;
 }
 
-.custom-modal-content-force::-webkit-scrollbar-thumb {
+.custom-modal-content-force::-webkit-scrollbar-thumb,
+.modal__content::-webkit-scrollbar-thumb {
   background: var(--color-scrollbar-thumb);
   border-radius: 6px;
   transition: background 0.2s;
 }
 
-.custom-modal-content-force::-webkit-scrollbar-thumb:hover {
+.custom-modal-content-force::-webkit-scrollbar-thumb:hover,
+.modal__content::-webkit-scrollbar-thumb:hover {
   background: var(--color-scrollbar-thumb-hover);
 }
 
-.custom-modal-content-force::-webkit-scrollbar-track {
+.custom-modal-content-force::-webkit-scrollbar-track,
+.modal__content::-webkit-scrollbar-track {
   background: var(--color-scrollbar-track);
   border-radius: 6px;
 }
@@ -1282,6 +1286,11 @@ nav.d-flex.position-fixed {
   overflow-y: auto;
   height: calc(100vh - 56px);
   position: relative;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.modal__content {
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
   scrollbar-width: thin;
 }
