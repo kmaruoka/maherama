@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { API_BASE, apiCall } from '../../config/api';
+import { apiCall } from '../../config/api';
 import type { Mission } from '../../hooks/useMissions';
 import { CompletionBadge, RewardIcon } from '../atoms';
 import CustomLink from '../atoms/CustomLink';
@@ -31,7 +31,7 @@ const MissionPane = React.forwardRef<MissionPaneRef, MissionPaneProps>(({
   const { data: missions = [], isLoading, error } = useQuery({
     queryKey: ['missions'],
     queryFn: async (): Promise<Mission[]> => {
-      const response = await apiCall(`${API_BASE}/missions`);
+      const response = await apiCall(`/missions`);
       return response.json();
     },
     staleTime: 5 * 60 * 1000,

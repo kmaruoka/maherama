@@ -3,7 +3,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { formatDistance } from '../../../backend/shared/utils/distance';
-import { API_BASE, apiCall, apiCallWithToast } from '../../config/api';
+import { apiCall, apiCallWithToast } from '../../config/api';
 import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
 import { useModal } from '../../contexts/ModalContext';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
@@ -179,7 +179,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const yyyymm = `${prevMonth.getFullYear()}${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
 
-            apiCall(`${API_BASE}/api/shrines/${id}/images?votingMonth=${yyyymm}`)
+            apiCall(`/shrines/${id}/images?votingMonth=${yyyymm}`)
       .then(res => res.json())
       .then(json => {
         if (isMounted) {

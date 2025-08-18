@@ -1,7 +1,7 @@
-import React, { createContext, useState, useEffect, type ReactNode } from 'react';
-import barriers from './index';
-import type { BarrierName } from './index';
+import React, { createContext, type ReactNode } from 'react';
 import useLocalStorageState from '../hooks/useLocalStorageState';
+import type { BarrierName } from './index';
+import barriers from './index';
 
 const BarrierContext = createContext(undefined as unknown as {
   barrierName: BarrierName;
@@ -10,7 +10,7 @@ const BarrierContext = createContext(undefined as unknown as {
 } | undefined);
 
 export const BarrierProvider = ({ children }: { children: ReactNode }) => {
-  const [barrierName, setBarrierName] = useLocalStorageState<BarrierName>('barrier', 'normal');
+  const [barrierName, setBarrierName] = useLocalStorageState<BarrierName>('barrier', 'search');
   const barrier = barriers[barrierName];
 
   return (

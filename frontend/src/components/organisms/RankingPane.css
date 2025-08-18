@@ -1,0 +1,17 @@
+.ranking-pane__loading,
+.ranking-pane__empty {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+.ranking-pane {
+  font-size: 1rem;
+}
+
+.ranking-pane .nav-tabs {
+  font-size: 1rem;
+}
+
+.ranking-pane .nav-tabs .nav-link {
+  font-size: 1rem;
+}
