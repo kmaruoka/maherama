@@ -46,11 +46,61 @@
   --mission-card-width: 114px;
   --mission-card-height: 200px;
   --mission-card-gap: 4px;
+  /* スマホサイズでの文字サイズ調整 */
+  --mobile-font-scale: 0.85;
 }
 
 @media (min-width: 600px) {
   :root {
     --bs-modal-width: calc(100vw - 64px);
+  }
+}
+
+/* スマホサイズでの文字サイズ調整 */
+@media (max-width: 599px) {
+  /* デバッグ用：背景色を変更してメディアクエリが動作するかテスト */
+  body {
+    background-color: red !important;
+  }
+
+  /* 基本文字サイズ（小） */
+  html {
+    font-size: calc(16px * var(--mobile-font-scale));
+  }
+
+  body, #root, .log-pane, .log-pane-expanded {
+    font-size: calc(1rem * var(--mobile-font-scale));
+  }
+
+  /* 見出し（中） */
+  .modal__header h3,
+  .pane__title,
+  .submenu-page__title {
+    font-size: calc(1.1rem * var(--mobile-font-scale));
+  }
+
+  /* 本文（小） */
+  .modal__content,
+  .catalog-card__body,
+  .log-pane,
+  .field-row__label,
+  .field-row__value,
+  .description-preview p,
+  .description-full p,
+  .catalog-count {
+    font-size: calc(10.875rem * var(--mobile-font-scale)) !important;
+  }
+
+  /* より一般的なセレクタでテスト */
+  p, div, span {
+    font-size: calc(0.875rem * var(--mobile-font-scale)) !important;
+  }
+
+
+
+  /* メニュー（大） */
+  .custom-menu-item {
+    font-size: calc(1.5rem * var(--mobile-font-scale));
   }
 }
 
@@ -927,6 +977,9 @@ body, #root, .log-pane, .log-pane-expanded {
   background: var(--color-prayable);
   border-color: var(--color-prayable);
   color: var(--color-surface);
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-pray:disabled, .btn-pray.disabled {
@@ -939,6 +992,9 @@ body, #root, .log-pane, .log-pane-expanded {
   background: var(--color-remote-prayable);
   border-color: var(--color-remote-prayable);
   color: var(--color-surface);
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-remote-pray:disabled, .btn-remote-pray.disabled {
@@ -947,18 +1003,7 @@ body, #root, .log-pane, .log-pane-expanded {
   color: var(--color-surface);
 }
 
-/* ===== PRAY BUTTONS RESPONSIVE ===== */
-@media (min-width: 600px) {
-  .d-flex.flex-column.gap-2 {
-    flex-direction: row !important;
-  }
 
-  .d-flex.flex-column.gap-2 .btn-pray,
-  .d-flex.flex-column.gap-2 .btn-remote-pray {
-    flex: 1;
-    width: auto !important;
-  }
-}
 
 /* モーダル基本設定 - シンプル版 */
 .custom-modal-dialog {

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { formatDistance } from '../../../backend/shared/utils/distance';
@@ -556,25 +557,31 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
       {/* 参拝・遥拝ボタン */}
       <div className="modal-section">
-        <div className="d-flex flex-column gap-2">
-          <CustomButton
-            className="btn-pray width-100"
-            onClick={() => prayMutation.mutate(id)}
-            disabled={!canPray || markerStatus?.has_prayed_today || localPrayedToday || prayMutation.isPending}
-          >
-            {(markerStatus?.has_prayed_today || localPrayedToday) ? t('prayedToday') : t('pray')}
-          </CustomButton>
-          <CustomButton
-            className="btn-remote-pray width-100"
-            onClick={() => remotePrayMutation.mutate()}
-            disabled={!markerStatus?.can_remote_pray || localRemotePrayedToday || remotePrayMutation.isPending}
-          >
-            {markerStatus?.max_worship_count !== undefined && markerStatus?.today_worship_count !== undefined
-              ? `${t('remotePray')}（${t('remainingToday')}${markerStatus.max_worship_count - markerStatus.today_worship_count}）`
-              : t('remotePray')
-            }
-          </CustomButton>
-        </div>
+        <Row className="g-2">
+          <Col xs={12} md={6}>
+            <CustomButton
+              className="btn-pray w-100"
+              onClick={() => prayMutation.mutate(id)}
+              disabled={!canPray || markerStatus?.has_prayed_today || localPrayedToday || prayMutation.isPending}
+              style={{ width: '100%' }}
+            >
+              {(markerStatus?.has_prayed_today || localPrayedToday) ? t('prayedToday') : t('pray')}
+            </CustomButton>
+          </Col>
+          <Col xs={12} md={6}>
+            <CustomButton
+              className="btn-remote-pray w-100"
+              onClick={() => remotePrayMutation.mutate()}
+              disabled={!markerStatus?.can_remote_pray || localRemotePrayedToday || remotePrayMutation.isPending}
+              style={{ width: '100%' }}
+            >
+              {markerStatus?.max_worship_count !== undefined && markerStatus?.today_worship_count !== undefined
+                ? `${t('remotePray')}（${t('remainingToday')}${markerStatus.max_worship_count - markerStatus.today_worship_count}）`
+                : t('remotePray')
+              }
+            </CustomButton>
+          </Col>
+        </Row>
         {currentPosition === null ? (
           <div className="text-muted small mt-2">
             {t('gpsNotAvailable')} - {t('prayWithoutDistanceCheck')}
