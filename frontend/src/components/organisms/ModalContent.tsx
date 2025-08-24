@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal } from 'react-bootstrap';
+import ModalFooter from '../molecules/ModalFooter';
 import ModalHeader from '../molecules/ModalHeader';
 import DietyPage from './DietyPane';
 import MissionPane from './MissionPane';
@@ -66,14 +67,6 @@ const ModalContent: React.FC<ModalContentProps> = ({
               title={getModalTitle()}
               onBack={closeModal}
               onTitleClick={handleBackToOverview}
-              canGoBack={canGoBack}
-              canGoForward={canGoForward}
-              onGoBack={goBack}
-              onGoForward={goForward}
-              getPreviousItemName={getPreviousItemName}
-              getNextItemName={getNextItemName}
-              getPreviousItemType={getPreviousItemType}
-              getNextItemType={getNextItemType}
             />
             <div className="modal__content">
               <ShrinePane
@@ -84,6 +77,16 @@ const ModalContent: React.FC<ModalContentProps> = ({
                 onDetailViewChange={handleDetailViewChange}
               />
             </div>
+            <ModalFooter
+              canGoBack={canGoBack}
+              canGoForward={canGoForward}
+              onGoBack={goBack}
+              onGoForward={goForward}
+              getPreviousItemName={getPreviousItemName}
+              getNextItemName={getNextItemName}
+              getPreviousItemType={getPreviousItemType}
+              getNextItemType={getNextItemType}
+            />
           </>
         );
 
@@ -94,14 +97,6 @@ const ModalContent: React.FC<ModalContentProps> = ({
               title={getModalTitle()}
               onBack={closeModal}
               onTitleClick={handleBackToOverview}
-              canGoBack={canGoBack}
-              canGoForward={canGoForward}
-              onGoBack={goBack}
-              onGoForward={goForward}
-              getPreviousItemName={getPreviousItemName}
-              getNextItemName={getNextItemName}
-              getPreviousItemType={getPreviousItemType}
-              getNextItemType={getNextItemType}
             />
             <div className="modal__content">
               <DietyPage
@@ -112,6 +107,16 @@ const ModalContent: React.FC<ModalContentProps> = ({
                 onDetailViewChange={handleDetailViewChange}
               />
             </div>
+            <ModalFooter
+              canGoBack={canGoBack}
+              canGoForward={canGoForward}
+              onGoBack={goBack}
+              onGoForward={goForward}
+              getPreviousItemName={getPreviousItemName}
+              getNextItemName={getNextItemName}
+              getPreviousItemType={getPreviousItemType}
+              getNextItemType={getNextItemType}
+            />
           </>
         );
 
@@ -122,14 +127,6 @@ const ModalContent: React.FC<ModalContentProps> = ({
               title={getModalTitle()}
               onBack={closeModal}
               onTitleClick={handleBackToOverview}
-              canGoBack={canGoBack}
-              canGoForward={canGoForward}
-              onGoBack={goBack}
-              onGoForward={goForward}
-              getPreviousItemName={getPreviousItemName}
-              getNextItemName={getNextItemName}
-              getPreviousItemType={getPreviousItemType}
-              getNextItemType={getNextItemType}
             />
             <div className="modal__content">
               {modal.id === currentUserId ? (
@@ -149,6 +146,16 @@ const ModalContent: React.FC<ModalContentProps> = ({
                 />
               )}
             </div>
+            <ModalFooter
+              canGoBack={canGoBack}
+              canGoForward={canGoForward}
+              onGoBack={goBack}
+              onGoForward={goForward}
+              getPreviousItemName={getPreviousItemName}
+              getNextItemName={getNextItemName}
+              getPreviousItemType={getPreviousItemType}
+              getNextItemType={getNextItemType}
+            />
           </>
         );
 
@@ -159,6 +166,14 @@ const ModalContent: React.FC<ModalContentProps> = ({
               title={getModalTitle()}
               onBack={closeModal}
               onTitleClick={handleBackToOverview}
+            />
+            <MissionPane
+              ref={missionPaneRef}
+              id={modal.id}
+              onShowShrine={(id: number) => openModal('shrine', id)}
+              onShowDiety={(id: number) => openModal('diety', id)}
+            />
+            <ModalFooter
               canGoBack={canGoBack}
               canGoForward={canGoForward}
               onGoBack={goBack}
@@ -167,12 +182,6 @@ const ModalContent: React.FC<ModalContentProps> = ({
               getNextItemName={getNextItemName}
               getPreviousItemType={getPreviousItemType}
               getNextItemType={getNextItemType}
-            />
-            <MissionPane
-              ref={missionPaneRef}
-              id={modal.id}
-              onShowShrine={(id: number) => openModal('shrine', id)}
-              onShowDiety={(id: number) => openModal('diety', id)}
             />
           </>
         );
@@ -184,6 +193,13 @@ const ModalContent: React.FC<ModalContentProps> = ({
               title={getModalTitle()}
               onBack={closeModal}
               onTitleClick={handleBackToOverview}
+            />
+            <div className="modal__content">
+              <NotificationPane
+                ref={notificationPaneRef}
+              />
+            </div>
+            <ModalFooter
               canGoBack={canGoBack}
               canGoForward={canGoForward}
               onGoBack={goBack}
@@ -193,11 +209,6 @@ const ModalContent: React.FC<ModalContentProps> = ({
               getPreviousItemType={getPreviousItemType}
               getNextItemType={getNextItemType}
             />
-            <div className="modal__content">
-              <NotificationPane
-                ref={notificationPaneRef}
-              />
-            </div>
           </>
         );
 
