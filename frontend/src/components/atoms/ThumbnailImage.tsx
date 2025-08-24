@@ -26,6 +26,8 @@ interface ThumbnailImageProps {
   onClick?: () => void;
   // サムネイルアクション（投票ボタンなど）
   thumbnailActions?: React.ReactNode;
+  // キャッシュバスティング用
+  cacheKey?: number;
 }
 
 export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({
@@ -45,7 +47,8 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({
   imageByUserId,
   onShowUser,
   onClick,
-  thumbnailActions
+  thumbnailActions,
+  cacheKey
 }) => {
   const { t } = useTranslation();
 
@@ -85,6 +88,7 @@ export const ThumbnailImage: React.FC<ThumbnailImageProps> = ({
         showLoadingOverlay={showLoadingOverlay}
         loadingText={loadingText}
         shouldUseFallback={shouldUseFallback}
+        cacheKey={cacheKey}
       />
 
       {/* 右上のアクションボタン */}

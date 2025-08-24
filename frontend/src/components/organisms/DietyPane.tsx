@@ -6,9 +6,12 @@ import { apiCall } from '../../config/api';
 import { NOIMAGE_DIETY_URL } from '../../constants';
 import { useModal } from '../../contexts/ModalContext';
 import { useDietyDetail } from '../../hooks/useDietyDetail';
+import { useImageManagement } from '../../hooks/useImageManagement';
+import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
 import { ThumbnailImage } from '../atoms/ThumbnailImage';
+import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import type { Period } from './RankingPane';
 import RankingPane from './RankingPane';
 
@@ -65,6 +68,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
     const [detailView, setDetailView] = useState<DetailViewType>('overview');
     const [rankRefreshKey, setRankRefreshKey] = useState(0);
     const { updateCurrentModalName } = useModal();
+    const [userId] = useLocalStorageState<number | null>('userId', null);
 
     // detailViewが変更されたときに親コンポーネントに通知
     useEffect(() => {
@@ -83,6 +87,19 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
 
     const { skin } = useSkin();
 
+    // 画像管理フックを使用
+    const [imageState, imageActions] = useImageManagement({
+      entityType: 'diety',
+      entityId: id || 0,
+      userId: userId || undefined,
+      noImageUrl: NOIMAGE_DIETY_URL,
+      queryKeys: ['diety', String(id), 'diety-list'],
+      relatedQueryKeys: [
+        ['diety-list'],
+        ['diety', String(id || 0)]
+      ]
+    });
+
     // データ取得後にgetTitleメソッドを更新
     useEffect(() => {
       if (diety?.name) {
@@ -100,6 +117,28 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
       }
     }));
 
+    useEffect(() => {
+      if (diety?.image_url || diety?.image_url_m || diety?.image_url_s || diety?.image_url_l) {
+        // データが更新されたら画像状態をリセット
+        imageActions.resetImageState();
+
+        // 画像URLの存在確認を行う（Lサイズを優先、次にMサイズ、Sサイズ、オリジナル）
+        const imageUrl = diety.image_url_l || diety.image_url_m || diety.image_url_s || diety.image_url;
+        if (imageUrl && imageUrl !== NOIMAGE_DIETY_URL) {
+          imageActions.handleImageUrlChange(imageUrl);
+        }
+      }
+    }, [diety?.image_url, diety?.image_url_m, diety?.image_url_s, diety?.image_url_l, imageActions]);
+
+    const handleUpload = async (file: File) => {
+      if (!id) {
+        console.error('神様IDが指定されていません');
+        return;
+      }
+      await imageActions.handleUpload(file);
+      setRankRefreshKey(prev => prev + 1);
+    };
+
     if (isLoading) {
       return <div className="p-3">{t('loading')}</div>;
     }
@@ -108,11 +147,9 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
       return <div className="p-3">{t('dietyNotFound')}</div>;
     }
 
-    // 型安全なサムネイル取得（mサイズを優先、次にsサイズ）
-    const dietyImageUrl = (diety as { image_url_m?: string; image_url_s?: string; image_url?: string } | undefined)?.image_url_m || (diety as { image_url_s?: string; image_url?: string } | undefined)?.image_url_s || (diety as { image_url?: string } | undefined)?.image_url || NOIMAGE_DIETY_URL;
-
-    // 拡大表示用のLサイズ画像URL
-    const dietyLargeImageUrl = (diety as { image_url_l?: string; image_url_m?: string; image_url_s?: string; image_url?: string } | undefined)?.image_url_l || (diety as { image_url_m?: string; image_url_s?: string; image_url?: string } | undefined)?.image_url_m || (diety as { image_url_s?: string; image_url?: string } | undefined)?.image_url_s || (diety as { image_url?: string } | undefined)?.image_url || NOIMAGE_DIETY_URL;
+    // 画像管理フックから画像URLを取得
+    const dietyImageUrl = imageState.currentImageUrl || NOIMAGE_DIETY_URL;
+    const dietyLargeImageUrl = imageState.currentImageUrl || NOIMAGE_DIETY_URL;
 
     // 詳細表示のレンダリング関数
     const renderDetailContent = () => {
@@ -123,6 +160,8 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
             alt="神様サムネイル"
             fallbackSrc={NOIMAGE_DIETY_URL}
             className="width-100 height-auto max-height-100 object-fit-contain"
+            shouldUseFallback={imageState.shouldUseFallback}
+            cacheKey={imageState.thumbCache}
           />
         );
       } else if (detailView === 'description') {
@@ -191,10 +230,15 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
               src={dietyImageUrl}
               alt="神様サムネイル"
               fallbackSrc={NOIMAGE_DIETY_URL}
+              loadingText="読み込み中..."
+              shouldUseFallback={imageState.shouldUseFallback}
+              onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
+              showUploadButton={!!id}
               imageBy={diety.image_by}
               imageByUserId={(diety as any).image_by_user_id}
               onShowUser={onShowUser}
               onClick={() => setDetailView('thumbnail')}
+              cacheKey={imageState.thumbCache}
             />
           </Col>
           <Col xs={12} md={8}>
@@ -275,6 +319,14 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
             />
           </Col>
         </Row>
+
+        {/* モーダル */}
+        <ImageUploadModal
+          isOpen={imageState.isUploadModalOpen}
+          onClose={() => imageActions.setIsUploadModalOpen(false)}
+          onUpload={handleUpload}
+          title={`${diety?.name || '神様'}の画像をアップロード`}
+        />
       </Container>
     );
   }

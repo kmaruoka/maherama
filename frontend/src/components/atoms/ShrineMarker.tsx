@@ -23,8 +23,21 @@ export interface Shrine {
   image_by?: string;
 }
 
+export interface ShrineImageInfo {
+  id: number;
+  image_id?: number;
+  image_url?: string;
+  image_url_xs?: string;
+  image_url_s?: string;
+  image_url_m?: string;
+  image_url_l?: string;
+  image_url_xl?: string;
+  image_by?: string;
+}
+
 interface ShrineMarkerProps {
   shrine: Shrine;
+  shrineImage?: ShrineImageInfo;
   currentPosition: [number, number] | null;
   onShowShrine: (id: number) => void;
   zIndex?: number;
@@ -76,7 +89,7 @@ function createShrineIcon(
       <div class="shrine-marker-frame-anim ${statusClassString}">
         <div class="shrine-marker-frame-border"></div>
         <div class="shrine-marker-thumbnail-wrap">
-          <img src="${(image_url || NOIMAGE_SHRINE_URL) + (imageCache > 0 ? '?t=' + imageCache : '')}" alt="shrine" onerror="this.onerror=null; this.src='${NOIMAGE_SHRINE_URL}';" />
+          <img src="${(image_url || NOIMAGE_SHRINE_URL) + '?t=' + imageCache}" alt="shrine" onerror="this.onerror=null; this.src='${NOIMAGE_SHRINE_URL}';" />
           <div class="shrine-marker-thumbnail-gloss ${isPrayable && !hasPrayedToday ? 'active' : ''}"></div>
         </div>
         <div class="shrine-marker-pin"></div>
@@ -89,20 +102,32 @@ function createShrineIcon(
   });
 }
 
-export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zIndex }: ShrineMarkerProps) {
+export default function ShrineMarker({ shrine, shrineImage, currentPosition, onShowShrine, zIndex }: ShrineMarkerProps) {
   const { t } = useTranslation();
   const debugLog = useDebugLog();
   const [userId] = useLocalStorageState<number | null>('userId', null);
-  const [imageCache, setImageCache] = useState(0);
+  const [imageCache, setImageCache] = useState(Date.now());
 
   const { data: markerStatus } = useShrineMarkerStatus(shrine.id, userId);
 
-  // 画像URLが変更された時にキャッシュを更新
+  // 画像URLが変更された時のみキャッシュを更新
+  const currentImageUrl = shrineImage?.image_url_xs || shrineImage?.image_url || shrine.image_url_xs || shrine.image_url;
+
   useEffect(() => {
-    if (shrine.image_url_xs || shrine.image_url) {
-      setImageCache(prev => prev + 1);
+    if (currentImageUrl) {
+      setImageCache(Date.now());
     }
-  }, [shrine.image_url_xs, shrine.image_url]);
+  }, [currentImageUrl]);
+
+  // 神社データの変更を検知してキャッシュを更新
+  useEffect(() => {
+    const imageUrl = shrine.image_url_xs || shrine.image_url;
+    if (imageUrl && imageUrl !== currentImageUrl) {
+      setImageCache(Date.now());
+    }
+  }, [shrine.image_url_xs, shrine.image_url, currentImageUrl]);
+
+
 
   // 参拝距離・現在地から距離計算
   const { prayDistance, isLoading: isPrayDistanceLoading } = usePrayDistance(userId);
@@ -129,8 +154,9 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
 
   // createShrineIconをuseMemoでキャッシュ（DOM再生成を最小化）
   const icon = useMemo(() => {
+    const imageUrl = shrineImage?.image_url_xs || shrineImage?.image_url || shrine.image_url_xs || shrine.image_url;
     return createShrineIcon(
-      shrine.image_url_xs || shrine.image_url,
+      imageUrl,
       isInZukan,
       canPray,
       false, // isRemotePrayable: 常にfalse
@@ -142,6 +168,8 @@ export default function ShrineMarker({ shrine, currentPosition, onShowShrine, zI
       imageCache
     );
   }, [
+    shrineImage?.image_url_xs,
+    shrineImage?.image_url,
     shrine.image_url_xs,
     shrine.image_url,
     isInZukan,

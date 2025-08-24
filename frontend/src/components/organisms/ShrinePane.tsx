@@ -65,7 +65,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   ({ id, onShowDiety, onShowUser, onClose, onDetailViewChange, onDataLoaded }, ref) => {
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const { data } = useShrineDetail(id);
+  const { data, refetch } = useShrineDetail(id);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
   const queryClient = useQueryClient();
@@ -87,7 +87,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     onDetailViewChange?.(detailView);
   }, [detailView, onDetailViewChange]);
   const { data: worshipLimit } = useWorshipLimit(userId);
-  const { data: markerStatus } = useShrineMarkerStatus(id, userId);
+  const { data: markerStatus, refetch: refetchMarkerStatus } = useShrineMarkerStatus(id, userId);
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageListLoading, setImageListLoading] = useState(false);
   const [imageListError, setImageListError] = useState<string | null>(null);
@@ -124,7 +124,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     entityId: id,
     userId: userId || undefined,
     noImageUrl: NOIMAGE_SHRINE_DISPLAY_URL,
-    queryKeys: ['shrine', String(id), 'shrines-all']
+    queryKeys: ['shrine', String(id)],
+    relatedQueryKeys: [
+      ['shrine', String(id)],
+      ['shrine-image', String(id)],
+      ['all-shrines'],
+      ['shrine-marker-status'],
+      ['shrine-marker-status', String(id), String(userId || 0)]
+    ]
   });
 
   // データ取得後にgetTitleメソッドを更新
@@ -160,13 +167,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       // データが更新されたら画像状態をリセット
       imageActions.resetImageState();
 
-      // 画像URLの存在確認を行う
-      const imageUrl = data.image_url_l || data.image_url_m || data.image_url || data.image_url_s;
+      // 画像URLの存在確認を行う（Lサイズを優先、次にMサイズ、Sサイズ、オリジナル）
+      const imageUrl = data.image_url_l || data.image_url_m || data.image_url_s || data.image_url;
       if (imageUrl && imageUrl !== NOIMAGE_SHRINE_DISPLAY_URL) {
         imageActions.handleImageUrlChange(imageUrl);
       }
     }
-  }, [data?.image_url, data?.image_url_m, data?.image_url_s, data?.image_url_l]);
+  }, [data?.image_url, data?.image_url_m, data?.image_url_s, data?.image_url_l, imageActions]);
 
   // 画像リスト取得
   useEffect(() => {
@@ -180,7 +187,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const yyyymm = `${prevMonth.getFullYear()}${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
 
-            apiCall(`/shrines/${id}/images?votingMonth=${yyyymm}`)
+            apiCall(`/api/shrines/${id}/images?votingMonth=${yyyymm}`)
       .then(res => res.json())
       .then(json => {
         if (isMounted) {
@@ -206,6 +213,16 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const handleUpload = async (file: File) => {
     await imageActions.handleUpload(file);
     setRankRefreshKey(prev => prev + 1);
+
+    // 画像アップロード後に強制的にデータを再取得
+    if (refetch) {
+      await refetch();
+    }
+
+    // マーカーステータスも再取得
+    if (refetchMarkerStatus) {
+      await refetchMarkerStatus();
+    }
   };
 
   const handleVote = async () => {
@@ -319,8 +336,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       if (result.success) {
         // ローカル状態を即座に更新して「本日参拝済み」に変更
         setLocalPrayedToday(true);
-        queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-        queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+        queryClient.invalidateQueries({ queryKey: ['shrine', id] });
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
         queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
         queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
@@ -349,8 +365,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       if (result.success) {
         // ローカル状態を即座に更新
         setLocalRemotePrayedToday(true);
-        queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
-        queryClient.invalidateQueries({ queryKey: ['shrine-detail', id] });
+        queryClient.invalidateQueries({ queryKey: ['shrine', id] });
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
         queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
         queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
@@ -370,14 +385,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   // 画像ごとの投票
   const handleImageVote = async (imageId: number) => {
-          const result = await apiCallWithToast(`/shrines/${id}/images/${imageId}/vote`, {
+          const result = await apiCallWithToast(`/api/shrines/${id}/images/${imageId}/vote`, {
       method: 'POST',
     }, showToast);
 
     if (result.success) {
       setRankRefreshKey(prev => prev + 1);
       queryClient.invalidateQueries({ queryKey: ['shrine', id] });
-      queryClient.invalidateQueries({ queryKey: ['shrines-all'] });
     }
   };
 
@@ -401,12 +415,13 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
           if (detailView === 'thumbnail') {
               return (
           <ThumbnailImage
-            src={(data.image_url_l || data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
+            src={imageState.currentImageUrl}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
             className="max-width-100 height-auto"
             loadingText="読み込み中..."
             shouldUseFallback={imageState.shouldUseFallback}
+            cacheKey={imageState.thumbCache}
           />
       );
     } else if (detailView === 'deities') {
@@ -497,27 +512,28 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       {/* ヘッダー部分：サムネイルと情報を横並び */}
       <Row className="mb-3">
         <Col xs={12} md={4}>
-          <ThumbnailImage
-            src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
-            alt="サムネイル"
-            fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
-            loadingText="読み込み中..."
-            shouldUseFallback={imageState.shouldUseFallback}
-            onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
-            showUploadButton={true}
-            imageBy={data.image_by}
-            imageByUserId={(data as any).image_by_user_id}
-            onShowUser={onShowUser}
-            onClick={() => setDetailView('thumbnail')}
-            thumbnailActions={
-              (data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL ? (
-                <button className="pane__icon-btn" onClick={(e) => {
-                  e.stopPropagation();
-                  handleVote();
-                }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
-              ) : undefined
-            }
-          />
+                      <ThumbnailImage
+              src={imageState.currentImageUrl}
+              alt="サムネイル"
+              fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
+              loadingText="読み込み中..."
+              shouldUseFallback={imageState.shouldUseFallback}
+              onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
+              showUploadButton={true}
+              imageBy={data.image_by}
+              imageByUserId={(data as any).image_by_user_id}
+              onShowUser={onShowUser}
+              onClick={() => setDetailView('thumbnail')}
+              cacheKey={imageState.thumbCache}
+              thumbnailActions={
+                imageState.currentImageUrl !== NOIMAGE_SHRINE_DISPLAY_URL ? (
+                  <button className="pane__icon-btn" onClick={(e) => {
+                    e.stopPropagation();
+                    handleVote();
+                  }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
+                ) : undefined
+              }
+            />
         </Col>
         <Col xs={12} md={8}>
           <div className="pane__info">

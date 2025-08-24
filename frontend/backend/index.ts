@@ -1023,6 +1023,39 @@ app.get('/api/shrines/:id', authenticateJWT, async (req, res) => {
   }
 });
 
+// 個別神社の画像情報のみを取得するAPI
+app.get('/api/shrines/:id/image', authenticateJWT, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid ID parameter' });
+  }
+  try {
+    const shrine = await prisma.shrine.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        image_id: true,
+        image_url: true,
+        image_url_xs: true,
+        image_url_s: true,
+        image_url_m: true,
+        image_url_l: true,
+        image_url_xl: true,
+        image_by: true
+      }
+    });
+
+    if (!shrine) {
+      return res.status(404).json({ error: 'Shrine not found' });
+    }
+
+    res.json(shrine);
+  } catch (err) {
+    console.error('Error fetching shrine image:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 // 共通化: 参拝・遥拝の業務ロジック
 async function prayAtShrine({
   prisma,
@@ -4076,8 +4109,14 @@ app.get('/api/shrines/:id/marker-status', authenticateJWT, async (req, res) => {
 
 // アップロード設定
 const upload = multer({
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
+    console.log('Multer fileFilter called:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
     if (!file.mimetype.startsWith('image/')) {
       return cb(new Error('画像ファイルのみアップロード可能です'));
     }
@@ -4166,6 +4205,9 @@ app.post('/api/shrines/:id/images/upload', authenticateJWT, (req, res, next) => 
 }, async (req, res) => {
   const shrineId = parseInt(req.params.id, 10);
   const userId = req.user.id;
+
+
+
   if (isNaN(shrineId) || !req.file) {
     return res.status(400).json({ error: 'IDまたは画像が不正です' });
   }
@@ -4260,6 +4302,9 @@ app.post('/api/dietys/:id/images/upload', authenticateJWT, (req, res, next) => {
 }, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
+
+
+
   if (isNaN(dietyId) || !req.file) {
     return res.status(400).json({ error: 'IDまたは画像が不正です' });
   }
@@ -4354,6 +4399,9 @@ app.post('/api/dieties/:id/images/upload', authenticateJWT, (req, res, next) => 
 }, async (req, res) => {
   const dietyId = parseInt(req.params.id, 10);
   const userId = req.user.id;
+
+
+
   if (isNaN(dietyId) || !req.file) {
     return res.status(400).json({ error: 'IDまたは画像が不正です' });
   }

@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
@@ -7,6 +7,7 @@ import { NOIMAGE_USER_URL } from '../../constants';
 import { useModal } from '../../contexts/ModalContext';
 import { useFollowers } from '../../hooks/useFollowers';
 import { useFollowing } from '../../hooks/useFollowing';
+import { useImageManagement } from '../../hooks/useImageManagement';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useLevelInfo } from '../../hooks/usePrayDistance';
 import useUserDietyRankings from '../../hooks/useUserDietyRankings';
@@ -17,7 +18,9 @@ import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
 import PageTitle from '../atoms/PageTitle';
+import { ThumbnailImage } from '../atoms/ThumbnailImage';
 import FollowModal from '../molecules/FollowModal';
+import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import RankingPane from './RankingPane';
 
 interface MyPageProps {
@@ -66,11 +69,38 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
     const [showFollowingModal, setShowFollowingModal] = useState(false);
     const [showFollowerModal, setShowFollowerModal] = useState(false);
 
+    // 画像管理フックを使用
+    const [imageState, imageActions] = useImageManagement({
+      entityType: 'user',
+      entityId: currentUserId,
+      userId: currentUserId,
+      noImageUrl: NOIMAGE_USER_URL,
+      queryKeys: ['user', String(currentUserId), 'user-info']
+    });
+
     // refで外部から呼び出せるメソッドを定義
     useImperativeHandle(ref, () => ({
       backToOverview: () => {}, // MyPageでは詳細表示がないため空実装
       getTitle: () => userInfo?.name || ''
     }));
+
+    useEffect(() => {
+      if (userInfo?.image_url || userInfo?.image_url_m || userInfo?.image_url_s || userInfo?.image_url_l) {
+        // データが更新されたら画像状態をリセット
+        imageActions.resetImageState();
+
+        // 画像URLの存在確認を行う
+        const imageUrl = userInfo.image_url_l || userInfo.image_url_m || userInfo.image_url || userInfo.image_url_s;
+        if (imageUrl && imageUrl !== NOIMAGE_USER_URL) {
+          imageActions.handleImageUrlChange(imageUrl);
+        }
+      }
+    }, [userInfo?.image_url, userInfo?.image_url_m, userInfo?.image_url_s, userInfo?.image_url_l]);
+
+    const handleUpload = async (file: File) => {
+      await imageActions.handleUpload(file);
+      refetch();
+    };
 
     const handleFollow = async () => {
       if (!userInfo) return;
@@ -163,10 +193,15 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
         <Container fluid className="pane__header">
           <Row>
             <Col md={3} className="pane__thumbnail">
-              <img
-                src={userImageUrl}
+              <ThumbnailImage
+                src={(userImageUrl) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
                 alt="ユーザーサムネイル"
+                fallbackSrc={NOIMAGE_USER_URL}
                 className="pane__thumbnail-img"
+                loadingText="読み込み中..."
+                shouldUseFallback={imageState.shouldUseFallback}
+                onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
+                showUploadButton={true}
               />
             </Col>
             <Col md={9} className="pane__info">
@@ -302,6 +337,14 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
             </Row>
           </Container>
         )}
+
+        {/* モーダル */}
+        <ImageUploadModal
+          isOpen={imageState.isUploadModalOpen}
+          onClose={() => imageActions.setIsUploadModalOpen(false)}
+          onUpload={handleUpload}
+          title={`${userInfo?.name || 'ユーザー'}の画像をアップロード`}
+        />
       </div>
     );
   }

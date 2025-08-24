@@ -12,6 +12,8 @@ interface ManagedImageProps {
   showLoadingOverlay?: boolean;
   loadingText?: string;
   shouldUseFallback?: boolean;
+  // キャッシュバスティング用のプロパティ
+  cacheKey?: number;
 }
 
 export const ManagedImage: React.FC<ManagedImageProps> = ({
@@ -24,7 +26,8 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
   onError,
   showLoadingOverlay = true,
   loadingText = '読み込み中...',
-  shouldUseFallback = false
+  shouldUseFallback = false,
+  cacheKey
 }) => {
   const {
     retryCount,
@@ -58,16 +61,30 @@ export const ManagedImage: React.FC<ManagedImageProps> = ({
 
   // 画像URLが変更されたらリセット（無限ループを防ぐため条件を追加）
   React.useEffect(() => {
-    // 同じURLの場合はリセットしない、またfallbackSrcの場合はリセットしない
-    if (src !== fallbackSrc && !src.includes('retry=') && !src.includes('?t=')) {
+    // キャッシュバスティングのクエリパラメータを除去してベースURLを取得
+    const baseSrc = src.split('?')[0];
+    const baseFallbackSrc = fallbackSrc.split('?')[0];
+
+    // 同じベースURLの場合はリセットしない、またfallbackSrcの場合はリセットしない
+    if (baseSrc !== baseFallbackSrc && !src.includes('retry=')) {
       resetImageState();
     }
   }, [src, fallbackSrc, resetImageState]);
 
-    // NoImageの場合は無限ループを防ぐため、fallbackを使用しない
+  // キャッシュバスティング付きのsrcを生成
+  const getCachedSrc = (baseSrc: string) => {
+    if (isNoImage) return baseSrc;
+
+    const separator = baseSrc.includes('?') ? '&' : '?';
+    const cacheParam = cacheKey ? `cache=${cacheKey}` : `t=${Date.now()}`;
+    return `${baseSrc}${separator}${cacheParam}`;
+  };
+
+  // NoImageの場合は無限ループを防ぐため、fallbackを使用しない
   const isNoImage = src === fallbackSrc || src.includes('noimage') || src.includes('null');
-  // NoImageの場合はクエリパラメータを除去して元のファイルパスを使用
-  const displaySrc = isNoImage ? fallbackSrc : ((imageLoadError || shouldUseFallback) ? fallbackSrc : src);
+  // キャッシュバスティング付きの表示用src
+  const displaySrc = isNoImage ? fallbackSrc :
+    ((imageLoadError || shouldUseFallback) ? fallbackSrc : getCachedSrc(src));
   const containerStyle: React.CSSProperties = {
     position: 'relative',
     ...style

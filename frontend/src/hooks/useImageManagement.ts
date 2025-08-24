@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { apiCall } from '../config/api';
 import { useApiWithToast } from './useApiWithToast';
 
 export interface ImageManagementOptions {
@@ -8,6 +9,8 @@ export interface ImageManagementOptions {
   userId?: number;
   noImageUrl: string;
   queryKeys: string[];
+  // 関連クエリの無効化キーを指定
+  relatedQueryKeys?: string[][];
 }
 
 export interface ImageManagementState {
@@ -17,6 +20,7 @@ export interface ImageManagementState {
   isImageLoading: boolean;
   isUploadModalOpen: boolean;
   shouldUseFallback: boolean;
+  currentImageUrl: string;
 }
 
 export interface ImageManagementActions {
@@ -26,6 +30,20 @@ export interface ImageManagementActions {
   setIsUploadModalOpen: (open: boolean) => void;
   resetImageState: () => void;
   handleImageUrlChange: (imageUrl: string) => void;
+}
+
+// entityTypeから正しい複数形を取得する関数
+function getEntityTypePlural(entityType: string): string {
+  switch (entityType) {
+    case 'diety':
+      return 'dieties';
+    case 'shrine':
+      return 'shrines';
+    case 'user':
+      return 'users';
+    default:
+      return `${entityType}s`;
+  }
 }
 
 export function useImageManagement(options: ImageManagementOptions): [ImageManagementState, ImageManagementActions] {
@@ -38,6 +56,7 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [shouldUseFallback, setShouldUseFallback] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState(options.noImageUrl);
 
   // 画像存在確認の重複を防ぐためのref
   const checkingImageRef = useRef<string | null>(null);
@@ -55,6 +74,9 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   // 画像URLが変更されたときに存在確認を行う（同期的に処理）
   const handleImageUrlChange = useCallback((imageUrl: string) => {
+    // 現在の画像URLを更新
+    setCurrentImageUrl(imageUrl);
+
     if (!imageUrl || imageUrl === options.noImageUrl || imageUrl.includes('noimage') || imageUrl.includes('null')) {
       // NoImageの場合はfallbackを使用しない（無限ループを防ぐ）
       setShouldUseFallback(false);
@@ -84,30 +106,95 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const handleUpload = useCallback(async (file: File) => {
     try {
+      if (!options.entityId || options.entityId === 0) {
+        throw new Error('エンティティIDが無効です');
+      }
+
       const formData = new FormData();
       formData.append('image', file);
 
-      const result = await callApi(`/${options.entityType}s/${options.entityId}/images/upload`, {
+      const result = await callApi(`/api/${getEntityTypePlural(options.entityType)}/${options.entityId}/images/upload`, {
         method: 'POST',
         body: formData
       });
 
       if (result.success) {
-        // クエリを無効化して再取得
-        await Promise.all(
-          options.queryKeys.map(key => queryClient.invalidateQueries({ queryKey: [key] }))
-        );
-
-        // データの再取得を確実に待つ
-        await queryClient.refetchQueries({ queryKey: [options.queryKeys[0]] });
-
         // リトライカウントとエラーフラグをリセット
         setRetryCount(0);
         setImageLoadError(false);
         setIsImageLoading(false);
 
-        // アップロード成功時のみキャッシュを更新
+        // 即座にキャッシュを更新（最初に実行）
         setThumbCache(prev => prev + 1);
+
+        // すべての関連クエリを無効化
+        const queriesToInvalidate = [
+          ...options.queryKeys.map(key => [key]),
+          ...(options.relatedQueryKeys || [])
+        ];
+
+        // すべてのクエリを並行して無効化
+        await Promise.all(
+          queriesToInvalidate.map(queryKey =>
+            queryClient.invalidateQueries({ queryKey })
+          )
+        );
+
+
+
+        // メインクエリを強制的に再取得
+        await Promise.all(
+          options.queryKeys.map(key =>
+            queryClient.refetchQueries({ queryKey: [key] })
+          )
+        );
+
+        // 関連クエリを再取得（キャッシュを保持しつつ更新）
+        if (options.relatedQueryKeys) {
+          await Promise.all(
+            options.relatedQueryKeys.map(queryKey =>
+              queryClient.refetchQueries({ queryKey })
+            )
+          );
+        }
+
+        // 神社の場合は、該当神社のデータを直接更新（地図マーカー更新用）
+        if (options.entityType === 'shrine' && options.entityId) {
+          try {
+            // 個別神社の画像情報を取得
+            const imageResponse = await apiCall(`/shrines/${options.entityId}/image`);
+            const imageData = await imageResponse.json();
+
+            // useAllShrinesのキャッシュから該当神社のデータを更新
+            const allShrinesData = queryClient.getQueryData(['all-shrines']) as any[];
+            if (allShrinesData && imageData) {
+              const updatedShrines = allShrinesData.map(shrine => {
+                if (shrine.id === options.entityId) {
+                  return {
+                    ...shrine,
+                    image_url: imageData.image_url || shrine.image_url,
+                    image_url_xs: imageData.image_url_xs || shrine.image_url_xs,
+                    image_url_s: imageData.image_url_s || shrine.image_url_s,
+                    image_url_m: imageData.image_url_m || shrine.image_url_m,
+                    image_url_l: imageData.image_url_l || shrine.image_url_l,
+                    image_url_xl: imageData.image_url_xl || shrine.image_url_xl,
+                    image_by: imageData.image_by || shrine.image_by
+                  };
+                }
+                return shrine;
+              });
+
+              // 更新されたデータをキャッシュに設定
+              queryClient.setQueryData(['all-shrines'], updatedShrines);
+            }
+          } catch (error) {
+            console.error('画像情報取得エラー:', error);
+          }
+        }
+
+
+
+
       }
     } catch (error) {
       console.error('アップロードエラー:', error);
@@ -117,7 +204,11 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const handleVote = useCallback(async () => {
     try {
-      const result = await callApi(`/${options.entityType}s/${options.entityId}/images/vote`, {
+      if (!options.entityId || options.entityId === 0) {
+        throw new Error('エンティティIDが無効です');
+      }
+
+      const result = await callApi(`/api/${getEntityTypePlural(options.entityType)}/${options.entityId}/images/vote`, {
         method: 'POST'
       });
 
@@ -135,7 +226,11 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const handleImageVote = useCallback(async (imageId: number) => {
     try {
-      const result = await callApi(`/${options.entityType}s/${options.entityId}/images/${imageId}/vote`, {
+      if (!options.entityId || options.entityId === 0) {
+        throw new Error('エンティティIDが無効です');
+      }
+
+      const result = await callApi(`/api/${getEntityTypePlural(options.entityType)}/${options.entityId}/images/${imageId}/vote`, {
         method: 'POST'
       });
 
@@ -156,7 +251,8 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     imageLoadError,
     isImageLoading,
     isUploadModalOpen,
-    shouldUseFallback
+    shouldUseFallback,
+    currentImageUrl
   };
 
   const actions: ImageManagementActions = useMemo(() => ({

@@ -11,6 +11,7 @@ import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { usePrayDistance } from '../../hooks/usePrayDistance';
+
 import { useSubscription } from '../../hooks/useSubscription';
 import '../../setupLeaflet';
 import { useToast } from '../atoms';
@@ -196,6 +197,24 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
     return shrinesWithDistance;
   }, [shrines, centerArray, prayDistance, maxShrineDisplay]);
 
+      // 画像情報をIDでマッピング（神社データから取得）
+  const shrineImageMap = useMemo(() => {
+    const map = new Map<number, any>();
+    displayShrines.forEach(shrine => {
+      map.set(shrine.id, {
+        id: shrine.id,
+        image_url: shrine.image_url,
+        image_url_xs: shrine.image_url_xs,
+        image_url_s: shrine.image_url_s,
+        image_url_m: shrine.image_url_m,
+        image_url_l: shrine.image_url_l,
+        image_url_xl: shrine.image_url_xl,
+        image_by: shrine.image_by
+      });
+    });
+    return map;
+  }, [displayShrines]);
+
   const maxZoom = 18;
   const baseDistance = 100; // 100mを基準
   const baseZoom = useMemo(() => {
@@ -334,6 +353,7 @@ export default function MapPage({ onShowShrine, onShowUser, onShowDiety }: { onS
             <ShrineMarker
               key={s.id}
               shrine={s}
+              shrineImage={shrineImageMap.get(s.id)}
               currentPosition={currentPosition}
               onShowShrine={handleShrineClick}
               zIndex={zIndex}

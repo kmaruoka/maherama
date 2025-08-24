@@ -193,8 +193,12 @@ export async function apiCall(url: string, options: ApiCallOptions = {}): Promis
   const token = SecureTokenManager.getToken();
   const headers: Record<string, string> = {
     ...(fetchOptions.headers as Record<string, string>),
-    'Content-Type': 'application/json',
   };
+
+  // FormDataの場合はContent-Typeを設定しない（ブラウザが自動設定）
+  if (!(fetchOptions.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
