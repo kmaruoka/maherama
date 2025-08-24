@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FaCamera, FaCheck, FaFolder, FaTimes } from 'react-icons/fa';
 import type { Crop } from 'react-image-crop';
 import ReactCrop from 'react-image-crop';
@@ -170,175 +171,124 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        padding: 20,
-        maxWidth: 500,
-        width: '90%',
-        maxHeight: '90%',
-        overflow: 'auto'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+  const modalContent = (
+    <div className="image-upload-modal-overlay" onClick={handleClose}>
+      <div className="image-upload-modal-container" onClick={(e) => e.stopPropagation()}>
+        <div className="image-upload-modal-header">
           <h3>{title}</h3>
-          <button onClick={handleClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>
+          <button onClick={handleClose} className="image-upload-modal-close">
             <FaTimes />
           </button>
         </div>
 
-        {step === 'select' && (
-          <div>
-            <div style={{ marginBottom: 20 }}>
-              <button
-                onClick={handleCameraCapture}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '12px 20px',
-                  marginBottom: 10,
-                  width: '100%',
-                  background: '#007bff',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}
-              >
-                <FaCamera /> カメラで撮影
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '12px 20px',
-                  width: '100%',
-                  background: '#28a745',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}
-              >
-                <FaFolder /> ストレージから選択
-              </button>
-            </div>
+        <div className="image-upload-modal-body">
+          {step === 'select' && (
+            <div className="image-upload-select">
+              <div className="image-upload-buttons">
+                <button
+                  onClick={handleCameraCapture}
+                  className="image-upload-button image-upload-button--camera"
+                >
+                  <FaCamera className="image-upload-button__icon" />
+                  <span className="image-upload-button__text">カメラで撮影</span>
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="image-upload-button image-upload-button--storage"
+                >
+                  <FaFolder className="image-upload-button__icon" />
+                  <span className="image-upload-button__text">ストレージから選択</span>
+                </button>
+              </div>
 
-            {/* カメラプレビュー */}
-            <div style={{ marginBottom: 20 }}>
-              <video
-                ref={videoRef}
-                style={{ width: '100%', maxWidth: 300, display: 'none' }}
-                autoPlay
-                muted
+              {/* カメラプレビュー */}
+              <div className="camera-preview">
+                <video
+                  ref={videoRef}
+                  className="camera-preview__video"
+                  autoPlay
+                  muted
+                />
+                <canvas ref={canvasRef} className="camera-preview__canvas" />
+                <button
+                  onClick={captureFromCamera}
+                  className="camera-preview__capture-btn"
+                  id="capture-btn"
+                >
+                  撮影
+                </button>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileSelect(file);
+                }}
+                className="image-upload-input"
               />
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
-              <button
-                onClick={captureFromCamera}
-                style={{
-                  padding: '8px 16px',
-                  background: '#dc3545',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                  display: 'none'
-                }}
-                id="capture-btn"
-              >
-                撮影
-              </button>
             </div>
+          )}
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileSelect(file);
-              }}
-              style={{ display: 'none' }}
-            />
-          </div>
-        )}
+          {step === 'crop' && imageSrc && (
+            <div className="image-upload-crop">
+              <div className="crop-instruction">
+                <p>画像を正方形にトリミングしてください</p>
+              </div>
 
-        {step === 'crop' && imageSrc && (
-          <div>
-            <div style={{ marginBottom: 20 }}>
-              <p>画像を正方形にトリミングしてください</p>
-              <ReactCrop
-                crop={crop}
-                onChange={(newCrop) => {
-                  // 幅・高さが異なる場合は小さい方に合わせて正方形に
-                  let fixedCrop = { ...newCrop };
-                  if (!fixedCrop.width || !fixedCrop.height) {
-                    fixedCrop.width = fixedCrop.height = fixedCrop.width || fixedCrop.height || 80;
-                  } else if (fixedCrop.width !== fixedCrop.height) {
-                    const min = Math.min(fixedCrop.width, fixedCrop.height);
-                    fixedCrop.width = fixedCrop.height = min;
-                  }
-                  setCrop(fixedCrop as Crop);
-                }}
-                onComplete={(c) => setCompletedCrop(c)}
-                aspect={1}
-              >
-                <img src={imageSrc} alt="トリミング対象" style={{ maxWidth: '100%' }} onLoad={e => handleImageLoaded(e.currentTarget)} />
-              </ReactCrop>
+              <div className="crop-container">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(newCrop) => {
+                    // 幅・高さが異なる場合は小さい方に合わせて正方形に
+                    let fixedCrop = { ...newCrop };
+                    if (!fixedCrop.width || !fixedCrop.height) {
+                      fixedCrop.width = fixedCrop.height = fixedCrop.width || fixedCrop.height || 80;
+                    } else if (fixedCrop.width !== fixedCrop.height) {
+                      const min = Math.min(fixedCrop.width, fixedCrop.height);
+                      fixedCrop.width = fixedCrop.height = min;
+                    }
+                    setCrop(fixedCrop as Crop);
+                  }}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={1}
+                  className="crop-component"
+                >
+                  <img
+                    src={imageSrc}
+                    alt="トリミング対象"
+                    className="crop-image"
+                    onLoad={e => handleImageLoaded(e.currentTarget)}
+                  />
+                </ReactCrop>
+              </div>
+
+              <div className="crop-actions">
+                <button
+                  onClick={() => setStep('select')}
+                  className="crop-action-button crop-action-button--back"
+                >
+                  戻る
+                </button>
+                <button
+                  onClick={handleConfirmCrop}
+                  disabled={isUploading}
+                  className="crop-action-button crop-action-button--confirm"
+                >
+                  <FaCheck className="crop-action-button__icon" />
+                  <span className="crop-action-button__text">
+                    {isUploading ? 'アップロード中...' : '確定'}
+                  </span>
+                </button>
+              </div>
             </div>
-
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setStep('select')}
-                style={{
-                  padding: '8px 16px',
-                  background: '#6c757d',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}
-              >
-                戻る
-              </button>
-              <button
-                onClick={handleConfirmCrop}
-                disabled={isUploading}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '8px 16px',
-                  background: '#28a745',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: isUploading ? 'not-allowed' : 'pointer',
-                  opacity: isUploading ? 0.6 : 1
-                }}
-              >
-                <FaCheck />
-                {isUploading ? 'アップロード中...' : '確定'}
-              </button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
