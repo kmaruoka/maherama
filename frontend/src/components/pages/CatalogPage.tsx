@@ -9,6 +9,7 @@ import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useShrineList } from '../../hooks/useShrineList';
 import GridCardContainer from '../atoms/GridCardContainer';
 import PageLayout from '../atoms/PageLayout';
+import PageTitle from '../atoms/PageTitle';
 import CatalogGridCard from '../molecules/CatalogGridCard';
 import CustomCatalogListItem from '../molecules/CustomCatalogListItem';
 
@@ -118,6 +119,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
 
   return (
     <PageLayout style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <PageTitle title="図鑑" />
       <Tabs
         id="catalog-tabs"
         activeKey={tab}

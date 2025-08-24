@@ -11,13 +11,7 @@
   padding: 0 1rem;
 }
 
-.submenu-page__title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
-  text-align: center;
-  color: var(--skin-title);
-}
+
 
 .submenu-page__items {
   display: flex;
@@ -62,9 +56,7 @@
     padding: 1rem 0;
   }
 
-  .submenu-page__title {
-    font-size: 1.5rem;
-  }
+
 
   .submenu-page__link {
     font-size: 1rem;

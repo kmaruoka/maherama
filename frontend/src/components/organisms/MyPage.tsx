@@ -15,6 +15,7 @@ import { useUserTitles } from '../../hooks/useUserTitles';
 import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
+import PageTitle from '../atoms/PageTitle';
 import FollowModal from '../molecules/FollowModal';
 import RankingPane from './RankingPane';
 
@@ -164,6 +165,7 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
 
     return (
       <div>
+        <PageTitle title="プロフィール" />
         <div className="pane__header">
           <div className="pane__thumbnail">
             <img

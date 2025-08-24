@@ -2,6 +2,7 @@ import { Button, Card, Container } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaChevronCircleLeft } from 'react-icons/fa';
 import { useSkin } from '../../skins/SkinContext';
+import PageTitle from '../atoms/PageTitle';
 import './CommonPage.css';
 
 interface CommercialTransactionPageProps {
@@ -26,7 +27,7 @@ export default function CommercialTransactionPage({ onBack }: CommercialTransact
       <Container>
         <Card className="common-page__card">
           <Card.Body className="common-page__content">
-            <h1 className="common-page__title">特定商取引に基づく表記</h1>
+            <PageTitle title="特定商取引法に基づく表記" />
 
             <div className="common-page__section">
               <h2 className="common-page__section-title">販売事業者</h2>

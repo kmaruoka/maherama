@@ -6,6 +6,7 @@ import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { skins } from '../../skins';
 import { useSkin } from '../../skins/SkinContext';
 import CustomButton from '../atoms/CustomButton';
+import PageTitle from '../atoms/PageTitle';
 
 interface SettingsPageProps {
   onLogout?: () => void;
@@ -89,7 +90,7 @@ export default function SettingsPage({ onLogout }: SettingsPageProps) {
 
   return (
     <div className="p-3 space-y-4">
-      <h2 className="h5 fw-bold" style={{ color: 'var(--color-text)' }}>設定</h2>
+      <PageTitle title="設定" />
       <div className="d-flex justify-content-between align-items-center">
         {(() => {
           const user = users.find(u => u.id === Number(userId));

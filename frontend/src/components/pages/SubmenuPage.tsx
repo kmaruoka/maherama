@@ -1,6 +1,7 @@
 import { Button } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useSkin } from '../../skins/SkinContext';
+import PageTitle from '../atoms/PageTitle';
 import './SubmenuPage.css';
 
 interface SubmenuPageProps {
@@ -15,7 +16,7 @@ export default function SubmenuPage({ onNavigateToTerms, onNavigateToCommercialT
   return (
     <div className="submenu-page">
       <div className="submenu-page__content">
-        <h2 className="submenu-page__title">{t('submenu')}</h2>
+        <PageTitle title="メニュー" />
         <div className="submenu-page__items">
           {/* 利用規約と特定商取引に基づく表記へのリンク */}
           {onNavigateToTerms && (

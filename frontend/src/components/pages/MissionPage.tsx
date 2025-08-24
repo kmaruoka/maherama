@@ -7,6 +7,7 @@ import { useMissions } from '../../hooks/useMissions';
 import { useSkin } from '../../skins/SkinContext';
 import GridCardContainer from '../atoms/GridCardContainer';
 import PageLayout from '../atoms/PageLayout';
+import PageTitle from '../atoms/PageTitle';
 import MissionGridCard from '../molecules/MissionGridCard';
 import './MissionPage.css';
 
@@ -51,6 +52,7 @@ const MissionPage: React.FC<MissionPageProps> = ({ onShowShrine, onShowDiety, on
 
   return (
     <PageLayout>
+      <PageTitle title="ミッション" />
       <Tabs
         id="mission-tabs"
         activeKey={tab}

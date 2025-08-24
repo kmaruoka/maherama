@@ -2,6 +2,7 @@ import { Button, Card, Container } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaChevronCircleLeft } from 'react-icons/fa';
 import { useSkin } from '../../skins/SkinContext';
+import PageTitle from '../atoms/PageTitle';
 import './CommonPage.css';
 
 interface TermsPageProps {
@@ -26,7 +27,7 @@ export default function TermsPage({ onBack }: TermsPageProps) {
       <Container>
         <Card className="common-page__card">
           <Card.Body className="common-page__content">
-            <h1 className="common-page__title">利用規約</h1>
+            <PageTitle title="利用規約" />
 
             <div className="common-page__section">
               <p className="common-page__intro">
