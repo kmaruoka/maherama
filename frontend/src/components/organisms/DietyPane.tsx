@@ -8,6 +8,7 @@ import { useModal } from '../../contexts/ModalContext';
 import { useDietyDetail } from '../../hooks/useDietyDetail';
 import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
+import { ThumbnailImage } from '../atoms/ThumbnailImage';
 import type { Period } from './RankingPane';
 import RankingPane from './RankingPane';
 
@@ -117,9 +118,10 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
     const renderDetailContent = () => {
       if (detailView === 'thumbnail') {
         return (
-          <img
+          <ThumbnailImage
             src={dietyLargeImageUrl}
             alt="神様サムネイル"
+            fallbackSrc={NOIMAGE_DIETY_URL}
             className="width-100 height-auto max-height-100 object-fit-contain"
           />
         );
@@ -185,21 +187,15 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         {/* ヘッダー部分：サムネイルと情報を横並び */}
         <Row className="mb-3">
           <Col xs={12} md={4}>
-            <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
-              if ((e.target as HTMLElement).closest('button')) {
-                return;
-              }
-              setDetailView('thumbnail');
-            }}>
-              <img
-                src={dietyImageUrl}
-                alt="神様サムネイル"
-                className="pane__thumbnail-img"
-              />
-              {diety.image_by && dietyImageUrl !== NOIMAGE_DIETY_URL && (
-                <div className="pane__thumbnail-by">{t('by')} {diety.image_by}</div>
-              )}
-            </div>
+            <ThumbnailImage
+              src={dietyImageUrl}
+              alt="神様サムネイル"
+              fallbackSrc={NOIMAGE_DIETY_URL}
+              imageBy={diety.image_by}
+              imageByUserId={(diety as any).image_by_user_id}
+              onShowUser={onShowUser}
+              onClick={() => setDetailView('thumbnail')}
+            />
           </Col>
           <Col xs={12} md={8}>
             <div className="pane__info">

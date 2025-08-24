@@ -11,5 +11,6 @@ export { default as MissionBadge } from './MissionBadge';
 export { default as PageTitle } from './PageTitle';
 export { default as RewardIcon } from './RewardIcon';
 export { default as ShrineBadge } from './ShrineBadge';
+export { ThumbnailImage } from './ThumbnailImage';
 export { ToastContainer, useToast } from './ToastContainer';
 

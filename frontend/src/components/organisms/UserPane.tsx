@@ -17,6 +17,7 @@ import { useSkin } from '../../skins/SkinContext';
 import { CustomButton } from '../atoms/CustomButton';
 import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
+import { ThumbnailImage } from '../atoms/ThumbnailImage';
 import FollowModal from '../molecules/FollowModal';
 import RankingPane from './RankingPane';
 
@@ -165,13 +166,14 @@ const UserPage = forwardRef<UserPaneRef, UserPageProps & { onDetailViewChange?: 
             {/* ヘッダー（サムネイルと情報） */}
             <Row className="mb-3">
               <Col xs={12} md={4}>
-                <div className="pane__thumbnail">
-                  <img
-                    src={userImageUrl}
-                    alt="ユーザーサムネイル"
-                    className="pane__thumbnail-img"
-                  />
-                </div>
+                <ThumbnailImage
+                  src={userImageUrl}
+                  alt="ユーザーサムネイル"
+                  fallbackSrc={NOIMAGE_USER_URL}
+                  imageBy={(userInfo as any).image_by}
+                  imageByUserId={(userInfo as any).image_by_user_id}
+                  onShowUser={onShowUser}
+                />
               </Col>
               <Col xs={12} md={8}>
                 <div className="pane__info">

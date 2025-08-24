@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
+import { FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { formatDistance } from '../../../backend/shared/utils/distance';
 import { apiCall, apiCallWithToast } from '../../config/api';
 import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
@@ -20,7 +20,7 @@ import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
 import { CustomButton } from '../atoms/CustomButton';
 import CustomLink from '../atoms/CustomLink';
-import { ManagedImage } from '../atoms/ManagedImage';
+import { ThumbnailImage } from '../atoms/ThumbnailImage';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import { TravelLogModal } from '../molecules/TravelLogModal';
 import { TravelLogsDisplay } from '../molecules/TravelLogsDisplay';
@@ -398,16 +398,16 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   // 詳細表示のレンダリング関数
   const renderDetailContent = () => {
-    if (detailView === 'thumbnail') {
+          if (detailView === 'thumbnail') {
               return (
-          <ManagedImage
+          <ThumbnailImage
             src={(data.image_url_l || data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="サムネイル"
             fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
-          className="max-width-100 height-auto"
-          loadingText="読み込み中..."
-          shouldUseFallback={imageState.shouldUseFallback}
-        />
+            className="max-width-100 height-auto"
+            loadingText="読み込み中..."
+            shouldUseFallback={imageState.shouldUseFallback}
+          />
       );
     } else if (detailView === 'deities') {
       return (
@@ -497,35 +497,27 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
       {/* ヘッダー部分：サムネイルと情報を横並び */}
       <Row className="mb-3">
         <Col xs={12} md={4}>
-          <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
-            if ((e.target as HTMLElement).closest('button')) {
-              return;
-            }
-            setDetailView('thumbnail');
-          }}>
-            <ManagedImage
-              src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
-              alt="サムネイル"
-              fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
-              loadingText="読み込み中..."
-              shouldUseFallback={imageState.shouldUseFallback}
-            />
-            <div className="pane__thumbnail-actions">
-              <button className="pane__icon-btn" onClick={(e) => {
-                e.stopPropagation();
-                imageActions.setIsUploadModalOpen(true);
-              }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
-              {(data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
+          <ThumbnailImage
+            src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
+            alt="サムネイル"
+            fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
+            loadingText="読み込み中..."
+            shouldUseFallback={imageState.shouldUseFallback}
+            onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
+            showUploadButton={true}
+            imageBy={data.image_by}
+            imageByUserId={(data as any).image_by_user_id}
+            onShowUser={onShowUser}
+            onClick={() => setDetailView('thumbnail')}
+            thumbnailActions={
+              (data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL ? (
                 <button className="pane__icon-btn" onClick={(e) => {
                   e.stopPropagation();
                   handleVote();
                 }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
-              )}
-            </div>
-            {data.image_by && (data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
-              <div className="pane__thumbnail-by">{t('by')} {data.image_by}</div>
-            )}
-          </div>
+              ) : undefined
+            }
+          />
         </Col>
         <Col xs={12} md={8}>
           <div className="pane__info">
