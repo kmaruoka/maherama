@@ -128,7 +128,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     relatedQueryKeys: [
       ['shrine', String(id)],
       ['shrine-image', String(id)],
-      ['all-shrines'],
       ['shrine-marker-status'],
       ['shrine-marker-status', String(id), String(userId || 0)]
     ]

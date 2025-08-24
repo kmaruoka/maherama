@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { apiCall } from '../config/api';
 import { useApiWithToast } from './useApiWithToast';
+import { useImageCache } from './useImageCache';
 
 export interface ImageManagementOptions {
   entityType: 'shrine' | 'diety' | 'user';
@@ -49,6 +49,7 @@ function getEntityTypePlural(entityType: string): string {
 export function useImageManagement(options: ImageManagementOptions): [ImageManagementState, ImageManagementActions] {
   const queryClient = useQueryClient();
   const { callApi } = useApiWithToast();
+  const { updateImageUrls } = useImageCache();
 
   const [thumbCache, setThumbCache] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
@@ -158,38 +159,9 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
           );
         }
 
-        // 神社の場合は、該当神社のデータを直接更新（地図マーカー更新用）
-        if (options.entityType === 'shrine' && options.entityId) {
-          try {
-            // 個別神社の画像情報を取得
-            const imageResponse = await apiCall(`/shrines/${options.entityId}/image`);
-            const imageData = await imageResponse.json();
-
-            // useAllShrinesのキャッシュから該当神社のデータを更新
-            const allShrinesData = queryClient.getQueryData(['all-shrines']) as any[];
-            if (allShrinesData && imageData) {
-              const updatedShrines = allShrinesData.map(shrine => {
-                if (shrine.id === options.entityId) {
-                  return {
-                    ...shrine,
-                    image_url: imageData.image_url || shrine.image_url,
-                    image_url_xs: imageData.image_url_xs || shrine.image_url_xs,
-                    image_url_s: imageData.image_url_s || shrine.image_url_s,
-                    image_url_m: imageData.image_url_m || shrine.image_url_m,
-                    image_url_l: imageData.image_url_l || shrine.image_url_l,
-                    image_url_xl: imageData.image_url_xl || shrine.image_url_xl,
-                    image_by: imageData.image_by || shrine.image_by
-                  };
-                }
-                return shrine;
-              });
-
-              // 更新されたデータをキャッシュに設定
-              queryClient.setQueryData(['all-shrines'], updatedShrines);
-            }
-          } catch (error) {
-            console.error('画像情報取得エラー:', error);
-          }
+        // 統一された画像キャッシュシステムで画像を更新
+        if (options.entityId) {
+          await updateImageUrls(options.entityType, options.entityId);
         }
 
 
