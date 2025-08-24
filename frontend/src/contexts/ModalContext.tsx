@@ -10,34 +10,21 @@ interface NavigationHistoryItem {
 }
 
 interface ModalContextType {
-  // モーダル状態
   modal: ModalType;
   currentUserId: number | null;
-
-  // ナビゲーション履歴
   navigationHistory: NavigationHistoryItem[];
   historyIndex: number;
-
-  // モーダル操作
   openModal: (type: 'shrine' | 'diety' | 'user' | 'mission' | 'notification', id: number, clearHistory?: boolean) => void;
   closeModal: () => void;
-
-  // ナビゲーション操作
   goBack: () => void;
   goForward: () => void;
   canGoBack: boolean;
   canGoForward: boolean;
-
-  // 履歴情報
   getPreviousItemName: () => string;
   getNextItemName: () => string;
-  getPreviousItemType: () => 'shrine' | 'diety' | 'user' | 'mission';
-  getNextItemType: () => 'shrine' | 'diety' | 'user' | 'mission';
-
-  // データ更新
+  getPreviousItemType: () => 'shrine' | 'diety' | 'user' | 'mission' | 'notification';
+  getNextItemType: () => 'shrine' | 'diety' | 'user' | 'mission' | 'notification';
   updateCurrentModalName: (name: string) => void;
-
-  // ユーザーID設定
   setCurrentUserId: (userId: number | null) => void;
 }
 
@@ -62,7 +49,7 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [historyIndex, setHistoryIndex] = useState(-1);
 
   // 履歴に追加
-  const addToHistory = useCallback((type: 'shrine' | 'diety' | 'user' | 'mission', id: number, name: string) => {
+  const addToHistory = useCallback((type: 'shrine' | 'diety' | 'user' | 'mission' | 'notification', id: number, name: string) => {
     const newItem: NavigationHistoryItem = { type, id, name };
     const newHistory = navigationHistory.slice(0, historyIndex + 1);
     newHistory.push(newItem);
@@ -78,17 +65,12 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
       setNavigationHistory([{ type, id, name: initialName }]);
       setHistoryIndex(0);
     } else {
-      // 同じアイテムが既に現在の位置にある場合は履歴を追加しない
-      const currentItem = navigationHistory[historyIndex];
-      if (currentItem && currentItem.type === type && currentItem.id === id) {
-        setModal({ type, id });
-        return;
-      }
+      // 新しいアイテムを履歴に追加
       addToHistory(type, id, initialName);
     }
 
     setModal({ type, id });
-  }, [navigationHistory, historyIndex, addToHistory]);
+  }, [addToHistory]);
 
   // モーダルを閉じる
   const closeModal = useCallback(() => {
@@ -177,6 +159,8 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     updateCurrentModalName,
     setCurrentUserId,
   };
+
+
 
   return (
     <ModalContext.Provider value={value}>
