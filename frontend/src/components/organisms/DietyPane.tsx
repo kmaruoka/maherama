@@ -10,7 +10,7 @@ import { useImageManagement } from '../../hooks/useImageManagement';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
-import { ThumbnailImage } from '../atoms/ThumbnailImage';
+import SizedThumbnailImage from '../atoms/SizedThumbnailImage';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import type { Period } from './RankingPane';
 import RankingPane from './RankingPane';
@@ -69,6 +69,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
     const [rankRefreshKey, setRankRefreshKey] = useState(0);
     const { updateCurrentModalName } = useModal();
     const [userId] = useLocalStorageState<number | null>('userId', null);
+    const [imageCache, setImageCache] = useState(Date.now());
 
     // detailViewが変更されたときに親コンポーネントに通知
     useEffect(() => {
@@ -117,18 +118,24 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
       }
     }));
 
+    // アップロード後のデータ再取得
     useEffect(() => {
-      if (diety?.image_url || diety?.image_url_m || diety?.image_url_s || diety?.image_url_l) {
-        // データが更新されたら画像状態をリセット
-        imageActions.resetImageState();
-
-        // 画像URLの存在確認を行う（Lサイズを優先、次にMサイズ、Sサイズ、オリジナル）
-        const imageUrl = diety.image_url_l || diety.image_url_m || diety.image_url_s || diety.image_url;
-        if (imageUrl && imageUrl !== NOIMAGE_DIETY_URL) {
-          imageActions.handleImageUrlChange(imageUrl);
-        }
+      if (imageState.thumbCache > 0 && refetch) {
+        refetch().then(() => {
+          // データ更新後にimageCacheを更新
+          setImageCache(Date.now());
+        }).catch((error) => {
+          console.error('DietyPane: Data refetch failed:', error);
+        });
       }
-    }, [diety?.image_url, diety?.image_url_m, diety?.image_url_s, diety?.image_url_l, imageActions]);
+    }, [imageState.thumbCache, refetch]);
+
+    // 画像URLが変更された時にimageCacheを更新
+    useEffect(() => {
+      if (diety?.image_url_s || diety?.image_url_m || diety?.image_url_l || diety?.image_url) {
+        setImageCache(Date.now());
+      }
+    }, [diety?.image_url_s, diety?.image_url_m, diety?.image_url_l, diety?.image_url]);
 
     const handleUpload = async (file: File) => {
       if (!id) {
@@ -137,6 +144,11 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
       }
       await imageActions.handleUpload(file);
       setRankRefreshKey(prev => prev + 1);
+
+      // アップロード後にデータを再取得
+      if (refetch) {
+        await refetch();
+      }
     };
 
     if (isLoading) {
@@ -155,13 +167,15 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
     const renderDetailContent = () => {
       if (detailView === 'thumbnail') {
         return (
-          <ThumbnailImage
-            src={dietyLargeImageUrl}
+          <SizedThumbnailImage
+            key={`diety-detail-${id}-${imageCache}`}
+            size="xl"
+            url={diety.image_url_xl || diety.image_url_l || diety.image_url_m || diety.image_url_s || diety.image_url || NOIMAGE_DIETY_URL}
             alt="神様サムネイル"
-            fallbackSrc={NOIMAGE_DIETY_URL}
+            noImageUrl={NOIMAGE_DIETY_URL}
             className="width-100 height-auto max-height-100 object-fit-contain"
             shouldUseFallback={imageState.shouldUseFallback}
-            cacheKey={imageState.thumbCache}
+            cacheKey={imageCache}
           />
         );
       } else if (detailView === 'description') {
@@ -226,10 +240,13 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         {/* ヘッダー部分：サムネイルと情報を横並び */}
         <Row className="mb-3">
           <Col xs={12} md={4}>
-            <ThumbnailImage
-              src={dietyImageUrl}
+            <SizedThumbnailImage
+              key={`diety-${id}-${imageCache}`}
+              size="s"
+              url={diety.image_url_s || diety.image_url_m || diety.image_url_l || diety.image_url || NOIMAGE_DIETY_URL}
               alt="神様サムネイル"
-              fallbackSrc={NOIMAGE_DIETY_URL}
+              noImageUrl={NOIMAGE_DIETY_URL}
+              responsive={true}
               loadingText="読み込み中..."
               shouldUseFallback={imageState.shouldUseFallback}
               onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
@@ -238,7 +255,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
               imageByUserId={(diety as any).image_by_user_id}
               onShowUser={onShowUser}
               onClick={() => setDetailView('thumbnail')}
-              cacheKey={imageState.thumbCache}
+              cacheKey={imageCache}
             />
           </Col>
           <Col xs={12} md={8}>

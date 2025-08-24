@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
@@ -7,6 +7,7 @@ import { formatDistance } from '../../../backend/shared/utils/distance';
 import { apiCall, apiCallWithToast } from '../../config/api';
 import { NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
 import { useModal } from '../../contexts/ModalContext';
+import { useAllShrines } from '../../hooks/useAllShrines';
 import useCurrentPosition from '../../hooks/useCurrentPosition';
 import useDebugLog from '../../hooks/useDebugLog';
 import { useImageManagement } from '../../hooks/useImageManagement';
@@ -20,7 +21,7 @@ import { formatDisplayDate } from '../../utils/dateFormat';
 import { useToast } from '../atoms';
 import { CustomButton } from '../atoms/CustomButton';
 import CustomLink from '../atoms/CustomLink';
-import { ThumbnailImage } from '../atoms/ThumbnailImage';
+import SizedThumbnailImage from '../atoms/SizedThumbnailImage';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import { TravelLogModal } from '../molecules/TravelLogModal';
 import { TravelLogsDisplay } from '../molecules/TravelLogsDisplay';
@@ -65,7 +66,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   ({ id, onShowDiety, onShowUser, onClose, onDetailViewChange, onDataLoaded }, ref) => {
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const { data, refetch } = useShrineDetail(id);
+  const { data: detailData, refetch } = useShrineDetail(id);
+  const { data: allShrines } = useAllShrines();
+
+  // useAllShrinesから該当する神社のデータを取得（地図マーカーと同じデータソース）
+  const data = useMemo(() => {
+    if (!allShrines || !id) return detailData;
+    return allShrines.find(shrine => shrine.id === id) || detailData;
+  }, [allShrines, id, detailData]);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
   const queryClient = useQueryClient();
@@ -91,6 +99,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageListLoading, setImageListLoading] = useState(false);
   const [imageListError, setImageListError] = useState<string | null>(null);
+  const [imageCache, setImageCache] = useState(Date.now());
 
   // 旅の記録関連
   const [travelLogsPage, setTravelLogsPage] = useState(1);
@@ -161,18 +170,26 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     }
   }));
 
+  // アップロード後のデータ再取得
   useEffect(() => {
-    if (data?.image_url || data?.image_url_m || data?.image_url_s || data?.image_url_l) {
-      // データが更新されたら画像状態をリセット
-      imageActions.resetImageState();
-
-      // 画像URLの存在確認を行う（Lサイズを優先、次にMサイズ、Sサイズ、オリジナル）
-      const imageUrl = data.image_url_l || data.image_url_m || data.image_url_s || data.image_url;
-      if (imageUrl && imageUrl !== NOIMAGE_SHRINE_DISPLAY_URL) {
-        imageActions.handleImageUrlChange(imageUrl);
-      }
+    if (imageState.thumbCache > 0 && refetch) {
+      refetch().then(() => {
+        // データ更新後にimageCacheを更新
+        setImageCache(Date.now());
+      }).catch((error) => {
+        console.error('ShrinePane: Data refetch failed:', error);
+      });
     }
-  }, [data?.image_url, data?.image_url_m, data?.image_url_s, data?.image_url_l, imageActions]);
+  }, [imageState.thumbCache, refetch]);
+
+  // 画像URLが変更された時にimageCacheを更新
+  useEffect(() => {
+    if (data?.image_url_s || data?.image_url_m || data?.image_url_l || data?.image_url) {
+      setImageCache(Date.now());
+    }
+  }, [data?.image_url_s, data?.image_url_m, data?.image_url_l, data?.image_url]);
+
+
 
   // 画像リスト取得
   useEffect(() => {
@@ -413,10 +430,11 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const renderDetailContent = () => {
           if (detailView === 'thumbnail') {
               return (
-          <ThumbnailImage
-            src={imageState.currentImageUrl}
+          <SizedThumbnailImage
+            size="xl"
+            url={data.image_url_xl || data.image_url_l || data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL}
             alt="サムネイル"
-            fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
+            noImageUrl={NOIMAGE_SHRINE_DISPLAY_URL}
             className="max-width-100 height-auto"
             loadingText="読み込み中..."
             shouldUseFallback={imageState.shouldUseFallback}
@@ -510,11 +528,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     <Container fluid>
       {/* ヘッダー部分：サムネイルと情報を横並び */}
       <Row className="mb-3">
-        <Col xs={12} md={4}>
-                      <ThumbnailImage
-              src={imageState.currentImageUrl}
+        <Col xs={12} md={5}>
+                      <SizedThumbnailImage
+              key={`shrine-${id}-${imageCache}`}
+              size="s"
+              url={data.image_url_s || data.image_url_m || data.image_url_l || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL}
               alt="サムネイル"
-              fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
+              noImageUrl={NOIMAGE_SHRINE_DISPLAY_URL}
+              responsive={true}
               loadingText="読み込み中..."
               shouldUseFallback={imageState.shouldUseFallback}
               onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
@@ -523,7 +544,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
               imageByUserId={(data as any).image_by_user_id}
               onShowUser={onShowUser}
               onClick={() => setDetailView('thumbnail')}
-              cacheKey={imageState.thumbCache}
+              cacheKey={imageCache}
               thumbnailActions={
                 imageState.currentImageUrl !== NOIMAGE_SHRINE_DISPLAY_URL ? (
                   <button className="pane__icon-btn" onClick={(e) => {
@@ -533,8 +554,9 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
                 ) : undefined
               }
             />
+
         </Col>
-        <Col xs={12} md={8}>
+        <Col xs={12} md={7}>
           <div className="pane__info">
             <div className="pane__title">{data.name}</div>
             {data.kana && <div className="pane__kana">{data.kana}</div>}

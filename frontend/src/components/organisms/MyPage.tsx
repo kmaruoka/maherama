@@ -18,7 +18,7 @@ import { useSkin } from '../../skins/SkinContext';
 import CustomLink from '../atoms/CustomLink';
 import { AwardIcon } from '../atoms/CustomText';
 import PageTitle from '../atoms/PageTitle';
-import { ThumbnailImage } from '../atoms/ThumbnailImage';
+import SizedThumbnailImage from '../atoms/SizedThumbnailImage';
 import FollowModal from '../molecules/FollowModal';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
 import RankingPane from './RankingPane';
@@ -85,17 +85,40 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
     }));
 
     useEffect(() => {
-      if (userInfo?.image_url || userInfo?.image_url_m || userInfo?.image_url_s || userInfo?.image_url_l) {
+      if (userInfo?.image_url || userInfo?.image_url_m || userInfo?.image_url_s || userInfo?.image_url_l || userInfo?.image_url_xl) {
         // データが更新されたら画像状態をリセット
         imageActions.resetImageState();
 
-        // 画像URLの存在確認を行う
-        const imageUrl = userInfo.image_url_l || userInfo.image_url_m || userInfo.image_url || userInfo.image_url_s;
+        // 画像URLの存在確認を行う（レスポンシブ対応）
+        // mdブレークポイント以上ではLサイズ、それ以外ではMサイズを優先
+        const isMdOrLarger = window.innerWidth >= 768; // mdブレークポイント
+        const imageUrl = isMdOrLarger
+          ? (userInfo.image_url_l || userInfo.image_url_m || userInfo.image_url_s || userInfo.image_url_xl || userInfo.image_url)
+          : (userInfo.image_url_m || userInfo.image_url_s || userInfo.image_url_l || userInfo.image_url_xl || userInfo.image_url);
         if (imageUrl && imageUrl !== NOIMAGE_USER_URL) {
           imageActions.handleImageUrlChange(imageUrl);
         }
       }
-    }, [userInfo?.image_url, userInfo?.image_url_m, userInfo?.image_url_s, userInfo?.image_url_l]);
+    }, [userInfo?.image_url, userInfo?.image_url_m, userInfo?.image_url_s, userInfo?.image_url_l, userInfo?.image_url_xl]);
+
+    // ウィンドウサイズ変更時の画像URL更新
+    useEffect(() => {
+      const handleResize = () => {
+        if (userInfo?.image_url || userInfo?.image_url_m || userInfo?.image_url_s || userInfo?.image_url_l || userInfo?.image_url_xl) {
+          const isMdOrLarger = window.innerWidth >= 768;
+          const imageUrl = isMdOrLarger
+            ? (userInfo.image_url_l || userInfo.image_url_m || userInfo.image_url_s || userInfo.image_url_xl || userInfo.image_url)
+            : (userInfo.image_url_m || userInfo.image_url_s || userInfo.image_url_l || userInfo.image_url_xl || userInfo.image_url);
+
+          if (imageUrl && imageUrl !== NOIMAGE_USER_URL) {
+            imageActions.handleImageUrlChange(imageUrl);
+          }
+        }
+      };
+
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, [userInfo, imageActions]);
 
     const handleUpload = async (file: File) => {
       await imageActions.handleUpload(file);
@@ -193,10 +216,12 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
         <Container fluid className="pane__header">
           <Row>
             <Col md={3} className="pane__thumbnail">
-              <ThumbnailImage
-                src={(userImageUrl) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
+              <SizedThumbnailImage
+                size="s"
+                url={(userImageUrl) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
                 alt="ユーザーサムネイル"
-                fallbackSrc={NOIMAGE_USER_URL}
+                noImageUrl={NOIMAGE_USER_URL}
+                responsive={true}
                 className="pane__thumbnail-img"
                 loadingText="読み込み中..."
                 shouldUseFallback={imageState.shouldUseFallback}

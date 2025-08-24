@@ -38,6 +38,7 @@ export default function CatalogPage({ onShowShrine, onShowDiety, onShowUser }: {
   const [sort, setSort] = useLocalStorageState('catalogSort', 'catalogedAt-desc');
   const [style, setStyle] = useLocalStorageState<'card' | 'list'>('catalogStyle', 'card');
 
+
   const { data: shrines = [], isLoading: isShrinesLoading, error: shrinesError } = useShrineList();
 
   const { data: dieties = [], isLoading: isDietiesLoading, error: dietiesError } = useDietyList();

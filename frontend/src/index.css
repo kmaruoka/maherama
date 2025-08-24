@@ -1769,14 +1769,28 @@ nav.d-flex.position-fixed {
 /* タブレット以上でのペインサムネイル調整（sm: 576px以上） */
 @media (min-width: var(--breakpoint-sm)) {
   .pane__thumbnail {
-    width: 112px;
-    height: 112px;
-    min-width: 112px;
+    width: 140px;
+    height: 140px;
+    min-width: 140px;
   }
 
   .pane__thumbnail img {
-    width: 112px;
-    height: 112px;
+    width: 140px;
+    height: 140px;
+  }
+}
+
+/* mdブレークポイント以上でのペインサムネイル調整（md: 768px以上） */
+@media (min-width: var(--breakpoint-md)) {
+  .pane__thumbnail {
+    width: 160px;
+    height: 160px;
+    min-width: 160px;
+  }
+
+  .pane__thumbnail img {
+    width: 160px;
+    height: 160px;
   }
 }
 

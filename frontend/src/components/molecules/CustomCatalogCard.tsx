@@ -1,10 +1,10 @@
-import CustomImage from '../atoms/CustomImage';
-import { NOIMAGE_SHRINE_URL, NOIMAGE_SHRINE_DISPLAY_URL, NOIMAGE_DIETY_URL } from '../../constants';
-import Card from 'react-bootstrap/Card';
+
 import { useTranslation } from 'react-i18next';
-import './CustomCatalogCard.css';
-import { formatDisplayDate } from '../../utils/dateFormat';
+import { NOIMAGE_DIETY_URL, NOIMAGE_SHRINE_DISPLAY_URL } from '../../constants';
 import { useSkin } from '../../skins/SkinContext';
+import { formatDisplayDate } from '../../utils/dateFormat';
+import SizedImage from '../atoms/SizedImage';
+import './CustomCatalogCard.css';
 
 export interface CustomCatalogCardProps {
   name: string;
@@ -22,14 +22,17 @@ export interface CustomCatalogCardProps {
 }
 export default function CustomCatalogCard({ name, count, catalogedAt, lastPrayedAt, onClick, countLabel = '参拝数', type, image_url, image_url_s, image_url_m, image_url_l, dateLabel }: CustomCatalogCardProps) {
   const { t } = useTranslation();
-  const { skin } = useSkin();
+    const { skin } = useSkin();
   const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_DISPLAY_URL;
-  // 適切なサイズの画像を選択（112pxを優先、なければ元のimage_url）
-  const imageSrc = image_url_s || image_url || noImage;
+
   return (
     <div className="catalog-card" onClick={onClick} role="button">
       <div className="catalog-card__thumbnail">
-        <img src={imageSrc} alt={name} />
+        <SizedImage
+          size="s"
+          url={image_url_s || noImage}
+          alt={name}
+        />
       </div>
       <div className="catalog-card__body">
         <div className="catalog-card__title">{name}</div>

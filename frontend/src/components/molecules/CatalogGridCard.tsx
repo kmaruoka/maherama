@@ -30,9 +30,7 @@ const CatalogGridCard: React.FC<CatalogGridCardProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // 画像URLの優先順位: l > m > s > デフォルト
   const noImage = type === 'diety' ? NOIMAGE_DIETY_URL : NOIMAGE_SHRINE_DISPLAY_URL;
-  const imageUrl = image_url_l || image_url_m || image_url_s || image_url || noImage;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -43,7 +41,7 @@ const CatalogGridCard: React.FC<CatalogGridCardProps> = ({
   return (
     <GridCard
       title={name}
-      imageUrl={imageUrl}
+      imageUrl={image_url_s || noImage}
       onClick={onClick}
       variant="default"
     >
