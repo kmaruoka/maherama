@@ -37,6 +37,7 @@ html, body {
 .top-page__hero {
   width: 100vw;
   min-height: 400px;
+  max-height: 60vh;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
   padding: 0;
@@ -44,11 +45,13 @@ html, body {
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #0a0f1f 0%, #11162a 100%) !important; /* ダーク系グラデーション */
+  overflow: hidden;
 }
 
 .top-page__hero-image {
   width: 100%;
-  height: auto;
+  height: 100%;
+  max-height: 60vh;
   object-fit: contain;
   object-position: center top;
 }
@@ -351,11 +354,12 @@ html, body {
 @media (min-width: var(--breakpoint-md)) {
   .top-page__hero {
     min-height: 400px;
-    max-height: 60vh;
+    max-height: 50vh;
   }
 
   .top-page__hero-image {
-    max-height: 60vh;
+    max-height: 50vh;
+    height: 100%;
   }
 }
 
@@ -363,20 +367,22 @@ html, body {
 @media (max-width: var(--breakpoint-sm-max)) {
   .top-page__hero {
     min-height: 300px;
+    max-height: 50vh;
   }
 
   .top-page__hero-image {
-    /* 自然なサイズで表示 */
+    max-height: 50vh;
   }
 }
 
 @media (max-width: 400px) {
   .top-page__hero {
     min-height: 250px;
+    max-height: 40vh;
   }
 
   .top-page__hero-image {
-    /* 自然なサイズで表示 */
+    max-height: 40vh;
   }
 }
 
