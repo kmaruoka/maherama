@@ -1,5 +1,6 @@
 import { Button, Card, Container } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { FaChevronCircleLeft } from 'react-icons/fa';
 import { useSkin } from '../../skins/SkinContext';
 import './CommonPage.css';
 
@@ -19,7 +20,7 @@ export default function CommercialTransactionPage({ onBack }: CommercialTransact
           onClick={onBack}
           className="common-page__back-button"
         >
-          &lt;
+          <FaChevronCircleLeft size={24} />
         </Button>
       )}
       <Container>

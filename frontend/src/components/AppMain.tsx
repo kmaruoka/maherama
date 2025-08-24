@@ -54,6 +54,7 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
 
   const handleNavigateToTerms = () => setPage('terms');
   const handleNavigateToCommercialTransaction = () => setPage('commercial-transaction');
+  const handleBack = () => setPage('submenu');
 
   return (
     <div className="app">
@@ -66,6 +67,7 @@ const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
           onNavigateToTerms={handleNavigateToTerms}
           onNavigateToCommercialTransaction={handleNavigateToCommercialTransaction}
           onLogout={handleLogout}
+          onBack={handleBack}
         />
         <ModalContent
           modal={modal}

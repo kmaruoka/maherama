@@ -16,6 +16,7 @@ interface PageContentProps {
   onNavigateToTerms: () => void;
   onNavigateToCommercialTransaction: () => void;
   onLogout: () => void;
+  onBack?: () => void;
 }
 
 const PageContent: React.FC<PageContentProps> = ({
@@ -23,7 +24,8 @@ const PageContent: React.FC<PageContentProps> = ({
   openModal,
   onNavigateToTerms,
   onNavigateToCommercialTransaction,
-  onLogout
+  onLogout,
+  onBack
 }) => {
   const renderPage = () => {
     switch (page) {
@@ -68,9 +70,9 @@ const PageContent: React.FC<PageContentProps> = ({
           />
         );
       case 'terms':
-        return <TermsPage />;
+        return <TermsPage onBack={onBack} />;
       case 'commercial-transaction':
-        return <CommercialTransactionPage />;
+        return <CommercialTransactionPage onBack={onBack} />;
       default:
         return null;
     }
