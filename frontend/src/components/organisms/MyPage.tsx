@@ -122,7 +122,14 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
 
     const handleUpload = async (file: File) => {
       await imageActions.handleUpload(file);
-      refetch();
+
+      // 画像アップロード後に強制的にデータを再取得
+      if (refetch) {
+        await refetch();
+      }
+
+      // 画像キャッシュを更新
+      imageActions.resetImageState();
     };
 
     const handleFollow = async () => {
@@ -216,14 +223,18 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
           <SizedThumbnailImage
             size="s"
-            url={(userImageUrl) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
             alt="ユーザーサムネイル"
             noImageUrl={NOIMAGE_USER_URL}
             responsive={true}
+            images={{
+              s: (userImageUrl) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')
+            }}
             loadingText="読み込み中..."
             shouldUseFallback={imageState.shouldUseFallback}
-            onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
-            showUploadButton={true}
+            upload={{
+              onUploadClick: () => imageActions.setIsUploadModalOpen(true),
+              showUploadButton: true
+            }}
           />
           <div style={{ flex: 1 }}>
             <div className="pane__title">{userInfo.name}</div>
@@ -312,8 +323,6 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
                 <div className="modal-subtitle">{t('titles')}</div>
                 <ul className="list-unstyled">
                   {titles.map(t => {
-                    // デバッグ用ログ
-                    console.log('MyPage TrophyIcon debug', { grade: t.grade, embed_data: t.embed_data, name: t.embed_data?.name, shrine: t.embed_data?.shrine, diety: t.embed_data?.diety });
                     return (
                       <li key={t.id} style={{ whiteSpace: 'nowrap' }}>
                         <AwardIcon grade={t.grade} embed_data={t.embed_data} /> {t.template && t.embed_data ? (

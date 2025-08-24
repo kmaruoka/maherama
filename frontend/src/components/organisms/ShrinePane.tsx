@@ -435,12 +435,12 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     if (detailView === 'thumbnail') {
       return (
         <SizedThumbnailImage
-          size="m"
+          size="l"
           alt="サムネイル"
           noImageUrl={NOIMAGE_SHRINE_DISPLAY_URL}
           expanded={true}
           images={{
-            m: data.image_url_m
+            l: data.image_url_l
           }}
           loadingText="読み込み中..."
           shouldUseFallback={imageState.shouldUseFallback}

@@ -169,12 +169,12 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         return (
           <SizedThumbnailImage
             key={`diety-detail-${id}-${imageCache}`}
-            size="m"
+            size="l"
             alt="神様サムネイル"
             noImageUrl={NOIMAGE_DIETY_URL}
             expanded={true}
             images={{
-              m: diety.image_url_m
+              l: diety.image_url_l
             }}
             shouldUseFallback={imageState.shouldUseFallback}
             cacheKey={imageCache}
