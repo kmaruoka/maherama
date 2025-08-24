@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useState } from 'react';
+import { Col, Container, Row } from 'react-bootstrap';
 import type { Notification } from '../../hooks/useNotifications';
 import { useNotificationDetail, useNotifications } from '../../hooks/useNotifications';
 import './NotificationPane.css';
@@ -77,41 +78,10 @@ export const NotificationPane = forwardRef<NotificationPaneRef, NotificationPane
     }, [onDataLoaded, selectedNotificationId]);
 
     return (
-      <div className="notification-pane">
-        {selectedNotificationId ? (
-          // 詳細表示
-          <div className="notification-detail">
-            {detailLoading ? (
-              <div className="notification-loading">読み込み中...</div>
-            ) : selectedNotification ? (
-              <>
-                <div className="notification-detail-header">
-                  <span className={`notification-type-badge ${getTypeColor(selectedNotification.type)}`}>
-                    {getTypeIcon(selectedNotification.type)}
-                  </span>
-                  <h3 className="notification-detail-title">{selectedNotification.title}</h3>
-                  <div className="notification-detail-date">
-                    {new Date(selectedNotification.created_at).toLocaleDateString('ja-JP')}
-                  </div>
-                </div>
-                <div className="notification-detail-content">
-                  {selectedNotification.content.split('\n').map((line, index) => (
-                    <p key={index} className="notification-detail-line">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-                <button className="notification-back-button" onClick={handleBackToList}>
-                  一覧に戻る
-                </button>
-              </>
-            ) : (
-              <div className="notification-error">通知の詳細を取得できませんでした</div>
-            )}
-          </div>
-        ) : (
-          // 一覧表示
-          <div className="notification-list">
+      <Container fluid className="notification-pane">
+        <Row>
+          <Col md={3} className="notification-sidebar">
+            <h3>お知らせ</h3>
             {loading ? (
               <div className="notification-loading">読み込み中...</div>
             ) : notifications.length === 0 ? (
@@ -120,30 +90,70 @@ export const NotificationPane = forwardRef<NotificationPaneRef, NotificationPane
                 <p>新しいお知らせはありません</p>
               </div>
             ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`notification-item ${!notification.is_read ? 'notification-unread' : ''}`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="notification-item-header">
-                    <span className={`notification-type-badge ${getTypeColor(notification.type)}`}>
-                      {getTypeIcon(notification.type)}
-                    </span>
-                    <span className="notification-item-title">{notification.title}</span>
-                    {!notification.is_read && (
-                      <span className="notification-unread-badge">NEW</span>
-                    )}
+              <div className="notification-list">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`notification-item ${!notification.is_read ? 'notification-unread' : ''}`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="notification-item-header">
+                      <span className={`notification-type-badge ${getTypeColor(notification.type)}`}>
+                        {getTypeIcon(notification.type)}
+                      </span>
+                      <span className="notification-item-title">{notification.title}</span>
+                      {!notification.is_read && (
+                        <span className="notification-unread-badge">NEW</span>
+                      )}
+                    </div>
+                    <div className="notification-item-date">
+                      {new Date(notification.created_at).toLocaleDateString('ja-JP')}
+                    </div>
                   </div>
-                  <div className="notification-item-date">
-                    {new Date(notification.created_at).toLocaleDateString('ja-JP')}
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
-          </div>
-        )}
-      </div>
+          </Col>
+          <Col md={9} className="notification-detail-col">
+            {selectedNotificationId ? (
+              // 詳細表示
+              <div className="notification-detail">
+                {detailLoading ? (
+                  <div className="notification-loading">読み込み中...</div>
+                ) : selectedNotification ? (
+                  <>
+                    <div className="notification-detail-header">
+                      <span className={`notification-type-badge ${getTypeColor(selectedNotification.type)}`}>
+                        {getTypeIcon(selectedNotification.type)}
+                      </span>
+                      <h3 className="notification-detail-title">{selectedNotification.title}</h3>
+                      <div className="notification-detail-date">
+                        {new Date(selectedNotification.created_at).toLocaleDateString('ja-JP')}
+                      </div>
+                    </div>
+                    <div className="notification-detail-content">
+                      {selectedNotification.content.split('\n').map((line, index) => (
+                        <p key={index} className="notification-detail-line">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                    <button className="notification-back-button" onClick={handleBackToList}>
+                      一覧に戻る
+                    </button>
+                  </>
+                ) : (
+                  <div className="notification-error">通知の詳細を取得できませんでした</div>
+                )}
+              </div>
+            ) : (
+              <div className="notification-detail-placeholder">
+                お知らせを選択してください
+              </div>
+            )}
+          </Col>
+        </Row>
+      </Container>
     );
   }
 );

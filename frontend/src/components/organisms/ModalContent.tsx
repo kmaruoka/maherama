@@ -224,7 +224,14 @@ const ModalContent: React.FC<ModalContentProps> = ({
       dialogClassName="custom-modal-dialog"
       contentClassName="custom-modal-content-force"
     >
-      <Modal.Body style={{ padding: 0, height: 'auto', overflow: 'hidden' }}>
+      <Modal.Body style={{
+        padding: 0,
+        height: '600px',
+        overflow: 'hidden',
+        // レイアウト計算を最適化
+        contain: 'layout style paint',
+        willChange: 'auto'
+      }}>
         {renderModalContent()}
       </Modal.Body>
     </Modal>

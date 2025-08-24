@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
+import { Col, Container, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
 import { apiCall } from '../../config/api';
@@ -159,54 +160,60 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
     return (
       <div>
         <PageTitle title="プロフィール" />
-        <div className="pane__header">
-          <div className="pane__thumbnail">
-            <img
-              src={userImageUrl}
-              alt="ユーザーサムネイル"
-              className="pane__thumbnail-img"
-            />
-          </div>
-          <div className="pane__info">
-            <div className="pane__title">{userInfo.name}</div>
-            <div className="pane__meta">
-              <div className="field-row">
-                <span className="field-row__label">{t('level')}:</span>
-                <span className="field-row__value">{userInfo.level}</span>
+        <Container fluid className="pane__header">
+          <Row>
+            <Col md={3} className="pane__thumbnail">
+              <img
+                src={userImageUrl}
+                alt="ユーザーサムネイル"
+                className="pane__thumbnail-img"
+              />
+            </Col>
+            <Col md={9} className="pane__info">
+              <div className="pane__title">{userInfo.name}</div>
+              <div className="pane__meta">
+                <div className="field-row">
+                  <span className="field-row__label">{t('level')}:</span>
+                  <span className="field-row__value">{userInfo.level}</span>
+                </div>
+                <div className="field-row">
+                  <span className="field-row__label">{t('prayDistanceMeters')}:</span>
+                  <span className="field-row__value">{levelInfo?.stats.pray_distance ?? '...'}m</span>
+                </div>
+                <div className="field-row">
+                  <span className="field-row__label">{t('remotePrayCount')}:</span>
+                  <span className="field-row__value">{userInfo.worship_count}回/日</span>
+                </div>
+                <div className="field-row">
+                  <span className="field-row__label">{t('exp')}:</span>
+                  <span className="field-row__value">{userInfo.exp}</span>
+                </div>
               </div>
-              <div className="field-row">
-                <span className="field-row__label">{t('prayDistanceMeters')}:</span>
-                <span className="field-row__value">{levelInfo?.stats.pray_distance ?? '...'}m</span>
+              <div className="pane__actions">
+                <span className="pane__follow" onClick={() => setShowFollowingModal(true)}>{t('following')}: {userInfo.following_count}</span>
+                <span className="pane__follow" onClick={() => setShowFollowerModal(true)}>{t('followers')}: {userInfo.follower_count}</span>
               </div>
-              <div className="field-row">
-                <span className="field-row__label">{t('remotePrayCount')}:</span>
-                <span className="field-row__value">{userInfo.worship_count}回/日</span>
-              </div>
-              <div className="field-row">
-                <span className="field-row__label">{t('exp')}:</span>
-                <span className="field-row__value">{userInfo.exp}</span>
-              </div>
-            </div>
-            <div className="pane__actions">
-              <span className="pane__follow" onClick={() => setShowFollowingModal(true)}>{t('following')}: {userInfo.following_count}</span>
-              <span className="pane__follow" onClick={() => setShowFollowerModal(true)}>{t('followers')}: {userInfo.follower_count}</span>
-            </div>
-          </div>
-        </div>
+            </Col>
+          </Row>
+        </Container>
 
-        <div className="modal-section">
-          <div className="modal-subtitle" onClick={() => setDetailView('shrine-ranking')} style={{ cursor: 'pointer' }}>
-            {t('oftenPrayedShrines')}
-            <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
-          </div>
-          <RankingPane
-            itemsByPeriod={userShrineRankingsByPeriod}
-            type="shrine"
-            isLoading={isUserShrineRankingLoading}
-            onItemClick={onShowShrine}
-            maxItems={3}
-          />
-        </div>
+        <Container fluid className="modal-section">
+          <Row>
+            <Col md={12} onClick={() => setDetailView('shrine-ranking')} style={{ cursor: 'pointer' }}>
+              <div className="modal-subtitle">
+                {t('oftenPrayedShrines')}
+                <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+              </div>
+              <RankingPane
+                itemsByPeriod={userShrineRankingsByPeriod}
+                type="shrine"
+                isLoading={isUserShrineRankingLoading}
+                onItemClick={onShowShrine}
+                maxItems={3}
+              />
+            </Col>
+          </Row>
+        </Container>
         <FollowModal
           isOpen={showFollowingModal}
           onClose={() => setShowFollowingModal(false)}
@@ -225,67 +232,75 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
           error={followersError?.message || null}
           onUserClick={onShowUser}
         />
-        <div className="modal-section">
-          <div className="modal-subtitle" onClick={() => setDetailView('diety-ranking')} style={{ cursor: 'pointer' }}>
-            {t('oftenPrayedDeities')}
-            <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
-          </div>
-          <RankingPane
-            itemsByPeriod={userDietyRankingsByPeriod}
-            type="diety"
-            isLoading={isUserDietyRankingLoading}
-            onItemClick={onShowDiety}
-            maxItems={3}
-          />
-        </div>
+        <Container fluid className="modal-section">
+          <Row>
+            <Col md={12} onClick={() => setDetailView('diety-ranking')} style={{ cursor: 'pointer' }}>
+              <div className="modal-subtitle">
+                {t('oftenPrayedDeities')}
+                <FaExpandAlt size={16} style={{ marginLeft: '8px', opacity: 0.7 }} />
+              </div>
+              <RankingPane
+                itemsByPeriod={userDietyRankingsByPeriod}
+                type="diety"
+                isLoading={isUserDietyRankingLoading}
+                onItemClick={onShowDiety}
+                maxItems={3}
+              />
+            </Col>
+          </Row>
+        </Container>
 
         {titles.length > 0 && (
-          <div className="mt-4">
-            <div className="modal-subtitle">{t('titles')}</div>
-            <ul className="list-unstyled">
-              {titles.map(t => {
-                // デバッグ用ログ
-                console.log('MyPage TrophyIcon debug', { grade: t.grade, embed_data: t.embed_data, name: t.embed_data?.name, shrine: t.embed_data?.shrine, diety: t.embed_data?.diety });
-                return (
-                  <li key={t.id} style={{ whiteSpace: 'nowrap' }}>
-                    <AwardIcon grade={t.grade} embed_data={t.embed_data} /> {t.template && t.embed_data ? (
-                      <span style={{ display: 'inline', whiteSpace: 'nowrap' }}>
-                        {t.template.split(/(<\{[^}]+\}>)/g).map((part, idx) => {
-                          if (part.startsWith('<{') && part.endsWith('}>')) {
-                            const key = part.slice(2, -2);
-                            if (key === 'shrine' && t.embed_data?.shrine && t.embed_data?.shrine_id) {
-                              return (
-                                <CustomLink key={idx} type="shrine" onClick={() => onShowShrine && onShowShrine(t.embed_data?.shrine_id)}>
-                                  {t.embed_data?.shrine}
-                                </CustomLink>
-                              );
-                            }
-                            if (key === 'diety' && t.embed_data?.diety && t.embed_data?.diety_id) {
-                              return (
-                                <CustomLink key={idx} type="diety" onClick={() => onShowDiety && onShowDiety(t.embed_data?.diety_id)}>
-                                  {t.embed_data?.diety}
-                                </CustomLink>
-                              );
-                            }
-                            if (key === 'period' && t.embed_data?.period) {
-                              return (
-                                <span key={idx} style={{ color: 'var(--color-accent)', fontWeight: 'bold' }}>
-                                  {t.embed_data?.period}
-                                </span>
-                              );
-                            }
-                            // 他の埋め込みデータもそのまま表示
-                            return t.embed_data?.[key] || '';
-                          }
-                          return part;
-                        })}
-                      </span>
-                    ) : t.name}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <Container fluid className="mt-4">
+            <Row>
+              <Col md={12}>
+                <div className="modal-subtitle">{t('titles')}</div>
+                <ul className="list-unstyled">
+                  {titles.map(t => {
+                    // デバッグ用ログ
+                    console.log('MyPage TrophyIcon debug', { grade: t.grade, embed_data: t.embed_data, name: t.embed_data?.name, shrine: t.embed_data?.shrine, diety: t.embed_data?.diety });
+                    return (
+                      <li key={t.id} style={{ whiteSpace: 'nowrap' }}>
+                        <AwardIcon grade={t.grade} embed_data={t.embed_data} /> {t.template && t.embed_data ? (
+                          <span style={{ display: 'inline', whiteSpace: 'nowrap' }}>
+                            {t.template.split(/(<\{[^}]+\}>)/g).map((part, idx) => {
+                              if (part.startsWith('<{') && part.endsWith('}>')) {
+                                const key = part.slice(2, -2);
+                                if (key === 'shrine' && t.embed_data?.shrine && t.embed_data?.shrine_id) {
+                                  return (
+                                    <CustomLink key={idx} type="shrine" onClick={() => onShowShrine && onShowShrine(t.embed_data?.shrine_id)}>
+                                      {t.embed_data?.shrine}
+                                    </CustomLink>
+                                  );
+                                }
+                                if (key === 'diety' && t.embed_data?.diety && t.embed_data?.diety_id) {
+                                  return (
+                                    <CustomLink key={idx} type="diety" onClick={() => onShowDiety && onShowDiety(t.embed_data?.diety_id)}>
+                                      {t.embed_data?.diety}
+                                    </CustomLink>
+                                  );
+                                }
+                                if (key === 'period' && t.embed_data?.period) {
+                                  return (
+                                    <span key={idx} style={{ color: 'var(--color-accent)', fontWeight: 'bold' }}>
+                                      {t.embed_data?.period}
+                                    </span>
+                                  );
+                                }
+                                // 他の埋め込みデータもそのまま表示
+                                return t.embed_data?.[key] || '';
+                              }
+                              return part;
+                            })}
+                          </span>
+                        ) : t.name}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Col>
+            </Row>
+          </Container>
         )}
       </div>
     );
