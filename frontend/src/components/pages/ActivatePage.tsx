@@ -3,6 +3,7 @@ import { Alert, Button, Card, Container, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE, apiCall } from '../../config/api';
+import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useSkin } from '../../skins/SkinContext';
 import './CommonPage.css';
 
@@ -13,6 +14,9 @@ export default function ActivatePage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   useSkin();
+
+  // React Routerのページ遷移時にスクロール位置をリセット
+  useScrollToTop();
 
   useEffect(() => {
     const activateAccount = async () => {

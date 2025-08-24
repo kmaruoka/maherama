@@ -3,6 +3,7 @@ import { Alert, Button, Card, Container, Form, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE, apiCall } from '../../config/api';
+import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useSkin } from '../../skins/SkinContext';
 import './CommonPage.css';
 
@@ -17,6 +18,9 @@ export default function ResetPasswordPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   useSkin();
+
+  // React Routerのページ遷移時にスクロール位置をリセット
+  useScrollToTop();
 
   useEffect(() => {
     const tokenParam = searchParams.get('token');

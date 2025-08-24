@@ -3,18 +3,23 @@ import { Alert, Button, Card, Container, Form } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { API_BASE, apiCall } from '../../config/api';
+import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useSkin } from '../../skins/SkinContext';
 import './CommonPage.css';
 
 export default function SetPasswordPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const location = useLocation();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<'loading' | 'form' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useSkin();
+
+  // React Routerのページ遷移時にスクロール位置をリセット
+  useScrollToTop();
 
   const token = location.state?.token;
   const welcomeMessage = location.state?.message || 'パスワードを設定してください。';
@@ -28,13 +33,13 @@ export default function SetPasswordPage() {
       return;
     }
 
-    if (password.length < 6) {
+    if (formData.password.length < 6) {
       setStatus('error');
       setMessage('パスワードは6文字以上で入力してください。');
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setStatus('error');
       setMessage('パスワードが一致しません。');
       return;
@@ -45,7 +50,7 @@ export default function SetPasswordPage() {
     try {
       const response = await apiCall(`${API_BASE}/auth/set-password`, {
         method: 'POST',
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ token, password: formData.password }),
         requireAuth: false, // パスワード設定は認証不要
       });
 
@@ -92,7 +97,7 @@ export default function SetPasswordPage() {
                 </Alert>
               )}
 
-              {token && status === 'idle' && (
+              {token && status === 'form' && (
                 <>
                   <Alert variant="info">
                     <p>{welcomeMessage}</p>
@@ -103,8 +108,8 @@ export default function SetPasswordPage() {
                       <Form.Label>パスワード</Form.Label>
                       <Form.Control
                         type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         placeholder="パスワードを入力してください（6文字以上）"
                         required
                         minLength={6}
@@ -115,8 +120,8 @@ export default function SetPasswordPage() {
                       <Form.Label>パスワード確認</Form.Label>
                       <Form.Control
                         type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         placeholder="パスワードを再入力してください"
                         required
                       />
@@ -155,7 +160,7 @@ export default function SetPasswordPage() {
                   <Alert.Heading>エラー</Alert.Heading>
                   <p>{message}</p>
                   <hr />
-                  <Button variant="primary" onClick={() => setStatus('idle')}>
+                  <Button variant="primary" onClick={() => setStatus('form')}>
                     再試行
                   </Button>
                   <Button variant="outline-secondary" onClick={handleBackToLogin} className="ms-2">

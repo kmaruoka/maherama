@@ -17,6 +17,11 @@ function App() {
   const [authStatus, setAuthStatus] = useState(false);
   useSkin();
 
+  // 認証されていない状態でのページ遷移時にスクロール位置をリセット
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
   // 認証状態を監視
   useEffect(() => {
     const checkAuth = () => {

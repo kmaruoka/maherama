@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useModal } from '../contexts/ModalContext';
 import { useAuthInitialization } from '../hooks/useAuthInitialization';
 import { useLogoutHandler } from '../hooks/useLogoutHandler';
@@ -16,6 +16,11 @@ interface AppMainProps {
 
 const AppMain: React.FC<AppMainProps> = ({ onLogout }) => {
   const [page, setPage] = useState<'map' | 'catalog' | 'user' | 'settings' | 'submenu' | 'mission' | 'terms' | 'commercial-transaction'>('map');
+
+  // 認証された状態でのページ遷移時にスクロール位置をリセット
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
 
   const {
     modal,
