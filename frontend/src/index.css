@@ -2,8 +2,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap');
+@import './styles/breakpoints.css';
 
 :root {
+
   --color-prayable: var(--color-primary);
   --color-remote-prayable: var(--color-accent);
   --color-unprayable: #9e9e9e;
@@ -48,12 +50,8 @@
   --mobile-font-scale: 0.85;
 }
 
-
-
-/* スマホサイズでの文字サイズ調整 */
-@media (max-width: 599px) {
-
-
+/* スマホサイズでの文字サイズ調整（xs: 576px未満） */
+@media (max-width: var(--breakpoint-xs-max)) {
   /* 基本文字サイズ（小） */
   html {
     font-size: calc(16px * var(--mobile-font-scale));
@@ -81,13 +79,6 @@
   .catalog-count {
     font-size: calc(0.875rem * var(--mobile-font-scale)) !important;
   }
-
-  /* より一般的なセレクタでテスト */
-  p, div, span {
-    font-size: calc(0.875rem * var(--mobile-font-scale)) !important;
-  }
-
-
 
   /* メニュー（大） */
   .custom-menu-item {
@@ -1004,7 +995,8 @@ body, #root, .log-pane, .log-pane-expanded {
   z-index: 9999 !important;
 }
 
-@media (min-width: 600px) {
+/* タブレット以上でのモーダルダイアログ調整（sm: 576px以上） */
+@media (min-width: var(--breakpoint-sm)) {
   .custom-modal-dialog {
     /* PCサイズ：適切な幅、最大800px */
     width: 80% !important;
@@ -1269,13 +1261,15 @@ body, #root, .log-pane, .log-pane-expanded {
   background: none;
 }
 
-@media (max-width: 600px) {
+/* スマホサイズでのモーダルコンテンツ調整（xs: 576px未満） */
+@media (max-width: var(--breakpoint-xs-max)) {
   .modal__content {
     height: 600px !important;
     max-height: 600px !important;
   }
 }
 
+/* 小さいスマホサイズでのモーダルコンテンツ調整（320px未満） */
 @media (max-width: 320px) {
   .modal__content {
     height: 600px !important;
@@ -1283,7 +1277,8 @@ body, #root, .log-pane, .log-pane-expanded {
   }
 }
 
-@media (min-width: 600px) {
+/* タブレット以上でのモーダルコンテンツ調整（sm: 576px以上） */
+@media (min-width: var(--breakpoint-sm)) {
   .modal__content {
     height: 600px !important;
     max-height: 600px !important;
@@ -1540,7 +1535,8 @@ nav.d-flex.position-fixed {
   padding: calc(var(--card-gap) / 2);
 }
 
-@media (max-width: 600px) {
+/* スマホサイズでのカタログカードセル調整（xs: 576px未満） */
+@media (max-width: var(--breakpoint-xs-max)) {
   .catalog-page__card-cell {
     padding: calc(var(--card-gap-mobile) / 2);
   }
@@ -1599,6 +1595,7 @@ nav.d-flex.position-fixed {
   gap: 12px;
 }
 
+/* 小さい画面でのペインヘッダー調整（480px未満） */
 @media (max-width: 480px) {
   .dietypane-header-responsive, .shrinepane-header-responsive {
     flex-direction: column;
@@ -1660,7 +1657,8 @@ nav.d-flex.position-fixed {
   border-radius: 8px;
 }
 
-@media (min-width: 600px) {
+/* タブレット以上でのペインサムネイル調整（sm: 576px以上） */
+@media (min-width: var(--breakpoint-sm)) {
   .pane__thumbnail {
     width: 112px;
     height: 112px;

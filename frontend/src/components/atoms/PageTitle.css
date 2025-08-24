@@ -8,7 +8,7 @@
   border-bottom: 2px solid var(--skin-accent);
 }
 
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-sm-max)) {
   .page-title {
     font-size: 1.5rem;
     margin-bottom: 1rem;

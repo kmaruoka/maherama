@@ -71,7 +71,7 @@ html, body {
 }
 
 /* レスポンシブ対応 */
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-sm-max)) {
   .top-page__catchphrase {
     padding: 2rem 1rem;
   }
@@ -82,7 +82,7 @@ html, body {
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: var(--breakpoint-xs-max)) {
   .top-page__catchphrase {
     padding: 1.5rem 1rem;
   }
@@ -326,7 +326,7 @@ html, body {
 }
 
 /* PCサイズでの画像制限 */
-@media (min-width: 769px) {
+@media (min-width: var(--breakpoint-md)) {
   .top-page__hero {
     min-height: 400px;
     max-height: 60vh;
@@ -338,7 +338,7 @@ html, body {
 }
 
 /* レスポンシブ対応 */
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-sm-max)) {
   .top-page__hero {
     min-height: 300px;
   }
@@ -358,7 +358,7 @@ html, body {
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: var(--breakpoint-xs-max)) {
   .top-page__auth-card .nav-tabs .nav-link {
     padding: 0.5rem 0.75rem !important;
     font-size: 0.9rem;
@@ -406,7 +406,7 @@ html, body {
   text-decoration: underline !important;
 }
 
-@media (max-width: 576px) {
+@media (max-width: var(--breakpoint-xs-max)) {
   .top-page__footer-links {
     gap: 1rem;
   }

@@ -252,7 +252,7 @@
 }
 
 /* レスポンシブ対応 */
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-sm-max)) {
   .mission-notification {
     top: 10px;
     right: 10px;

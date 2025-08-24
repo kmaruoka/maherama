@@ -70,7 +70,7 @@
 }
 
 /* レスポンシブ対応 */
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-sm-max)) {
   .mission-page {
     padding: 10px;
   }
@@ -210,7 +210,7 @@
 }
 
 /* レスポンシブ対応 */
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-sm-max)) {
   .mission-page {
     padding: 0.5rem;
   }
