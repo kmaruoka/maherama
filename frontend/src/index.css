@@ -24,10 +24,8 @@
   --border-radius: 1.5rem;
   --font-family: "Noto Serif JP", serif;
   --box-shadow: 0 8px 32px 0 rgba(80,60,10,0.18), 0 0 0 6px #f8f5e4;
-  --modal-max-width: 400px;
   --modal-padding: 2rem 1.5rem;
   --modal-background: linear-gradient(135deg, #f8f5e4 0%, #f5e9c6 100%);
-  --bs-modal-width: calc(100vw - 16px);
   --badge-size: 1.4em;
   --badge-size-px: 14px;
   --award-badge-size: 1.4em;
@@ -50,11 +48,7 @@
   --mobile-font-scale: 0.85;
 }
 
-@media (min-width: 600px) {
-  :root {
-    --bs-modal-width: calc(100vw - 64px);
-  }
-}
+
 
 /* スマホサイズでの文字サイズ調整 */
 @media (max-width: 599px) {
@@ -1000,25 +994,23 @@ body, #root, .log-pane, .log-pane-expanded {
   color: var(--color-surface);
 }
 
-
-
-/* モーダル基本設定 - シンプル版 */
+/* ===== BOOTSTRAP MODAL DIALOG ===== */
 .custom-modal-dialog {
-  position: fixed !important;
-  top: 16px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+  /* スマホサイズ：画面の90%、最大400px */
   width: 90% !important;
   max-width: 400px !important;
-  margin: 0 !important;
+  margin: 0 auto !important; /* Bootstrap標準の水平中央配置 */
+  top: 16px !important; /* 垂直位置は上から16px */
   z-index: 9999 !important;
 }
 
 @media (min-width: 600px) {
   .custom-modal-dialog {
+    /* PCサイズ：適切な幅、最大800px */
     width: 80% !important;
     max-width: 800px !important;
     max-height: calc(100vh - 64px) !important;
+    margin: 0 auto !important; /* Bootstrap標準の水平中央配置 */
   }
 }
 
@@ -1028,16 +1020,15 @@ body, #root, .log-pane, .log-pane-expanded {
   border-radius: var(--border-radius) !important;
   background: var(--modal-background) !important;
   padding: 0 !important;
-  margin: 0 !important;
   height: auto !important;
   max-height: calc(100vh - 138px) !important;
   width: 100% !important;
   overflow-y: auto !important;
   z-index: 9999 !important;
-  position: relative !important;
   box-sizing: border-box !important;
 }
 
+/* ===== BOOTSTRAP MODAL CONTENT ===== */
 .modal-content {
   height: auto !important;
   width: 100% !important;
@@ -1051,8 +1042,9 @@ body, #root, .log-pane, .log-pane-expanded {
   margin: 0 !important;
 }
 
+/* ===== BOOTSTRAP MODAL BASE ===== */
 .modal {
-  overflow: hidden !important;
+  /* Bootstrapのデフォルト動作を維持 */
 }
 
 .modal__content {
@@ -2199,66 +2191,8 @@ nav.d-flex.position-fixed {
   text-align: center;
 }
 
-/* モーダル関連スタイル */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.modal-close-btn {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  color: #666;
-  padding: 4px;
-}
-
-.modal-close-btn:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 16px;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 16px;
-  border-top: 1px solid #e0e0e0;
-}
+/* ===== BOOTSTRAP MODAL STYLES ===== */
+/* Bootstrap React Modalのデフォルト中央配置を維持 */
 
 .form-group {
   margin-bottom: 16px;
