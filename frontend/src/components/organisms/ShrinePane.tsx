@@ -356,6 +356,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
         queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
         queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
+        queryClient.invalidateQueries({ queryKey: ['shrines-visited'] }); // 図鑑の神社一覧を更新
+        queryClient.invalidateQueries({ queryKey: ['dieties-visited'] }); // 図鑑の神様一覧を更新
         setRankRefreshKey(k => k + 1); // ランキングも再取得
       }
     },
@@ -385,6 +387,8 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
         queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
         queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
+        queryClient.invalidateQueries({ queryKey: ['shrines-visited'] }); // 図鑑の神社一覧を更新
+        queryClient.invalidateQueries({ queryKey: ['dieties-visited'] }); // 図鑑の神様一覧を更新
         setRankRefreshKey(k => k + 1); // ランキングも再取得
       }
     },
@@ -428,18 +432,20 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
 
   // 詳細表示のレンダリング関数
   const renderDetailContent = () => {
-          if (detailView === 'thumbnail') {
-              return (
-          <SizedThumbnailImage
-            size="xl"
-            url={data.image_url_xl || data.image_url_l || data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL}
-            alt="サムネイル"
-            noImageUrl={NOIMAGE_SHRINE_DISPLAY_URL}
-            className="max-width-100 height-auto"
-            loadingText="読み込み中..."
-            shouldUseFallback={imageState.shouldUseFallback}
-            cacheKey={imageState.thumbCache}
-          />
+    if (detailView === 'thumbnail') {
+      return (
+        <SizedThumbnailImage
+          size="m"
+          alt="サムネイル"
+          noImageUrl={NOIMAGE_SHRINE_DISPLAY_URL}
+          expanded={true}
+          images={{
+            m: data.image_url_m
+          }}
+          loadingText="読み込み中..."
+          shouldUseFallback={imageState.shouldUseFallback}
+          cacheKey={imageState.thumbCache}
+        />
       );
     } else if (detailView === 'deities') {
       return (
@@ -528,35 +534,48 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
     <Container fluid>
       {/* ヘッダー部分：サムネイルと情報を横並び */}
       <Row className="mb-3">
-        <Col xs={12} md={5}>
-                      <SizedThumbnailImage
+        <Col xs={12} md={6}>
+          <SizedThumbnailImage
               key={`shrine-${id}-${imageCache}`}
-              size="s"
-              url={data.image_url_s || data.image_url_m || data.image_url_l || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL}
               alt="サムネイル"
               noImageUrl={NOIMAGE_SHRINE_DISPLAY_URL}
               responsive={true}
+              responsiveConfig={{
+                breakpoints: [
+                  { minWidth: 768, size: 'm' },   // タブレット以上: Mサイズ
+                  { maxWidth: 767, size: 's' }    // スマホ以下: Sサイズ
+                ],
+                defaultSize: 's'
+              }}
+              images={{
+                s: data.image_url_s,
+                m: data.image_url_m
+              }}
               loadingText="読み込み中..."
               shouldUseFallback={imageState.shouldUseFallback}
-              onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
-              showUploadButton={true}
-              imageBy={data.image_by}
-              imageByUserId={(data as any).image_by_user_id}
-              onShowUser={onShowUser}
-              onClick={() => setDetailView('thumbnail')}
               cacheKey={imageCache}
-              thumbnailActions={
-                imageState.currentImageUrl !== NOIMAGE_SHRINE_DISPLAY_URL ? (
+              upload={{
+                onUploadClick: () => imageActions.setIsUploadModalOpen(true),
+                showUploadButton: true
+              }}
+              userInfo={{
+                imageBy: data.image_by,
+                imageByUserId: (data as any).image_by_user_id,
+                onShowUser: onShowUser
+              }}
+              actions={{
+                onClick: () => setDetailView('thumbnail'),
+                thumbnailActions: imageState.currentImageUrl !== NOIMAGE_SHRINE_DISPLAY_URL ? (
                   <button className="pane__icon-btn" onClick={(e) => {
                     e.stopPropagation();
                     handleVote();
                   }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
                 ) : undefined
-              }
+              }}
             />
 
         </Col>
-        <Col xs={12} md={7}>
+        <Col xs={12} md={6}>
           <div className="pane__info">
             <div className="pane__title">{data.name}</div>
             {data.kana && <div className="pane__kana">{data.kana}</div>}

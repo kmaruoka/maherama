@@ -169,11 +169,13 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         return (
           <SizedThumbnailImage
             key={`diety-detail-${id}-${imageCache}`}
-            size="l"
-            url={diety.image_url_l || NOIMAGE_DIETY_URL}
+            size="m"
             alt="神様サムネイル"
             noImageUrl={NOIMAGE_DIETY_URL}
-            className="width-100 height-auto max-height-100 object-fit-contain"
+            expanded={true}
+            images={{
+              m: diety.image_url_m
+            }}
             shouldUseFallback={imageState.shouldUseFallback}
             cacheKey={imageCache}
           />
@@ -239,26 +241,41 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
       <Container fluid>
         {/* ヘッダー部分：サムネイルと情報を横並び */}
         <Row className="mb-3">
-          <Col xs={12} md={4}>
+          <Col xs={12} md={5}>
             <SizedThumbnailImage
               key={`diety-${id}-${imageCache}`}
-              size="s"
-              url={diety.image_url_s || diety.image_url_m || diety.image_url_l || diety.image_url || NOIMAGE_DIETY_URL}
               alt="神様サムネイル"
               noImageUrl={NOIMAGE_DIETY_URL}
               responsive={true}
+              responsiveConfig={{
+                breakpoints: [
+                  { minWidth: 768, size: 'm' },   // タブレット以上: Mサイズ
+                  { maxWidth: 767, size: 's' }    // スマホ以下: Sサイズ
+                ],
+                defaultSize: 's'
+              }}
+              images={{
+                s: diety.image_url_s,
+                m: diety.image_url_m
+              }}
               loadingText="読み込み中..."
               shouldUseFallback={imageState.shouldUseFallback}
-              onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
-              showUploadButton={!!id}
-              imageBy={diety.image_by}
-              imageByUserId={(diety as any).image_by_user_id}
-              onShowUser={onShowUser}
-              onClick={() => setDetailView('thumbnail')}
               cacheKey={imageCache}
+              upload={{
+                onUploadClick: () => imageActions.setIsUploadModalOpen(true),
+                showUploadButton: !!id
+              }}
+              userInfo={{
+                imageBy: diety.image_by,
+                imageByUserId: (diety as any).image_by_user_id,
+                onShowUser: onShowUser
+              }}
+              actions={{
+                onClick: () => setDetailView('thumbnail')
+              }}
             />
           </Col>
-          <Col xs={12} md={8}>
+          <Col xs={12} md={7}>
             <div className="pane__info">
               <div className="pane__title">{diety.name}</div>
               {diety.kana && <div className="pane__kana">{diety.kana}</div>}

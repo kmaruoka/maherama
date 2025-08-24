@@ -1032,9 +1032,19 @@ body, #root, .log-pane, .log-pane-expanded {
 @media (max-width: 480px) {
   .modal-dialog,
   .custom-modal-dialog {
-    width: 98% !important;
-    max-width: none !important;
-    margin: 8px !important;
+    width: 90% !important;
+    max-width: 350px !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* 非常に小さいスマホ（360px以下） */
+@media (max-width: 360px) {
+  .modal-dialog,
+  .custom-modal-dialog {
+    width: 85% !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
   }
 }
 
