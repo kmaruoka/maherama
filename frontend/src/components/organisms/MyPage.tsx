@@ -213,49 +213,44 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
     return (
       <div>
         <PageTitle title="プロフィール" />
-        <Container fluid className="pane__header">
-          <Row>
-            <Col md={3} className="pane__thumbnail">
-              <SizedThumbnailImage
-                size="s"
-                url={(userImageUrl) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
-                alt="ユーザーサムネイル"
-                noImageUrl={NOIMAGE_USER_URL}
-                responsive={true}
-                className="pane__thumbnail-img"
-                loadingText="読み込み中..."
-                shouldUseFallback={imageState.shouldUseFallback}
-                onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
-                showUploadButton={true}
-              />
-            </Col>
-            <Col md={9} className="pane__info">
-              <div className="pane__title">{userInfo.name}</div>
-              <div className="pane__meta">
-                <div className="field-row">
-                  <span className="field-row__label">{t('level')}:</span>
-                  <span className="field-row__value">{userInfo.level}</span>
-                </div>
-                <div className="field-row">
-                  <span className="field-row__label">{t('prayDistanceMeters')}:</span>
-                  <span className="field-row__value">{levelInfo?.stats.pray_distance ?? '...'}m</span>
-                </div>
-                <div className="field-row">
-                  <span className="field-row__label">{t('remotePrayCount')}:</span>
-                  <span className="field-row__value">{userInfo.worship_count}回/日</span>
-                </div>
-                <div className="field-row">
-                  <span className="field-row__label">{t('exp')}:</span>
-                  <span className="field-row__value">{userInfo.exp}</span>
-                </div>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <SizedThumbnailImage
+            size="s"
+            url={(userImageUrl) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
+            alt="ユーザーサムネイル"
+            noImageUrl={NOIMAGE_USER_URL}
+            responsive={true}
+            loadingText="読み込み中..."
+            shouldUseFallback={imageState.shouldUseFallback}
+            onUploadClick={() => imageActions.setIsUploadModalOpen(true)}
+            showUploadButton={true}
+          />
+          <div style={{ flex: 1 }}>
+            <div className="pane__title">{userInfo.name}</div>
+            <div className="pane__meta">
+              <div className="field-row">
+                <span className="field-row__label">{t('level')}:</span>
+                <span className="field-row__value">{userInfo.level}</span>
               </div>
-              <div className="pane__actions">
-                <span className="pane__follow" onClick={() => setShowFollowingModal(true)}>{t('following')}: {userInfo.following_count}</span>
-                <span className="pane__follow" onClick={() => setShowFollowerModal(true)}>{t('followers')}: {userInfo.follower_count}</span>
+              <div className="field-row">
+                <span className="field-row__label">{t('prayDistanceMeters')}:</span>
+                <span className="field-row__value">{levelInfo?.stats.pray_distance ?? '...'}m</span>
               </div>
-            </Col>
-          </Row>
-        </Container>
+              <div className="field-row">
+                <span className="field-row__label">{t('remotePrayCount')}:</span>
+                <span className="field-row__value">{userInfo.worship_count}回/日</span>
+              </div>
+              <div className="field-row">
+                <span className="field-row__label">{t('exp')}:</span>
+                <span className="field-row__value">{userInfo.exp}</span>
+              </div>
+            </div>
+            <div className="pane__actions">
+              <span className="pane__follow" onClick={() => setShowFollowingModal(true)}>{t('following')}: {userInfo.following_count}</span>
+              <span className="pane__follow" onClick={() => setShowFollowerModal(true)}>{t('followers')}: {userInfo.follower_count}</span>
+            </div>
+          </div>
+        </div>
 
         <Container fluid className="modal-section">
           <Row>

@@ -169,8 +169,8 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         return (
           <SizedThumbnailImage
             key={`diety-detail-${id}-${imageCache}`}
-            size="xl"
-            url={diety.image_url_xl || diety.image_url_l || diety.image_url_m || diety.image_url_s || diety.image_url || NOIMAGE_DIETY_URL}
+            size="l"
+            url={diety.image_url_l || NOIMAGE_DIETY_URL}
             alt="神様サムネイル"
             noImageUrl={NOIMAGE_DIETY_URL}
             className="width-100 height-auto max-height-100 object-fit-contain"

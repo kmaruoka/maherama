@@ -1715,92 +1715,11 @@ nav.d-flex.position-fixed {
 
 /* ===== PANE ===== */
 
+/* サムネイル関連はSizedThumbnailImageコンポーネントで管理 */
 
+/* サムネイル関連はSizedThumbnailImageコンポーネントで管理 */
 
-
-.pane__header {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  margin-bottom: 8px;
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-}
-
-.pane__header {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  margin-bottom: 8px;
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-}
-
-@media (max-width: 480px) {
-  .pane__header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-}
-
-.pane__thumbnail {
-  position: relative;
-  width: 112px;
-  height: 112px;
-  min-width: 112px;
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-}
-
-.pane__thumbnail img {
-  width: 112px;
-  height: 112px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-/* タブレット以上でのペインサムネイル調整（sm: 576px以上） */
-@media (min-width: var(--breakpoint-sm)) {
-  .pane__thumbnail {
-    width: 140px;
-    height: 140px;
-    min-width: 140px;
-  }
-
-  .pane__thumbnail img {
-    width: 140px;
-    height: 140px;
-  }
-}
-
-/* mdブレークポイント以上でのペインサムネイル調整（md: 768px以上） */
-@media (min-width: var(--breakpoint-md)) {
-  .pane__thumbnail {
-    width: 160px;
-    height: 160px;
-    min-width: 160px;
-  }
-
-  .pane__thumbnail img {
-    width: 160px;
-    height: 160px;
-  }
-}
-
-.pane__thumbnail-actions {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: flex;
-  gap: 4px;
-}
+/* サムネイル関連はSizedThumbnailImageコンポーネントで管理 */
 
 .pane__icon-btn {
   background: var(--color-surface);
@@ -1815,16 +1734,7 @@ nav.d-flex.position-fixed {
   justify-content: center;
 }
 
-.pane__thumbnail-by {
-  position: absolute;
-  left: 4px;
-  bottom: 4px;
-  background: var(--color-text);
-  color: var(--color-surface);
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 11px;
-}
+/* サムネイル関連はSizedThumbnailImageコンポーネントで管理 */
 
 .pane__info {
   flex: 1;
