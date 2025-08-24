@@ -1,4 +1,4 @@
-const tsukiSkin = {
+const moonSkin = {
   name: '月',
   colors: {
     background: '#0a0f1f',           // 深い藍黒（夜空）
@@ -21,12 +21,7 @@ const tsukiSkin = {
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5), 0 0 0 6px #0a0f1f',
-  modal: {
-    maxWidth: '600px',
-    padding: '2rem 1.5rem',
-    background: 'linear-gradient(135deg, #11162a 0%, #0a0f1f 100%)',
-  },
 };
 
-export default tsukiSkin;
+export default moonSkin;
 

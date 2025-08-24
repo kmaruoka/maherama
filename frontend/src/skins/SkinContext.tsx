@@ -33,9 +33,7 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--border-radius', skin.borderRadius);
     root.style.setProperty('--font-family', skin.fontFamily);
     root.style.setProperty('--box-shadow', skin.boxShadow);
-    root.style.setProperty('--modal-max-width', skin.modal.maxWidth);
-    root.style.setProperty('--modal-padding', skin.modal.padding);
-    root.style.setProperty('--modal-background', skin.modal.background);
+    root.style.setProperty('--modal-background', colors.background);
     root.style.setProperty('--color-disabled', colors.disabled);
     root.style.setProperty('--color-text-muted', colors.textMuted);
 

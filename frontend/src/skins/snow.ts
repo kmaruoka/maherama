@@ -21,11 +21,6 @@ const snowSkin = {
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.06), 0 0 0 6px #f8f9fa',
-  modal: {
-    maxWidth: '600px',
-    padding: '2rem 1.5rem',
-    background: 'radial-gradient(circle at 50% 30%, #ffffff 0%, #f1f3f5 100%)',
-  },
 };
 
 export default snowSkin;

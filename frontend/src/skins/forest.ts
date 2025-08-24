@@ -21,11 +21,6 @@ const forestSkin = {
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1), 0 0 0 6px #eef4e7',
-  modal: {
-    maxWidth: '600px',
-    padding: '2rem 1.5rem',
-    background: 'linear-gradient(135deg, #f9faf8 0%, #eef4e7 100%)',
-  },
 };
 
 export default forestSkin;

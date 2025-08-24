@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
 import { apiCall } from '../../config/api';
@@ -64,13 +64,6 @@ const MyPage = forwardRef<MyPageRef, MyPageProps>(
 
     const [showFollowingModal, setShowFollowingModal] = useState(false);
     const [showFollowerModal, setShowFollowerModal] = useState(false);
-
-    // データ取得後にgetTitleメソッドを更新
-    useEffect(() => {
-      if (userInfo?.name) {
-        updateCurrentModalName(userInfo.name);
-      }
-    }, [userInfo?.name, updateCurrentModalName]);
 
     // refで外部から呼び出せるメソッドを定義
     useImperativeHandle(ref, () => ({

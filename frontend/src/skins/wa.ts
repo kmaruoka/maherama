@@ -21,11 +21,6 @@ const waSkin = {
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(100, 80, 40, 0.18), 0 0 0 6px #f6f1e7',
-  modal: {
-    maxWidth: '600px',
-    padding: '2rem 1.5rem',
-    background: 'radial-gradient(circle at 50% 30%, #fdfaf3 0%, #f6f1e7 100%)',
-  },
 };
 
 export default waSkin;

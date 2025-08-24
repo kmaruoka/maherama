@@ -21,11 +21,6 @@ const aiSkin = {
   borderRadius: '1.5rem',
   fontFamily: '"Noto Serif JP", serif',
   boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5), 0 0 0 6px #0d1b2a',
-  modal: {
-    maxWidth: '600px',
-    padding: '2rem 1.5rem',
-    background: 'linear-gradient(135deg, #1b263b 0%, #0d1b2a 100%)',
-  },
 };
 
 export default aiSkin;

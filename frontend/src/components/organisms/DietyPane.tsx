@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { Col, Container, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaCompressAlt, FaExpandAlt } from 'react-icons/fa';
 import { apiCall } from '../../config/api';
@@ -180,86 +181,105 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
     }
 
     return (
-      <div>
-        <div className="pane__header">
-          <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
-            // ボタンがクリックされた場合は画像表示切り替えを行わない
-            if ((e.target as HTMLElement).closest('button')) {
-              return;
-            }
-            setDetailView('thumbnail');
-          }}>
-            <img
-              src={dietyImageUrl}
-              alt="神様サムネイル"
-              className="pane__thumbnail-img"
-            />
-            {diety.image_by && dietyImageUrl !== NOIMAGE_DIETY_URL && (
-              <div className="pane__thumbnail-by">{t('by')} {diety.image_by}</div>
-            )}
-          </div>
-          <div className="pane__info">
-            <div className="pane__title">{diety.name}</div>
-            {diety.kana && <div className="pane__kana">{diety.kana}</div>}
-            <div className="pane__meta">
-              <div className="field-row">
-                <span className="field-row__label">{t('description')}:</span>
-                <span className="field-row__value">{diety.description || t('noDescription')}</span>
-              </div>
-              <div className="field-row">
-                <span className="field-row__label">{t('count')}:</span>
-                <span className="field-row__value">{diety.count}</span>
+      <Container fluid>
+        {/* ヘッダー部分：サムネイルと情報を横並び */}
+        <Row className="mb-3">
+          <Col xs={12} md={4}>
+            <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
+              if ((e.target as HTMLElement).closest('button')) {
+                return;
+              }
+              setDetailView('thumbnail');
+            }}>
+              <img
+                src={dietyImageUrl}
+                alt="神様サムネイル"
+                className="pane__thumbnail-img"
+              />
+              {diety.image_by && dietyImageUrl !== NOIMAGE_DIETY_URL && (
+                <div className="pane__thumbnail-by">{t('by')} {diety.image_by}</div>
+              )}
+            </div>
+          </Col>
+          <Col xs={12} md={8}>
+            <div className="pane__info">
+              <div className="pane__title">{diety.name}</div>
+              {diety.kana && <div className="pane__kana">{diety.kana}</div>}
+              <div className="pane__meta">
+                <div className="field-row">
+                  <span className="field-row__label">{t('description')}:</span>
+                  <span className="field-row__value">{diety.description || t('noDescription')}</span>
+                </div>
+                <div className="field-row">
+                  <span className="field-row__label">{t('count')}:</span>
+                  <span className="field-row__value">{diety.count}</span>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </Col>
+        </Row>
 
-        <div className="modal-section">
-          <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('shrine-ranking')}>
-            {t('enshrinedShrines')}
-            {diety.shrines && diety.shrines.length > 0 && (
-              <span className="margin-left-8 opacity-7">({diety.shrines.length})</span>
-            )}
-            <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
-          </div>
-          <div className="d-flex flex-wrap gap-2">
-            {diety.shrines && diety.shrines.length > 0 ? (
-              diety.shrines.slice(0, 10).map(shrine => (
-                <CustomLink
-                  key={shrine.id}
-                  onClick={() => onShowShrine && onShowShrine(shrine.id)}
-                  type="shrine"
-                >
-                  {shrine.name}
-                </CustomLink>
-              ))
-            ) : (
-              <span className="text-muted">{t('noShrineInfo')}</span>
-            )}
-          </div>
-        </div>
+        {/* 祭神 */}
+        <Row className="mb-3">
+          <Col xs={12}>
+            <div className="modal-section">
+              <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('shrine-ranking')}>
+                {t('enshrinedShrines')}
+                {diety.shrines && diety.shrines.length > 0 && (
+                  <span className="margin-left-8 opacity-7">({diety.shrines.length})</span>
+                )}
+                <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
+              </div>
+              <div className="d-flex flex-wrap gap-2">
+                {diety.shrines && diety.shrines.length > 0 ? (
+                  diety.shrines.slice(0, 10).map(shrine => (
+                    <CustomLink
+                      key={shrine.id}
+                      onClick={() => onShowShrine && onShowShrine(shrine.id)}
+                      type="shrine"
+                    >
+                      {shrine.name}
+                    </CustomLink>
+                  ))
+                ) : (
+                  <span className="text-muted">{t('noShrineInfo')}</span>
+                )}
+              </div>
+            </div>
+          </Col>
+        </Row>
 
+        {/* 説明 */}
         {diety.description && (
-          <div className="modal-section">
-            <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('description')}>
-              {t('description')}
-              <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
-            </div>
-            <div className="description-preview">
-              <p className="text-body-secondary small">{diety.description}</p>
-            </div>
-          </div>
+          <Row className="mb-3">
+            <Col xs={12}>
+              <div className="modal-section">
+                <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('description')}>
+                  {t('description')}
+                  <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
+                </div>
+                <div className="description-preview">
+                  <p className="text-body-secondary small">{diety.description}</p>
+                </div>
+              </div>
+            </Col>
+          </Row>
         )}
 
-        <RankingPane
-          itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
-          type="user"
-          rankingType="diety"
-          isLoading={isRankingLoading}
-          onItemClick={onShowUser}
-          maxItems={100}
-        />
-      </div>
+        {/* ランキング */}
+        <Row>
+          <Col xs={12}>
+            <RankingPane
+              itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
+              type="user"
+              rankingType="diety"
+              isLoading={isRankingLoading}
+              onItemClick={onShowUser}
+              maxItems={100}
+            />
+          </Col>
+        </Row>
+      </Container>
     );
   }
 );

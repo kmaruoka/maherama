@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { Col, Row } from 'react-bootstrap';
+import { Col, Container, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaCloudUploadAlt, FaCompressAlt, FaExpandAlt, FaVoteYea } from 'react-icons/fa';
 import { formatDistance } from '../../../backend/shared/utils/distance';
@@ -493,183 +493,268 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   }
 
   return (
-    <div>
-      <div className="pane__header">
-        <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
-          // ボタンがクリックされた場合は画像表示切り替えを行わない
-          if ((e.target as HTMLElement).closest('button')) {
-            return;
-          }
-          setDetailView('thumbnail');
-        }}>
-          <ManagedImage
-            src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
-            alt="サムネイル"
-            fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
-            loadingText="読み込み中..."
-            shouldUseFallback={imageState.shouldUseFallback}
-          />
-          <div className="pane__thumbnail-actions">
-            <button className="pane__icon-btn" onClick={(e) => {
-              e.stopPropagation();
-              imageActions.setIsUploadModalOpen(true);
-            }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
-                      {(data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
-            <button className="pane__icon-btn" onClick={(e) => {
-              e.stopPropagation();
-              handleVote();
-            }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
-          )}
-        </div>
-        {data.image_by && (data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
-          <div className="pane__thumbnail-by">{t('by')} {data.image_by}</div>
-        )}
-        </div>
-        <div className="pane__info">
-          <div className="pane__title">{data.name}</div>
-          {data.kana && <div className="pane__kana">{data.kana}</div>}
-          <div className="field-row">
-            <span className="field-row__label">{t('count')}:</span>
-            <span className="field-row__value">{data.count}</span>
+    <Container fluid>
+      {/* ヘッダー部分：サムネイルと情報を横並び */}
+      <Row className="mb-3">
+        <Col xs={12} md={4}>
+          <div className="pane__thumbnail cursor-pointer" onClick={(e) => {
+            if ((e.target as HTMLElement).closest('button')) {
+              return;
+            }
+            setDetailView('thumbnail');
+          }}>
+            <ManagedImage
+              src={(data.image_url_m || data.image_url_s || data.image_url || NOIMAGE_SHRINE_DISPLAY_URL) + (imageState.thumbCache > 0 ? '?t=' + imageState.thumbCache : '')}
+              alt="サムネイル"
+              fallbackSrc={NOIMAGE_SHRINE_DISPLAY_URL}
+              loadingText="読み込み中..."
+              shouldUseFallback={imageState.shouldUseFallback}
+            />
+            <div className="pane__thumbnail-actions">
+              <button className="pane__icon-btn" onClick={(e) => {
+                e.stopPropagation();
+                imageActions.setIsUploadModalOpen(true);
+              }} title={t('imageUpload')}><FaCloudUploadAlt size={20} /></button>
+              {(data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
+                <button className="pane__icon-btn" onClick={(e) => {
+                  e.stopPropagation();
+                  handleVote();
+                }} title={t('thumbnailVote')}><FaVoteYea size={20} /></button>
+              )}
+            </div>
+            {data.image_by && (data.image_url || data.image_url_m || data.image_url_s) && (data.image_url || data.image_url_m || data.image_url_s) !== NOIMAGE_SHRINE_DISPLAY_URL && (
+              <div className="pane__thumbnail-by">{t('by')} {data.image_by}</div>
+            )}
           </div>
-        </div>
-      </div>
-
-      <div className="small modal-item-text mb-4">{data.location}</div>
-
-      {data.founded && (
-        <div className="modal-section">
-          <div className="field-row">
-            <span className="field-row__label">{t('founded')}:</span>
-            <span className="field-row__value">{data.founded}</span>
+        </Col>
+        <Col xs={12} md={8}>
+          <div className="pane__info">
+            <div className="pane__title">{data.name}</div>
+            {data.kana && <div className="pane__kana">{data.kana}</div>}
+            <div className="field-row">
+              <span className="field-row__label">{t('count')}:</span>
+              <span className="field-row__value">{data.count}</span>
+            </div>
           </div>
-        </div>
-      )}
+          <div className="small modal-item-text">{data.location}</div>
+        </Col>
+      </Row>
 
-      {data.description && (
-        <div className="modal-section">
-          <div className="field-row">
-            <span className="field-row__label">{t('description')}:</span>
-            <span className="field-row__value field-row__value--multiline">{data.description}</span>
-          </div>
-        </div>
+      {/* 基本情報 */}
+      {(data.founded || data.description) && (
+        <Row className="mb-3">
+          <Col xs={12}>
+            {data.founded && (
+              <div className="modal-section">
+                <div className="field-row">
+                  <span className="field-row__label">{t('founded')}:</span>
+                  <span className="field-row__value">{data.founded}</span>
+                </div>
+              </div>
+            )}
+            {data.description && (
+              <div className="modal-section">
+                <div className="field-row">
+                  <span className="field-row__label">{t('description')}:</span>
+                  <span className="field-row__value field-row__value--multiline">{data.description}</span>
+                </div>
+              </div>
+            )}
+          </Col>
+        </Row>
       )}
 
       {/* 参拝・遥拝ボタン */}
-      <div className="modal-section">
-        <Row className="g-2">
-          <Col xs={12} md={6}>
-            <CustomButton
-              className="btn-pray w-100"
-              onClick={() => prayMutation.mutate(id)}
-              disabled={!canPray || markerStatus?.has_prayed_today || localPrayedToday || prayMutation.isPending}
-              style={{ width: '100%' }}
-            >
-              {(markerStatus?.has_prayed_today || localPrayedToday) ? t('prayedToday') : t('pray')}
-            </CustomButton>
-          </Col>
-          <Col xs={12} md={6}>
-            <CustomButton
-              className="btn-remote-pray w-100"
-              onClick={() => remotePrayMutation.mutate()}
-              disabled={!markerStatus?.can_remote_pray || localRemotePrayedToday || remotePrayMutation.isPending}
-              style={{ width: '100%' }}
-            >
-              {markerStatus?.max_worship_count !== undefined && markerStatus?.today_worship_count !== undefined
-                ? `${t('remotePray')}（${t('remainingToday')}${markerStatus.max_worship_count - markerStatus.today_worship_count}）`
-                : t('remotePray')
-              }
-            </CustomButton>
+      <Row className="mb-3">
+        <Col xs={12}>
+          <div className="modal-section">
+            <Row className="g-2">
+              <Col xs={12} md={6}>
+                <CustomButton
+                  className="btn-pray w-100"
+                  onClick={() => prayMutation.mutate(id)}
+                  disabled={!canPray || markerStatus?.has_prayed_today || localPrayedToday || prayMutation.isPending}
+                  style={{ width: '100%' }}
+                >
+                  {(markerStatus?.has_prayed_today || localPrayedToday) ? t('prayedToday') : t('pray')}
+                </CustomButton>
+              </Col>
+              <Col xs={12} md={6}>
+                <CustomButton
+                  className="btn-remote-pray w-100"
+                  onClick={() => remotePrayMutation.mutate()}
+                  disabled={!markerStatus?.can_remote_pray || localRemotePrayedToday || remotePrayMutation.isPending}
+                  style={{ width: '100%' }}
+                >
+                  {markerStatus?.max_worship_count !== undefined && markerStatus?.today_worship_count !== undefined
+                    ? `${t('remotePray')}（${t('remainingToday')}${markerStatus.max_worship_count - markerStatus.today_worship_count}）`
+                    : t('remotePray')
+                  }
+                </CustomButton>
+              </Col>
+            </Row>
+            {currentPosition === null ? (
+              <div className="text-muted small mt-2">
+                {t('gpsNotAvailable')} - {t('prayWithoutDistanceCheck')}
+              </div>
+            ) : distance !== null && (
+              <div className="text-muted small mt-2">
+                {t('distance')}: {formatDistance(distance)}
+                {canPray ? ` (${t('prayable')})` : ` (${t('outOfRange')})`}
+              </div>
+            )}
+          </div>
+        </Col>
+      </Row>
+
+      {/* 祭神 */}
+      <Row className="mb-3">
+        <Col xs={12}>
+          <div className="modal-section">
+            <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('deities')}>
+              {t('enshrinedDeities')}
+              <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
+            </div>
+            <div className="d-flex flex-wrap gap-2">
+              {data.dieties && data.dieties.length > 0 ? (
+                data.dieties.map(d => (
+                  <CustomLink
+                    key={d.id}
+                    onClick={() => onShowDiety && onShowDiety(d.id)}
+                    type="diety"
+                  >
+                    {d.name}
+                  </CustomLink>
+                ))
+              ) : (
+                <span className="text-muted">{t('noDeityInfo')}</span>
+              )}
+            </div>
+          </div>
+        </Col>
+      </Row>
+
+      {/* 歴史・祭事 */}
+      {(data.history || data.festivals) && (
+        <Row className="mb-3">
+          <Col xs={12}>
+            {data.history && (
+              <div className="modal-section">
+                <div className="modal-subtitle">{t('history')}</div>
+                <div className="small">{data.history}</div>
+              </div>
+            )}
+            {data.festivals && (
+              <div className="modal-section">
+                <div className="modal-subtitle">{t('festivals')}</div>
+                <div className="small">{data.festivals}</div>
+              </div>
+            )}
           </Col>
         </Row>
-        {currentPosition === null ? (
-          <div className="text-muted small mt-2">
-            {t('gpsNotAvailable')} - {t('prayWithoutDistanceCheck')}
-          </div>
-        ) : distance !== null && (
-          <div className="text-muted small mt-2">
-            {t('distance')}: {formatDistance(distance)}
-            {canPray ? ` (${t('prayable')})` : ` (${t('outOfRange')})`}
-          </div>
-        )}
-      </div>
-
-      <div className="modal-section">
-        <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('deities')}>
-          {t('enshrinedDeities')}
-          <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
-        </div>
-        <div className="d-flex flex-wrap gap-2">
-          {data.dieties && data.dieties.length > 0 ? (
-            data.dieties.map(d => (
-              <CustomLink
-                key={d.id}
-                onClick={() => onShowDiety && onShowDiety(d.id)}
-                type="diety"
-              >
-                {d.name}
-              </CustomLink>
-            ))
-          ) : (
-            <span className="text-muted">{t('noDeityInfo')}</span>
-          )}
-        </div>
-      </div>
-
-      {data.history && (
-        <div className="modal-section">
-          <div className="modal-subtitle">{t('history')}</div>
-          <div className="small">{data.history}</div>
-        </div>
-      )}
-
-      {data.festivals && (
-        <div className="modal-section">
-          <div className="modal-subtitle">{t('festivals')}</div>
-          <div className="small">{data.festivals}</div>
-        </div>
       )}
 
       {/* ランキング表示 */}
-      <div className="modal-section">
-        <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('ranking')}>
-          {t('prayRanking')}
-          <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
-        </div>
-        <RankingPane
-          itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
-          type="user"
-          rankingType="shrine"
-          isLoading={isRankingLoading}
-          onItemClick={onShowUser}
-          maxItems={3}
-        />
-      </div>
+      <Row className="mb-3">
+        <Col xs={12}>
+          <div className="modal-section">
+            <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('ranking')}>
+              {t('prayRanking')}
+              <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
+            </div>
+            <RankingPane
+              itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
+              type="user"
+              rankingType="shrine"
+              isLoading={isRankingLoading}
+              onItemClick={onShowUser}
+              maxItems={3}
+            />
+          </div>
+        </Col>
+      </Row>
 
       {/* 旅の記録表示 */}
-      <div className="modal-section">
-        <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('travelLogs')}>
-          {t('travelLogs')}
-          <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
-        </div>
-        <TravelLogsDisplay
-          logs={travelLogsData?.logs || []}
-          pagination={travelLogsData?.pagination}
-          isLoading={isTravelLogsLoading}
-          isExpanded={false}
-          onToggleExpand={handleToggleTravelLogsExpand}
-          onLoadMore={handleLoadMoreTravelLogs}
-          onShowUser={onShowUser}
-          canPost={travelLogCanPost?.canPost ?? false}
-          onPostClick={() => setIsTravelLogModalOpen(true)}
-          maxPreviewItems={3}
-          remainingPosts={travelLogCanPost?.remainingPosts}
-          prayCount={travelLogCanPost?.prayCount}
-          postedLogCount={travelLogCanPost?.postedLogCount}
-        />
-      </div>
+      <Row className="mb-3">
+        <Col xs={12}>
+          <div className="modal-section">
+            <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('travelLogs')}>
+              {t('travelLogs')}
+              <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
+            </div>
+            <TravelLogsDisplay
+              logs={travelLogsData?.logs || []}
+              pagination={travelLogsData?.pagination}
+              isLoading={isTravelLogsLoading}
+              isExpanded={false}
+              onToggleExpand={handleToggleTravelLogsExpand}
+              onLoadMore={handleLoadMoreTravelLogs}
+              onShowUser={onShowUser}
+              canPost={travelLogCanPost?.canPost ?? false}
+              onPostClick={() => setIsTravelLogModalOpen(true)}
+              maxPreviewItems={3}
+              remainingPosts={travelLogCanPost?.remainingPosts}
+              prayCount={travelLogCanPost?.prayCount}
+              postedLogCount={travelLogCanPost?.postedLogCount}
+            />
+          </div>
+        </Col>
+      </Row>
 
-      {/* アップロードモーダル */}
+      {/* サムネイル投票候補 */}
+      <Row className="mb-3">
+        <Col xs={12}>
+          <div className="modal-section">
+            <div className="modal-subtitle">{t('thumbnailVoteCandidates')}</div>
+            {imageListLoading ? (
+              <div>{t('loadingImages')}</div>
+            ) : imageListError ? (
+              <div className="text-danger">{imageListError}</div>
+            ) : imageList.length === 0 ? (
+              <div>{t('noVoteCandidates')}</div>
+            ) : (
+              <Row className="g-2">
+                {imageList.map(img => (
+                  <Col xs={6} sm={4} md={3} key={img.id}>
+                    <div className="border-1 border-radius-8 padding-8 text-center position-relative">
+                      <img src={img.thumbnail_url || img.image_url} alt="候補画像" className="object-fit-cover border-radius-4" style={{ width: '100%', height: 100 }} />
+                      <div className="font-size-75" style={{ margin: '4px 0' }}>{t('by')} {img.user?.name || t('unknown')}</div>
+                      <CustomButton
+                        color="#28a745"
+                        hoverColor="#218838"
+                        disabledColor="#b1dfbb"
+                        onClick={() => handleImageVote(img.id)}
+                        style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}
+                      >
+                        <FaVoteYea /> {t('vote')}
+                      </CustomButton>
+                      <div className="font-size-75 text-muted" style={{ marginTop: 2 }}>{t('voteCount')}: {img.votes?.length || 0}</div>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </div>
+        </Col>
+      </Row>
+
+      {/* 図鑑収録日と最終参拝日 */}
+      <Row>
+        <Col xs={12}>
+          <div className="modal-section">
+            <div className="field-row">
+              <span className="field-row__label">{t('catalogedAt')}:</span>
+              <span className="field-row__value">{data.catalogedAt ? formatDisplayDate(data.catalogedAt) : t('notRegistered')}</span>
+            </div>
+            <div className="field-row">
+              <span className="field-row__label">{t('lastPrayedAt')}:</span>
+              <span className="field-row__value">{data.lastPrayedAt ? formatDisplayDate(data.lastPrayedAt) : t('notRegistered')}</span>
+            </div>
+          </div>
+        </Col>
+      </Row>
+
+      {/* モーダル */}
       <ImageUploadModal
         isOpen={imageState.isUploadModalOpen}
         onClose={() => imageActions.setIsUploadModalOpen(false)}
@@ -677,7 +762,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         title={`${data?.name || '神社'}の画像をアップロード`}
       />
 
-      {/* 旅の記録投稿モーダル */}
       <TravelLogModal
         isOpen={isTravelLogModalOpen}
         onClose={() => setIsTravelLogModalOpen(false)}
@@ -685,50 +769,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         title={`${data?.name || '神社'}の旅の記録を投稿`}
         isLoading={postTravelLog.isPending}
       />
-
-      {/* サムネイル投票候補 */}
-      <div className="modal-section">
-        <div className="modal-subtitle">{t('thumbnailVoteCandidates')}</div>
-        {imageListLoading ? (
-          <div>{t('loadingImages')}</div>
-        ) : imageListError ? (
-          <div className="text-danger">{imageListError}</div>
-        ) : imageList.length === 0 ? (
-          <div>{t('noVoteCandidates')}</div>
-        ) : (
-          <div className="display-flex flex-wrap" style={{ gap: 16 }}>
-            {imageList.map(img => (
-              <div key={img.id} className="border-1 border-radius-8 padding-8 text-center position-relative" style={{ width: 120 }}>
-                <img src={img.thumbnail_url || img.image_url} alt="候補画像" className="object-fit-cover border-radius-4" style={{ width: 100, height: 100 }} />
-                <div className="font-size-75" style={{ margin: '4px 0' }}>{t('by')} {img.user?.name || t('unknown')}</div>
-                <CustomButton
-                  color="#28a745"
-                  hoverColor="#218838"
-                  disabledColor="#b1dfbb"
-                  onClick={() => handleImageVote(img.id)}
-                  style={{ background: '#28a745', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', fontSize: 12 }}
-                >
-                  <FaVoteYea /> {t('vote')}
-                </CustomButton>
-                <div className="font-size-75 text-muted" style={{ marginTop: 2 }}>{t('voteCount')}: {img.votes?.length || 0}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 図鑑収録日と最終参拝日（一番下に表示） */}
-      <div className="modal-section">
-        <div className="field-row">
-          <span className="field-row__label">{t('catalogedAt')}:</span>
-          <span className="field-row__value">{data.catalogedAt ? formatDisplayDate(data.catalogedAt) : t('notRegistered')}</span>
-        </div>
-        <div className="field-row">
-          <span className="field-row__label">{t('lastPrayedAt')}:</span>
-          <span className="field-row__value">{data.lastPrayedAt ? formatDisplayDate(data.lastPrayedAt) : t('notRegistered')}</span>
-        </div>
-      </div>
-    </div>
+    </Container>
   );
 });
 
