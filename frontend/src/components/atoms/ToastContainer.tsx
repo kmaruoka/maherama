@@ -63,11 +63,13 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ children }) => {
             padding: '16px 20px',
             minWidth: '300px',
             maxWidth: '400px',
+            zIndex: 99999,
           },
         }}
         gutter={8}
         containerStyle={{
           top: 20,
+          zIndex: 99999,
         }}
         reverseOrder={false}
       />

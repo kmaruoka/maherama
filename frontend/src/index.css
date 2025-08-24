@@ -1253,7 +1253,7 @@ body, #root, .log-pane, .log-pane-expanded {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 99999;
+  z-index: 9999;
 }
 
 /* 画像アップロードモーダルが開いている時に既存のモーダルを暗くする */
@@ -1272,7 +1272,7 @@ body, #root, .log-pane, .log-pane-expanded {
   width: 90%;
   max-height: 80vh;
   overflow: hidden;
-  z-index: 100000;
+  z-index: 10000;
 }
 
 .image-upload-modal-header {
