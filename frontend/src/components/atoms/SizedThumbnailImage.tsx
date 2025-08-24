@@ -42,7 +42,7 @@ interface UserInfoProps {
 // アクションの型定義
 interface ActionProps {
   thumbnailActions?: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
 }
 
 // メインのProps型定義
@@ -173,10 +173,19 @@ const SizedThumbnailImage: React.FC<SizedThumbnailImageProps> = ({
     xl: images.xl
   };
 
-  // 存在する画像のみをフィルタリング
+  // 統一された画像URL取得ロジック
   const getValidImageUrl = (size: ImageSize): string | undefined => {
     const url = responsiveUrls[size];
-    return url && url !== noImageUrl ? url : undefined;
+    // 無効なURLの場合はundefinedを返す
+    if (!url ||
+        url === 'null' ||
+        url === 'undefined' ||
+        url.includes('noimage') ||
+        url.includes('null') ||
+        url === noImageUrl) {
+      return undefined;
+    }
+    return url;
   };
 
   // cacheKeyを使用してキャッシュバスティングを追加
@@ -254,7 +263,9 @@ const SizedThumbnailImage: React.FC<SizedThumbnailImageProps> = ({
     if ((e.target as HTMLElement).closest('button, a, .custom-link')) {
       return;
     }
-    actions?.onClick?.();
+    if (actions?.onClick) {
+      actions.onClick();
+    }
   };
 
   const handleUploadClick = (e: React.MouseEvent) => {

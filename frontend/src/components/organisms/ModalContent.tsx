@@ -143,6 +143,7 @@ const ModalContent: React.FC<ModalContentProps> = ({
                   onShowShrine={(id: number) => openModal('shrine', id)}
                   onShowDiety={(id: number) => openModal('diety', id)}
                   onShowUser={(id: number) => openModal('user', id)}
+                  onDetailViewChange={handleDetailViewChange}
                 />
               )}
             </div>

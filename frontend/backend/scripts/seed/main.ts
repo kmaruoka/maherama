@@ -6,8 +6,7 @@ import { seedLevel } from './level';
 import { seedMissions } from './mission';
 import { seedNotifications } from './notification';
 import { seedRealisticTransactions } from './realisticTransactions';
-import { seedShrine, seedShrinesFromTxt } from './shrine';
-import { seedShrineDiety } from './shrineDiety';
+import { seedShrinesFromTxt } from './shrine';
 import { seedShrineImage } from './shrineImage';
 import { seedSubscription } from './subscription';
 import { seedTitle } from './title';
@@ -17,25 +16,18 @@ const prisma = new PrismaClient();
 
 async function main() {
   await seedLevel(prisma); // ←最初に呼ぶ
-  const shrineIds = await seedShrine(prisma);
   await seedDiety(prisma);
 
   // ShrineDiety生成前の件数を確認
   const beforeShrineDiety = await prisma.shrineDiety.count();
   console.log(`📊 ShrineDiety生成前: ${beforeShrineDiety}件`);
 
-  await seedShrineDiety(prisma, shrineIds);
-
-  // seedShrineDiety後の件数を確認
-  const afterShrineDiety = await prisma.shrineDiety.count();
-  console.log(`📊 seedShrineDiety後: ${afterShrineDiety}件 (+${afterShrineDiety - beforeShrineDiety}件)`);
-
-  // shrines.txtの神社・祭神リレーションも追加
-  await seedShrinesFromTxt(prisma, '../scripts/shrines.txt');
+  // shrines2.tsvの神社・祭神リレーションを追加
+  await seedShrinesFromTxt(prisma, 'shrines2.tsv');
 
   // seedShrinesFromTxt後の件数を確認
   const afterShrinesFromTxt = await prisma.shrineDiety.count();
-  console.log(`📊 seedShrinesFromTxt後: ${afterShrinesFromTxt}件 (+${afterShrinesFromTxt - afterShrineDiety}件)`);
+  console.log(`📊 seedShrinesFromTxt後: ${afterShrinesFromTxt}件 (+${afterShrinesFromTxt - beforeShrineDiety}件)`);
 
   await seedUser(prisma);
   await seedSubscription(prisma);

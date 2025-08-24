@@ -9,6 +9,7 @@ import { useDietyDetail } from '../../hooks/useDietyDetail';
 import { useImageManagement } from '../../hooks/useImageManagement';
 import useLocalStorageState from '../../hooks/useLocalStorageState';
 import { useSkin } from '../../skins/SkinContext';
+import { formatDisplayDate } from '../../utils/dateFormat';
 import CustomLink from '../atoms/CustomLink';
 import SizedThumbnailImage from '../atoms/SizedThumbnailImage';
 import { ImageUploadModal } from '../molecules/ImageUploadModal';
@@ -184,7 +185,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         return (
           <>
             <div className="modal-subtitle">
-              {t('description')}
+              {t('historyAndLegend')}
               <FaCompressAlt size={16} className="margin-left-8 opacity-7" />
             </div>
             <div className="description-full">
@@ -277,17 +278,8 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
           </Col>
           <Col xs={12} md={7}>
             <div className="pane__info">
-              <div className="pane__title">{diety.name}</div>
-              {diety.kana && <div className="pane__kana">{diety.kana}</div>}
               <div className="pane__meta">
-                <div className="field-row">
-                  <span className="field-row__label">{t('description')}:</span>
-                  <span className="field-row__value">{diety.description || t('noDescription')}</span>
-                </div>
-                <div className="field-row">
-                  <span className="field-row__label">{t('count')}:</span>
-                  <span className="field-row__value">{diety.count}</span>
-                </div>
+
               </div>
             </div>
           </Col>
@@ -329,7 +321,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
             <Col xs={12}>
               <div className="modal-section">
                 <div className="modal-subtitle cursor-pointer" onClick={() => setDetailView('description')}>
-                  {t('description')}
+                  {t('historyAndLegend')}
                   <FaExpandAlt size={16} className="margin-left-8 opacity-7" />
                 </div>
                 <div className="description-preview">
@@ -341,7 +333,7 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
         )}
 
         {/* ランキング */}
-        <Row>
+        <Row className="mb-3">
           <Col xs={12}>
             <RankingPane
               itemsByPeriod={convertUserRankingsByPeriod(userRankingsByPeriod)}
@@ -351,6 +343,26 @@ const DietyPane = forwardRef<DietyPaneRef, DietyPaneProps>(
               onItemClick={onShowUser}
               maxItems={100}
             />
+          </Col>
+        </Row>
+
+        {/* 参拝数、図鑑収録日と最終参拝日 */}
+        <Row>
+          <Col xs={12}>
+            <div className="modal-section">
+              <div className="field-row">
+                <span className="field-row__label">{t('count')}:</span>
+                <span className="field-row__value">{diety.count}</span>
+              </div>
+              <div className="field-row">
+                <span className="field-row__label">{t('catalogedAt')}:</span>
+                <span className="field-row__value">{diety.catalogedAt ? formatDisplayDate(diety.catalogedAt) : t('notRegistered')}</span>
+              </div>
+              <div className="field-row">
+                <span className="field-row__label">{t('lastPrayedAt')}:</span>
+                <span className="field-row__value">{diety.lastPrayedAt ? formatDisplayDate(diety.lastPrayedAt) : t('notRegistered')}</span>
+              </div>
+            </div>
           </Col>
         </Row>
 

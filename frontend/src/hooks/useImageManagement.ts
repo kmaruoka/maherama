@@ -30,6 +30,8 @@ export interface ImageManagementActions {
   setIsUploadModalOpen: (open: boolean) => void;
   resetImageState: () => void;
   handleImageUrlChange: (imageUrl: string) => void;
+  setImageUrlFromEntityData: (entityData: any) => void;
+  getUnifiedImageUrl: (entityData: any) => string;
 }
 
 // entityTypeから正しい複数形を取得する関数
@@ -64,13 +66,33 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
 
   const MAX_RETRIES = 2;
 
+  // 強制的に統一された画像URL取得ロジック
+  const getUnifiedImageUrl = useCallback((entityData: any): string => {
+    if (!entityData) return options.noImageUrl;
+
+    // 統一された優先順位: m > s > 元のimage_url > noImageUrl
+    const imageUrl = entityData.image_url_m ||
+                    entityData.image_url_s ||
+                    entityData.image_url ||
+                    options.noImageUrl;
+
+    // 無効なURLの場合はnoImageUrlを使用
+    if (!imageUrl ||
+        imageUrl === 'null' ||
+        imageUrl === 'undefined' ||
+        imageUrl.includes('noimage') ||
+        imageUrl.includes('null')) {
+      return options.noImageUrl;
+    }
+
+    return imageUrl;
+  }, [options.noImageUrl]);
+
   const resetImageState = useCallback(() => {
     setRetryCount(0);
     setImageLoadError(false);
     setIsImageLoading(false);
     setShouldUseFallback(false);
-    // キャッシュバスティングは必要な時のみ実行
-    // setThumbCache(prev => prev + 1);
   }, []);
 
   // 画像URLが変更されたときに存在確認を行う（同期的に処理）
@@ -104,6 +126,12 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     };
     img.src = imageUrl;
   }, [options.noImageUrl]);
+
+  // エンティティデータから画像URLを自動設定する関数
+  const setImageUrlFromEntityData = useCallback((entityData: any) => {
+    const unifiedImageUrl = getUnifiedImageUrl(entityData);
+    handleImageUrlChange(unifiedImageUrl);
+  }, [getUnifiedImageUrl, handleImageUrlChange]);
 
   const handleUpload = useCallback(async (file: File) => {
     try {
@@ -233,8 +261,10 @@ export function useImageManagement(options: ImageManagementOptions): [ImageManag
     handleImageVote,
     setIsUploadModalOpen,
     resetImageState,
-    handleImageUrlChange
-  }), [handleUpload, handleVote, handleImageVote, setIsUploadModalOpen, resetImageState, handleImageUrlChange]);
+    handleImageUrlChange,
+    setImageUrlFromEntityData,
+    getUnifiedImageUrl
+  }), [handleUpload, handleVote, handleImageVote, setIsUploadModalOpen, resetImageState, handleImageUrlChange, setImageUrlFromEntityData, getUnifiedImageUrl]);
 
   return [state, actions];
 }

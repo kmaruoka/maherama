@@ -1864,6 +1864,10 @@ nav.d-flex.position-fixed {
   padding: 16px;
 }
 
+.user-page--expanded {
+  padding: 0;
+}
+
 /* ===== SUBMENU PAGE ===== */
 .submenu-page {
   padding: 16px;

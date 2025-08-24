@@ -41,21 +41,19 @@ function buildAddress(props: any): string {
 /**
  * shrines.txtから神社データを追加し、祭神リレーションも作成
  */
-import * as readline from 'readline';
 
 export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) {
   const fs = require('fs');
   const path = require('path');
-  const filePath = path.isAbsolute(txtPath) ? txtPath : path.join(__dirname, '..', txtPath);
+  const filePath = path.isAbsolute(txtPath) ? txtPath : path.join(__dirname, txtPath);
   const fileContent = fs.readFileSync(filePath, 'utf-8');
   const lines = fileContent.split('\n').filter(line => line.trim() !== '');
   if (lines.length < 2) return;
-  const header = lines[0].split(/\t|\s{2,}/).map(h => h.trim());
-  const nameIdx = header.findIndex(h => h.includes('name'));
-  const locationIdx = header.findIndex(h => h.includes('location'));
-  const latIdx = header.findIndex(h => h.includes('lat'));
-  const lngIdx = header.findIndex(h => h.includes('long'));
-  const dietiesIdx = header.findIndex(h => h.includes('dieties'));
+  const header = lines[0].split('\t').map(h => h.trim());
+  const nameIdx = header.findIndex(h => h === 'name');
+  const locationIdx = header.findIndex(h => h === 'location');
+  const latIdx = header.findIndex(h => h === 'lat');
+  const lngIdx = header.findIndex(h => h === 'lng');
 
   // 祭神名→ID辞書
   const allDieties = await prisma.diety.findMany({ select: { id: true, name: true } });
@@ -66,20 +64,23 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
 
   let inserted = 0, relInserted = 0;
   const shrineDietyPairs: { shrine_id: number; diety_id: number }[] = [];
+  const totalLines = lines.length - 1; // ヘッダー行を除く
+
+  console.log(`📊 shrines2.tsv処理開始: ${totalLines}件の神社データを処理します`);
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(/\t|\s{2,}/);
+    // 100件毎に進行状況を表示
+    if (i % 100 === 0) {
+      console.log(`📊 進行状況: ${i}/${totalLines}件処理済み (${Math.round((i / totalLines) * 100)}%)`);
+    }
+
+    const cols = lines[i].split('\t');
     if (cols.length < 4) continue;
     const name = cols[nameIdx]?.trim();
     const location = cols[locationIdx]?.trim();
-    // 緯度・経度の区切りがカンマやタブ混在なので両方対応
-    let lat = cols[latIdx]?.trim();
-    let lng = cols[lngIdx]?.trim();
-    if (lat && lat.includes(',')) {
-      [lat, lng] = lat.split(',').map(s => s.trim());
-    } else if (lng && lng.includes(',')) {
-      [lng, lat] = lng.split(',').map(s => s.trim());
-    }
+    const lat = cols[latIdx]?.trim();
+    const lng = cols[lngIdx]?.trim();
+
     const latNum = parseFloat(lat);
     const lngNum = parseFloat(lng);
     if (!name || isNaN(latNum) || isNaN(lngNum)) continue;
@@ -109,20 +110,21 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
       inserted++;
     }
 
-    // 祭神リレーション（既存を消さずに新規のみ追加）
-    if (dietiesIdx >= 0 && cols[dietiesIdx]) {
-      // カンマ・読点・全角カンマ区切り対応
-      const raw = cols[dietiesIdx].replace(/、/g, ',').replace(/，/g, ',');
-      const names = raw.split(',').map(s => s.trim()).filter(Boolean);
-      for (const dietyName of names) {
-        const id = dietyNameToId.get(dietyName.replace(/\s/g, ''));
-        if (id) {
-          shrineDietyPairs.push({
-            shrine_id: shrine.id,
-            diety_id: id
-          });
-        }
-      }
+    // 祭神リレーションをランダムで追加（1-3体の祭神をランダムに割り当て）
+    const dietyIds = Array.from(dietyNameToId.values());
+    const numDieties = Math.floor(Math.random() * 3) + 1; // 1-3体
+    const selectedDieties = new Set<number>();
+
+    for (let j = 0; j < numDieties; j++) {
+      const randomIndex = Math.floor(Math.random() * dietyIds.length);
+      selectedDieties.add(dietyIds[randomIndex]);
+    }
+
+    for (const dietyId of selectedDieties) {
+      shrineDietyPairs.push({
+        shrine_id: shrine.id,
+        diety_id: dietyId
+      });
     }
   }
 
@@ -135,7 +137,7 @@ export async function seedShrinesFromTxt(prisma: PrismaClient, txtPath: string) 
     relInserted = shrineDietyPairs.length;
   }
 
-  console.log(`shrines.txtから神社${inserted}件、祭神リレーション${relInserted}件を追加しました（既存データは保持）`);
+  console.log(`shrines2.tsvから神社${inserted}件、祭神リレーション${relInserted}件を追加しました（既存データは保持）`);
 }
 
 export async function seedShrine(prisma: PrismaClient): Promise<number[]> {

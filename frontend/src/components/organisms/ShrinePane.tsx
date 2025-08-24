@@ -69,11 +69,12 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
   const { data: detailData, refetch } = useShrineDetail(id);
   const { data: allShrines } = useAllShrines();
 
-  // useAllShrinesから該当する神社のデータを取得（地図マーカーと同じデータソース）
+  // useShrineDetailのデータを優先し、フォールバックとしてuseAllShrinesを使用
   const data = useMemo(() => {
-    if (!allShrines || !id) return detailData;
-    return allShrines.find(shrine => shrine.id === id) || detailData;
-  }, [allShrines, id, detailData]);
+    if (detailData) return detailData;
+    if (!allShrines || !id) return null;
+    return allShrines.find(shrine => shrine.id === id) || null;
+  }, [detailData, allShrines, id]);
   const [rankRefreshKey, setRankRefreshKey] = useState(0);
   const { data: userRankingsByPeriod, isLoading: isRankingLoading } = useShrineUserRankingsBundle(id, rankRefreshKey);
   const queryClient = useQueryClient();
@@ -353,12 +354,18 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         // ローカル状態を即座に更新して「本日参拝済み」に変更
         setLocalPrayedToday(true);
         queryClient.invalidateQueries({ queryKey: ['shrine', id] });
+        queryClient.invalidateQueries({ queryKey: ['all-shrines'] }); // 全神社データも更新
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
         queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
         queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
         queryClient.invalidateQueries({ queryKey: ['shrines-visited'] }); // 図鑑の神社一覧を更新
         queryClient.invalidateQueries({ queryKey: ['dieties-visited'] }); // 図鑑の神様一覧を更新
         setRankRefreshKey(k => k + 1); // ランキングも再取得
+
+        // 神社詳細データを即座に再取得
+        if (refetch) {
+          refetch();
+        }
       }
     },
     onError: () => {
@@ -384,12 +391,18 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         // ローカル状態を即座に更新
         setLocalRemotePrayedToday(true);
         queryClient.invalidateQueries({ queryKey: ['shrine', id] });
+        queryClient.invalidateQueries({ queryKey: ['all-shrines'] }); // 全神社データも更新
         queryClient.invalidateQueries({ queryKey: ['shrine-marker-status', id, userId] });
         queryClient.invalidateQueries({ queryKey: ['missions'] }); // ミッション進捗も更新
         queryClient.refetchQueries({ queryKey: ['missions'] }); // 即座に再取得
         queryClient.invalidateQueries({ queryKey: ['shrines-visited'] }); // 図鑑の神社一覧を更新
         queryClient.invalidateQueries({ queryKey: ['dieties-visited'] }); // 図鑑の神様一覧を更新
         setRankRefreshKey(k => k + 1); // ランキングも再取得
+
+        // 神社詳細データを即座に再取得
+        if (refetch) {
+          refetch();
+        }
       }
     },
     onError: () => {
@@ -577,12 +590,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         </Col>
         <Col xs={12} md={6}>
           <div className="pane__info">
-            <div className="pane__title">{data.name}</div>
-            {data.kana && <div className="pane__kana">{data.kana}</div>}
-            <div className="field-row">
-              <span className="field-row__label">{t('count')}:</span>
-              <span className="field-row__value">{data.count}</span>
-            </div>
+
           </div>
           <div className="small modal-item-text">{data.location}</div>
         </Col>
@@ -603,7 +611,7 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
             {data.description && (
               <div className="modal-section">
                 <div className="field-row">
-                  <span className="field-row__label">{t('description')}:</span>
+                  <span className="field-row__label">{t('historyAndLegend')}:</span>
                   <span className="field-row__value field-row__value--multiline">{data.description}</span>
                 </div>
               </div>
@@ -786,10 +794,14 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         </Col>
       </Row>
 
-      {/* 図鑑収録日と最終参拝日 */}
+      {/* 参拝数、図鑑収録日と最終参拝日 */}
       <Row>
         <Col xs={12}>
           <div className="modal-section">
+            <div className="field-row">
+              <span className="field-row__label">{t('count')}:</span>
+              <span className="field-row__value">{data.count}</span>
+            </div>
             <div className="field-row">
               <span className="field-row__label">{t('catalogedAt')}:</span>
               <span className="field-row__value">{data.catalogedAt ? formatDisplayDate(data.catalogedAt) : t('notRegistered')}</span>

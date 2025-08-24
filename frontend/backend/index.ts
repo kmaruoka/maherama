@@ -1124,7 +1124,7 @@ async function prayAtShrine({
   const shrineCatalogResult = await prisma.shrineCatalog.upsert({
     where: { user_id_shrine_id: { user_id: userId, shrine_id: shrineId } },
     update: { last_prayed_at: getCurrentDate() },
-    create: { user_id: userId, shrine_id: shrineId, last_prayed_at: getCurrentDate() }
+    create: { user_id: userId, shrine_id: shrineId, last_prayed_at: getCurrentDate(), cataloged_at: getCurrentDate() }
   });
 
   // ShrinePrayStats系
