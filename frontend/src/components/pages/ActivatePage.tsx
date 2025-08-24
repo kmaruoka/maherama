@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Card, Container, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE, apiCall } from '../../config/api';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useSkin } from '../../skins/SkinContext';
+import PageLayout from '../atoms/PageLayout';
 import './CommonPage.css';
 
 export default function ActivatePage() {
@@ -73,44 +74,50 @@ export default function ActivatePage() {
   };
 
   return (
-    <div className="common-page">
-      <Container>
-        <Card className="common-page__card">
-          <Card.Body className="common-page__content">
-            <h1 className="common-page__title">アカウント有効化</h1>
+    <PageLayout>
+      <Container fluid>
+        <Row className="justify-content-center">
+          <Col xs={12} md={8} lg={6}>
+            <Card className="common-page__card">
+              <Card.Body className="common-page__content">
+                <h1 className="common-page__title">アカウント有効化</h1>
 
-            <div className="common-page__section">
-              {status === 'loading' && (
-                <div className="text-center">
-                  <Spinner animation="border" role="status" className="mb-3">
-                    <span className="visually-hidden">読み込み中...</span>
-                  </Spinner>
-                  <p>アカウントを有効化しています...</p>
+                <div className="common-page__section">
+                  {status === 'loading' && (
+                    <div className="text-center">
+                      <Spinner animation="border" role="status" className="mb-3">
+                        <span className="visually-hidden">読み込み中...</span>
+                      </Spinner>
+                      <p>アカウントを有効化しています...</p>
+                    </div>
+                  )}
+
+                  {status === 'success' && (
+                    <Alert variant="success">
+                      <Alert.Heading>有効化完了</Alert.Heading>
+                      <p>{message}</p>
+                      <p>パスワード設定ページに移動します...</p>
+                    </Alert>
+                  )}
+
+                  {status === 'error' && (
+                    <Alert variant="danger">
+                      <Alert.Heading>有効化エラー</Alert.Heading>
+                      <p>{message}</p>
+                      <hr />
+                      <div className="d-flex justify-content-end">
+                        <Button variant="outline-danger" onClick={handleBackToLogin}>
+                          ログインページに戻る
+                        </Button>
+                      </div>
+                    </Alert>
+                  )}
                 </div>
-              )}
-
-              {status === 'success' && (
-                <Alert variant="success">
-                  <Alert.Heading>有効化完了</Alert.Heading>
-                  <p>{message}</p>
-                  <p>パスワード設定ページに移動します...</p>
-                </Alert>
-              )}
-
-              {status === 'error' && (
-                <Alert variant="danger">
-                  <Alert.Heading>有効化エラー</Alert.Heading>
-                  <p>{message}</p>
-                  <hr />
-                  <Button variant="primary" onClick={handleBackToLogin}>
-                    ログインページに戻る
-                  </Button>
-                </Alert>
-              )}
-            </div>
-          </Card.Body>
-        </Card>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
       </Container>
-    </div>
+    </PageLayout>
   );
 }

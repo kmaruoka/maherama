@@ -6,6 +6,7 @@
   position: relative;
 }
 
+/* 共通ページスタイル - BootstrapのContainer/Row/Col構造と競合しないように調整 */
 .common-page__back-button {
   position: fixed;
   top: 1rem;
@@ -41,7 +42,13 @@
   padding: 2rem;
 }
 
-
+.common-page__title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: var(--skin-title);
+  text-align: center;
+}
 
 .common-page__section {
   margin-bottom: 2rem;
@@ -111,15 +118,13 @@
 }
 
 @media (max-width: var(--breakpoint-sm-max)) {
-  .common-page {
-    padding: 1rem 0;
-  }
-
   .common-page__content {
     padding: 1rem;
   }
 
-
+  .common-page__title {
+    font-size: 1.3rem;
+  }
 
   .common-page__section-title {
     font-size: 1.1rem;

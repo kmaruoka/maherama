@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Card, Container, Form, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE, apiCall } from '../../config/api';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useSkin } from '../../skins/SkinContext';
+import PageLayout from '../atoms/PageLayout';
 import './CommonPage.css';
 
 export default function ResetPasswordPage() {
@@ -84,99 +85,103 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="common-page">
-      <Container>
-        <Card className="common-page__card">
-          <Card.Body className="common-page__content">
-            <h1 className="common-page__title">パスワードリセット</h1>
+    <PageLayout>
+      <Container fluid>
+        <Row className="justify-content-center">
+          <Col xs={12} md={8} lg={6}>
+            <Card className="common-page__card">
+              <Card.Body className="common-page__content">
+                <h1 className="common-page__title">パスワードリセット</h1>
 
-            <div className="common-page__section">
-              {status === 'loading' && (
-                <div className="text-center">
-                  <Spinner animation="border" role="status" className="mb-3">
-                    <span className="visually-hidden">読み込み中...</span>
-                  </Spinner>
-                  <p>リンクを確認しています...</p>
-                </div>
-              )}
-
-              {status === 'form' && (
-                <>
-                  {errors.general && (
-                    <Alert variant="danger">{errors.general}</Alert>
+                <div className="common-page__section">
+                  {status === 'loading' && (
+                    <div className="text-center">
+                      <Spinner animation="border" role="status" className="mb-3">
+                        <span className="visually-hidden">読み込み中...</span>
+                      </Spinner>
+                      <p>リンクを確認しています...</p>
+                    </div>
                   )}
-                  <Form onSubmit={handleSubmit}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>新しいパスワード</Form.Label>
-                      <Form.Control
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        isInvalid={!!errors.password}
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {errors.password}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                      <Form.Label>パスワード確認</Form.Label>
-                      <Form.Control
-                        type="password"
-                        value={formData.confirmPassword}
-                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        isInvalid={!!errors.confirmPassword}
-                        required
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {errors.confirmPassword}
-                      </Form.Control.Feedback>
-                    </Form.Group>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      disabled={isSubmitting || !formData.password || !formData.confirmPassword}
-                      className="w-100 mb-2"
-                    >
-                      {isSubmitting ? '更新中...' : 'パスワードを更新'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={handleBackToLogin}
-                      className="w-100"
-                    >
-                      ログインページに戻る
-                    </Button>
-                  </Form>
-                </>
-              )}
 
-              {status === 'success' && (
-                <Alert variant="success">
-                  <Alert.Heading>パスワード更新完了</Alert.Heading>
-                  <p>{message}</p>
-                  <hr />
-                  <Button variant="primary" onClick={handleBackToLogin}>
-                    ログインページに戻る
-                  </Button>
-                </Alert>
-              )}
+                  {status === 'form' && (
+                    <>
+                      {errors.general && (
+                        <Alert variant="danger">{errors.general}</Alert>
+                      )}
+                      <Form onSubmit={handleSubmit}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>新しいパスワード</Form.Label>
+                          <Form.Control
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            isInvalid={!!errors.password}
+                            required
+                          />
+                          <Form.Control.Feedback type="invalid">
+                            {errors.password}
+                          </Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                          <Form.Label>パスワード確認</Form.Label>
+                          <Form.Control
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                            isInvalid={!!errors.confirmPassword}
+                            required
+                          />
+                          <Form.Control.Feedback type="invalid">
+                            {errors.confirmPassword}
+                          </Form.Control.Feedback>
+                        </Form.Group>
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={isSubmitting || !formData.password || !formData.confirmPassword}
+                          className="w-100 mb-2"
+                        >
+                          {isSubmitting ? '更新中...' : 'パスワードを更新'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline-secondary"
+                          onClick={handleBackToLogin}
+                          className="w-100"
+                        >
+                          ログインページに戻る
+                        </Button>
+                      </Form>
+                    </>
+                  )}
 
-              {status === 'error' && (
-                <Alert variant="danger">
-                  <Alert.Heading>エラー</Alert.Heading>
-                  <p>{message}</p>
-                  <hr />
-                  <Button variant="primary" onClick={handleBackToLogin}>
-                    ログインページに戻る
-                  </Button>
-                </Alert>
-              )}
-            </div>
-          </Card.Body>
-        </Card>
+                  {status === 'success' && (
+                    <Alert variant="success">
+                      <Alert.Heading>パスワード更新完了</Alert.Heading>
+                      <p>{message}</p>
+                      <hr />
+                      <Button variant="primary" onClick={handleBackToLogin}>
+                        ログインページに戻る
+                      </Button>
+                    </Alert>
+                  )}
+
+                  {status === 'error' && (
+                    <Alert variant="danger">
+                      <Alert.Heading>エラー</Alert.Heading>
+                      <p>{message}</p>
+                      <hr />
+                      <Button variant="primary" onClick={handleBackToLogin}>
+                        ログインページに戻る
+                      </Button>
+                    </Alert>
+                  )}
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
       </Container>
-    </div>
+    </PageLayout>
   );
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Alert, Button, Card, Container, Form } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { API_BASE, apiCall } from '../../config/api';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useSkin } from '../../skins/SkinContext';
+import PageLayout from '../atoms/PageLayout';
 import './CommonPage.css';
 
 export default function SetPasswordPage() {
@@ -79,99 +80,103 @@ export default function SetPasswordPage() {
   };
 
   return (
-    <div className="common-page">
-      <Container>
-        <Card className="common-page__card">
-          <Card.Body className="common-page__content">
-            <h1 className="common-page__title">パスワード設定</h1>
+    <PageLayout>
+      <Container fluid>
+        <Row className="justify-content-center">
+          <Col xs={12} md={8} lg={6}>
+            <Card className="common-page__card">
+              <Card.Body className="common-page__content">
+                <h1 className="common-page__title">パスワード設定</h1>
 
-            <div className="common-page__section">
-              {!token && (
-                <Alert variant="danger">
-                  <Alert.Heading>エラー</Alert.Heading>
-                  <p>無効なアクセスです。</p>
-                  <hr />
-                  <Button variant="primary" onClick={handleBackToLogin}>
-                    ログインページに戻る
-                  </Button>
-                </Alert>
-              )}
-
-              {token && status === 'form' && (
-                <>
-                  <Alert variant="info">
-                    <p>{welcomeMessage}</p>
-                  </Alert>
-
-                  <Form onSubmit={handleSubmit}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>パスワード</Form.Label>
-                      <Form.Control
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        placeholder="パスワードを入力してください（6文字以上）"
-                        required
-                        minLength={6}
-                      />
-                    </Form.Group>
-
-                    <Form.Group className="mb-3">
-                      <Form.Label>パスワード確認</Form.Label>
-                      <Form.Control
-                        type="password"
-                        value={formData.confirmPassword}
-                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        placeholder="パスワードを再入力してください"
-                        required
-                      />
-                    </Form.Group>
-
-                    <div className="d-grid gap-2">
-                      <Button variant="primary" type="submit">
-                        パスワードを設定
-                      </Button>
-                      <Button variant="outline-secondary" onClick={handleBackToLogin}>
+                <div className="common-page__section">
+                  {!token && (
+                    <Alert variant="danger">
+                      <Alert.Heading>エラー</Alert.Heading>
+                      <p>無効なアクセスです。</p>
+                      <hr />
+                      <Button variant="primary" onClick={handleBackToLogin}>
                         ログインページに戻る
                       </Button>
+                    </Alert>
+                  )}
+
+                  {token && status === 'form' && (
+                    <>
+                      <Alert variant="info">
+                        <p>{welcomeMessage}</p>
+                      </Alert>
+
+                      <Form onSubmit={handleSubmit}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>パスワード</Form.Label>
+                          <Form.Control
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            placeholder="パスワードを入力してください（6文字以上）"
+                            required
+                            minLength={6}
+                          />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                          <Form.Label>パスワード確認</Form.Label>
+                          <Form.Control
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                            placeholder="パスワードを再入力してください"
+                            required
+                          />
+                        </Form.Group>
+
+                        <div className="d-grid gap-2">
+                          <Button variant="primary" type="submit">
+                            パスワードを設定
+                          </Button>
+                          <Button variant="outline-secondary" onClick={handleBackToLogin}>
+                            ログインページに戻る
+                          </Button>
+                        </div>
+                      </Form>
+                    </>
+                  )}
+
+                  {status === 'loading' && (
+                    <div className="text-center">
+                      <Alert variant="info">
+                        <p>パスワードを設定しています...</p>
+                      </Alert>
                     </div>
-                  </Form>
-                </>
-              )}
+                  )}
 
-              {status === 'loading' && (
-                <div className="text-center">
-                  <Alert variant="info">
-                    <p>パスワードを設定しています...</p>
-                  </Alert>
+                  {status === 'success' && (
+                    <Alert variant="success">
+                      <Alert.Heading>設定完了</Alert.Heading>
+                      <p>{message}</p>
+                      <p>ログインページに移動します...</p>
+                    </Alert>
+                  )}
+
+                  {status === 'error' && (
+                    <Alert variant="danger">
+                      <Alert.Heading>エラー</Alert.Heading>
+                      <p>{message}</p>
+                      <hr />
+                      <Button variant="primary" onClick={() => setStatus('form')}>
+                        再試行
+                      </Button>
+                      <Button variant="outline-secondary" onClick={handleBackToLogin} className="ms-2">
+                        ログインページに戻る
+                      </Button>
+                    </Alert>
+                  )}
                 </div>
-              )}
-
-              {status === 'success' && (
-                <Alert variant="success">
-                  <Alert.Heading>設定完了</Alert.Heading>
-                  <p>{message}</p>
-                  <p>ログインページに移動します...</p>
-                </Alert>
-              )}
-
-              {status === 'error' && (
-                <Alert variant="danger">
-                  <Alert.Heading>エラー</Alert.Heading>
-                  <p>{message}</p>
-                  <hr />
-                  <Button variant="primary" onClick={() => setStatus('form')}>
-                    再試行
-                  </Button>
-                  <Button variant="outline-secondary" onClick={handleBackToLogin} className="ms-2">
-                    ログインページに戻る
-                  </Button>
-                </Alert>
-              )}
-            </div>
-          </Card.Body>
-        </Card>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
       </Container>
-    </div>
+    </PageLayout>
   );
 }

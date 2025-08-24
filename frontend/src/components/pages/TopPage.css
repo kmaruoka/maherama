@@ -62,12 +62,15 @@ html, body {
 
 .top-page__catchphrase-text {
   color: #ffffff !important; /* 純白 - 強力な視認性 */
-  font-size: 1.5rem;
-  font-weight: 600 !important;
+  font-size: 1.2rem;
+  font-weight: 600 !important; /* フォントウェイトを上げて視認性向上 */
   line-height: 1.8;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5) !important; /* 光る効果を追加 */
   max-width: 800px;
   margin: 0 auto;
+  white-space: normal !important; /* 自然な改行を許可 */
+  word-wrap: break-word !important; /* 長い単語の折り返し */
+  overflow-wrap: break-word !important; /* モダンブラウザ対応 */
 }
 
 /* レスポンシブ対応 */
@@ -77,8 +80,9 @@ html, body {
   }
 
   .top-page__catchphrase-text {
-    font-size: 1.25rem;
+    font-size: 1rem;
     line-height: 1.6;
+    max-width: 600px;
   }
 }
 
@@ -88,8 +92,17 @@ html, body {
   }
 
   .top-page__catchphrase-text {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     line-height: 1.5;
+    max-width: 500px;
+  }
+}
+
+@media (max-width: 375px) {
+  .top-page__catchphrase-text {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    max-width: 400px;
   }
 }
 
@@ -127,6 +140,8 @@ html, body {
 .top-page__auth-card .nav-tabs {
   border-bottom: 1px solid #2c3e50 !important; /* 夜の静けさを感じる青みグレー */
   background: #11162a !important;
+  display: flex !important;
+  flex-wrap: nowrap !important; /* 改行を防ぐ */
 }
 
 .top-page__auth-card .nav-tabs .nav-link {
@@ -135,9 +150,16 @@ html, body {
   border: none !important;
   border-bottom: 2px solid transparent !important;
   border-radius: 0 !important;
-  padding: 0.75rem 1rem !important;
+  padding: 0.75rem 0.5rem !important; /* パディングを調整 */
   font-weight: 600 !important; /* フォントウェイトを上げて視認性向上 */
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.3) !important; /* 光る効果を追加 */
+  white-space: nowrap !important; /* 改行を防ぐ */
+  flex: 1 !important; /* 均等に配置 */
+  text-align: center !important; /* 中央揃え */
+  font-size: 0.9rem !important; /* フォントサイズを少し小さく */
+  min-width: 0 !important; /* 最小幅を0に */
+  overflow: hidden !important; /* はみ出しを隠す */
+  text-overflow: ellipsis !important; /* はみ出した場合は省略記号 */
 }
 
 .top-page__auth-card .nav-tabs .nav-link:hover {
@@ -358,10 +380,23 @@ html, body {
   }
 }
 
+@media (max-width: 375px) {
+  .top-page__auth-card .nav-tabs .nav-link {
+    padding: 0.4rem 0.15rem !important; /* 最小限のパディング */
+    font-size: 0.75rem !important; /* 最小限のフォントサイズ */
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+
 @media (max-width: var(--breakpoint-xs-max)) {
   .top-page__auth-card .nav-tabs .nav-link {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.9rem;
+    padding: 0.5rem 0.25rem !important; /* さらにパディングを縮小 */
+    font-size: 0.8rem !important; /* フォントサイズをさらに小さく */
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .top-page__form-section {
