@@ -6,12 +6,10 @@ export default function useCurrentPosition(): [number, number] | null {
 
   useEffect(() => {
     isMountedRef.current = true;
-    console.log('[GPS] 位置情報の取得を開始');
 
     const successCallback = (pos: GeolocationPosition) => {
       if (isMountedRef.current) {
         const newPosition: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-        console.log('[GPS] 位置情報取得成功:', newPosition);
         setPosition(newPosition);
       }
     };
@@ -48,7 +46,6 @@ export default function useCurrentPosition(): [number, number] | null {
     }
 
     return () => {
-      console.log('[GPS] 位置情報の監視を停止');
       isMountedRef.current = false;
       if (watchId !== null) {
         try {

@@ -590,9 +590,18 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
         </Col>
         <Col xs={12} md={6}>
           <div className="pane__info">
-
+            <div className="small modal-item-text">{data.location}</div>
+            {currentPosition === null ? (
+              <div className="text-muted small mt-2">
+                {t('gpsNotAvailable')} - {t('prayWithoutDistanceCheck')}
+              </div>
+            ) : distance !== null && (
+              <div className="text-muted small mt-2">
+                {t('distance')}: {formatDistance(distance)}
+                {canPray ? ` (${t('prayable')})` : ` (${t('outOfRange')})`}
+              </div>
+            )}
           </div>
-          <div className="small modal-item-text">{data.location}</div>
         </Col>
       </Row>
 
@@ -649,16 +658,6 @@ const ShrinePane = forwardRef<ShrinePaneRef, { id: number; onShowDiety?: (id: nu
                 </CustomButton>
               </Col>
             </Row>
-            {currentPosition === null ? (
-              <div className="text-muted small mt-2">
-                {t('gpsNotAvailable')} - {t('prayWithoutDistanceCheck')}
-              </div>
-            ) : distance !== null && (
-              <div className="text-muted small mt-2">
-                {t('distance')}: {formatDistance(distance)}
-                {canPray ? ` (${t('prayable')})` : ` (${t('outOfRange')})`}
-              </div>
-            )}
           </div>
         </Col>
       </Row>

@@ -24,7 +24,6 @@
   object-fit: contain;
   object-position: center;
   display: block;
-  border-radius: 0.5rem;
   border: none;
   outline: none;
 }
@@ -121,12 +120,33 @@
   max-width: 100% !important;
   max-height: 100% !important;
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: center !important;
   padding: 0 !important;
   margin: 0 !important;
   box-sizing: border-box !important;
   overflow: visible !important;
+  margin-top: 0 !important;
+  position: relative !important;
+  top: 0 !important;
+}
+
+/* モバイル用の拡大表示スタイル */
+@media (max-width: 767px) {
+  .sized-thumbnail--expanded {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    top: 0 !important;
+    position: relative !important;
+  }
+
+  .sized-thumbnail--expanded .sized-thumbnail__img {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    position: relative !important;
+    top: 0 !important;
+    vertical-align: top !important;
+  }
 }
 
 .sized-thumbnail--expanded .sized-thumbnail__img {
@@ -135,6 +155,9 @@
   max-width: 100% !important;
   max-height: 100% !important;
   object-fit: contain !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: top !important;
 }
 
 
